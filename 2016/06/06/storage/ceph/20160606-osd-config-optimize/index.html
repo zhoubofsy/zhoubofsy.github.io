@@ -1,0 +1,900 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="config,ceph,osd," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="OSD配置优化Filestore
+
+
+参数名
+描述
+默认值
+推荐值
+
+
+
+
+filestore max sync interval
+从日志到数据盘最大同步间隔(秒)
+5
+15
+
+
+filestore min sync interval
+从日志到数据盘最小同步间隔(秒)
+0.1
+10
+
+
+filestore queue max ops
+最大未完成io数
+50
+25000
+
+
+filestore qu">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Ceph集群OSD节点配置优化">
+<meta property="og:url" content="http://yoursite.com/2016/06/06/storage/ceph/20160606-osd-config-optimize/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="OSD配置优化Filestore
+
+
+参数名
+描述
+默认值
+推荐值
+
+
+
+
+filestore max sync interval
+从日志到数据盘最大同步间隔(秒)
+5
+15
+
+
+filestore min sync interval
+从日志到数据盘最小同步间隔(秒)
+0.1
+10
+
+
+filestore queue max ops
+最大未完成io数
+50
+25000
+
+
+filestore qu">
+<meta property="og:updated_time" content="2016-11-13T10:02:51.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Ceph集群OSD节点配置优化">
+<meta name="twitter:description" content="OSD配置优化Filestore
+
+
+参数名
+描述
+默认值
+推荐值
+
+
+
+
+filestore max sync interval
+从日志到数据盘最大同步间隔(秒)
+5
+15
+
+
+filestore min sync interval
+从日志到数据盘最小同步间隔(秒)
+0.1
+10
+
+
+filestore queue max ops
+最大未完成io数
+50
+25000
+
+
+filestore qu">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2016/06/06/storage/ceph/20160606-osd-config-optimize/"/>
+
+  <title> Ceph集群OSD节点配置优化 | Hexo </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">Hexo</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Ceph集群OSD节点配置优化
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-06-06T09:51:13+08:00" content="2016-06-06">
+              2016-06-06
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index">
+                    <span itemprop="name">storage</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="OSD配置优化"><a href="#OSD配置优化" class="headerlink" title="OSD配置优化"></a>OSD配置优化</h1><h2 id="Filestore"><a href="#Filestore" class="headerlink" title="Filestore"></a>Filestore</h2><table>
+<thead>
+<tr>
+<th>参数名</th>
+<th style="text-align:left">描述</th>
+<th style="text-align:right">默认值</th>
+<th style="text-align:right">推荐值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>filestore max sync interval</td>
+<td style="text-align:left">从日志到数据盘最大同步间隔(秒)</td>
+<td style="text-align:right">5</td>
+<td style="text-align:right">15</td>
+</tr>
+<tr>
+<td>filestore min sync interval</td>
+<td style="text-align:left">从日志到数据盘最小同步间隔(秒)</td>
+<td style="text-align:right">0.1</td>
+<td style="text-align:right">10</td>
+</tr>
+<tr>
+<td>filestore queue max ops</td>
+<td style="text-align:left">最大未完成io数</td>
+<td style="text-align:right">50</td>
+<td style="text-align:right">25000</td>
+</tr>
+<tr>
+<td>filestore queue max bytes</td>
+<td style="text-align:left">最大未完成io字节数(B)</td>
+<td style="text-align:right">100 &lt;&lt; 20</td>
+<td style="text-align:right">10 &lt;&lt; 20</td>
+</tr>
+<tr>
+<td>filestore queue committing max ops</td>
+<td style="text-align:left">数据盘能够commit的操作数</td>
+<td style="text-align:right">500</td>
+<td style="text-align:right">5000</td>
+</tr>
+<tr>
+<td>filestore queue committing max bytes</td>
+<td style="text-align:left">数据盘能够commit的最大字节数（B）</td>
+<td style="text-align:right">100 &lt;&lt; 20</td>
+<td style="text-align:right">1000 &lt;&lt; 20</td>
+</tr>
+<tr>
+<td>filestore op threads</td>
+<td style="text-align:left">并发文件系统操作线程数</td>
+<td style="text-align:right">2</td>
+<td style="text-align:right">32</td>
+</tr>
+<tr>
+<td>filestore fd cache size</td>
+<td style="text-align:left">对象文件句柄缓存大小</td>
+<td style="text-align:right">128</td>
+<td style="text-align:right">8192</td>
+</tr>
+<tr>
+<td>filestore wbthrottle_xfs_bytes_start_flusher</td>
+<td style="text-align:left">xfs文件系统开始执行回刷的脏数据</td>
+<td style="text-align:right">41943040</td>
+<td style="text-align:right">90 &lt;&lt; 20</td>
+</tr>
+<tr>
+<td>filestore wbthrottle_xfs_bytes_hard_limit</td>
+<td style="text-align:left">xfs文件系统允许的最大脏数据</td>
+<td style="text-align:right">419430400</td>
+<td style="text-align:right">500 &lt;&lt; 20</td>
+</tr>
+</tbody>
+</table>
+<h2 id="Journal"><a href="#Journal" class="headerlink" title="Journal"></a>Journal</h2><table>
+<thead>
+<tr>
+<th>参数名</th>
+<th style="text-align:left">描述</th>
+<th style="text-align:right">默认值</th>
+<th style="text-align:right">推荐值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>osd journal size</td>
+<td style="text-align:left">OSD 日志大小（MB）</td>
+<td style="text-align:right">5120</td>
+<td style="text-align:right">20000</td>
+</tr>
+<tr>
+<td>journal max write bytes</td>
+<td style="text-align:left">日志一次异步io的最大字节数（B）</td>
+<td style="text-align:right">10 &lt;&lt; 20</td>
+<td style="text-align:right">1 &lt;&lt; 30</td>
+</tr>
+<tr>
+<td>journal max write entries</td>
+<td style="text-align:left">日志一次异步io的最大记录数</td>
+<td style="text-align:right">100</td>
+<td style="text-align:right">10000</td>
+</tr>
+</tbody>
+</table>
+<h2 id="Recovery"><a href="#Recovery" class="headerlink" title="Recovery"></a>Recovery</h2><p>None</p>
+<h2 id="PG"><a href="#PG" class="headerlink" title="PG"></a>PG</h2><p><code>PGs = (Total_number_of_OSD * 100) / max_replication_count</code><br>如果有15个OSD，副本数为3，根据公式计算PGs为500，最接近512，所以需要设置该pool的<code>pg_num</code>和<code>pgp_num</code>都为512<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">ceph osd pool set &#123;pool name&#125; pg_num 512</div><div class="line">ceph osd pool set &#123;pool name&#125; pgp_num 512</div></pre></td></tr></table></figure></p>
+<h2 id="CRUSH-Map"><a href="#CRUSH-Map" class="headerlink" title="CRUSH Map"></a>CRUSH Map</h2><p>Todo…</p>
+<h2 id="Client"><a href="#Client" class="headerlink" title="Client"></a>Client</h2><table>
+<thead>
+<tr>
+<th>参数名</th>
+<th style="text-align:left">描述</th>
+<th style="text-align:right">默认值</th>
+<th style="text-align:right">推荐值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>objecter inflight ops</td>
+<td style="text-align:left">客户端允许的最大未发送io请求数</td>
+<td style="text-align:right">1024</td>
+<td style="text-align:right">1 &lt;&lt; 20</td>
+</tr>
+<tr>
+<td>objecter inflight op bytes</td>
+<td style="text-align:left">客户端允许的最大未发送脏数据</td>
+<td style="text-align:right">100 &lt;&lt; 20</td>
+<td style="text-align:right">10 &lt;&lt; 30</td>
+</tr>
+</tbody>
+</table>
+<h2 id="Other"><a href="#Other" class="headerlink" title="Other"></a>Other</h2><table>
+<thead>
+<tr>
+<th>参数名</th>
+<th style="text-align:left">描述</th>
+<th style="text-align:right">默认值</th>
+<th style="text-align:right">推荐值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>osd max write size</td>
+<td style="text-align:left">OSD一次可写入的最大值（MB）</td>
+<td style="text-align:right">90</td>
+<td style="text-align:right">512</td>
+</tr>
+<tr>
+<td>osd client message size</td>
+<td style="text-align:left">客户端允许在内存中的最大数据（B）</td>
+<td style="text-align:right">500 &lt;&lt; 20</td>
+<td style="text-align:right">2 &lt;&lt; 30</td>
+</tr>
+<tr>
+<td>osd deep scrub stride</td>
+<td style="text-align:left">在Deep Scrub时允许读取的字节数（B）</td>
+<td style="text-align:right">512 &lt;&lt; 10</td>
+<td style="text-align:right">128 &lt;&lt; 10</td>
+</tr>
+<tr>
+<td>osd op threads</td>
+<td style="text-align:left">OSD进程操作的线程数</td>
+<td style="text-align:right">2</td>
+<td style="text-align:right">8</td>
+</tr>
+<tr>
+<td>osd disk threads</td>
+<td style="text-align:left">OSD恢复和Scrubbing时的线程数</td>
+<td style="text-align:right">1</td>
+<td style="text-align:right">4</td>
+</tr>
+<tr>
+<td>osd map cache size</td>
+<td style="text-align:left">OSD Map 的缓存（MB）</td>
+<td style="text-align:right">200</td>
+<td style="text-align:right">1024</td>
+</tr>
+<tr>
+<td>ms_dispatch_throttle_bytes</td>
+<td style="text-align:left">控制DispatcherQueue队列深度大小</td>
+<td style="text-align:right">100 &lt;&lt; 20</td>
+<td style="text-align:right">1 &lt;&lt; 30</td>
+</tr>
+</tbody>
+</table>
+<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a href="http://xiaoquqi.github.io/blog/2015/06/28/ceph-performance-optimization-summary/" target="_blank" rel="external">Ceph性能优化总结（v.94）</a></li>
+<li><a href="http://m.blog.csdn.net/article/details?id=51320138" target="_blank" rel="external">Ceph性能优化之配置参数调优</a></li>
+</ul>
+
+      
+    </div>
+
+    <div>
+      
+        
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/config/" rel="tag">#config</a>
+          
+            <a href="/tags/ceph/" rel="tag">#ceph</a>
+          
+            <a href="/tags/osd/" rel="tag">#osd</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/06/02/storage/ceph/20160602-osd-node-optimize/" rel="next" title="OSD 节点优化">
+                <i class="fa fa-chevron-left"></i> OSD 节点优化
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/06/07/power/20160607-control-usb-power/" rel="prev" title="控制USB设备的电源">
+                控制USB设备的电源 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="博" />
+          <p class="site-author-name" itemprop="name">博</p>
+          <p class="site-description motion-element" itemprop="description"></p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">27</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">12</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">28</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/zhoubofsy" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/5448295640" target="_blank" title="Weibo">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#OSD配置优化"><span class="nav-number">1.</span> <span class="nav-text">OSD配置优化</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Filestore"><span class="nav-number">1.1.</span> <span class="nav-text">Filestore</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Journal"><span class="nav-number">1.2.</span> <span class="nav-text">Journal</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Recovery"><span class="nav-number">1.3.</span> <span class="nav-text">Recovery</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#PG"><span class="nav-number">1.4.</span> <span class="nav-text">PG</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#CRUSH-Map"><span class="nav-number">1.5.</span> <span class="nav-text">CRUSH Map</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Client"><span class="nav-number">1.6.</span> <span class="nav-text">Client</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Other"><span class="nav-number">1.7.</span> <span class="nav-text">Other</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考-amp-鸣谢"><span class="nav-number">2.</span> <span class="nav-text">参考&鸣谢</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">博</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+  
+  
+
+  
+
+  
+
+</body>
+</html>

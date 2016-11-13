@@ -1,0 +1,653 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="ceph,xenserver," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.0.1" />
+
+
+
+
+
+
+<meta name="description" content="集成原理123456789+-----------+|           ||           ||           |                          +-- ISCSI SR ----+| XenServer |         +---------+      |                |     +------------+ |           |">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ceph J版与Xenserver6.5集成">
+<meta property="og:url" content="http://yoursite.com/2016/05/04/storage/ceph/20160504-jewel-xensvr6-5-integration/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="集成原理123456789+-----------+|           ||           ||           |                          +-- ISCSI SR ----+| XenServer |         +---------+      |                |     +------------+ |           |">
+<meta property="og:updated_time" content="2016-11-13T10:02:51.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="ceph J版与Xenserver6.5集成">
+<meta name="twitter:description" content="集成原理123456789+-----------+|           ||           ||           |                          +-- ISCSI SR ----+| XenServer |         +---------+      |                |     +------------+ |           |">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2016/05/04/storage/ceph/20160504-jewel-xensvr6-5-integration/"/>
+
+  <title> ceph J版与Xenserver6.5集成 | Hexo </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">Hexo</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                ceph J版与Xenserver6.5集成
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-05-04T10:20:43+08:00" content="2016-05-04">
+              2016-05-04
+            </time>
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index">
+                    <span itemprop="name">storage</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="集成原理"><a href="#集成原理" class="headerlink" title="集成原理"></a>集成原理</h1><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">+-----------+</div><div class="line">|           |</div><div class="line">|           |</div><div class="line">|           |                          +-- ISCSI SR ----+</div><div class="line">| XenServer |         +---------+      |                |     +------------+ </div><div class="line">|           | ------&gt; |SR Driver| -----+-- NFS SR   ----+-----| XenCenter  |</div><div class="line">|           |         +---------+      |                |     +------------+ </div><div class="line">|           |                          +-- RBD SR   ----+</div><div class="line">+-----------+                           ( Fork ISCSI SR)</div></pre></td></tr></table></figure>
+<ul>
+<li>RBDSR通过KRBD映射ceph快设备（详细请见<a href="http://zhoubofsy.github.io/2016/04/27/20160427-map-rbd-kernel-without-ceph-common-md/" target="_blank" rel="external">不使用ceph-common 进行内核映射 rbd 块设备</a>）</li>
+<li>XenCenter在添加ISCSI设备界面中通过指定端口为“6789”来区别使用ISCSISR，还是使用RBDSR</li>
+</ul>
+<h1 id="步骤"><a href="#步骤" class="headerlink" title="步骤"></a>步骤</h1><h2 id="1-搭建ceph-J版集群"><a href="#1-搭建ceph-J版集群" class="headerlink" title="1. 搭建ceph J版集群"></a>1. 搭建ceph J版集群</h2><p>详细请见： </p>
+<ul>
+<li><a href="zhoubofsy.github.io/2016/04/29/20160429-jewel-of-ceph-deploy-test/">ceph Jewel 10.2.0 部署测试</a></li>
+<li><a href="http://zhoubofsy.github.io/2016/04/15/20160415_ceph-install-deploy-config-on-rhel7-md/" target="_blank" rel="external">在RHEL7.2平台上搭建ceph集群</a></li>
+</ul>
+<h2 id="2-调整ceph集群crush-tunables与XenServer内核匹配"><a href="#2-调整ceph集群crush-tunables与XenServer内核匹配" class="headerlink" title="2. 调整ceph集群crush tunables与XenServer内核匹配"></a>2. 调整ceph集群crush tunables与XenServer内核匹配</h2><p>针对XenServer6.5，需要调整crush tunables 为 bobtail<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ceph osd crush tunables bobtail</div></pre></td></tr></table></figure></p>
+<p>查看更改<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ceph osd crush show-tunables</div></pre></td></tr></table></figure></p>
+<h2 id="3-创建ceph-rbd块设备"><a href="#3-创建ceph-rbd块设备" class="headerlink" title="3. 创建ceph rbd块设备"></a>3. 创建ceph rbd块设备</h2><ul>
+<li>为了保证快设备可映射、可快照、可克隆，必须使用format 2</li>
+<li>ceph J版必须指定feature 为 layering</li>
+<li>快设备名称必须使用uuid（不带“-”分隔）</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">uuidgen | sed &apos;s/-//g&apos;     # 生成无“-”分隔符的rbd名称</div><div class="line">rbd create --size &#123;size&#125; &#123;rbd名称&#125; --image-feature layering</div></pre></td></tr></table></figure>
+<h2 id="4-XenServer节点安装RBDSR-patch"><a href="#4-XenServer节点安装RBDSR-patch" class="headerlink" title="4. XenServer节点安装RBDSR patch"></a>4. XenServer节点安装RBDSR patch</h2><p>详细请见：<br><a href="https://github.com/zhoubofsy/rbdsr/tree/1.0.0" target="_blank" rel="external">RBDSR README</a></p>
+<h2 id="5-使用XenCenter创建SR"><a href="#5-使用XenCenter创建SR" class="headerlink" title="5. 使用XenCenter创建SR"></a>5. 使用XenCenter创建SR</h2><p>同上</p>
+<h1 id="注意"><a href="#注意" class="headerlink" title="注意"></a>注意</h1><ul>
+<li>ceph J版 开始抛弃KRBD</li>
+<li>ceph J版 tunables会引发集群告警“crush map has legacy tunables (require bobtail, min is firefly)”（可忽略） </li>
+<li>创建rbd快设备必须使用format 2 格式，否则不能正常映射（map）</li>
+<li>ceph J版 rbd格式feature中只能包含layering，不能包含其他feature，否则不能正常映射（map）</li>
+</ul>
+<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a href="https://github.com/mstarikov/rbdsr" target="_blank" rel="external">mstarikov/rbdsr</a></li>
+</ul>
+
+      
+    </div>
+
+    <div>
+      
+        
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/ceph/" rel="tag">#ceph</a>
+          
+            <a href="/tags/xenserver/" rel="tag">#xenserver</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/04/29/storage/ceph/20160429-jewel-of-ceph-deploy-test/" rel="next" title="ceph Jewel 10.2.0 部署测试">
+                <i class="fa fa-chevron-left"></i> ceph Jewel 10.2.0 部署测试
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/05/13/storage/20160513-linux-ssd-check/" rel="prev" title="Linux中查看硬盘类型">
+                Linux中查看硬盘类型 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="博" />
+          <p class="site-author-name" itemprop="name">博</p>
+          <p class="site-description motion-element" itemprop="description"></p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">27</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">12</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">28</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/zhoubofsy" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/5448295640" target="_blank" title="Weibo">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#集成原理"><span class="nav-number">1.</span> <span class="nav-text">集成原理</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#步骤"><span class="nav-number">2.</span> <span class="nav-text">步骤</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-搭建ceph-J版集群"><span class="nav-number">2.1.</span> <span class="nav-text">1. 搭建ceph J版集群</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-调整ceph集群crush-tunables与XenServer内核匹配"><span class="nav-number">2.2.</span> <span class="nav-text">2. 调整ceph集群crush tunables与XenServer内核匹配</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-创建ceph-rbd块设备"><span class="nav-number">2.3.</span> <span class="nav-text">3. 创建ceph rbd块设备</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-XenServer节点安装RBDSR-patch"><span class="nav-number">2.4.</span> <span class="nav-text">4. XenServer节点安装RBDSR patch</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#5-使用XenCenter创建SR"><span class="nav-number">2.5.</span> <span class="nav-text">5. 使用XenCenter创建SR</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#注意"><span class="nav-number">3.</span> <span class="nav-text">注意</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考-amp-鸣谢"><span class="nav-number">4.</span> <span class="nav-text">参考&鸣谢</span></a></li></ol></div>
+            
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">博</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.0.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.0.1"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.0.1"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.0.1"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.0.1"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+  
+  
+  
+
+  
+
+  
+
+</body>
+</html>
