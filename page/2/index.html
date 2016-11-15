@@ -256,6 +256,1138 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/06/23/storage/ceph/persistence-calculation/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="博">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.png">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="Bolog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="Bolog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2016/06/23/storage/ceph/persistence-calculation/" itemprop="url">
+                  Ceph 持久性计算
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-06-23T14:23:33+08:00">
+              2016-06-23
+            </time>
+
+            &nbsp;|&nbsp;
+
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-check-o"></i>
+            </span>
+            <time title="Post modified" itemprop="dateModified" datetime="2016-11-13T18:02:51+08:00">
+              2016-11-13
+            </time>
+            
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/ceph/" itemprop="url" rel="index">
+                    <span itemprop="name">ceph</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+          
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="持久性"><a href="#持久性" class="headerlink" title="持久性"></a>持久性</h1><p>持久性是数据丢失的概率，可以用于度量一个存储系统的可靠性，俗称 “多少个9”。数据的放置(DataPlacement)决定了数据持久性，而Ceph的CRUSH MAP又决定了数据的放置，因此CRUSH MAP的设置决定了数据持久性。</p>
+<h1 id="数学模型"><a href="#数学模型" class="headerlink" title="数学模型"></a>数学模型</h1><h2 id="公式"><a href="#公式" class="headerlink" title="公式"></a>公式</h2><p><code>P = Pr x M / C（R，N）</code></p>
+<h2 id="解释"><a href="#解释" class="headerlink" title="解释"></a>解释</h2><h3 id="P"><a href="#P" class="headerlink" title="P"></a>P</h3><p>P为丢失数据的概率，持久性，可用1-P来计算。</p>
+<h3 id="Pr"><a href="#Pr" class="headerlink" title="Pr"></a>Pr</h3><p><code>Pr = P1（any） x P2（any） x P3（any）</code></p>
+<p>Pr为一年内R（ceph副本数）个OSD发生故障的概率。</p>
+<ul>
+<li><p>P1（any）为一年内第一个OSD发生故障的概率<br>硬盘在一定时间内的失败概率符合Possion（伯松）分布 <code>Pn（入,t）</code>(<code>入</code>为lamda)，由于我们不太容易直接计算任意一个OSD顺坏的概率，但可以计算出没有OSD出现故障的概率，再用1减去无OSD节点故障的概率，就得到了<code>P1（any）</code><br><code>入=FIT x N</code> ，<code>FIT=AFR/（24×365）</code>，AFR为硬盘年故障概率;<br><code>t</code>为一年的小时数，24x365</p>
+</li>
+<li><p>P2（any）为一个OSD恢复周期内第二个OSD发生故障的概率<br><code>入</code>中的N为N-1<br><code>t</code> 为一个OSD恢复周期，<code>OSD恢复周期 = 恢复数据量 / 恢复速度</code>；<code>恢复数据量 = 硬盘容量 x 使用率</code>；<code>恢复速度 = 每个OSD写速度 x 参与恢复的OSD数量</code></p>
+</li>
+<li><p>P3（any）为一个OSD恢复周期内第三个OSD发生故障的概率<br><code>入</code>中的N为N-2<br><code>t</code> 为一个OSD恢复周期，算法同上</p>
+</li>
+</ul>
+<h3 id="M"><a href="#M" class="headerlink" title="M"></a>M</h3><p>Copy Set个数，copy set上至少有一个PG的所有副本。<br>丢失数据必须是主副本数据同时丢失，数据不可恢复才算。而一个copy set，包含一个PG的所有主副本数据，所以一个copy set损坏（或丢失）导致至少一个PG的主副本数据丢失，数据不可恢复。</p>
+<h3 id="C（R，N）"><a href="#C（R，N）" class="headerlink" title="C（R，N）"></a>C（R，N）</h3><p>N为OSD数量（一个OSD对应一个硬盘），R为副本数，C（R，N）为N个OSD中任意挑选R个OSD的组合数。</p>
+<h2 id="优化"><a href="#优化" class="headerlink" title="优化"></a>优化</h2><p>综上所述，我们能调节的参数包括：</p>
+<ul>
+<li>OSD恢复周期（recovery time）<br>  增加<code>参与恢复的OSD数量</code>可以缩短<code>OSD恢复周期</code>，从而降低丢失数据的概率</li>
+<li>copy set个数<br>  减少copy set个数，可以降低丢失数据的概率</li>
+</ul>
+<p>以上优化需要修改Crush map</p>
+<h1 id="使用prmc计算持久性"><a href="#使用prmc计算持久性" class="headerlink" title="使用prmc计算持久性"></a>使用prmc计算持久性</h1><h2 id="获取prmc"><a href="#获取prmc" class="headerlink" title="获取prmc"></a>获取prmc</h2><p>从github上下载prmc代码<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">git clone https://github.com/zhoubofsy/persistence_calculation.git</div></pre></td></tr></table></figure></p>
+<h2 id="配置输入参数"><a href="#配置输入参数" class="headerlink" title="配置输入参数"></a>配置输入参数</h2><p>修改<code>config.py</code>文件中的<code>prmc</code>字典<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div></pre></td><td class="code"><pre><div class="line"># 算法名称</div><div class="line">name = &apos;prmc&apos;</div><div class="line"></div><div class="line">prmc = &#123;</div><div class="line"># 副本数</div><div class="line">&apos;replica_num&apos; : 3, </div><div class="line"></div><div class="line"># 集群OSD总数数量</div><div class="line">&apos;osd_num&apos; : 14,</div><div class="line"></div><div class="line"># AFR(硬盘年故障率)</div><div class="line">&apos;disk_afr&apos; : 0.017,</div><div class="line"></div><div class="line"># 磁盘平均容量（MB）</div><div class="line">&apos;disk_capacity&apos; : 1000.0,</div><div class="line"></div><div class="line"># 磁盘平均写速度（MB/s）</div><div class="line">&apos;disk_writerate&apos; : 50.0,</div><div class="line"></div><div class="line"># 磁盘使用率</div><div class="line">&apos;disk_usage&apos; : 0.75,</div><div class="line"></div><div class="line"># 一个Host中OSD的数量</div><div class="line">&apos;num_osd_in_host&apos; : 4, </div><div class="line"></div><div class="line"># 一个副本域的host数量</div><div class="line">&apos;num_host_in_replic_domain&apos; : 1,</div><div class="line"></div><div class="line"># rack数量</div><div class="line">&apos;num_rack_in_root&apos; : 4, </div><div class="line"></div><div class="line"># 副本域数量</div><div class="line">&apos;num_replic_domain_in_root&apos; : 1</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>程序会根据<code>name</code>的设置，选择相关的算法，不同的算法会采用不同的配置参数，目前只支持<code>prmc</code>算法</p>
+<h2 id="执行计算"><a href="#执行计算" class="headerlink" title="执行计算"></a>执行计算</h2><p>执行<code>main.py</code>进行计算持久性<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">./main.py</div></pre></td></tr></table></figure></p>
+<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a href="https://www.ustack.com/blog/build-block-storage-service/" target="_blank" rel="external">打造高性能高可靠块存储系统</a></li>
+<li><a href="http://blog.csdn.net/xiaoquqi/article/details/43055031#0-tsina-1-70142-397232819ff9a47a7b7e80a40613cfe1" target="_blank" rel="external">CEPH可靠性的计算方法分析</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/06/07/power/20160607-control-usb-power/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="博">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.png">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="Bolog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="Bolog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2016/06/07/power/20160607-control-usb-power/" itemprop="url">
+                  控制USB设备的电源
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-06-07T10:32:19+08:00">
+              2016-06-07
+            </time>
+
+            &nbsp;|&nbsp;
+
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-check-o"></i>
+            </span>
+            <time title="Post modified" itemprop="dateModified" datetime="2016-11-13T18:02:51+08:00">
+              2016-11-13
+            </time>
+            
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/power/" itemprop="url" rel="index">
+                    <span itemprop="name">power</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+          
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="上电"><a href="#上电" class="headerlink" title="上电"></a>上电</h2><p>eg:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">echo &quot;1-4.4.4&quot; &gt; /sys/bus/usb/drivers/usb/bind</div></pre></td></tr></table></figure></p>
+<h2 id="下电"><a href="#下电" class="headerlink" title="下电"></a>下电</h2><p>eg:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">echo &quot;1-4.4.4&quot; &gt; /sys/bus/usb/drivers/usb/unbind</div></pre></td></tr></table></figure></p>
+<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a href="http://stackoverflow.com/questions/4702216/controlling-a-usb-power-supply-on-off-with-linux" target="_blank" rel="external">Controlling a USB power supply(on/off) with linux</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/06/06/storage/ceph/20160606-osd-config-optimize/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="博">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.png">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="Bolog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="Bolog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2016/06/06/storage/ceph/20160606-osd-config-optimize/" itemprop="url">
+                  Ceph集群OSD节点配置优化
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-06-06T09:51:13+08:00">
+              2016-06-06
+            </time>
+
+            &nbsp;|&nbsp;
+
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-check-o"></i>
+            </span>
+            <time title="Post modified" itemprop="dateModified" datetime="2016-11-13T18:02:51+08:00">
+              2016-11-13
+            </time>
+            
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index">
+                    <span itemprop="name">storage</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+          
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="OSD配置优化"><a href="#OSD配置优化" class="headerlink" title="OSD配置优化"></a>OSD配置优化</h1><h2 id="Filestore"><a href="#Filestore" class="headerlink" title="Filestore"></a>Filestore</h2><table>
+<thead>
+<tr>
+<th>参数名</th>
+<th style="text-align:left">描述</th>
+<th style="text-align:right">默认值</th>
+<th style="text-align:right">推荐值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>filestore max sync interval</td>
+<td style="text-align:left">从日志到数据盘最大同步间隔(秒)</td>
+<td style="text-align:right">5</td>
+<td style="text-align:right">15</td>
+</tr>
+<tr>
+<td>filestore min sync interval</td>
+<td style="text-align:left">从日志到数据盘最小同步间隔(秒)</td>
+<td style="text-align:right">0.1</td>
+<td style="text-align:right">10</td>
+</tr>
+<tr>
+<td>filestore queue max ops</td>
+<td style="text-align:left">最大未完成io数</td>
+<td style="text-align:right">50</td>
+<td style="text-align:right">25000</td>
+</tr>
+<tr>
+<td>filestore queue max bytes</td>
+<td style="text-align:left">最大未完成io字节数(B)</td>
+<td style="text-align:right">100 &lt;&lt; 20</td>
+<td style="text-align:right">10 &lt;&lt; 20</td>
+</tr>
+<tr>
+<td>filestore queue committing max ops</td>
+<td style="text-align:left">数据盘能够commit的操作数</td>
+<td style="text-align:right">500</td>
+<td style="text-align:right">5000</td>
+</tr>
+<tr>
+<td>filestore queue committing max bytes</td>
+<td style="text-align:left">数据盘能够commit的最大字节数（B）</td>
+<td style="text-align:right">100 &lt;&lt; 20</td>
+<td style="text-align:right">1000 &lt;&lt; 20</td>
+</tr>
+<tr>
+<td>filestore op threads</td>
+<td style="text-align:left">并发文件系统操作线程数</td>
+<td style="text-align:right">2</td>
+<td style="text-align:right">32</td>
+</tr>
+<tr>
+<td>filestore fd cache size</td>
+<td style="text-align:left">对象文件句柄缓存大小</td>
+<td style="text-align:right">128</td>
+<td style="text-align:right">8192</td>
+</tr>
+<tr>
+<td>filestore wbthrottle_xfs_bytes_start_flusher</td>
+<td style="text-align:left">xfs文件系统开始执行回刷的脏数据</td>
+<td style="text-align:right">41943040</td>
+<td style="text-align:right">90 &lt;&lt; 20</td>
+</tr>
+<tr>
+<td>filestore wbthrottle_xfs_bytes_hard_limit</td>
+<td style="text-align:left">xfs文件系统允许的最大脏数据</td>
+<td style="text-align:right">419430400</td>
+<td style="text-align:right">500 &lt;&lt; 20</td>
+</tr>
+</tbody>
+</table>
+<h2 id="Journal"><a href="#Journal" class="headerlink" title="Journal"></a>Journal</h2><table>
+<thead>
+<tr>
+<th>参数名</th>
+<th style="text-align:left">描述</th>
+<th style="text-align:right">默认值</th>
+<th style="text-align:right">推荐值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>osd journal size</td>
+<td style="text-align:left">OSD 日志大小（MB）</td>
+<td style="text-align:right">5120</td>
+<td style="text-align:right">20000</td>
+</tr>
+<tr>
+<td>journal max write bytes</td>
+<td style="text-align:left">日志一次异步io的最大字节数（B）</td>
+<td style="text-align:right">10 &lt;&lt; 20</td>
+<td style="text-align:right">1 &lt;&lt; 30</td>
+</tr>
+<tr>
+<td>journal max write entries</td>
+<td style="text-align:left">日志一次异步io的最大记录数</td>
+<td style="text-align:right">100</td>
+<td style="text-align:right">10000</td>
+</tr>
+</tbody>
+</table>
+<h2 id="Recovery"><a href="#Recovery" class="headerlink" title="Recovery"></a>Recovery</h2><p>None</p>
+<h2 id="PG"><a href="#PG" class="headerlink" title="PG"></a>PG</h2><p><code>PGs = (Total_number_of_OSD * 100) / max_replication_count</code><br>如果有15个OSD，副本数为3，根据公式计算PGs为500，最接近512，所以需要设置该pool的<code>pg_num</code>和<code>pgp_num</code>都为512<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">ceph osd pool set &#123;pool name&#125; pg_num 512</div><div class="line">ceph osd pool set &#123;pool name&#125; pgp_num 512</div></pre></td></tr></table></figure></p>
+<h2 id="CRUSH-Map"><a href="#CRUSH-Map" class="headerlink" title="CRUSH Map"></a>CRUSH Map</h2><p>Todo…</p>
+<h2 id="Client"><a href="#Client" class="headerlink" title="Client"></a>Client</h2><table>
+<thead>
+<tr>
+<th>参数名</th>
+<th style="text-align:left">描述</th>
+<th style="text-align:right">默认值</th>
+<th style="text-align:right">推荐值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>objecter inflight ops</td>
+<td style="text-align:left">客户端允许的最大未发送io请求数</td>
+<td style="text-align:right">1024</td>
+<td style="text-align:right">1 &lt;&lt; 20</td>
+</tr>
+<tr>
+<td>objecter inflight op bytes</td>
+<td style="text-align:left">客户端允许的最大未发送脏数据</td>
+<td style="text-align:right">100 &lt;&lt; 20</td>
+<td style="text-align:right">10 &lt;&lt; 30</td>
+</tr>
+</tbody>
+</table>
+<h2 id="Other"><a href="#Other" class="headerlink" title="Other"></a>Other</h2><table>
+<thead>
+<tr>
+<th>参数名</th>
+<th style="text-align:left">描述</th>
+<th style="text-align:right">默认值</th>
+<th style="text-align:right">推荐值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>osd max write size</td>
+<td style="text-align:left">OSD一次可写入的最大值（MB）</td>
+<td style="text-align:right">90</td>
+<td style="text-align:right">512</td>
+</tr>
+<tr>
+<td>osd client message size</td>
+<td style="text-align:left">客户端允许在内存中的最大数据（B）</td>
+<td style="text-align:right">500 &lt;&lt; 20</td>
+<td style="text-align:right">2 &lt;&lt; 30</td>
+</tr>
+<tr>
+<td>osd deep scrub stride</td>
+<td style="text-align:left">在Deep Scrub时允许读取的字节数（B）</td>
+<td style="text-align:right">512 &lt;&lt; 10</td>
+<td style="text-align:right">128 &lt;&lt; 10</td>
+</tr>
+<tr>
+<td>osd op threads</td>
+<td style="text-align:left">OSD进程操作的线程数</td>
+<td style="text-align:right">2</td>
+<td style="text-align:right">8</td>
+</tr>
+<tr>
+<td>osd disk threads</td>
+<td style="text-align:left">OSD恢复和Scrubbing时的线程数</td>
+<td style="text-align:right">1</td>
+<td style="text-align:right">4</td>
+</tr>
+<tr>
+<td>osd map cache size</td>
+<td style="text-align:left">OSD Map 的缓存（MB）</td>
+<td style="text-align:right">200</td>
+<td style="text-align:right">1024</td>
+</tr>
+<tr>
+<td>ms_dispatch_throttle_bytes</td>
+<td style="text-align:left">控制DispatcherQueue队列深度大小</td>
+<td style="text-align:right">100 &lt;&lt; 20</td>
+<td style="text-align:right">1 &lt;&lt; 30</td>
+</tr>
+</tbody>
+</table>
+<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a href="http://xiaoquqi.github.io/blog/2015/06/28/ceph-performance-optimization-summary/" target="_blank" rel="external">Ceph性能优化总结（v.94）</a></li>
+<li><a href="http://m.blog.csdn.net/article/details?id=51320138" target="_blank" rel="external">Ceph性能优化之配置参数调优</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/06/02/storage/ceph/20160602-osd-node-optimize/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="博">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.png">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="Bolog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="Bolog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2016/06/02/storage/ceph/20160602-osd-node-optimize/" itemprop="url">
+                  OSD 节点优化
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-06-02T17:07:48+08:00">
+              2016-06-02
+            </time>
+
+            &nbsp;|&nbsp;
+
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-check-o"></i>
+            </span>
+            <time title="Post modified" itemprop="dateModified" datetime="2016-11-13T18:02:51+08:00">
+              2016-11-13
+            </time>
+            
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index">
+                    <span itemprop="name">storage</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+          
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="目标"><a href="#目标" class="headerlink" title="目标"></a>目标</h1><ul>
+<li>优化OSD节点性能</li>
+<li>关闭OSD节点瓶颈项</li>
+</ul>
+<h1 id="优化项"><a href="#优化项" class="headerlink" title="优化项"></a>优化项</h1><h2 id="CPU-Status"><a href="#CPU-Status" class="headerlink" title="CPU Status"></a>CPU Status</h2><p>将cpu status 设置为 performance，可通过BIOS设置，或在系统中进行如下配置，修改后需要重启生效<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">for CPUFREQ in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do [ -f $CPUFREQ ] || continue; echo -n performance &gt; $CPUFREQ; done</div></pre></td></tr></table></figure></p>
+<h2 id="Hyper-Threading（HT）"><a href="#Hyper-Threading（HT）" class="headerlink" title="Hyper-Threading（HT）"></a>Hyper-Threading（HT）</h2><p>开启VT和HT，在BIOS中配置</p>
+<h2 id="NUMA"><a href="#NUMA" class="headerlink" title="NUMA"></a>NUMA</h2><p>关闭NUMA，可通过BIOS关闭，也可在加载Kernel是设置<br>打开<code>/etc/grub2-efi.cfg</code>，修改kernel加载部分，修改后需要重启生效</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">linuxefi /vmlinuz-3.10.0-327.el7.x86_64 root=/dev/mapper/rhel-root ro crashkernel=auto rd.lvm.lv=rhel/root rd.lvm.lv=rhel/swap rhgb quiet LANG=en_US.UTF-8 numa=off</div></pre></td></tr></table></figure>
+<p>关闭前<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">$ lscpu | grep -i numa</div><div class="line">NUMA node(s):          2</div><div class="line">NUMA node0 CPU(s):     0-5,12-17</div><div class="line">NUMA node1 CPU(s):     6-11,18-23</div></pre></td></tr></table></figure></p>
+<p>关闭后<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">$ lscpu | grep -i numa</div><div class="line">NUMA node(s):          1</div><div class="line">NUMA node0 CPU(s):     0-23</div></pre></td></tr></table></figure></p>
+<h2 id="Jumbo-Frames"><a href="#Jumbo-Frames" class="headerlink" title="Jumbo Frames"></a>Jumbo Frames</h2><p>将cluster network 的网卡MTU设置为9000，修改后需要重启生效<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">echo &quot;MTU=9000&quot; | tee -a /etc/sysconfig/network-script/ifcfg-&#123;网卡&#125;</div></pre></td></tr></table></figure></p>
+<p>通过ifconfig查看mtu修改情况<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">$ ifconfig</div><div class="line">ens5f0: flags=4163&lt;UP,BROADCAST,RUNNING,MULTICAST&gt;  mtu 9000</div><div class="line">        inet 192.168.43.5  netmask 255.255.255.0  broadcast 192.168.43.255</div><div class="line">        inet6 fe80::92e2:baff:febf:3800  prefixlen 64  scopeid 0x20&lt;link&gt;</div><div class="line">        ether 90:e2:ba:bf:38:00  txqueuelen 1000  (Ethernet)</div><div class="line">        RX packets 5218040  bytes 661253942 (630.6 MiB)</div><div class="line">        RX errors 0  dropped 0  overruns 0  frame 0</div><div class="line">        TX packets 5170015  bytes 605082933 (577.0 MiB)</div><div class="line">        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0</div></pre></td></tr></table></figure></p>
+<h2 id="SSD-Trim"><a href="#SSD-Trim" class="headerlink" title="SSD Trim"></a>SSD Trim</h2><p>为减少SSD写放大，需要开启Trim。<br>判断SSD是否支持Trim<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ hdparm -I /dev/&#123;SSD硬盘&#125; | grep -i trim</div><div class="line">          *    Data Set Management TRIM supported (limit 8 blocks)</div></pre></td></tr></table></figure></p>
+<p>出现 “TRIM supported” 表示支持Trim，否则表示不支持Trim指令.</p>
+<p>在xfs文件系统中开启trim指令，需要挂载xfs文件系统时，option中增加<code>discard</code></p>
+<h2 id="Scheduler"><a href="#Scheduler" class="headerlink" title="Scheduler"></a>Scheduler</h2><p>硬盘I/O调度机制配置，SSD 推荐采用“noop”，机械硬盘推荐采用“deadline”<br>修改<code>/etc/udev/rules.d/60-schedulers.rules</code>，增加如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"># system default: set cfq scheduler for rotating disks</div><div class="line">ACTION==&quot;add|change&quot;,KERNEL==&quot;sd[a-z]&quot;,ATTR&#123;queue/rotational&#125;==&quot;1&quot;,ATTR&#123;queue/scheduler&#125;=&quot;deadline&quot;</div><div class="line">ACTION==&quot;add|change&quot;,KERNEL==&quot;sd[a-z]&quot;,ATTR&#123;queue/rotational&#125;==&quot;0&quot;,ATTR&#123;queue/scheduler&#125;=&quot;noop&quot;</div></pre></td></tr></table></figure></p>
+<p>rotational 为 “1” 表示机械硬盘，为“0”表示SSD</p>
+<p>查看修改是否生效<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">cat /sys/block/&#123;硬盘&#125;/queue/scheduler</div></pre></td></tr></table></figure></p>
+<h2 id="read-ahead-kb"><a href="#read-ahead-kb" class="headerlink" title="read_ahead_kb"></a>read_ahead_kb</h2><p>设置硬盘预读大小为8k<br>修改<code>/etc/udev/rules.d/60-schedulers.rules</code>，增加如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ACTION==&quot;add|change&quot;,KERNEL==&quot;sd[b-z]&quot;,ATTR&#123;queue/read_ahead_kb&#125;=&quot;8192&quot;</div></pre></td></tr></table></figure></p>
+<p>查看是否生效<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">cat /sys/block/&#123;硬盘&#125;/queue/read_ahead_kb</div></pre></td></tr></table></figure></p>
+<h2 id="xfs-option"><a href="#xfs-option" class="headerlink" title="xfs option"></a>xfs option</h2><p>xfs 挂载增加如下option：</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th style="text-align:center"></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>rw</td>
+<td style="text-align:center">允许读写操作</td>
+</tr>
+<tr>
+<td>noexec</td>
+<td style="text-align:center">不允许运行操作</td>
+</tr>
+<tr>
+<td>nodev</td>
+<td style="text-align:center">不支持设备文件</td>
+</tr>
+<tr>
+<td>noatime</td>
+<td style="text-align:center">不更新inode访问时间</td>
+</tr>
+<tr>
+<td>nobarrier</td>
+<td style="text-align:center">关闭cache 回写机制</td>
+</tr>
+</tbody>
+</table>
+<h2 id="FD-core-amp-PID"><a href="#FD-core-amp-PID" class="headerlink" title="FD,core &amp; PID"></a>FD,core &amp; PID</h2><h3 id="FD-amp-core"><a href="#FD-amp-core" class="headerlink" title="FD &amp; core"></a>FD &amp; core</h3><p>修改 max open files 最大值，系统默认是1024，将其修改为131072<br>修改 core 值，当程序崩溃时，会输出core文件，便于分析错误原因<br>修改<code>/etc/security/limits.conf</code>文件，增加：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">*   soft    core    10240</div><div class="line">*   soft    nofile  131072</div><div class="line">*   hard    nofile  131072</div></pre></td></tr></table></figure></p>
+<p>修改后，可通过<code>ulimit -a</code>查看。</p>
+<h3 id="PID"><a href="#PID" class="headerlink" title="PID"></a>PID</h3><p>修改pid max值，打破系统运行进程数量瓶颈，将其设置为4194303（系统默认是 32768）<br>修改<code>/etc/sysctl.conf</code>文件,增加<code>kernel.pid_max=4194303</code></p>
+<h2 id="cgroup"><a href="#cgroup" class="headerlink" title="cgroup"></a>cgroup</h2><p>若集群搭建采用超融合方案（计算节点与存储节点混搭），使用cgroup将cpu与OSD进程绑定，减少cpu时间片切换次数，提高OSD相应速度</p>
+<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a href="https://www.mylesgray.com/hardware/test-jumbo-frames-working/" target="_blank" rel="external">How to test if 9000 MTU/Jumbo Frames are working</a></li>
+<li><a href="http://puremonkey2010.blogspot.tw/2014/10/linux-jumbo-frame.html" target="_blank" rel="external">设置Jumbo frame</a></li>
+<li><a href="http://ycnian.org/blog/archives/832" target="_blank" rel="external">linux存储架构图</a></li>
+<li><a href="http://my.oschina.net/manmao/blog/593851" target="_blank" rel="external">linuxI/O子系统框架图</a></li>
+<li><a href="http://xiaoquqi.github.io/blog/2015/06/28/ceph-performance-optimization-summary/" target="_blank" rel="external">Ceph性能优化总结（v.94）</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/05/25/20160525-xunlei-download-parse/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="博">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.png">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="Bolog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="Bolog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2016/05/25/20160525-xunlei-download-parse/" itemprop="url">
+                  迅雷下载解析（上）
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-05-25T14:39:03+08:00">
+              2016-05-25
+            </time>
+
+            &nbsp;|&nbsp;
+
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-check-o"></i>
+            </span>
+            <time title="Post modified" itemprop="dateModified" datetime="2016-11-15T14:33:07+08:00">
+              2016-11-15
+            </time>
+            
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/other/" itemprop="url" rel="index">
+                    <span itemprop="name">other</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+          
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="需求"><a href="#需求" class="headerlink" title="需求"></a>需求</h1><p>所有使用非windows的用户在需要下载迅雷资源的时候，大概都有两种方法。其一，使用wine，装一个xunlei，然后下载资源；其二，利用离线下载，先下载到离线服务器上，然后利用http或ftp协议下载到本地。</p>
+<p>为啥迅雷不开发一个linux版呢！（个人猜测，估计是怕linux里面的license吧）相信为啥没有linux版本，只有迅雷知道。</p>
+<p>为了能让linux下载迅雷资源，做了如下调研。。。</p>
+<h1 id="thunder-地址解码"><a href="#thunder-地址解码" class="headerlink" title="thunder 地址解码"></a>thunder 地址解码</h1><p>通常能看到的 thunder 地址，都是通过base64 encode 过的 http 或 ftp 地址。所以解码，也需要用base64</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"># base64 加密后的http 或 ftp 地址</div><div class="line">thunder://QUFmdHA6Ly9keWdvZDE6ZHlnb2QxQGQxMzEuZHlnb2QuY246MzA0OS/pnZ7or5rli7/mibBEVkRzY3IvW+eUteW9seWkqeWggnd3dy5keWdvZC5jbl3pnZ7or5rli7/mibBjZDEucm12Ylpa</div><div class="line"></div><div class="line"># 经过 base64 -d decode 之后</div><div class="line">echo QUFmdHA6Ly9keWdvZDE6ZHlnb2QxQGQxMzEuZHlnb2QuY246MzA0OS/pnZ7or5rli7/mibBEVkRzY3IvW+eUteW9seWkqeWggnd3dy5keWdvZC5jbl3pnZ7or5rli7/mibBjZDEucm12Ylpa | base64 -d</div><div class="line"></div><div class="line">AAftp://dygod1:dygod1@d131.dygod.cn:3049/非诚勿扰DVDscr/[电影天堂www.dygod.cn]非诚勿扰cd1.rmvbZZ%</div></pre></td></tr></table></figure>
+<p>看到了吧，去掉开头的“AA”，去掉结尾的“ZZ%”，就剩下了一个ftp地址，这个ftp地址，就是迅雷下载时使用的ftp地址。</p>
+<h1 id="迅雷资源下载"><a href="#迅雷资源下载" class="headerlink" title="迅雷资源下载"></a>迅雷资源下载</h1><p>使用 wget 下载上文中的ftp资源<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">$ wget -v ftp://i:i@d3.dl1234.com:6958/\[电影天堂www.dy2018.com\]神战权力之眼BD中英双字.rmvb</div><div class="line">--2016-05-25 14:58:52--  ftp://i:*password*@d3.dl1234.com:6958/[%E7%94%B5%E5%BD%B1%E5%A4%A9%E5%A0%82www.dy2018.com]%E7%A5%9E%E6%88%98%E6%9D%83%E5%8A%9B%E4%B9%8B%E7%9C%BCBD%E4%B8%AD%E8%8B%B1%E5%8F%8C%E5%AD%97.rmvb</div><div class="line">           =&gt; ‘.listing’</div><div class="line">Resolving d3.dl1234.com (d3.dl1234.com)... 218.93.205.139</div><div class="line">Connecting to d3.dl1234.com (d3.dl1234.com)|218.93.205.139|:6958... failed: Connection refused.</div><div class="line">--2016-05-25 14:58:52--  ftp://i:*password*@d3.dl1234.com:6958/[%E7%94%B5%E5%BD%B1%E5%A4%A9%E5%A0%82www.dy2018.com]%E7%A5%9E%E6%88%98%E6%9D%83%E5%8A%9B%E4%B9%8B%E7%9C%BCBD%E4%B8%AD%E8%8B%B1%E5%8F%8C%E5%AD%97.rmvb</div><div class="line">           =&gt; ‘.listing’</div><div class="line">Connecting to d3.dl1234.com (d3.dl1234.com)|218.93.205.139|:6958... failed: Connection refused.</div></pre></td></tr></table></figure></p>
+<p>结果被无情的 refused 了，后来又用别的ftp客户端尝试下载结果，依然失败。。。</p>
+<p>痛定思痛，上网搜索了一下，有片文章的分析我觉得可能是正确的，其文如下：</p>
+<p>”（我揣测）迅雷走的是P2SP，也就是先访问它的索引server，找到真实可用的ip。换句话说，这个URL仅仅起到一个资源标识符的作用，本身也许未必能直接用于下载。 所以说这个东西，不逆向官方客户端恐怕是没法搞的，因为不知道它和服务器之间的协议。“</p>
+<h1 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h1><p>根据网友的分析，后续可以下载一个迅雷软件分析看看</p>
+<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a href="https://github.com/soimort/you-get/issues/929" target="_blank" rel="external">能支持迅雷下载地址么？（类似thunder://）</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/05/13/storage/20160513-linux-ssd-check/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="博">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.png">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="Bolog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="Bolog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2016/05/13/storage/20160513-linux-ssd-check/" itemprop="url">
+                  Linux中查看硬盘类型
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-05-13T10:01:51+08:00">
+              2016-05-13
+            </time>
+
+            &nbsp;|&nbsp;
+
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-check-o"></i>
+            </span>
+            <time title="Post modified" itemprop="dateModified" datetime="2016-11-13T18:02:51+08:00">
+              2016-11-13
+            </time>
+            
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index">
+                    <span itemprop="name">storage</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+          
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="查看SCSI总线上的设备"><a href="#查看SCSI总线上的设备" class="headerlink" title="查看SCSI总线上的设备"></a>查看SCSI总线上的设备</h1><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">lsscsi</div></pre></td></tr></table></figure>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
   <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/05/04/storage/ceph/20160504-jewel-xensvr6-5-integration/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -870,975 +2002,11 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/04/27/storage/ceph/20160427-map-rbd-kernel-without-ceph-common-md/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="博">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.png">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="Bolog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="Bolog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/04/27/storage/ceph/20160427-map-rbd-kernel-without-ceph-common-md/" itemprop="url">
-                  不使用ceph-common 进行内核映射 rbd 块设备
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-04-27T16:04:57+08:00">
-              2016-04-27
-            </time>
-
-            &nbsp;|&nbsp;
-
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-check-o"></i>
-            </span>
-            <time title="Post modified" itemprop="dateModified" datetime="2016-11-13T18:02:51+08:00">
-              2016-11-13
-            </time>
-            
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/storage/" itemprop="url" rel="index">
-                    <span itemprop="name">storage</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-          
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="例子"><a href="#例子" class="headerlink" title="例子"></a>例子</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">modprobe rbd</div><div class="line">echo &quot;192.168.1.234 name=admin,secret=AQAHzRBX77ORERAAqfW0YAqq8+ETXMqWtPKwkQ== rbd testrbd&quot; &gt; /sys/bus/rbd/add</div><div class="line">echo 1 &gt; /sys/bus/rbd/remove</div></pre></td></tr></table></figure>
-<h2 id="解释"><a href="#解释" class="headerlink" title="解释"></a>解释</h2><ul>
-<li>192.168.1.234 为 Monitor 地址</li>
-<li>name，制定使用的用户，可通过“ceph auth list” 查看</li>
-<li>secret，name制定用户所对应的 key 值</li>
-<li>rbd，制定需要映射的块设备（该快设备必须是已经创建好的）</li>
-<li>使用客户端内核必须支持rbd.ko这个内核模块</li>
-<li>1, 设备ID，用于去映射</li>
-</ul>
-<h2 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h2><ul>
-<li><a href="http://cephnotes.ksperis.com/blog/2014/01/09/map-rbd-kernel-without-install-ceph-common" target="_blank" rel="external">Map Rbd Kernel Without Install Ceph-common</a></li>
-</ul>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/04/15/storage/ceph/20160415_ceph-install-deploy-config-on-rhel7-md/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="博">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.png">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="Bolog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="Bolog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/04/15/storage/ceph/20160415_ceph-install-deploy-config-on-rhel7-md/" itemprop="url">
-                  在RHEL7.2平台上搭建ceph集群
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-04-15T09:04:40+08:00">
-              2016-04-15
-            </time>
-
-            &nbsp;|&nbsp;
-
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-check-o"></i>
-            </span>
-            <time title="Post modified" itemprop="dateModified" datetime="2016-11-13T18:02:51+08:00">
-              2016-11-13
-            </time>
-            
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/storage/" itemprop="url" rel="index">
-                    <span itemprop="name">storage</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-          
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>ceph 分布式统一存储</p>
-<h2 id="ceph-架构"><a href="#ceph-架构" class="headerlink" title="ceph 架构"></a>ceph 架构</h2><h2 id="版本"><a href="#版本" class="headerlink" title="版本"></a>版本</h2><ul>
-<li>OS版本，RHEL 7.2 </li>
-<li>Ceph版本，Infernalis</li>
-</ul>
-<h1 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h1><ul>
-<li>使用本地rpm包安装ceph及ceph依赖的软件包<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">yum localinstall *.rpm</div></pre></td></tr></table></figure>
-</li>
-</ul>
-<h1 id="部署"><a href="#部署" class="headerlink" title="部署"></a>部署</h1><h2 id="方案"><a href="#方案" class="headerlink" title="方案"></a>方案</h2><h3 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"></div><div class="line"></div><div class="line">              +------------------------------------------------+</div><div class="line">              |                 Client Requests                |</div><div class="line">              +------------------------------------------------+</div><div class="line">                      /\                             /\</div><div class="line">           Admin Ops /||\                           /||\</div><div class="line">                      ||                             ||</div><div class="line">           ClusterMap ||                             ||  Data I/O</div><div class="line">                     \||/                           \||/</div><div class="line">                      \/                             \/</div><div class="line">+-----+       +----------------+            +------------------+</div><div class="line">|     |------&gt;|  MON (Active)  | &lt;-------&gt;  |                  |</div><div class="line">|     |       +----------------+            |                  |</div><div class="line">|     |                                     |                  |</div><div class="line">|     |       +----------------+            |                  |</div><div class="line">| NTP |------&gt;|  MON (Standby) | &lt;-------&gt;  |       OSDs       |</div><div class="line">|     |       +----------------+            |                  |</div><div class="line">|     |              .                      |                  |</div><div class="line">|     |              .                      |                  |</div><div class="line">|     |              .                      |                  |</div><div class="line">|     |       +----------------+            |                  |</div><div class="line">|     |------&gt;|  MON (Standby) | &lt;-------&gt;  |                  |</div><div class="line">+-----+       +----------------+            +------------------+</div></pre></td></tr></table></figure>
-<p>ceph集群包括两类节点，mon节点、OSD节点</p>
-<h3 id="MON节点"><a href="#MON节点" class="headerlink" title="MON节点"></a>MON节点</h3><ul>
-<li>MON节点与OSD节点比例为1/4</li>
-<li>MON节点分布在存储压力较小的主机中</li>
-<li>两两节点不能分布在一台主机中</li>
-<li>MON节点使用万兆网络</li>
-<li>MON节点通过NTP同步时钟(详细请见<a href="#参考">参考6</a>)</li>
-</ul>
-<h3 id="OSD节点"><a href="#OSD节点" class="headerlink" title="OSD节点"></a>OSD节点</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"></div><div class="line"></div><div class="line">+------+  +-------------+        +-----------+          +-------+        +------------+</div><div class="line">|      |  |             |------&gt; |    Data   | ------&gt;  |  XFS  | ----&gt;  | SAS Device |</div><div class="line">|      |  |             |        +-----------+          +-------+        +------------+</div><div class="line">|      |  |             |</div><div class="line">|      |  | OSD1 Daemon |</div><div class="line">| One  |  |             |        +-----------+          +-------+        +------------+</div><div class="line">|      |  |             |------&gt; |  Journal  | -----+   |       |        |            |</div><div class="line">|      |  +-------------+        +-----------+      |   |       |        |            |</div><div class="line">| host |                                            +-&gt; |       |        |            |</div><div class="line">|      |                                            |   |  XFS  | ----&gt;  | SSD Device |</div><div class="line">|      |  +-------------+        +-----------+      |   |       |        |            |</div><div class="line">|      |  |             |------&gt; |  Journal  | -----+   |       |        |            |</div><div class="line">|      |  |             |        +-----------+          +-------+        +------------+</div><div class="line">|      |  |             |</div><div class="line">|      |  | OSDn Daemon |</div><div class="line">|      |  |             |        +-----------+          +-------+        +------------+</div><div class="line">|      |  |             |------&gt; |    Data   | ------&gt;  |  XFS  | ----&gt;  | SAS Device |</div><div class="line">+------+  +-------------+        +-----------+          +-------+        +------------+</div></pre></td></tr></table></figure>
-<ul>
-<li>一个硬盘对应一个OSD Daemon</li>
-<li>OSD节点使用万兆网络</li>
-<li>数据与日志分开，日志存放在SSD硬盘中<br>数据写入先写入日志，再回写入数据，提高日志写入性能，可以提高性能<br>详细请见：<code>http://docs.ceph.com/docs/jewel/rados/configuration/osd-config-ref/</code></li>
-<li>OSD使用XFS文件系统<br>生产环境使用XFS文件系统用于存储数据和日志<br>详细请见：<code>http://docs.ceph.com/docs/jewel/rados/configuration/filesystem-recommendations/</code></li>
-</ul>
-<h3 id="网络"><a href="#网络" class="headerlink" title="网络"></a>网络</h3><ul>
-<li>public Network<br>采用万兆网，主要负责处理用户I/O请求</li>
-<li>Cluster Network<br>采用万兆网络， 主要负责拷贝数据副本和传递心跳信息</li>
-</ul>
-<p>详细请见：<code>http://docs.ceph.com/docs/jewel/rados/configuration/network-config-ref/</code></p>
-<h2 id="方法"><a href="#方法" class="headerlink" title="方法"></a>方法</h2><h3 id="环境准备"><a href="#环境准备" class="headerlink" title="环境准备"></a>环境准备</h3><h4 id="创建并使用ceph用户"><a href="#创建并使用ceph用户" class="headerlink" title="创建并使用ceph用户"></a>创建并使用ceph用户</h4><ul>
-<li><p>创建ceph专属用户——ceph</p>
-  <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">useradd -Um -d /home/ceph ceph</div><div class="line">passwd ceph</div><div class="line">echo &quot;ceph  ALL=(ALL)   ALL&quot; &gt;&gt; /etc/sudoers</div><div class="line">su - ceph</div></pre></td></tr></table></figure>
-<ol>
-<li>创建ceph用户和ceph用户目录</li>
-<li>修改ceph用户密码</li>
-<li>修改ceph用户sudoer列表</li>
-<li>切换ceph用户</li>
-</ol>
-</li>
-<li>使用ceph用户配置环境<ol>
-<li>修改主机名称</li>
-<li>修改hosts文件，对应ip地址与主机名</li>
-<li>本地安装ceph rpm包<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo yum localinstall *.rpm</div></pre></td></tr></table></figure>
-</li>
-</ol>
-</li>
-</ul>
-<h4 id="SSH无密码访问"><a href="#SSH无密码访问" class="headerlink" title="SSH无密码访问"></a>SSH无密码访问</h4><ul>
-<li>各个物理节点之间，建立SSH无密码访问</li>
-</ul>
-<h4 id="集群搭建"><a href="#集群搭建" class="headerlink" title="集群搭建"></a>集群搭建</h4><h5 id="MON节点搭建步骤"><a href="#MON节点搭建步骤" class="headerlink" title="MON节点搭建步骤"></a>MON节点搭建步骤</h5><ol>
-<li>fsid生成</li>
-<li>修改ceph.conf中的MON信息</li>
-<li>创建并倒入admin keyring</li>
-<li>创建MON数据目录</li>
-<li>初始化MON节点</li>
-<li>启动MON服务</li>
-</ol>
-<h5 id="OSD节点搭建步骤"><a href="#OSD节点搭建步骤" class="headerlink" title="OSD节点搭建步骤"></a>OSD节点搭建步骤</h5><ol>
-<li>在集群中创建OSD</li>
-<li>创建OSD数据目录</li>
-<li>格式化硬盘文件系统为XFS</li>
-<li>挂载硬盘到数据目录</li>
-<li>初始化OSD节点</li>
-<li>创建OSD访问需要的keyring</li>
-<li>在Crushmap中添加OSD节点</li>
-<li>修改ceph.conf中的OSD息</li>
-<li>启动OSD服务</li>
-</ol>
-<p>详细请见：<a href="http://docs.ceph.com/docs/jewel/install/manual-deployment/" target="_blank" rel="external">http://docs.ceph.com/docs/jewel/install/manual-deployment/</a></p>
-<p><strong>注意：</strong></p>
-<ul>
-<li>按官网配置方式配置ceph集群（确保“/var/lib/ceph/”目录下的owner为ceph用户）</li>
-<li>如果集群名称不是默认名称（默认名称为：ceph），需要修改/etc/sysconfig/ceph，增加 CLUSTER=”新集群名称”(详细请见，参考5)</li>
-<li>根据集群情况结合本机需要启动的服务，在“/etc/sysconfig/ceph”中增加 MON_ID=”MON的ID” 或 OSD_ID=”OSD的ID”(详细请见，参考5)</li>
-<li>修改/etc/fstab，增加需要挂载的磁盘信息</li>
-<li>修改systemd中ceph服务为enable，保证开机启动<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">systemctl enable ceph-mon@&#123;MON ID&#125;</div><div class="line">systemctl enable ceph-osd@&#123;OSD ID&#125;</div><div class="line">systemctl enable ceph-mon.target</div><div class="line">systemctl enable ceph-osd.target</div></pre></td></tr></table></figure>
-</li>
-</ul>
-<p>大括号中的内容需要根据实际情况填写。</p>
-<h2 id="至此基本ceph集群已搭建完成"><a href="#至此基本ceph集群已搭建完成" class="headerlink" title="至此基本ceph集群已搭建完成"></a>至此基本ceph集群已搭建完成</h2><p>一个华丽的分割之后开始漫长的优化之路</p>
-<h1 id="优化"><a href="#优化" class="headerlink" title="优化"></a>优化</h1><p>详细请见：<br><a href="http://zhoubofsy.github.io/2016/06/02/20160602-osd-node-optimize/" target="_blank" rel="external">《OSD节点优化》</a>、<a href="http://zhoubofsy.github.io/2016/06/06/20160606-osd-config-optimize/" target="_blank" rel="external">《Ceph集群OSD节点配置优化》</a></p>
-<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><ol>
-<li><a href="https://www.ustack.com/blog/build-block-storage-service/" target="_blank" rel="external">打造高性能高可靠块存储系统</a></li>
-<li><a href="http://stackoverflow.com/questions/32397704/cant-start-ceph-service" target="_blank" rel="external">Can’t start ceph service</a></li>
-<li><a href="http://www.jb51.net/article/45848.htm" target="_blank" rel="external">linux命令详解之useradd命令使用方法</a></li>
-<li><a href="http://serverfault.com/questions/681632/systemd-how-do-i-view-journals-with-journalctl-without-switching-to-root-on-cen" target="_blank" rel="external">systemd:how do I view journals with journalctl without switching to root on CentOS7?</a></li>
-<li><a href="http://permalink.gmane.org/gmane.comp.file-systems.ceph.devel/19988" target="_blank" rel="external">Mail Re:Ceph on Fedora</a></li>
-<li><a href="http://tecadmin.net/setup-ntp-server-on-centos-redhat/#" target="_blank" rel="external">How to Setup NTP Server on CentOS/RHEL 7/6/5 and Fedora 21/20/19</a></li>
-</ol>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/04/14/git/git-usage-config-md/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="博">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.png">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="Bolog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="Bolog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/04/14/git/git-usage-config-md/" itemprop="url">
-                  git使用配置
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-04-14T11:28:09+08:00">
-              2016-04-14
-            </time>
-
-            &nbsp;|&nbsp;
-
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-check-o"></i>
-            </span>
-            <time title="Post modified" itemprop="dateModified" datetime="2016-11-13T18:02:51+08:00">
-              2016-11-13
-            </time>
-            
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/git/" itemprop="url" rel="index">
-                    <span itemprop="name">git</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-          
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="git配置"><a href="#git配置" class="headerlink" title="git配置"></a>git配置</h2><p>配置文件 ”~/.gitconfig“</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">[user]</div><div class="line">    email = zhoubofsy@hotmail.com</div><div class="line">    name = zhoubofsy</div><div class="line">[alias]</div><div class="line">    lg = log --color --graph --pretty=format:&apos;%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)&lt;%an&gt;%Creset&apos; --abbrev-commit</div><div class="line">[http]</div><div class="line">    proxy = http://127.0.0.1:8087</div><div class="line">    sslverify = false</div><div class="line">[https]</div><div class="line">    proxy = http://127.0.0.1:8087</div></pre></td></tr></table></figure>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/04/14/network/linux-http-proxy-md/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="博">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.png">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="Bolog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="Bolog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/04/14/network/linux-http-proxy-md/" itemprop="url">
-                  linux 配置 http 全局代理
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-04-14T11:21:25+08:00">
-              2016-04-14
-            </time>
-
-            &nbsp;|&nbsp;
-
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-check-o"></i>
-            </span>
-            <time title="Post modified" itemprop="dateModified" datetime="2016-11-13T18:02:51+08:00">
-              2016-11-13
-            </time>
-            
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/network/" itemprop="url" rel="index">
-                    <span itemprop="name">network</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-          
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>使用”XX-Net-2.9.2“做代理服务端（XX-Net-2.9.2在github上可以找到）</p>
-<h2 id="Linux系统配置"><a href="#Linux系统配置" class="headerlink" title="Linux系统配置"></a>Linux系统配置</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">export http_proxy=http://127.0.0.1:8087</div><div class="line">export https_proxy=$http_proxy</div><div class="line">export ftp_proxy=$http_proxy</div><div class="line">export rsync_proxy=$http_proxy</div></pre></td></tr></table></figure>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/04/14/linux/tmux-config-md/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="博">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.png">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="Bolog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="Bolog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/04/14/linux/tmux-config-md/" itemprop="url">
-                  tmux 配置
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-04-14T11:05:29+08:00">
-              2016-04-14
-            </time>
-
-            &nbsp;|&nbsp;
-
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-check-o"></i>
-            </span>
-            <time title="Post modified" itemprop="dateModified" datetime="2016-11-13T18:02:51+08:00">
-              2016-11-13
-            </time>
-            
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/linux/" itemprop="url" rel="index">
-                    <span itemprop="name">linux</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-          
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="tmux-配置如下-tmux-conf-："><a href="#tmux-配置如下-tmux-conf-：" class="headerlink" title="tmux 配置如下(~/.tmux.conf)："></a>tmux 配置如下(~/.tmux.conf)：</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line"># 状态栏</div><div class="line"></div><div class="line"># 颜色</div><div class="line">set -g status-bg black</div><div class="line">set -g status-fg white</div><div class="line"></div><div class="line"># 对齐</div><div class="line">set-option -g status-justify centre</div><div class="line"></div><div class="line"># 左下角</div><div class="line">set-option -g status-left &apos;#[bg=black,fg=green][#[fg=cyan]#S#[fg=green]]&apos;</div><div class="line">set-option -g status-left-length 20</div><div class="line"></div><div class="line"># 窗口列表</div><div class="line">set -g automatic-rename on</div><div class="line">set-window-option -g window-status-format &apos;#[dim]#I:#[default]#W#[fg=grey,dim]&apos;</div><div class="line">set-window-option -g window-status-current-format &apos;#[fg=cyan,bold]#I:#W#[fg=blue]&apos;</div><div class="line"></div><div class="line"># 右下角</div><div class="line">set -g status-right &apos;#[fg=green][#[fg=cyan]%Y-%m-%d#[fg=green]]&apos;</div><div class="line"></div><div class="line"># 复制模式</div><div class="line">set-window-option -g utf8 on</div><div class="line">set-window-option -g mode-keys vi</div></pre></td></tr></table></figure>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/04/13/linux/rhel/ceph-pkgs-download-on-rhel7-2-mk/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="博">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.png">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="Bolog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="Bolog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/04/13/linux/rhel/ceph-pkgs-download-on-rhel7-2-mk/" itemprop="url">
-                  在RHEL7.2上下载Ceph离线安装包
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-04-13T17:20:50+08:00">
-              2016-04-13
-            </time>
-
-            &nbsp;|&nbsp;
-
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-check-o"></i>
-            </span>
-            <time title="Post modified" itemprop="dateModified" datetime="2016-11-13T18:02:51+08:00">
-              2016-11-13
-            </time>
-            
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/rhel/" itemprop="url" rel="index">
-                    <span itemprop="name">rhel</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-          
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="Client-PKGs"><a href="#Client-PKGs" class="headerlink" title="Client PKGs"></a>Client PKGs</h2><p>RHEL从7.1版本（包含7.1）将libceph.ko、ceph.ko、rbd.ko纳入到kernel中，所以如果选择7.1之前的版本需要自己编译相关ko文件</p>
-<h2 id="Cluster-PKGs"><a href="#Cluster-PKGs" class="headerlink" title="Cluster PKGs"></a>Cluster PKGs</h2><p><strong>步骤：</strong></p>
-<h4 id="更换yum"><a href="#更换yum" class="headerlink" title="更换yum"></a>更换yum</h4><ol>
-<li><p>卸载RHEL yum包</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">rpm -qa | grep yum | xargs -e --nodeps</div><div class="line">rpm -qa | grep python-iniparse | xargs -e --nodeps</div></pre></td></tr></table></figure>
-</li>
-<li><p>安装CentOS yum包<br><em>下载yum包</em></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">wget http://mirrors.163.com/centos/7.2.1511/os/x86_64/Packages/yum-3.4.3-132.el7.centos.0.1.noarch.rpm</div><div class="line">wget http://mirrors.163.com/centos/7.2.1511/os/x86_64/Packages/python-iniparse-0.4-9.el7.noarch.rpm   </div><div class="line">wget http://mirrors.163.com/centos/7.2.1511/os/x86_64/Packages/yum-metadata-parser-1.1.4-10.el7.x86_64.rpm </div><div class="line">wget http://mirrors.163.com/centos/7.2.1511/os/x86_64/Packages/yum-plugin-fastestmirror-1.1.31-34.el7.noarch.rpm</div></pre></td></tr></table></figure>
-</li>
-</ol>
-<p><em>安装yum包</em><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">rpm -ivh *.rpm</div></pre></td></tr></table></figure></p>
-<h4 id="修改repo"><a href="#修改repo" class="headerlink" title="修改repo"></a>修改repo</h4><p>在“/etc/yum.repo.d/”目录下，增加文件rhel7.repo，内容如下。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line">[base]</div><div class="line">name=CentOS-$releasever - Base</div><div class="line">baseurl=http://mirrors.163.com/centos/7.2.1511/os/$basearch/</div><div class="line">gpgcheck=1</div><div class="line">gpgkey=http://mirrors.163.com/centos/7.2.1511/os/x86_64/RPM-GPG-KEY-CentOS-7</div><div class="line"></div><div class="line">#released updates</div><div class="line">[updates]</div><div class="line">name=CentOS-$releasever - Updates</div><div class="line">baseurl=http://mirrors.163.com/centos/7.2.1511/updates/$basearch/</div><div class="line">gpgcheck=1</div><div class="line">gpgkey=http://mirrors.163.com/centos/7.2.1511/os/x86_64/RPM-GPG-KEY-CentOS-7</div><div class="line"></div><div class="line">[extras]</div><div class="line">name=CentOS-$releasever - Extras</div><div class="line">baseurl=http://mirrors.163.com/centos/7.2.1511/extras//$basearch/</div><div class="line">gpgcheck=1</div><div class="line">gpgkey=http://mirrors.163.com/centos/7.2.1511/os/x86_64/RPM-GPG-KEY-CentOS-7</div><div class="line"></div><div class="line">[centosplus]</div><div class="line">name=CentOS-$releasever - Plus</div><div class="line">baseurl=http://mirrors.163.com/centos/7.2.1511/centosplus//$basearch/</div><div class="line">gpgcheck=1</div><div class="line">enabled=0k</div></pre></td></tr></table></figure></p>
-<p>在“/etc/yum.repo.d/”目录下，增加文件ceph.repo，内容如下。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div></pre></td><td class="code"><pre><div class="line">[ceph]</div><div class="line">name=Ceph packages for $basearch</div><div class="line">baseurl=http://ceph.com/rpm-infernalis/el7/$basearch</div><div class="line">enabled=1</div><div class="line">priority=2</div><div class="line">gpgcheck=1</div><div class="line">type=rpm-md</div><div class="line">gpgkey=https://ceph.com/git/?p=ceph.git;a=blob_plain;f=keys/release.asc</div><div class="line"></div><div class="line">[ceph-noarch]</div><div class="line">name=Ceph noarch packages</div><div class="line">baseurl=http://ceph.com/rpm-infernalis/el7/noarch</div><div class="line">enabled=1</div><div class="line">priority=2</div><div class="line">gpgcheck=1</div><div class="line">type=rpm-md</div><div class="line">gpgkey=https://ceph.com/git/?p=ceph.git;a=blob_plain;f=keys/release.asc</div><div class="line"></div><div class="line">[ceph-source]</div><div class="line">name=Ceph source packages</div><div class="line">baseurl=http://ceph.com/rpm-infernalis/el7/SRPMS</div><div class="line">enabled=0</div><div class="line">priority=2</div><div class="line">gpgcheck=1</div><div class="line">type=rpm-md</div><div class="line">gpgkey=https://ceph.com/git/?p=ceph.git;a=blob_plain;f=keys/release.asc</div></pre></td></tr></table></figure></p>
-<h4 id="使用downloadonly下载安装包"><a href="#使用downloadonly下载安装包" class="headerlink" title="使用downloadonly下载安装包"></a>使用downloadonly下载安装包</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">yum install --downloadonly ceph-common --downloaddir=./</div><div class="line">yum install --downloadonly ceph --downloaddir=./</div><div class="line">yum install --downloadonly snappy leveldb gdisk python-argparse gperftools-libs --downloaddir=./</div></pre></td></tr></table></figure>
-<p>详细见<a href="http://zhoubofsy.github.io/2016/04/13/yum-rpm-usage-md/" target="_blank" rel="external">《yum和rpm使用方法》</a></p>
-<h4 id="安装已下载的rpm包"><a href="#安装已下载的rpm包" class="headerlink" title="安装已下载的rpm包"></a>安装已下载的rpm包</h4><p>进入rpm包所在目录<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">yum localinstall *.rpm</div></pre></td></tr></table></figure></p>
-<h2 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h2><hr>
-<ul>
-<li><a href="http://blog.csdn.net/wylfengyujiancheng/article/details/50418930" target="_blank" rel="external">redhat7.2配置yum源</a></li>
-<li><a href="https://github.com/ceph/ceph-kmod-rpm" target="_blank" rel="external">README</a></li>
-<li><a href="http://docs.ceph.com/docs/infernalis/install/install-storage-cluster/" target="_blank" rel="external">Install Ceph Storage Cluster</a></li>
-</ul>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><a class="extend next" rel="next" href="/page/3/"><i class="fa fa-angle-right"></i></a>
+    <a class="extend prev" rel="prev" href="/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><a class="page-number" href="/page/4/">4</a><a class="extend next" rel="next" href="/page/3/"><i class="fa fa-angle-right"></i></a>
   </nav>
 
 
@@ -1879,7 +2047,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">27</span>
+              <span class="site-state-item-count">33</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -1887,7 +2055,7 @@
           
             <div class="site-state-item site-state-categories">
               <a href="/categories">
-                <span class="site-state-item-count">12</span>
+                <span class="site-state-item-count">13</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -1896,7 +2064,7 @@
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">28</span>
+                <span class="site-state-item-count">32</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
