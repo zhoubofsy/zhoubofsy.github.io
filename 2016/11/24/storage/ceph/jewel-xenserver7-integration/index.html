@@ -90,11 +90,9 @@ Ceph Jewel
 RBDSR
 
 集成原理
-安装配置步骤依赖库安装snappy leveldb gdisk gperftools-libs fuse fuse-libs安装rpm列表：
+应用层客户端i/o通过XenServer将i/o传递给fuse或nbd内核模块，nbd通过文件socket，将i/o请求传递给rbd-nbd。rbd-nbd通过ceph-common(包括librbd和librados)将读写请求发送给Ceph集群。（fuse内部通信方式及协议目前不清楚，待后续调研清楚再更新）
 
-snappy-1.1.0-3.el7.x86_64.rpm
-leveldb-1.12.0-11.el7.x86_64.rpm
-gdisk-0.8.6-5.el7.x86_64.rpm">
+关于rbd">
 <meta property="og:type" content="article">
 <meta property="og:title" content="ceph(J版)与XenServer7集成">
 <meta property="og:url" content="http://yoursite.com/2016/11/24/storage/ceph/jewel-xenserver7-integration/index.html">
@@ -105,13 +103,11 @@ Ceph Jewel
 RBDSR
 
 集成原理
-安装配置步骤依赖库安装snappy leveldb gdisk gperftools-libs fuse fuse-libs安装rpm列表：
+应用层客户端i/o通过XenServer将i/o传递给fuse或nbd内核模块，nbd通过文件socket，将i/o请求传递给rbd-nbd。rbd-nbd通过ceph-common(包括librbd和librados)将读写请求发送给Ceph集群。（fuse内部通信方式及协议目前不清楚，待后续调研清楚再更新）
 
-snappy-1.1.0-3.el7.x86_64.rpm
-leveldb-1.12.0-11.el7.x86_64.rpm
-gdisk-0.8.6-5.el7.x86_64.rpm">
+关于rbd">
 <meta property="og:image" content="http://yoursite.com/images/ceph/rbdsr-xenserver7-integration.png">
-<meta property="og:updated_time" content="2016-11-24T08:26:01.000Z">
+<meta property="og:updated_time" content="2016-11-24T08:36:34.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="ceph(J版)与XenServer7集成">
 <meta name="twitter:description" content="背景
@@ -120,11 +116,9 @@ Ceph Jewel
 RBDSR
 
 集成原理
-安装配置步骤依赖库安装snappy leveldb gdisk gperftools-libs fuse fuse-libs安装rpm列表：
+应用层客户端i/o通过XenServer将i/o传递给fuse或nbd内核模块，nbd通过文件socket，将i/o请求传递给rbd-nbd。rbd-nbd通过ceph-common(包括librbd和librados)将读写请求发送给Ceph集群。（fuse内部通信方式及协议目前不清楚，待后续调研清楚再更新）
 
-snappy-1.1.0-3.el7.x86_64.rpm
-leveldb-1.12.0-11.el7.x86_64.rpm
-gdisk-0.8.6-5.el7.x86_64.rpm">
+关于rbd">
 <meta name="twitter:image" content="http://yoursite.com/images/ceph/rbdsr-xenserver7-integration.png">
 
 
@@ -335,7 +329,7 @@ gdisk-0.8.6-5.el7.x86_64.rpm">
             <span class="post-meta-item-icon">
               <i class="fa fa-calendar-check-o"></i>
             </span>
-            <time title="Post modified" itemprop="dateModified" datetime="2016-11-24T16:26:01+08:00">
+            <time title="Post modified" itemprop="dateModified" datetime="2016-11-24T16:36:34+08:00">
               2016-11-24
             </time>
             
@@ -392,6 +386,10 @@ gdisk-0.8.6-5.el7.x86_64.rpm">
 <li><a href="https://github.com/zhoubofsy/RBDSR-1" target="_blank" rel="external">RBDSR</a></li>
 </ul>
 <h1 id="集成原理"><a href="#集成原理" class="headerlink" title="集成原理"></a>集成原理</h1><p><img src="/images/ceph/rbdsr-xenserver7-integration.png" alt="rbdsr-xenserver7-integration"></p>
+<p>应用层客户端i/o通过XenServer将i/o传递给fuse或nbd内核模块，nbd通过文件socket，将i/o请求传递给rbd-nbd。rbd-nbd通过ceph-common(包括librbd和librados)将读写请求发送给Ceph集群。（fuse内部通信方式及协议目前不清楚，待后续调研清楚再更新）</p>
+<ul>
+<li><a href="http://localhost:4000/2016/11/17/storage/ceph/rbd-nbd/" target="_blank" rel="external">关于rbd-nbd原理分析</a></li>
+</ul>
 <h1 id="安装配置步骤"><a href="#安装配置步骤" class="headerlink" title="安装配置步骤"></a>安装配置步骤</h1><h2 id="依赖库安装"><a href="#依赖库安装" class="headerlink" title="依赖库安装"></a>依赖库安装</h2><h3 id="snappy-leveldb-gdisk-gperftools-libs-fuse-fuse-libs安装"><a href="#snappy-leveldb-gdisk-gperftools-libs-fuse-fuse-libs安装" class="headerlink" title="snappy leveldb gdisk gperftools-libs fuse fuse-libs安装"></a>snappy leveldb gdisk gperftools-libs fuse fuse-libs安装</h3><p>rpm列表：</p>
 <ul>
 <li>snappy-1.1.0-3.el7.x86_64.rpm</li>
