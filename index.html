@@ -470,7 +470,7 @@
             <span class="post-meta-item-icon">
               <i class="fa fa-calendar-check-o"></i>
             </span>
-            <time title="Post modified" itemprop="dateModified" datetime="2016-11-30T14:37:58+08:00">
+            <time title="Post modified" itemprop="dateModified" datetime="2016-11-30T14:55:16+08:00">
               2016-11-30
             </time>
             
@@ -590,8 +590,8 @@
 <li><code>name-label</code>，可根据需要随意填写</li>
 <li><code>uuid</code>，为创建ceph存储池时使用的uuid</li>
 </ul>
-<h3 id="3-获取host-uuid"><a href="#3-获取host-uuid" class="headerlink" title="3. 获取host uuid"></a>3. 获取host uuid</h3><p>host uuid需要获取master节点的host uuid。<br>eg：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"># xe pool-list</div><div class="line">uuid ( RO)                : d4f52448-64e1-2bcc-320d-6426255dc99c</div><div class="line">          name-label ( RW): xenserver7</div><div class="line">    name-description ( RW):</div><div class="line">              master ( RO): 11e7e849-fd19-470e-9cb8-0c6c6781531f</div><div class="line">          default-SR ( RW): &lt;not in database&gt;</div></pre></td></tr></table></figure></p>
-<p><code>master ( RO):</code>表示的是master节点的host uuid</p>
+<h3 id="3-获取host-uuid"><a href="#3-获取host-uuid" class="headerlink" title="3. 获取host uuid"></a>3. 获取host uuid</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"># xe host-list</div><div class="line">uuid ( RO)                : 267cb56e-983f-48fb-a50a-7bcb7bbbee85</div><div class="line">          name-label ( RW): xenserver-88</div><div class="line">              name-description ( RW): Default install</div><div class="line"></div><div class="line"></div><div class="line">uuid ( RO)                : 11e7e849-fd19-470e-9cb8-0c6c6781531f</div><div class="line">          name-label ( RW): xenserver90</div><div class="line">              name-description ( RW): Default install</div></pre></td></tr></table></figure>
+<p>取本机的<code>uuid</code>做为host uuid</p>
 <h3 id="4-创建PBD"><a href="#4-创建PBD" class="headerlink" title="4. 创建PBD"></a>4. 创建PBD</h3><p>使用<code>xe pbd-create</code>创建PBD，默认创建方式为rbd-nbd方式，若想以rbd-fuse方式创建PBD，需要在<code>rbd-mode</code>参数中指定fuse。创建成功则返回PBD uuid<br>rbd-nbd eg：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"># xe pbd-create sr-uuid=ffc44a2c-7de2-49e7-a621-8ecabdb357f4 host-uuid=11e7e849-fd19-470e-9cb8-0c6c6781531f</div><div class="line">c51c8000-ad5f-190e-5a6c-dc12cc8f8733</div></pre></td></tr></table></figure></p>
 <p>rbd-fuse eg：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"># xe pbd-create sr-uuid=ffc44a2c-7de2-49e7-a621-8ecabdb357f4 host-uuid=11e7e849-fd19-470e-9cb8-0c6c6781531f device-config:rbd-mode=fuse</div><div class="line">c51c8000-ad5f-190e-5a6c-dc12cc8f8733</div></pre></td></tr></table></figure></p>
 <h3 id="5-挂载PBD"><a href="#5-挂载PBD" class="headerlink" title="5. 挂载PBD"></a>5. 挂载PBD</h3><p>使用<code>xe pbd-plug</code>挂载PBD，需要指定PBD uuid。<br>eg：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"># xe pbd-plug uuid=c51c8000-ad5f-190e-5a6c-dc12cc8f8733</div></pre></td></tr></table></figure></p>
@@ -1097,6 +1097,157 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/11/15/vim/vi-bin-text-change/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="博">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.png">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="Bolog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="Bolog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2016/11/15/vim/vi-bin-text-change/" itemprop="url">
+                  vi(m)进制转换
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-11-15T00:00:00+08:00">
+              2016-11-15
+            </time>
+
+            &nbsp;|&nbsp;
+
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-check-o"></i>
+            </span>
+            <time title="Post modified" itemprop="dateModified" datetime="2016-11-15T16:23:03+08:00">
+              2016-11-15
+            </time>
+            
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/vim/" itemprop="url" rel="index">
+                    <span itemprop="name">vim</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+          
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="vi命令"><a href="#vi命令" class="headerlink" title="vi命令"></a>vi命令</h1><p>使用“xxd”或“od”工具转换十六进制<br>方法如下：</p>
+<ul>
+<li><code>:%!xxd</code>将当前文本转换为16进制格式</li>
+<li><code>:%!xxd -c 12</code>将当前文本转换为16进制格式,并每行显示12个字节</li>
+<li><p><code>:%!xxd -r</code>将当前文件转换回文本格式</p>
+</li>
+<li><h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1></li>
+<li><ol>
+<li><a href="http://lwg2001s.iteye.com/blog/2035826" target="_blank" rel="external">vi下以16进制查看二进制文件</a></li>
+</ol>
+</li>
+</ul>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
   <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/11/15/mysql/mysql-password-functions/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1249,7 +1400,7 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/11/15/vim/vi-bin-text-change/">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/09/23/uwsgi/uwsgi-config-problem-1/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
     <meta itemprop="name" content="博">
@@ -1274,8 +1425,8 @@
             
               
                 
-                <a class="post-title-link" href="/2016/11/15/vim/vi-bin-text-change/" itemprop="url">
-                  vi(m)进制转换
+                <a class="post-title-link" href="/2016/09/23/uwsgi/uwsgi-config-problem-1/" itemprop="url">
+                  uWSGI中设置“cap = setuid,setpid”导致python脚本权限降低
                 </a>
               
             
@@ -1288,8 +1439,8 @@
               <i class="fa fa-calendar-o"></i>
             </span>
             <span class="post-meta-item-text">发表于</span>
-            <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-11-15T00:00:00+08:00">
-              2016-11-15
+            <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-09-23T00:00:00+08:00">
+              2016-09-23
             </time>
 
             &nbsp;|&nbsp;
@@ -1297,7 +1448,7 @@
             <span class="post-meta-item-icon">
               <i class="fa fa-calendar-check-o"></i>
             </span>
-            <time title="Post modified" itemprop="dateModified" datetime="2016-11-15T16:23:03+08:00">
+            <time title="Post modified" itemprop="dateModified" datetime="2016-11-15T16:48:19+08:00">
               2016-11-15
             </time>
             
@@ -1312,8 +1463,8 @@
               <span class="post-meta-item-text">分类于</span>
               
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/vim/" itemprop="url" rel="index">
-                    <span itemprop="name">vim</span>
+                  <a href="/categories/uwsgi/" itemprop="url" rel="index">
+                    <span itemprop="name">uwsgi</span>
                   </a>
                 </span>
 
@@ -1350,18 +1501,15 @@
       
         
           
-            <h1 id="vi命令"><a href="#vi命令" class="headerlink" title="vi命令"></a>vi命令</h1><p>使用“xxd”或“od”工具转换十六进制<br>方法如下：</p>
-<ul>
-<li><code>:%!xxd</code>将当前文本转换为16进制格式</li>
-<li><code>:%!xxd -c 12</code>将当前文本转换为16进制格式,并每行显示12个字节</li>
-<li><p><code>:%!xxd -r</code>将当前文件转换回文本格式</p>
-</li>
-<li><h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1></li>
-<li><ol>
-<li><a href="http://lwg2001s.iteye.com/blog/2035826" target="_blank" rel="external">vi下以16进制查看二进制文件</a></li>
-</ol>
-</li>
+            <h1 id="问题发现"><a href="#问题发现" class="headerlink" title="问题发现"></a>问题发现</h1><h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><ul>
+<li>uwsgi version： 2.0.13.1</li>
+<li>python version: 2.6.6</li>
+<li>采用 Nginx + uWSGI + Python 架构，均拥有ROOT权限</li>
 </ul>
+<h3 id="现象"><a href="#现象" class="headerlink" title="现象"></a>现象</h3><p>Python执行os.mkdir操作，提示“Permission Denied”</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">Traceback (most recent call last):</div><div class="line">File &quot;/cs/nginx/uwsgi/main.py&quot;, line 24, in application</div><div class="line">result = process().entry(environ, start_response)</div><div class="line">File &quot;/cs/nginx/uwsgi/rds/base_mng.py&quot;, line 90, in entry</div><div class="line">self.process_put_request(env)</div><div class="line">File &quot;/cs/nginx/uwsgi/rds/init_rds.py&quot;, line 149, in process_put_request</div><div class="line">result = self.do_put_request(env)</div><div class="line">File &quot;/cs/nginx/uwsgi/rds/init_rds.py&quot;, line 140, in do_put_request</div><div class="line">err_code = op.do()</div><div class="line">File &quot;/cs/nginx/uwsgi/rds/init_rds.py&quot;, line 70, in do</div><div class="line">if 0 == init_create_mp(mp):</div><div class="line">File &quot;/cs/nginx/uwsgi/rds/init/main.py&quot;, line 44, in init_create_mp</div><div class="line">os.mkdir(mp,0755)</div><div class="line">OSError: [Errno 13] Permission denied: &apos;/aaab&apos;</div></pre></td></tr></table></figure>
+<h1 id="解决"><a href="#解决" class="headerlink" title="解决"></a>解决</h1><p>Python脚本的权限，有uWSGI来决定，所以该错误肯定跟uWSGI有关，通过调整uwsgi.ini文件中的用户和权限相关配置发现，将<code>cap = setuid,setgid</code>去掉，可以正常创建目录。</p>
+<p>但：<strong><em>具体原因不明，可能跟setuid和setgid的使用有关，有可能是个Bug</em></strong></p>
 
           
         
@@ -2544,154 +2692,6 @@
 <li><a href="http://blog.csdn.net/pennyliang/article/details/41678953" target="_blank" rel="external">mmap ENOMEM（errno 12） 错误 </a></li>
 <li><a href="http://www.cnblogs.com/vinozly/p/5489138.html" target="_blank" rel="external">Linux进程分配内存的两种方式–brk() 和mmap()</a></li>
 </ul>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/09/23/uwsgi/uwsgi-config-problem-1/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="博">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.png">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="Bolog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="Bolog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/09/23/uwsgi/uwsgi-config-problem-1/" itemprop="url">
-                  uWSGI中设置“cap = setuid,setpid”导致python脚本权限降低
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-09-23T00:00:00+08:00">
-              2016-09-23
-            </time>
-
-            &nbsp;|&nbsp;
-
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-check-o"></i>
-            </span>
-            <time title="Post modified" itemprop="dateModified" datetime="2016-11-15T16:48:19+08:00">
-              2016-11-15
-            </time>
-            
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/uwsgi/" itemprop="url" rel="index">
-                    <span itemprop="name">uwsgi</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-          
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="问题发现"><a href="#问题发现" class="headerlink" title="问题发现"></a>问题发现</h1><h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><ul>
-<li>uwsgi version： 2.0.13.1</li>
-<li>python version: 2.6.6</li>
-<li>采用 Nginx + uWSGI + Python 架构，均拥有ROOT权限</li>
-</ul>
-<h3 id="现象"><a href="#现象" class="headerlink" title="现象"></a>现象</h3><p>Python执行os.mkdir操作，提示“Permission Denied”</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">Traceback (most recent call last):</div><div class="line">File &quot;/cs/nginx/uwsgi/main.py&quot;, line 24, in application</div><div class="line">result = process().entry(environ, start_response)</div><div class="line">File &quot;/cs/nginx/uwsgi/rds/base_mng.py&quot;, line 90, in entry</div><div class="line">self.process_put_request(env)</div><div class="line">File &quot;/cs/nginx/uwsgi/rds/init_rds.py&quot;, line 149, in process_put_request</div><div class="line">result = self.do_put_request(env)</div><div class="line">File &quot;/cs/nginx/uwsgi/rds/init_rds.py&quot;, line 140, in do_put_request</div><div class="line">err_code = op.do()</div><div class="line">File &quot;/cs/nginx/uwsgi/rds/init_rds.py&quot;, line 70, in do</div><div class="line">if 0 == init_create_mp(mp):</div><div class="line">File &quot;/cs/nginx/uwsgi/rds/init/main.py&quot;, line 44, in init_create_mp</div><div class="line">os.mkdir(mp,0755)</div><div class="line">OSError: [Errno 13] Permission denied: &apos;/aaab&apos;</div></pre></td></tr></table></figure>
-<h1 id="解决"><a href="#解决" class="headerlink" title="解决"></a>解决</h1><p>Python脚本的权限，有uWSGI来决定，所以该错误肯定跟uWSGI有关，通过调整uwsgi.ini文件中的用户和权限相关配置发现，将<code>cap = setuid,setgid</code>去掉，可以正常创建目录。</p>
-<p>但：<strong><em>具体原因不明，可能跟setuid和setgid的使用有关，有可能是个Bug</em></strong></p>
 
           
         
