@@ -256,6 +256,962 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/09/23/mysql/mysql-priv-mng-md/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="博">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.png">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="Bolog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="Bolog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2016/09/23/mysql/mysql-priv-mng-md/" itemprop="url">
+                  MySQL 权限管理
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-09-23T00:00:00+08:00">
+              2016-09-23
+            </time>
+
+            &nbsp;|&nbsp;
+
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-check-o"></i>
+            </span>
+            <time title="Post modified" itemprop="dateModified" datetime="2016-11-15T16:09:46+08:00">
+              2016-11-15
+            </time>
+            
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/mysql/" itemprop="url" rel="index">
+                    <span itemprop="name">mysql</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+          
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><ul>
+<li>OS Version : rhel 6.4</li>
+<li>MySQL Version : 5.6.31</li>
+</ul>
+<h1 id="权限"><a href="#权限" class="headerlink" title="权限"></a>权限</h1><h2 id="权限列表"><a href="#权限列表" class="headerlink" title="权限列表"></a>权限列表</h2><table>
+<thead>
+<tr>
+<th style="text-align:left">Privilege</th>
+<th style="text-align:left">Column</th>
+<th style="text-align:left">Context</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">CREATE</td>
+<td style="text-align:left">Create_priv</td>
+<td style="text-align:left">databases, tables, or indexes</td>
+</tr>
+<tr>
+<td style="text-align:left">DROP</td>
+<td style="text-align:left">Drop_priv</td>
+<td style="text-align:left">database, tables, or views</td>
+</tr>
+<tr>
+<td style="text-align:left">GRANT OPTION</td>
+<td style="text-align:left">Grant_priv</td>
+<td style="text-align:left">database, tables, or stored routines</td>
+</tr>
+<tr>
+<td style="text-align:left">LOCK TABLES</td>
+<td style="text-align:left">lock_tables_priv</td>
+<td style="text-align:left">databases</td>
+</tr>
+<tr>
+<td style="text-align:left">REFERENCES</td>
+<td style="text-align:left">References_priv</td>
+<td style="text-align:left">databases or tables, columns</td>
+</tr>
+<tr>
+<td style="text-align:left">EVENT</td>
+<td style="text-align:left">Event_priv</td>
+<td style="text-align:left">databases</td>
+</tr>
+<tr>
+<td style="text-align:left">ALTER</td>
+<td style="text-align:left">Alter_priv</td>
+<td style="text-align:left">tables</td>
+</tr>
+<tr>
+<td style="text-align:left">DELETE</td>
+<td style="text-align:left">Delete_priv</td>
+<td style="text-align:left">tables</td>
+</tr>
+<tr>
+<td style="text-align:left">INDEX</td>
+<td style="text-align:left">Index_priv</td>
+<td style="text-align:left">tables</td>
+</tr>
+<tr>
+<td style="text-align:left">INSERT</td>
+<td style="text-align:left">Insert_priv</td>
+<td style="text-align:left">tables or columns</td>
+</tr>
+<tr>
+<td style="text-align:left">SELECT</td>
+<td style="text-align:left">Select_priv</td>
+<td style="text-align:left">tables or columns</td>
+</tr>
+<tr>
+<td style="text-align:left">UPDATE</td>
+<td style="text-align:left">Update_priv</td>
+<td style="text-align:left">tables or columns</td>
+</tr>
+<tr>
+<td style="text-align:left">CREATE TEMPORARY TABLES</td>
+<td style="text-align:left">Create_tmp_table_priv</td>
+<td style="text-align:left">tables</td>
+</tr>
+<tr>
+<td style="text-align:left">TRIGGER</td>
+<td style="text-align:left">trigger_priv</td>
+<td style="text-align:left">tables</td>
+</tr>
+<tr>
+<td style="text-align:left">CREATE VIEW</td>
+<td style="text-align:left">Create_view_priv</td>
+<td style="text-align:left">views</td>
+</tr>
+<tr>
+<td style="text-align:left">SHOW VIEW</td>
+<td style="text-align:left">Show_view_priv</td>
+<td style="text-align:left">views</td>
+</tr>
+<tr>
+<td style="text-align:left">ALTER ROUTINE</td>
+<td style="text-align:left">alter_routine_priv</td>
+<td style="text-align:left">stored routines</td>
+</tr>
+<tr>
+<td style="text-align:left">CREATE ROUTINE</td>
+<td style="text-align:left">create_routine_priv</td>
+<td style="text-align:left">stored routines</td>
+</tr>
+<tr>
+<td style="text-align:left">EXECUTE</td>
+<td style="text-align:left">execute_priv</td>
+<td style="text-align:left">stored routines</td>
+</tr>
+<tr>
+<td style="text-align:left">FILE</td>
+<td style="text-align:left">file_priv</td>
+<td style="text-align:left">file access on server host (Global)</td>
+</tr>
+<tr>
+<td style="text-align:left">CREATE TABLESPACE</td>
+<td style="text-align:left">create_tablespace_priv</td>
+<td style="text-align:left">server administration (Global)</td>
+</tr>
+<tr>
+<td style="text-align:left">CREATE USER</td>
+<td style="text-align:left">create_user_priv</td>
+<td style="text-align:left">server administration (Global)</td>
+</tr>
+<tr>
+<td style="text-align:left">PROCESS</td>
+<td style="text-align:left">process_priv</td>
+<td style="text-align:left">server administration (Global)</td>
+</tr>
+<tr>
+<td style="text-align:left">PROXY</td>
+<td style="text-align:left">proxy_priv</td>
+<td style="text-align:left">server administration (user to user)</td>
+</tr>
+<tr>
+<td style="text-align:left">RELOAD</td>
+<td style="text-align:left">reload_priv</td>
+<td style="text-align:left">server administration (Global)</td>
+</tr>
+<tr>
+<td style="text-align:left">REPLICATION CLIENT</td>
+<td style="text-align:left">repl_client_priv</td>
+<td style="text-align:left">server administration (Global)</td>
+</tr>
+<tr>
+<td style="text-align:left">REPLICATION SLAVE</td>
+<td style="text-align:left">repl_slave_priv</td>
+<td style="text-align:left">server administration (Global)</td>
+</tr>
+<tr>
+<td style="text-align:left">SHOW DATABASES</td>
+<td style="text-align:left">show_db_priv</td>
+<td style="text-align:left">server administration (Global)</td>
+</tr>
+<tr>
+<td style="text-align:left">SHUTDOWN</td>
+<td style="text-align:left">shutdown_priv</td>
+<td style="text-align:left">server administration (Global)</td>
+</tr>
+<tr>
+<td style="text-align:left">SUPER</td>
+<td style="text-align:left">super_priv</td>
+<td style="text-align:left">server administration (Global)</td>
+</tr>
+<tr>
+<td style="text-align:left">ALL [PRIVILEGES]</td>
+<td style="text-align:left"></td>
+<td style="text-align:left">server administration</td>
+</tr>
+<tr>
+<td style="text-align:left">USAGE</td>
+<td style="text-align:left"></td>
+<td style="text-align:left">server administration</td>
+</tr>
+</tbody>
+</table>
+<h2 id="按权限的种类分类"><a href="#按权限的种类分类" class="headerlink" title="按权限的种类分类"></a>按权限的种类分类</h2><ul>
+<li>数据访问相关权限</li>
+<li>库表结构相关权限</li>
+<li>服务相关权限</li>
+</ul>
+<h1 id="权限相关表单"><a href="#权限相关表单" class="headerlink" title="权限相关表单"></a>权限相关表单</h1><p>MySQL权限信息存储在“mysql”数据中<br>其中:</p>
+<ul>
+<li>“user”表负责存储用户信息，及用户本身所拥有的权限；</li>
+<li>“db”表负责存储用户与db的权限关系;</li>
+<li>“tables_priv”负责存在用户与table的权限关系;</li>
+<li>“columns_priv”负责存储用户与column的权限关系;</li>
+</ul>
+<h2 id="user表结构"><a href="#user表结构" class="headerlink" title="user表结构"></a>user表结构</h2><table>
+<thead>
+<tr>
+<th style="text-align:left">Field</th>
+<th style="text-align:left">Type</th>
+<th style="text-align:center">Null</th>
+<th style="text-align:center">Key</th>
+<th style="text-align:left">Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">Host</td>
+<td style="text-align:left">char(60)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">User</td>
+<td style="text-align:left">char(16)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">Password</td>
+<td style="text-align:left">char(41)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">Select_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Insert_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Update_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Delete_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Create_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Drop_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Reload_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Shutdown_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Process_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">File_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Grant_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">References_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Index_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Alter_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Show_db_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Super_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Create_tmp_table_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Lock_tables_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Execute_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Repl_slave_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Repl_client_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Create_view_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Show_view_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Create_routine_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Alter_routine_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Create_user_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Event_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Trigger_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Create_tablespace_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">ssl_type</td>
+<td style="text-align:left">enum(‘’,’ANY’,’X509’,’SPECIFIED’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">ssl_cipher</td>
+<td style="text-align:left">blob</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">NULL</td>
+</tr>
+<tr>
+<td style="text-align:left">x509_issuer</td>
+<td style="text-align:left">blob</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">NULL</td>
+</tr>
+<tr>
+<td style="text-align:left">x509_subject</td>
+<td style="text-align:left">blob</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">NULL</td>
+</tr>
+<tr>
+<td style="text-align:left">max_questions</td>
+<td style="text-align:left">int(11) unsigned</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">0</td>
+</tr>
+<tr>
+<td style="text-align:left">max_updates</td>
+<td style="text-align:left">int(11) unsigned</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">0</td>
+</tr>
+<tr>
+<td style="text-align:left">max_connections</td>
+<td style="text-align:left">int(11) unsigned</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">0</td>
+</tr>
+<tr>
+<td style="text-align:left">max_user_connections</td>
+<td style="text-align:left">int(11) unsigned</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">0</td>
+</tr>
+<tr>
+<td style="text-align:left">plugin</td>
+<td style="text-align:left">char(64)</td>
+<td style="text-align:center">YES</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">mysql_native_password</td>
+</tr>
+<tr>
+<td style="text-align:left">authentication_string</td>
+<td style="text-align:left">text</td>
+<td style="text-align:center">YES</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">NULL</td>
+</tr>
+<tr>
+<td style="text-align:left">password_expired</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+</tbody>
+</table>
+<h2 id="db表结构"><a href="#db表结构" class="headerlink" title="db表结构"></a>db表结构</h2><table>
+<thead>
+<tr>
+<th style="text-align:left">Field</th>
+<th style="text-align:left">Type</th>
+<th style="text-align:center">Null</th>
+<th style="text-align:center">Key</th>
+<th style="text-align:left">Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">Host</td>
+<td style="text-align:left">char(60)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">Db</td>
+<td style="text-align:left">char(64)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">User</td>
+<td style="text-align:left">char(16)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">Select_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Insert_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Update_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Delete_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Create_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Drop_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Grant_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">References_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Index_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Alter_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Create_tmp_table_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Lock_tables_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Create_view_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Show_view_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Create_routine_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Alter_routine_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Execute_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Event_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Trigger_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+</tbody>
+</table>
+<h2 id="tables-priv表结构"><a href="#tables-priv表结构" class="headerlink" title="tables_priv表结构"></a>tables_priv表结构</h2><table>
+<thead>
+<tr>
+<th style="text-align:left">Field</th>
+<th style="text-align:left">Type</th>
+<th style="text-align:center">Null</th>
+<th style="text-align:center">Key</th>
+<th style="text-align:left">Default</th>
+<th style="text-align:left">Extra</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">Host</td>
+<td style="text-align:left">char(60)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">Db</td>
+<td style="text-align:left">char(64)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">User</td>
+<td style="text-align:left">char(16)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">Table_name</td>
+<td style="text-align:left">char(64)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">Grantor</td>
+<td style="text-align:left">char(77)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">MUL</td>
+<td style="text-align:left"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">Timestamp</td>
+<td style="text-align:left">timestamp</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">CURRENT_TIMESTAMP</td>
+<td style="text-align:left">on update CURRENT_TIMESTAMP</td>
+</tr>
+<tr>
+<td style="text-align:left">Table_priv</td>
+<td style="text-align:left">set(‘Select’,’Insert’,<br>‘Update’,’Delete’,<br>‘Create’,’Drop’,<br>‘Grant’,’References’,<br>‘Index’,’Alter’,<br>‘Create View’,<br>‘Show view’,’Trigger’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">Column_priv</td>
+<td style="text-align:left">set(‘Select’,’Insert’,<br>‘Update’,’References’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left"></td>
+<td style="text-align:left"><br></td>
+</tr>
+</tbody>
+</table>
+<h2 id="columns-priv表结构"><a href="#columns-priv表结构" class="headerlink" title="columns_priv表结构"></a>columns_priv表结构</h2><table>
+<thead>
+<tr>
+<th style="text-align:left">Field</th>
+<th style="text-align:left">Type</th>
+<th style="text-align:center">Null</th>
+<th style="text-align:center">Key</th>
+<th style="text-align:left">Default</th>
+<th style="text-align:left">Extra</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">Host</td>
+<td style="text-align:left">char(60)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">Db</td>
+<td style="text-align:left">char(64)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">User</td>
+<td style="text-align:left">char(16)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">Table_name</td>
+<td style="text-align:left">char(64)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">Column_name</td>
+<td style="text-align:left">char(64)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">Timestamp</td>
+<td style="text-align:left">timestamp</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">CURRENT_TIMESTAMP</td>
+<td style="text-align:left">on update <br>CURRENT_TIMESTAMP</td>
+</tr>
+<tr>
+<td style="text-align:left">Column_priv</td>
+<td style="text-align:left">set(‘Select’,<br>‘Insert’,<br>‘Update’,<br>‘References’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left"></td>
+<td style="text-align:left"><br></td>
+</tr>
+</tbody>
+</table>
+<h1 id="验证流程"><a href="#验证流程" class="headerlink" title="验证流程"></a>验证流程</h1><p><img src="/images/mysql/mysql_privilege_flow.png" alt="mysql_privilege_flow"></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
   <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/08/10/mysql/20160810-mysql-python-install-on-rhel7-2/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1848,146 +2804,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/05/13/storage/20160513-linux-ssd-check/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="博">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.png">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="Bolog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="Bolog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/05/13/storage/20160513-linux-ssd-check/" itemprop="url">
-                  Linux中查看硬盘类型
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-05-13T10:01:51+08:00">
-              2016-05-13
-            </time>
-
-            &nbsp;|&nbsp;
-
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-check-o"></i>
-            </span>
-            <time title="Post modified" itemprop="dateModified" datetime="2016-11-13T18:02:51+08:00">
-              2016-11-13
-            </time>
-            
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/storage/" itemprop="url" rel="index">
-                    <span itemprop="name">storage</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-          
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="查看SCSI总线上的设备"><a href="#查看SCSI总线上的设备" class="headerlink" title="查看SCSI总线上的设备"></a>查看SCSI总线上的设备</h1><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">lsscsi</div></pre></td></tr></table></figure>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -2033,7 +2849,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">37</span>
+              <span class="site-state-item-count">38</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -2050,7 +2866,7 @@
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">38</span>
+                <span class="site-state-item-count">39</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
