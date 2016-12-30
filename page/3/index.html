@@ -256,6 +256,686 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/06/06/storage/ceph/20160606-osd-config-optimize/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="博">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.png">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="Bolog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="Bolog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2016/06/06/storage/ceph/20160606-osd-config-optimize/" itemprop="url">
+                  Ceph集群OSD节点配置优化
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-06-06T09:51:13+08:00">
+              2016-06-06
+            </time>
+
+            &nbsp;|&nbsp;
+
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-check-o"></i>
+            </span>
+            <time title="Post modified" itemprop="dateModified" datetime="2016-11-13T18:02:51+08:00">
+              2016-11-13
+            </time>
+            
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index">
+                    <span itemprop="name">storage</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+          
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="OSD配置优化"><a href="#OSD配置优化" class="headerlink" title="OSD配置优化"></a>OSD配置优化</h1><h2 id="Filestore"><a href="#Filestore" class="headerlink" title="Filestore"></a>Filestore</h2><table>
+<thead>
+<tr>
+<th>参数名</th>
+<th style="text-align:left">描述</th>
+<th style="text-align:right">默认值</th>
+<th style="text-align:right">推荐值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>filestore max sync interval</td>
+<td style="text-align:left">从日志到数据盘最大同步间隔(秒)</td>
+<td style="text-align:right">5</td>
+<td style="text-align:right">15</td>
+</tr>
+<tr>
+<td>filestore min sync interval</td>
+<td style="text-align:left">从日志到数据盘最小同步间隔(秒)</td>
+<td style="text-align:right">0.1</td>
+<td style="text-align:right">10</td>
+</tr>
+<tr>
+<td>filestore queue max ops</td>
+<td style="text-align:left">最大未完成io数</td>
+<td style="text-align:right">50</td>
+<td style="text-align:right">25000</td>
+</tr>
+<tr>
+<td>filestore queue max bytes</td>
+<td style="text-align:left">最大未完成io字节数(B)</td>
+<td style="text-align:right">100 &lt;&lt; 20</td>
+<td style="text-align:right">10 &lt;&lt; 20</td>
+</tr>
+<tr>
+<td>filestore queue committing max ops</td>
+<td style="text-align:left">数据盘能够commit的操作数</td>
+<td style="text-align:right">500</td>
+<td style="text-align:right">5000</td>
+</tr>
+<tr>
+<td>filestore queue committing max bytes</td>
+<td style="text-align:left">数据盘能够commit的最大字节数（B）</td>
+<td style="text-align:right">100 &lt;&lt; 20</td>
+<td style="text-align:right">1000 &lt;&lt; 20</td>
+</tr>
+<tr>
+<td>filestore op threads</td>
+<td style="text-align:left">并发文件系统操作线程数</td>
+<td style="text-align:right">2</td>
+<td style="text-align:right">32</td>
+</tr>
+<tr>
+<td>filestore fd cache size</td>
+<td style="text-align:left">对象文件句柄缓存大小</td>
+<td style="text-align:right">128</td>
+<td style="text-align:right">8192</td>
+</tr>
+<tr>
+<td>filestore wbthrottle_xfs_bytes_start_flusher</td>
+<td style="text-align:left">xfs文件系统开始执行回刷的脏数据</td>
+<td style="text-align:right">41943040</td>
+<td style="text-align:right">90 &lt;&lt; 20</td>
+</tr>
+<tr>
+<td>filestore wbthrottle_xfs_bytes_hard_limit</td>
+<td style="text-align:left">xfs文件系统允许的最大脏数据</td>
+<td style="text-align:right">419430400</td>
+<td style="text-align:right">500 &lt;&lt; 20</td>
+</tr>
+</tbody>
+</table>
+<h2 id="Journal"><a href="#Journal" class="headerlink" title="Journal"></a>Journal</h2><table>
+<thead>
+<tr>
+<th>参数名</th>
+<th style="text-align:left">描述</th>
+<th style="text-align:right">默认值</th>
+<th style="text-align:right">推荐值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>osd journal size</td>
+<td style="text-align:left">OSD 日志大小（MB）</td>
+<td style="text-align:right">5120</td>
+<td style="text-align:right">20000</td>
+</tr>
+<tr>
+<td>journal max write bytes</td>
+<td style="text-align:left">日志一次异步io的最大字节数（B）</td>
+<td style="text-align:right">10 &lt;&lt; 20</td>
+<td style="text-align:right">1 &lt;&lt; 30</td>
+</tr>
+<tr>
+<td>journal max write entries</td>
+<td style="text-align:left">日志一次异步io的最大记录数</td>
+<td style="text-align:right">100</td>
+<td style="text-align:right">10000</td>
+</tr>
+</tbody>
+</table>
+<h2 id="Recovery"><a href="#Recovery" class="headerlink" title="Recovery"></a>Recovery</h2><p>None</p>
+<h2 id="PG"><a href="#PG" class="headerlink" title="PG"></a>PG</h2><p><code>PGs = (Total_number_of_OSD * 100) / max_replication_count</code><br>如果有15个OSD，副本数为3，根据公式计算PGs为500，最接近512，所以需要设置该pool的<code>pg_num</code>和<code>pgp_num</code>都为512<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">ceph osd pool set &#123;pool name&#125; pg_num 512</div><div class="line">ceph osd pool set &#123;pool name&#125; pgp_num 512</div></pre></td></tr></table></figure></p>
+<h2 id="CRUSH-Map"><a href="#CRUSH-Map" class="headerlink" title="CRUSH Map"></a>CRUSH Map</h2><p>Todo…</p>
+<h2 id="Client"><a href="#Client" class="headerlink" title="Client"></a>Client</h2><table>
+<thead>
+<tr>
+<th>参数名</th>
+<th style="text-align:left">描述</th>
+<th style="text-align:right">默认值</th>
+<th style="text-align:right">推荐值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>objecter inflight ops</td>
+<td style="text-align:left">客户端允许的最大未发送io请求数</td>
+<td style="text-align:right">1024</td>
+<td style="text-align:right">1 &lt;&lt; 20</td>
+</tr>
+<tr>
+<td>objecter inflight op bytes</td>
+<td style="text-align:left">客户端允许的最大未发送脏数据</td>
+<td style="text-align:right">100 &lt;&lt; 20</td>
+<td style="text-align:right">10 &lt;&lt; 30</td>
+</tr>
+</tbody>
+</table>
+<h2 id="Other"><a href="#Other" class="headerlink" title="Other"></a>Other</h2><table>
+<thead>
+<tr>
+<th>参数名</th>
+<th style="text-align:left">描述</th>
+<th style="text-align:right">默认值</th>
+<th style="text-align:right">推荐值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>osd max write size</td>
+<td style="text-align:left">OSD一次可写入的最大值（MB）</td>
+<td style="text-align:right">90</td>
+<td style="text-align:right">512</td>
+</tr>
+<tr>
+<td>osd client message size</td>
+<td style="text-align:left">客户端允许在内存中的最大数据（B）</td>
+<td style="text-align:right">500 &lt;&lt; 20</td>
+<td style="text-align:right">2 &lt;&lt; 30</td>
+</tr>
+<tr>
+<td>osd deep scrub stride</td>
+<td style="text-align:left">在Deep Scrub时允许读取的字节数（B）</td>
+<td style="text-align:right">512 &lt;&lt; 10</td>
+<td style="text-align:right">128 &lt;&lt; 10</td>
+</tr>
+<tr>
+<td>osd op threads</td>
+<td style="text-align:left">OSD进程操作的线程数</td>
+<td style="text-align:right">2</td>
+<td style="text-align:right">8</td>
+</tr>
+<tr>
+<td>osd disk threads</td>
+<td style="text-align:left">OSD恢复和Scrubbing时的线程数</td>
+<td style="text-align:right">1</td>
+<td style="text-align:right">4</td>
+</tr>
+<tr>
+<td>osd map cache size</td>
+<td style="text-align:left">OSD Map 的缓存（MB）</td>
+<td style="text-align:right">200</td>
+<td style="text-align:right">1024</td>
+</tr>
+<tr>
+<td>ms_dispatch_throttle_bytes</td>
+<td style="text-align:left">控制DispatcherQueue队列深度大小</td>
+<td style="text-align:right">100 &lt;&lt; 20</td>
+<td style="text-align:right">1 &lt;&lt; 30</td>
+</tr>
+</tbody>
+</table>
+<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a href="http://xiaoquqi.github.io/blog/2015/06/28/ceph-performance-optimization-summary/" target="_blank" rel="external">Ceph性能优化总结（v.94）</a></li>
+<li><a href="http://m.blog.csdn.net/article/details?id=51320138" target="_blank" rel="external">Ceph性能优化之配置参数调优</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/06/02/storage/ceph/20160602-osd-node-optimize/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="博">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.png">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="Bolog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="Bolog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2016/06/02/storage/ceph/20160602-osd-node-optimize/" itemprop="url">
+                  OSD 节点优化
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-06-02T17:07:48+08:00">
+              2016-06-02
+            </time>
+
+            &nbsp;|&nbsp;
+
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-check-o"></i>
+            </span>
+            <time title="Post modified" itemprop="dateModified" datetime="2016-11-13T18:02:51+08:00">
+              2016-11-13
+            </time>
+            
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index">
+                    <span itemprop="name">storage</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+          
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="目标"><a href="#目标" class="headerlink" title="目标"></a>目标</h1><ul>
+<li>优化OSD节点性能</li>
+<li>关闭OSD节点瓶颈项</li>
+</ul>
+<h1 id="优化项"><a href="#优化项" class="headerlink" title="优化项"></a>优化项</h1><h2 id="CPU-Status"><a href="#CPU-Status" class="headerlink" title="CPU Status"></a>CPU Status</h2><p>将cpu status 设置为 performance，可通过BIOS设置，或在系统中进行如下配置，修改后需要重启生效<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">for CPUFREQ in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do [ -f $CPUFREQ ] || continue; echo -n performance &gt; $CPUFREQ; done</div></pre></td></tr></table></figure></p>
+<h2 id="Hyper-Threading（HT）"><a href="#Hyper-Threading（HT）" class="headerlink" title="Hyper-Threading（HT）"></a>Hyper-Threading（HT）</h2><p>开启VT和HT，在BIOS中配置</p>
+<h2 id="NUMA"><a href="#NUMA" class="headerlink" title="NUMA"></a>NUMA</h2><p>关闭NUMA，可通过BIOS关闭，也可在加载Kernel是设置<br>打开<code>/etc/grub2-efi.cfg</code>，修改kernel加载部分，修改后需要重启生效</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">linuxefi /vmlinuz-3.10.0-327.el7.x86_64 root=/dev/mapper/rhel-root ro crashkernel=auto rd.lvm.lv=rhel/root rd.lvm.lv=rhel/swap rhgb quiet LANG=en_US.UTF-8 numa=off</div></pre></td></tr></table></figure>
+<p>关闭前<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">$ lscpu | grep -i numa</div><div class="line">NUMA node(s):          2</div><div class="line">NUMA node0 CPU(s):     0-5,12-17</div><div class="line">NUMA node1 CPU(s):     6-11,18-23</div></pre></td></tr></table></figure></p>
+<p>关闭后<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">$ lscpu | grep -i numa</div><div class="line">NUMA node(s):          1</div><div class="line">NUMA node0 CPU(s):     0-23</div></pre></td></tr></table></figure></p>
+<h2 id="Jumbo-Frames"><a href="#Jumbo-Frames" class="headerlink" title="Jumbo Frames"></a>Jumbo Frames</h2><p>将cluster network 的网卡MTU设置为9000，修改后需要重启生效<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">echo &quot;MTU=9000&quot; | tee -a /etc/sysconfig/network-script/ifcfg-&#123;网卡&#125;</div></pre></td></tr></table></figure></p>
+<p>通过ifconfig查看mtu修改情况<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">$ ifconfig</div><div class="line">ens5f0: flags=4163&lt;UP,BROADCAST,RUNNING,MULTICAST&gt;  mtu 9000</div><div class="line">        inet 192.168.43.5  netmask 255.255.255.0  broadcast 192.168.43.255</div><div class="line">        inet6 fe80::92e2:baff:febf:3800  prefixlen 64  scopeid 0x20&lt;link&gt;</div><div class="line">        ether 90:e2:ba:bf:38:00  txqueuelen 1000  (Ethernet)</div><div class="line">        RX packets 5218040  bytes 661253942 (630.6 MiB)</div><div class="line">        RX errors 0  dropped 0  overruns 0  frame 0</div><div class="line">        TX packets 5170015  bytes 605082933 (577.0 MiB)</div><div class="line">        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0</div></pre></td></tr></table></figure></p>
+<h2 id="SSD-Trim"><a href="#SSD-Trim" class="headerlink" title="SSD Trim"></a>SSD Trim</h2><p>为减少SSD写放大，需要开启Trim。<br>判断SSD是否支持Trim<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ hdparm -I /dev/&#123;SSD硬盘&#125; | grep -i trim</div><div class="line">          *    Data Set Management TRIM supported (limit 8 blocks)</div></pre></td></tr></table></figure></p>
+<p>出现 “TRIM supported” 表示支持Trim，否则表示不支持Trim指令.</p>
+<p>在xfs文件系统中开启trim指令，需要挂载xfs文件系统时，option中增加<code>discard</code></p>
+<h2 id="Scheduler"><a href="#Scheduler" class="headerlink" title="Scheduler"></a>Scheduler</h2><p>硬盘I/O调度机制配置，SSD 推荐采用“noop”，机械硬盘推荐采用“deadline”<br>修改<code>/etc/udev/rules.d/60-schedulers.rules</code>，增加如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"># system default: set cfq scheduler for rotating disks</div><div class="line">ACTION==&quot;add|change&quot;,KERNEL==&quot;sd[a-z]&quot;,ATTR&#123;queue/rotational&#125;==&quot;1&quot;,ATTR&#123;queue/scheduler&#125;=&quot;deadline&quot;</div><div class="line">ACTION==&quot;add|change&quot;,KERNEL==&quot;sd[a-z]&quot;,ATTR&#123;queue/rotational&#125;==&quot;0&quot;,ATTR&#123;queue/scheduler&#125;=&quot;noop&quot;</div></pre></td></tr></table></figure></p>
+<p>rotational 为 “1” 表示机械硬盘，为“0”表示SSD</p>
+<p>查看修改是否生效<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">cat /sys/block/&#123;硬盘&#125;/queue/scheduler</div></pre></td></tr></table></figure></p>
+<h2 id="read-ahead-kb"><a href="#read-ahead-kb" class="headerlink" title="read_ahead_kb"></a>read_ahead_kb</h2><p>设置硬盘预读大小为8k<br>修改<code>/etc/udev/rules.d/60-schedulers.rules</code>，增加如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ACTION==&quot;add|change&quot;,KERNEL==&quot;sd[b-z]&quot;,ATTR&#123;queue/read_ahead_kb&#125;=&quot;8192&quot;</div></pre></td></tr></table></figure></p>
+<p>查看是否生效<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">cat /sys/block/&#123;硬盘&#125;/queue/read_ahead_kb</div></pre></td></tr></table></figure></p>
+<h2 id="xfs-option"><a href="#xfs-option" class="headerlink" title="xfs option"></a>xfs option</h2><p>xfs 挂载增加如下option：</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th style="text-align:center"></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>rw</td>
+<td style="text-align:center">允许读写操作</td>
+</tr>
+<tr>
+<td>noexec</td>
+<td style="text-align:center">不允许运行操作</td>
+</tr>
+<tr>
+<td>nodev</td>
+<td style="text-align:center">不支持设备文件</td>
+</tr>
+<tr>
+<td>noatime</td>
+<td style="text-align:center">不更新inode访问时间</td>
+</tr>
+<tr>
+<td>nobarrier</td>
+<td style="text-align:center">关闭cache 回写机制</td>
+</tr>
+</tbody>
+</table>
+<h2 id="FD-core-amp-PID"><a href="#FD-core-amp-PID" class="headerlink" title="FD,core &amp; PID"></a>FD,core &amp; PID</h2><h3 id="FD-amp-core"><a href="#FD-amp-core" class="headerlink" title="FD &amp; core"></a>FD &amp; core</h3><p>修改 max open files 最大值，系统默认是1024，将其修改为131072<br>修改 core 值，当程序崩溃时，会输出core文件，便于分析错误原因<br>修改<code>/etc/security/limits.conf</code>文件，增加：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">*   soft    core    10240</div><div class="line">*   soft    nofile  131072</div><div class="line">*   hard    nofile  131072</div></pre></td></tr></table></figure></p>
+<p>修改后，可通过<code>ulimit -a</code>查看。</p>
+<h3 id="PID"><a href="#PID" class="headerlink" title="PID"></a>PID</h3><p>修改pid max值，打破系统运行进程数量瓶颈，将其设置为4194303（系统默认是 32768）<br>修改<code>/etc/sysctl.conf</code>文件,增加<code>kernel.pid_max=4194303</code></p>
+<h2 id="cgroup"><a href="#cgroup" class="headerlink" title="cgroup"></a>cgroup</h2><p>若集群搭建采用超融合方案（计算节点与存储节点混搭），使用cgroup将cpu与OSD进程绑定，减少cpu时间片切换次数，提高OSD相应速度</p>
+<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a href="https://www.mylesgray.com/hardware/test-jumbo-frames-working/" target="_blank" rel="external">How to test if 9000 MTU/Jumbo Frames are working</a></li>
+<li><a href="http://puremonkey2010.blogspot.tw/2014/10/linux-jumbo-frame.html" target="_blank" rel="external">设置Jumbo frame</a></li>
+<li><a href="http://ycnian.org/blog/archives/832" target="_blank" rel="external">linux存储架构图</a></li>
+<li><a href="http://my.oschina.net/manmao/blog/593851" target="_blank" rel="external">linuxI/O子系统框架图</a></li>
+<li><a href="http://xiaoquqi.github.io/blog/2015/06/28/ceph-performance-optimization-summary/" target="_blank" rel="external">Ceph性能优化总结（v.94）</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/05/25/20160525-xunlei-download-parse/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="博">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.png">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="Bolog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="Bolog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2016/05/25/20160525-xunlei-download-parse/" itemprop="url">
+                  迅雷下载解析（上）
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-05-25T14:39:03+08:00">
+              2016-05-25
+            </time>
+
+            &nbsp;|&nbsp;
+
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-check-o"></i>
+            </span>
+            <time title="Post modified" itemprop="dateModified" datetime="2016-11-15T14:33:07+08:00">
+              2016-11-15
+            </time>
+            
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/other/" itemprop="url" rel="index">
+                    <span itemprop="name">other</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+          
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="需求"><a href="#需求" class="headerlink" title="需求"></a>需求</h1><p>所有使用非windows的用户在需要下载迅雷资源的时候，大概都有两种方法。其一，使用wine，装一个xunlei，然后下载资源；其二，利用离线下载，先下载到离线服务器上，然后利用http或ftp协议下载到本地。</p>
+<p>为啥迅雷不开发一个linux版呢！（个人猜测，估计是怕linux里面的license吧）相信为啥没有linux版本，只有迅雷知道。</p>
+<p>为了能让linux下载迅雷资源，做了如下调研。。。</p>
+<h1 id="thunder-地址解码"><a href="#thunder-地址解码" class="headerlink" title="thunder 地址解码"></a>thunder 地址解码</h1><p>通常能看到的 thunder 地址，都是通过base64 encode 过的 http 或 ftp 地址。所以解码，也需要用base64</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"># base64 加密后的http 或 ftp 地址</div><div class="line">thunder://QUFmdHA6Ly9keWdvZDE6ZHlnb2QxQGQxMzEuZHlnb2QuY246MzA0OS/pnZ7or5rli7/mibBEVkRzY3IvW+eUteW9seWkqeWggnd3dy5keWdvZC5jbl3pnZ7or5rli7/mibBjZDEucm12Ylpa</div><div class="line"></div><div class="line"># 经过 base64 -d decode 之后</div><div class="line">echo QUFmdHA6Ly9keWdvZDE6ZHlnb2QxQGQxMzEuZHlnb2QuY246MzA0OS/pnZ7or5rli7/mibBEVkRzY3IvW+eUteW9seWkqeWggnd3dy5keWdvZC5jbl3pnZ7or5rli7/mibBjZDEucm12Ylpa | base64 -d</div><div class="line"></div><div class="line">AAftp://dygod1:dygod1@d131.dygod.cn:3049/非诚勿扰DVDscr/[电影天堂www.dygod.cn]非诚勿扰cd1.rmvbZZ%</div></pre></td></tr></table></figure>
+<p>看到了吧，去掉开头的“AA”，去掉结尾的“ZZ%”，就剩下了一个ftp地址，这个ftp地址，就是迅雷下载时使用的ftp地址。</p>
+<h1 id="迅雷资源下载"><a href="#迅雷资源下载" class="headerlink" title="迅雷资源下载"></a>迅雷资源下载</h1><p>使用 wget 下载上文中的ftp资源<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">$ wget -v ftp://i:i@d3.dl1234.com:6958/\[电影天堂www.dy2018.com\]神战权力之眼BD中英双字.rmvb</div><div class="line">--2016-05-25 14:58:52--  ftp://i:*password*@d3.dl1234.com:6958/[%E7%94%B5%E5%BD%B1%E5%A4%A9%E5%A0%82www.dy2018.com]%E7%A5%9E%E6%88%98%E6%9D%83%E5%8A%9B%E4%B9%8B%E7%9C%BCBD%E4%B8%AD%E8%8B%B1%E5%8F%8C%E5%AD%97.rmvb</div><div class="line">           =&gt; ‘.listing’</div><div class="line">Resolving d3.dl1234.com (d3.dl1234.com)... 218.93.205.139</div><div class="line">Connecting to d3.dl1234.com (d3.dl1234.com)|218.93.205.139|:6958... failed: Connection refused.</div><div class="line">--2016-05-25 14:58:52--  ftp://i:*password*@d3.dl1234.com:6958/[%E7%94%B5%E5%BD%B1%E5%A4%A9%E5%A0%82www.dy2018.com]%E7%A5%9E%E6%88%98%E6%9D%83%E5%8A%9B%E4%B9%8B%E7%9C%BCBD%E4%B8%AD%E8%8B%B1%E5%8F%8C%E5%AD%97.rmvb</div><div class="line">           =&gt; ‘.listing’</div><div class="line">Connecting to d3.dl1234.com (d3.dl1234.com)|218.93.205.139|:6958... failed: Connection refused.</div></pre></td></tr></table></figure></p>
+<p>结果被无情的 refused 了，后来又用别的ftp客户端尝试下载结果，依然失败。。。</p>
+<p>痛定思痛，上网搜索了一下，有片文章的分析我觉得可能是正确的，其文如下：</p>
+<p>”（我揣测）迅雷走的是P2SP，也就是先访问它的索引server，找到真实可用的ip。换句话说，这个URL仅仅起到一个资源标识符的作用，本身也许未必能直接用于下载。 所以说这个东西，不逆向官方客户端恐怕是没法搞的，因为不知道它和服务器之间的协议。“</p>
+<h1 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h1><p>根据网友的分析，后续可以下载一个迅雷软件分析看看</p>
+<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a href="https://github.com/soimort/you-get/issues/929" target="_blank" rel="external">能支持迅雷下载地址么？（类似thunder://）</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
   <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/05/13/storage/20160513-linux-ssd-check/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1391,433 +2071,11 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/04/14/git/git-usage-config-md/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="博">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.png">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="Bolog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="Bolog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/04/14/git/git-usage-config-md/" itemprop="url">
-                  git使用配置
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-04-14T11:28:09+08:00">
-              2016-04-14
-            </time>
-
-            &nbsp;|&nbsp;
-
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-check-o"></i>
-            </span>
-            <time title="Post modified" itemprop="dateModified" datetime="2016-11-13T18:02:51+08:00">
-              2016-11-13
-            </time>
-            
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/git/" itemprop="url" rel="index">
-                    <span itemprop="name">git</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-          
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="git配置"><a href="#git配置" class="headerlink" title="git配置"></a>git配置</h2><p>配置文件 ”~/.gitconfig“</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">[user]</div><div class="line">    email = zhoubofsy@hotmail.com</div><div class="line">    name = zhoubofsy</div><div class="line">[alias]</div><div class="line">    lg = log --color --graph --pretty=format:&apos;%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)&lt;%an&gt;%Creset&apos; --abbrev-commit</div><div class="line">[http]</div><div class="line">    proxy = http://127.0.0.1:8087</div><div class="line">    sslverify = false</div><div class="line">[https]</div><div class="line">    proxy = http://127.0.0.1:8087</div></pre></td></tr></table></figure>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/04/14/network/linux-http-proxy-md/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="博">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.png">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="Bolog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="Bolog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/04/14/network/linux-http-proxy-md/" itemprop="url">
-                  linux 配置 http 全局代理
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-04-14T11:21:25+08:00">
-              2016-04-14
-            </time>
-
-            &nbsp;|&nbsp;
-
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-check-o"></i>
-            </span>
-            <time title="Post modified" itemprop="dateModified" datetime="2016-11-13T18:02:51+08:00">
-              2016-11-13
-            </time>
-            
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/network/" itemprop="url" rel="index">
-                    <span itemprop="name">network</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-          
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>使用”XX-Net-2.9.2“做代理服务端（XX-Net-2.9.2在github上可以找到）</p>
-<h2 id="Linux系统配置"><a href="#Linux系统配置" class="headerlink" title="Linux系统配置"></a>Linux系统配置</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">export http_proxy=http://127.0.0.1:8087</div><div class="line">export https_proxy=$http_proxy</div><div class="line">export ftp_proxy=$http_proxy</div><div class="line">export rsync_proxy=$http_proxy</div></pre></td></tr></table></figure>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/04/14/linux/tmux-config-md/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="博">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.png">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="Bolog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="Bolog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/04/14/linux/tmux-config-md/" itemprop="url">
-                  tmux 配置
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-04-14T11:05:29+08:00">
-              2016-04-14
-            </time>
-
-            &nbsp;|&nbsp;
-
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-check-o"></i>
-            </span>
-            <time title="Post modified" itemprop="dateModified" datetime="2016-11-13T18:02:51+08:00">
-              2016-11-13
-            </time>
-            
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/linux/" itemprop="url" rel="index">
-                    <span itemprop="name">linux</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-          
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="tmux-配置如下-tmux-conf-："><a href="#tmux-配置如下-tmux-conf-：" class="headerlink" title="tmux 配置如下(~/.tmux.conf)："></a>tmux 配置如下(~/.tmux.conf)：</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line"># 状态栏</div><div class="line"></div><div class="line"># 颜色</div><div class="line">set -g status-bg black</div><div class="line">set -g status-fg white</div><div class="line"></div><div class="line"># 对齐</div><div class="line">set-option -g status-justify centre</div><div class="line"></div><div class="line"># 左下角</div><div class="line">set-option -g status-left &apos;#[bg=black,fg=green][#[fg=cyan]#S#[fg=green]]&apos;</div><div class="line">set-option -g status-left-length 20</div><div class="line"></div><div class="line"># 窗口列表</div><div class="line">set -g automatic-rename on</div><div class="line">set-window-option -g window-status-format &apos;#[dim]#I:#[default]#W#[fg=grey,dim]&apos;</div><div class="line">set-window-option -g window-status-current-format &apos;#[fg=cyan,bold]#I:#W#[fg=blue]&apos;</div><div class="line"></div><div class="line"># 右下角</div><div class="line">set -g status-right &apos;#[fg=green][#[fg=cyan]%Y-%m-%d#[fg=green]]&apos;</div><div class="line"></div><div class="line"># 复制模式</div><div class="line">set-window-option -g utf8 on</div><div class="line">set-window-option -g mode-keys vi</div></pre></td></tr></table></figure>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/page/2/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><a class="page-number" href="/page/2/">2</a><span class="page-number current">3</span><a class="page-number" href="/page/4/">4</a><a class="extend next" rel="next" href="/page/4/"><i class="fa fa-angle-right"></i></a>
+    <a class="extend prev" rel="prev" href="/page/2/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><a class="page-number" href="/page/2/">2</a><span class="page-number current">3</span><a class="page-number" href="/page/4/">4</a><a class="page-number" href="/page/5/">5</a><a class="extend next" rel="next" href="/page/4/"><i class="fa fa-angle-right"></i></a>
   </nav>
 
 
@@ -1858,7 +2116,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">38</span>
+              <span class="site-state-item-count">41</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -1866,7 +2124,7 @@
           
             <div class="site-state-item site-state-categories">
               <a href="/categories">
-                <span class="site-state-item-count">13</span>
+                <span class="site-state-item-count">14</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -1875,7 +2133,7 @@
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">39</span>
+                <span class="site-state-item-count">42</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
