@@ -68,7 +68,7 @@
 <link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="ceph,ceph-deploy," />
+  <meta name="keywords" content="docker,image," />
 
 
 
@@ -84,36 +84,31 @@
 
 
 
-<meta name="description" content="概述ceph-deploy官方认可的ceph部署工具。它不同于ansible、puppet。
-架构
-各个模块parser主命令参数解析，子命令参数解析
-cli加载子命令模块，选择调用哪个子命令执行操作
-new 子命令创建集群，及 ceph.conf 配置文件
-install 子命令跟据节点的不通角色（mon、mds、osd、rgw等），安装相关的软件包
-uninstall 子命令卸载节点的ceph">
+<meta name="description" content="背景docker容器的创建依赖于镜像，镜像的创建依赖于目录树，不同的linux发行版，有自己的目录树。本文主要介绍debian族发行版与fedora族发行版base image的创建。如果您想从零创建一个linux发行版base image，请参考LFS（linux from scratch）。
+测试环境
+OS Version, RHEL7.2
+docker Version, 1.12.5 
+
+d">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Ceph-deploy 解析">
-<meta property="og:url" content="http://yoursite.com/2016/07/27/storage/ceph/20160727-ceph-deploy-parse/index.html">
+<meta property="og:title" content="Docker Base Image制作">
+<meta property="og:url" content="http://yoursite.com/2017/01/04/container/docker/docker-mk-base-image/index.html">
 <meta property="og:site_name" content="Bolog">
-<meta property="og:description" content="概述ceph-deploy官方认可的ceph部署工具。它不同于ansible、puppet。
-架构
-各个模块parser主命令参数解析，子命令参数解析
-cli加载子命令模块，选择调用哪个子命令执行操作
-new 子命令创建集群，及 ceph.conf 配置文件
-install 子命令跟据节点的不通角色（mon、mds、osd、rgw等），安装相关的软件包
-uninstall 子命令卸载节点的ceph">
-<meta property="og:image" content="http://yoursite.com/images/ceph/ceph-deploy-frame.png">
-<meta property="og:updated_time" content="2016-11-13T10:02:51.000Z">
+<meta property="og:description" content="背景docker容器的创建依赖于镜像，镜像的创建依赖于目录树，不同的linux发行版，有自己的目录树。本文主要介绍debian族发行版与fedora族发行版base image的创建。如果您想从零创建一个linux发行版base image，请参考LFS（linux from scratch）。
+测试环境
+OS Version, RHEL7.2
+docker Version, 1.12.5 
+
+d">
+<meta property="og:updated_time" content="2017-01-04T04:40:36.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Ceph-deploy 解析">
-<meta name="twitter:description" content="概述ceph-deploy官方认可的ceph部署工具。它不同于ansible、puppet。
-架构
-各个模块parser主命令参数解析，子命令参数解析
-cli加载子命令模块，选择调用哪个子命令执行操作
-new 子命令创建集群，及 ceph.conf 配置文件
-install 子命令跟据节点的不通角色（mon、mds、osd、rgw等），安装相关的软件包
-uninstall 子命令卸载节点的ceph">
-<meta name="twitter:image" content="http://yoursite.com/images/ceph/ceph-deploy-frame.png">
+<meta name="twitter:title" content="Docker Base Image制作">
+<meta name="twitter:description" content="背景docker容器的创建依赖于镜像，镜像的创建依赖于目录树，不同的linux发行版，有自己的目录树。本文主要介绍debian族发行版与fedora族发行版base image的创建。如果您想从零创建一个linux发行版base image，请参考LFS（linux from scratch）。
+测试环境
+OS Version, RHEL7.2
+docker Version, 1.12.5 
+
+d">
 
 
 
@@ -141,13 +136,13 @@ uninstall 子命令卸载节点的ceph">
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2016/07/27/storage/ceph/20160727-ceph-deploy-parse/"/>
+  <link rel="canonical" href="http://yoursite.com/2017/01/04/container/docker/docker-mk-base-image/"/>
 
 
 
 
 
-  <title> Ceph-deploy 解析 | Bolog </title>
+  <title> Docker Base Image制作 | Bolog </title>
 </head>
 
 <body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
@@ -278,7 +273,7 @@ uninstall 子命令卸载节点的ceph">
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/07/27/storage/ceph/20160727-ceph-deploy-parse/">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/01/04/container/docker/docker-mk-base-image/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
     <meta itemprop="name" content="博">
@@ -302,7 +297,7 @@ uninstall 子命令卸载节点的ceph">
             
             
               
-                Ceph-deploy 解析
+                Docker Base Image制作
               
             
           </h1>
@@ -314,8 +309,8 @@ uninstall 子命令卸载节点的ceph">
               <i class="fa fa-calendar-o"></i>
             </span>
             <span class="post-meta-item-text">发表于</span>
-            <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-07-27T21:17:05+08:00">
-              2016-07-27
+            <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-01-04T10:30:32+08:00">
+              2017-01-04
             </time>
 
             &nbsp;|&nbsp;
@@ -323,8 +318,8 @@ uninstall 子命令卸载节点的ceph">
             <span class="post-meta-item-icon">
               <i class="fa fa-calendar-check-o"></i>
             </span>
-            <time title="Post modified" itemprop="dateModified" datetime="2016-11-13T18:02:51+08:00">
-              2016-11-13
+            <time title="Post modified" itemprop="dateModified" datetime="2017-01-04T12:40:36+08:00">
+              2017-01-04
             </time>
             
           </span>
@@ -338,8 +333,8 @@ uninstall 子命令卸载节点的ceph">
               <span class="post-meta-item-text">分类于</span>
               
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/ceph/" itemprop="url" rel="index">
-                    <span itemprop="name">ceph</span>
+                  <a href="/categories/container/" itemprop="url" rel="index">
+                    <span itemprop="name">container</span>
                   </a>
                 </span>
 
@@ -374,31 +369,39 @@ uninstall 子命令卸载节点的ceph">
       
 
       
-        <h1 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h1><p>ceph-deploy官方认可的ceph部署工具。它不同于ansible、puppet。</p>
-<h1 id="架构"><a href="#架构" class="headerlink" title="架构"></a>架构</h1><p><img src="/images/ceph/ceph-deploy-frame.png" alt="ceph-deploy-frame"></p>
-<h1 id="各个模块"><a href="#各个模块" class="headerlink" title="各个模块"></a>各个模块</h1><h2 id="parser"><a href="#parser" class="headerlink" title="parser"></a>parser</h2><p>主命令参数解析，子命令参数解析</p>
-<h2 id="cli"><a href="#cli" class="headerlink" title="cli"></a>cli</h2><p>加载子命令模块，选择调用哪个子命令执行操作</p>
-<h2 id="new-子命令"><a href="#new-子命令" class="headerlink" title="new 子命令"></a>new 子命令</h2><p>创建集群，及 ceph.conf 配置文件</p>
-<h2 id="install-子命令"><a href="#install-子命令" class="headerlink" title="install 子命令"></a>install 子命令</h2><p>跟据节点的不通角色（mon、mds、osd、rgw等），安装相关的软件包</p>
-<h2 id="uninstall-子命令"><a href="#uninstall-子命令" class="headerlink" title="uninstall 子命令"></a>uninstall 子命令</h2><p>卸载节点的ceph软件</p>
-<h2 id="purge-子命令"><a href="#purge-子命令" class="headerlink" title="purge 子命令"></a>purge 子命令</h2><p>清除ceph安装包</p>
-<h2 id="purgedata子命令"><a href="#purgedata子命令" class="headerlink" title="purgedata子命令"></a>purgedata子命令</h2><p>清除ceph在该节点上产生的数据</p>
-<h2 id="mon-子命令"><a href="#mon-子命令" class="headerlink" title="mon 子命令"></a>mon 子命令</h2><p>管理mon节点，添加、创建、删除等操作</p>
-<h2 id="gatherkeys子命令"><a href="#gatherkeys子命令" class="headerlink" title="gatherkeys子命令"></a>gatherkeys子命令</h2><p>收集ceph中的keyring</p>
-<h2 id="osd子命令"><a href="#osd子命令" class="headerlink" title="osd子命令"></a>osd子命令</h2><p>管理osd节点，准备、创建、激活等操作</p>
-<h2 id="disk子命令"><a href="#disk子命令" class="headerlink" title="disk子命令"></a>disk子命令</h2><p>管理硬盘，格式化硬盘分区等操作</p>
-<h2 id="mds子命令"><a href="#mds子命令" class="headerlink" title="mds子命令"></a>mds子命令</h2><p>管理mds节点，仅支持创建操作</p>
-<h2 id="forgetkeys子命令"><a href="#forgetkeys子命令" class="headerlink" title="forgetkeys子命令"></a>forgetkeys子命令</h2><p>删除“mon”、“client.admin”、“bootstrap-osd”、“bootstrap-mds”、“bootstrap-rgw”的keyring文件</p>
-<h2 id="config子命令"><a href="#config子命令" class="headerlink" title="config子命令"></a>config子命令</h2><p>从（往）指定的节点获取（输出）集群配置信息</p>
-<h2 id="admin子命令"><a href="#admin子命令" class="headerlink" title="admin子命令"></a>admin子命令</h2><p>为指定的节点赋予admin角色</p>
-<h2 id="pkg子命令"><a href="#pkg子命令" class="headerlink" title="pkg子命令"></a>pkg子命令</h2><p>包管理器，安装（卸载）指定的软件包</p>
-<h2 id="calamari子命令"><a href="#calamari子命令" class="headerlink" title="calamari子命令"></a>calamari子命令</h2><p><em>略</em></p>
-<h2 id="rgw子命令"><a href="#rgw子命令" class="headerlink" title="rgw子命令"></a>rgw子命令</h2><p>按配置文件中的配置启动rgw服务(建议使用CivetWeb)</p>
-<h2 id="repo子命令"><a href="#repo子命令" class="headerlink" title="repo子命令"></a>repo子命令</h2><p>管理节点repo信息，添加、删除repo操作</p>
-<h2 id="conf"><a href="#conf" class="headerlink" title="conf"></a>conf</h2><p>ceph.conf集群配置文件读写、解析等支持类操作</p>
-<h2 id="host"><a href="#host" class="headerlink" title="host"></a>host</h2><p>按不同操作系统进行区别操作</p>
-<h2 id="lib"><a href="#lib" class="headerlink" title="lib"></a>lib</h2><p>与系统相关的操作类库（如：连接管理、命令执行、文件操作等）</p>
-<h2 id="util"><a href="#util" class="headerlink" title="util"></a>util</h2><p>支持库（如：ssh连接管理、服务管理、RPM包管理、APT包管理、日志管理等）</p>
+        <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>docker容器的创建依赖于镜像，镜像的创建依赖于目录树，不同的linux发行版，有自己的目录树。本文主要介绍debian族发行版与fedora族发行版base image的创建。如果您想从零创建一个linux发行版base image，请参考LFS（linux from scratch）。</p>
+<h2 id="测试环境"><a href="#测试环境" class="headerlink" title="测试环境"></a>测试环境</h2><ul>
+<li>OS Version, RHEL7.2</li>
+<li>docker Version, 1.12.5 </li>
+</ul>
+<h1 id="debian"><a href="#debian" class="headerlink" title="debian"></a>debian</h1><p>debian类的操作系统包括debian、ubuntu，这一类操作系统的目录树都是用<code>debootstrap</code>来生成的。其中<code>de</code>取debian之意。</p>
+<h2 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h2><p>可直接使用yum安装<code>yum install debootstrap</code>。</p>
+<h2 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h2><p>debian默认的mirror为<a href="https://deb.debian.org/debian/" target="_blank" rel="external">https://deb.debian.org/debian/</a></p>
+<p>debootstrap格式:<br><code>debootstrap [OPTION...] &lt;版本&gt; &lt;目录树存放位置目录&gt; [&lt;镜像（mirror）位置&gt;]</code></p>
+<p>eg: <code>sudo debootstrap jessie my_jessie</code></p>
+<h1 id="fedora"><a href="#fedora" class="headerlink" title="fedora"></a>fedora</h1><p>fedora类的操作系统包括fedora、RHEL、CentOS，这一类操作系统的目录树都是用<code>febootstrap</code>来生成的。其中<code>fe</code>取fedora之意。</p>
+<h2 id="安装-1"><a href="#安装-1" class="headerlink" title="安装"></a>安装</h2><p><code>febootstrap</code>并没有存在于RHEL7.2（或CentOS7.2）Repo中，目前可以直接安装6.8 repo中的<code>febootstrap-3.21-4</code>。</p>
+<p>febootstrap-3.21-4依赖包如下所示：</p>
+<ul>
+<li>fakechroot-2.9-24.5.el6_1.1.x86_64</li>
+<li>fakechroot-libs-2.9-24.5.el6_1.1.x86_64</li>
+<li>fakeroot-1.12.2-22.2.el6.x86_64</li>
+<li>fakeroot-libs-1.12.2-22.2.el6.x86_64</li>
+<li>febootstrap-supermin-helper-3.21-4.el6.x86_64</li>
+</ul>
+<h2 id="使用-1"><a href="#使用-1" class="headerlink" title="使用"></a>使用</h2><p>febootstrap格式:<br><code>febootstrap [OPTION...] &lt;版本&gt; &lt;目录树存放位置目录&gt; [镜像（mirror）位置]</code></p>
+<p>eg: <code>febootstrap -i bash 6.8 my_centos6.8 http://mirrors.163.com/centos/6.8/os/x86_64/</code></p>
+<h1 id="LFS"><a href="#LFS" class="headerlink" title="LFS"></a>LFS</h1><p>Todo…</p>
+<h1 id="镜像导入"><a href="#镜像导入" class="headerlink" title="镜像导入"></a>镜像导入</h1><h2 id="Tar导入方式创建镜像"><a href="#Tar导入方式创建镜像" class="headerlink" title="Tar导入方式创建镜像"></a>Tar导入方式创建镜像</h2><p>无论是debootstrap还是febootstrap生成的目录，其导入docker image的方法是一样的。</p>
+<p>格式:<br><code>tar -C &lt;目录树目录&gt; -c . | docker import - &lt;docker image 名称&gt;</code></p>
+<p>eg: <code>tar -C ./my_jessie -c . | docker import - my_jessie_base</code></p>
+<h2 id="空镜像创建"><a href="#空镜像创建" class="headerlink" title="空镜像创建"></a>空镜像创建</h2><p>格式:<br><code>tar cv --files-from /dev/null | docker import - &lt;docker image 名称&gt;</code></p>
+<p>eg: <code>tar cv --files-from /dev/null | docker import - empty_image</code></p>
+<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a href="https://linux.cn/article-5427-1.html" target="_blank" rel="external">两种方式创建你自己的 Docker 基本映像</a></li>
+<li><a href="http://www.latelee.org/using-gnu-linux/ubuntu-debootstrap.html" target="_blank" rel="external">ubuntu系统debootstrap的使用</a></li>
+<li><a href="https://my.oschina.net/ylchou/blog/490412" target="_blank" rel="external">CentOS下febootstrap自制Docker的CentOS6.6和7.1 Docker镜像</a></li>
+</ul>
 
       
     </div>
@@ -422,9 +425,9 @@ uninstall 子命令卸载节点的ceph">
       
         <div class="post-tags">
           
-            <a href="/tags/ceph/" rel="tag"># ceph</a>
+            <a href="/tags/docker/" rel="tag"># docker</a>
           
-            <a href="/tags/ceph-deploy/" rel="tag"># ceph-deploy</a>
+            <a href="/tags/image/" rel="tag"># image</a>
           
         </div>
       
@@ -433,8 +436,8 @@ uninstall 子命令卸载节点的ceph">
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2016/07/17/storage/ceph/20160617-ceph-messenger-simple/" rel="next" title="SimpleMessenger分析">
-                <i class="fa fa-chevron-left"></i> SimpleMessenger分析
+              <a href="/2017/01/02/raspbarrypi/rpi3-wifi-usr-pwd-configuration/" rel="next" title="RPI WIFI用户名密码配置">
+                <i class="fa fa-chevron-left"></i> RPI WIFI用户名密码配置
               </a>
             
           </div>
@@ -442,10 +445,6 @@ uninstall 子命令卸载节点的ceph">
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2016/08/10/mysql/20160810-mysql-deploy-on-rhel7-2/" rel="prev" title="MySQL环境配置搭建">
-                MySQL环境配置搭建 <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -585,7 +584,7 @@ uninstall 子命令卸载节点的ceph">
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#概述"><span class="nav-number">1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#架构"><span class="nav-number">2.</span> <span class="nav-text">架构</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#各个模块"><span class="nav-number">3.</span> <span class="nav-text">各个模块</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#parser"><span class="nav-number">3.1.</span> <span class="nav-text">parser</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#cli"><span class="nav-number">3.2.</span> <span class="nav-text">cli</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#new-子命令"><span class="nav-number">3.3.</span> <span class="nav-text">new 子命令</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#install-子命令"><span class="nav-number">3.4.</span> <span class="nav-text">install 子命令</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#uninstall-子命令"><span class="nav-number">3.5.</span> <span class="nav-text">uninstall 子命令</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#purge-子命令"><span class="nav-number">3.6.</span> <span class="nav-text">purge 子命令</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#purgedata子命令"><span class="nav-number">3.7.</span> <span class="nav-text">purgedata子命令</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#mon-子命令"><span class="nav-number">3.8.</span> <span class="nav-text">mon 子命令</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#gatherkeys子命令"><span class="nav-number">3.9.</span> <span class="nav-text">gatherkeys子命令</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#osd子命令"><span class="nav-number">3.10.</span> <span class="nav-text">osd子命令</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#disk子命令"><span class="nav-number">3.11.</span> <span class="nav-text">disk子命令</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#mds子命令"><span class="nav-number">3.12.</span> <span class="nav-text">mds子命令</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#forgetkeys子命令"><span class="nav-number">3.13.</span> <span class="nav-text">forgetkeys子命令</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#config子命令"><span class="nav-number">3.14.</span> <span class="nav-text">config子命令</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#admin子命令"><span class="nav-number">3.15.</span> <span class="nav-text">admin子命令</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#pkg子命令"><span class="nav-number">3.16.</span> <span class="nav-text">pkg子命令</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#calamari子命令"><span class="nav-number">3.17.</span> <span class="nav-text">calamari子命令</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#rgw子命令"><span class="nav-number">3.18.</span> <span class="nav-text">rgw子命令</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#repo子命令"><span class="nav-number">3.19.</span> <span class="nav-text">repo子命令</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#conf"><span class="nav-number">3.20.</span> <span class="nav-text">conf</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#host"><span class="nav-number">3.21.</span> <span class="nav-text">host</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#lib"><span class="nav-number">3.22.</span> <span class="nav-text">lib</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#util"><span class="nav-number">3.23.</span> <span class="nav-text">util</span></a></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#背景"><span class="nav-number">1.</span> <span class="nav-text">背景</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#测试环境"><span class="nav-number">1.1.</span> <span class="nav-text">测试环境</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#debian"><span class="nav-number">2.</span> <span class="nav-text">debian</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#安装"><span class="nav-number">2.1.</span> <span class="nav-text">安装</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#使用"><span class="nav-number">2.2.</span> <span class="nav-text">使用</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#fedora"><span class="nav-number">3.</span> <span class="nav-text">fedora</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#安装-1"><span class="nav-number">3.1.</span> <span class="nav-text">安装</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#使用-1"><span class="nav-number">3.2.</span> <span class="nav-text">使用</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#LFS"><span class="nav-number">4.</span> <span class="nav-text">LFS</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#镜像导入"><span class="nav-number">5.</span> <span class="nav-text">镜像导入</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Tar导入方式创建镜像"><span class="nav-number">5.1.</span> <span class="nav-text">Tar导入方式创建镜像</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#空镜像创建"><span class="nav-number">5.2.</span> <span class="nav-text">空镜像创建</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考-amp-鸣谢"><span class="nav-number">6.</span> <span class="nav-text">参考&鸣谢</span></a></li></ol></div>
             
 
           </div>
