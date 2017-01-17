@@ -1672,8 +1672,8 @@
             <span class="post-meta-item-icon">
               <i class="fa fa-calendar-check-o"></i>
             </span>
-            <time title="Post modified" itemprop="dateModified" datetime="2016-12-30T14:44:16+08:00">
-              2016-12-30
+            <time title="Post modified" itemprop="dateModified" datetime="2017-01-17T16:07:58+08:00">
+              2017-01-17
             </time>
             
           </span>
@@ -1805,6 +1805,13 @@
 <li>复制MAC地址</li>
 <li>复制IP地址</li>
 </ul>
+<h1 id="Docker-Remote-API"><a href="#Docker-Remote-API" class="headerlink" title="Docker Remote API"></a>Docker Remote API</h1><h2 id="开启Remote-API"><a href="#开启Remote-API" class="headerlink" title="开启Remote API"></a>开启Remote API</h2><p>以RHEL7.2为例，开启Docker Remote API服务</p>
+<ol>
+<li>修改systemd中的docker.server<br> 找到<code>ExecStart</code>项，增加<code>-H tcp://0.0.0.0:2375</code>允许任意客户端访问；增加<code>-H unix:///var/run/docker.sock</code>保证<code>docker</code>命令能正常使用。<br> 若需要使用HTTPS证书，可以增加<code>--tls=true --tlscert=cert.pem --tlskey=key.pem</code>。<a href="https://docs.docker.com/engine/admin/" target="_blank" rel="external">详细请见</a></li>
+<li>增加防火墙规则／关闭防火墙<br> RHEL7.2中防火墙服务为<code>firewalld</code>。<br> eg: <code>sudo systemctl stop firewalld</code></li>
+<li>重启docker服务<br> 重载配置<code>sudo systemctl daemon-reload</code><br> 重启服务<code>sudo systemctl restart docker</code></li>
+</ol>
+<h2 id="API使用说明"><a href="#API使用说明" class="headerlink" title="API使用说明"></a>API使用说明</h2><p>详细请见：<a href="https://docs.docker.com/engine/reference/api/docker_remote_api_v1.24/" target="_blank" rel="external">《Docker Remote API v1.24》</a></p>
 <h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
 <li><a href="https://www.docker.com" target="_blank" rel="external">docker官网</a></li>
 <li><a href="https://hub.docker.com" target="_blank" rel="external">docker hub</a></li>
@@ -1814,6 +1821,8 @@
 <li><a href="http://www.tuicool.com/articles/uYzeAnz" target="_blank" rel="external">深入理解 Docker Volume（一）</a></li>
 <li><a href="http://www.cnblogs.com/sammyliu/p/5932996.html" target="_blank" rel="external">理解Docker（8）：Docker 存储之卷（Volume）</a></li>
 <li><a href="http://blog.csdn.net/halcyonbaby/article/details/42112141" target="_blank" rel="external">docker的四种网络方式</a></li>
+<li><a href="https://docs.docker.com/engine/reference/api/docker_remote_api/" target="_blank" rel="external">Docker Remote API</a></li>
+<li><a href="https://www.zhihu.com/question/24852884" target="_blank" rel="external">Docker Remote API 如何使用？</a></li>
 </ul>
 
           
