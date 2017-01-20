@@ -68,7 +68,7 @@
 <link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="search," />
+  <meta name="keywords" content="rpi3,image," />
 
 
 
@@ -84,19 +84,31 @@
 
 
 
-<meta name="description" content="搜索引擎搜索引擎对于每一个码农来说都是一个互联网数据库，在这个数据库中有很多信息，我们在这个数据库中检索数据不需要指定数据库，也不需要数据表，只需要指定你需要检索的关键字即可。但这种搜索方式虽然搜索范围大，无漏网之鱼，可也搜到了很多于我们需要无关的内容。为了精确查找，筛选掉不需要的信息。搜索引擎还有如下用法，接下来，就让我们一探究竟吧。
-特殊用法由于天朝屏蔽Google，所以以下可在baidu搜索">
+<meta name="description" content="介绍新买了一个TF卡，Class10的，应该能挺快。原来的卡是class4的，如果用新卡做系统，然后所有软件都重装重配，太麻烦！所以将现有系统，做成镜像（img），然后直接dd到新卡上，然后再执行raspi-conf进行容量扩展就可以正常使用了。
+版本
+硬件，RaspberryPi3
+OS，raspbian jessie
+
+步骤安装需要的软件安装dosfstools、parted、kpartx软件">
 <meta property="og:type" content="article">
-<meta property="og:title" content="搜索引擎命令用法">
-<meta property="og:url" content="http://yoursite.com/2016/11/17/search-engine-command/index.html">
+<meta property="og:title" content="img制作">
+<meta property="og:url" content="http://yoursite.com/2017/01/20/raspbarrypi/rpi3-make-image/index.html">
 <meta property="og:site_name" content="Bolog">
-<meta property="og:description" content="搜索引擎搜索引擎对于每一个码农来说都是一个互联网数据库，在这个数据库中有很多信息，我们在这个数据库中检索数据不需要指定数据库，也不需要数据表，只需要指定你需要检索的关键字即可。但这种搜索方式虽然搜索范围大，无漏网之鱼，可也搜到了很多于我们需要无关的内容。为了精确查找，筛选掉不需要的信息。搜索引擎还有如下用法，接下来，就让我们一探究竟吧。
-特殊用法由于天朝屏蔽Google，所以以下可在baidu搜索">
-<meta property="og:updated_time" content="2016-11-17T02:39:22.000Z">
+<meta property="og:description" content="介绍新买了一个TF卡，Class10的，应该能挺快。原来的卡是class4的，如果用新卡做系统，然后所有软件都重装重配，太麻烦！所以将现有系统，做成镜像（img），然后直接dd到新卡上，然后再执行raspi-conf进行容量扩展就可以正常使用了。
+版本
+硬件，RaspberryPi3
+OS，raspbian jessie
+
+步骤安装需要的软件安装dosfstools、parted、kpartx软件">
+<meta property="og:updated_time" content="2017-01-20T07:33:09.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="搜索引擎命令用法">
-<meta name="twitter:description" content="搜索引擎搜索引擎对于每一个码农来说都是一个互联网数据库，在这个数据库中有很多信息，我们在这个数据库中检索数据不需要指定数据库，也不需要数据表，只需要指定你需要检索的关键字即可。但这种搜索方式虽然搜索范围大，无漏网之鱼，可也搜到了很多于我们需要无关的内容。为了精确查找，筛选掉不需要的信息。搜索引擎还有如下用法，接下来，就让我们一探究竟吧。
-特殊用法由于天朝屏蔽Google，所以以下可在baidu搜索">
+<meta name="twitter:title" content="img制作">
+<meta name="twitter:description" content="介绍新买了一个TF卡，Class10的，应该能挺快。原来的卡是class4的，如果用新卡做系统，然后所有软件都重装重配，太麻烦！所以将现有系统，做成镜像（img），然后直接dd到新卡上，然后再执行raspi-conf进行容量扩展就可以正常使用了。
+版本
+硬件，RaspberryPi3
+OS，raspbian jessie
+
+步骤安装需要的软件安装dosfstools、parted、kpartx软件">
 
 
 
@@ -124,13 +136,13 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2016/11/17/search-engine-command/"/>
+  <link rel="canonical" href="http://yoursite.com/2017/01/20/raspbarrypi/rpi3-make-image/"/>
 
 
 
 
 
-  <title> 搜索引擎命令用法 | Bolog </title>
+  <title> img制作 | Bolog </title>
 </head>
 
 <body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
@@ -261,7 +273,7 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/11/17/search-engine-command/">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/01/20/raspbarrypi/rpi3-make-image/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
     <meta itemprop="name" content="博">
@@ -285,7 +297,7 @@
             
             
               
-                搜索引擎命令用法
+                img制作
               
             
           </h1>
@@ -297,8 +309,8 @@
               <i class="fa fa-calendar-o"></i>
             </span>
             <span class="post-meta-item-text">发表于</span>
-            <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-11-17T09:57:58+08:00">
-              2016-11-17
+            <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-01-20T13:54:34+08:00">
+              2017-01-20
             </time>
 
             &nbsp;|&nbsp;
@@ -306,8 +318,8 @@
             <span class="post-meta-item-icon">
               <i class="fa fa-calendar-check-o"></i>
             </span>
-            <time title="Post modified" itemprop="dateModified" datetime="2016-11-17T10:39:22+08:00">
-              2016-11-17
+            <time title="Post modified" itemprop="dateModified" datetime="2017-01-20T15:33:09+08:00">
+              2017-01-20
             </time>
             
           </span>
@@ -321,8 +333,8 @@
               <span class="post-meta-item-text">分类于</span>
               
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/other/" itemprop="url" rel="index">
-                    <span itemprop="name">other</span>
+                  <a href="/categories/rpi/" itemprop="url" rel="index">
+                    <span itemprop="name">rpi</span>
                   </a>
                 </span>
 
@@ -357,21 +369,24 @@
       
 
       
-        <h1 id="搜索引擎"><a href="#搜索引擎" class="headerlink" title="搜索引擎"></a>搜索引擎</h1><p>搜索引擎对于每一个码农来说都是一个互联网数据库，在这个数据库中有很多信息，我们在这个数据库中检索数据不需要指定数据库，也不需要数据表，只需要指定你需要检索的关键字即可。但这种搜索方式虽然搜索范围大，无漏网之鱼，可也搜到了很多于我们需要无关的内容。为了精确查找，筛选掉不需要的信息。搜索引擎还有如下用法，接下来，就让我们一探究竟吧。</p>
-<h1 id="特殊用法"><a href="#特殊用法" class="headerlink" title="特殊用法"></a>特殊用法</h1><p>由于天朝屏蔽Google，所以以下可在baidu搜索输入框中操作实现。</p>
-<h2 id="指定标题搜索"><a href="#指定标题搜索" class="headerlink" title="指定标题搜索"></a>指定标题搜索</h2><h3 id="语法"><a href="#语法" class="headerlink" title="语法"></a>语法</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">intitle:&quot;&lt;网页title内容(标签上显示的内容)&gt;&quot;</div></pre></td></tr></table></figure>
-<h3 id="举例"><a href="#举例" class="headerlink" title="举例"></a>举例</h3><p>搜索title中含有“Bolog”的网页<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">intitle:&quot;Bolog&quot;</div></pre></td></tr></table></figure></p>
-<h2 id="指定URL搜索"><a href="#指定URL搜索" class="headerlink" title="指定URL搜索"></a>指定URL搜索</h2><h3 id="语法-1"><a href="#语法-1" class="headerlink" title="语法"></a>语法</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">inurl:&lt;全部或部分URL信息&gt;</div></pre></td></tr></table></figure>
-<h3 id="举例-1"><a href="#举例-1" class="headerlink" title="举例"></a>举例</h3><p>搜索url中包含<code>nginx-1-11-6</code>的网页<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">inurl:nginx-1-11-6</div></pre></td></tr></table></figure></p>
-<h2 id="指定正文内容搜索"><a href="#指定正文内容搜索" class="headerlink" title="指定正文内容搜索"></a>指定正文内容搜索</h2><h3 id="语法-2"><a href="#语法-2" class="headerlink" title="语法"></a>语法</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">intext:&quot;&lt;搜索关键字&gt;&quot;</div></pre></td></tr></table></figure>
-<p>此方法也是搜索引擎默认使用方法（猜的）</p>
-<h3 id="举例-2"><a href="#举例-2" class="headerlink" title="举例"></a>举例</h3><p>搜索正文内容含有“python” 和“golang”关键字的网页<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">intext:&quot;&lt;python golang&gt;&quot;</div></pre></td></tr></table></figure></p>
-<h2 id="指定网站（站点）搜索"><a href="#指定网站（站点）搜索" class="headerlink" title="指定网站（站点）搜索"></a>指定网站（站点）搜索</h2><h3 id="语法-3"><a href="#语法-3" class="headerlink" title="语法"></a>语法</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">site:&lt;网站域名&gt; &lt;搜索关键字&gt;</div></pre></td></tr></table></figure>
-<h3 id="举例-3"><a href="#举例-3" class="headerlink" title="举例"></a>举例</h3><p>在oschina上搜索python关键字<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">site:oschina.net python</div></pre></td></tr></table></figure></p>
-<h2 id="指定文件类型搜索"><a href="#指定文件类型搜索" class="headerlink" title="指定文件类型搜索"></a>指定文件类型搜索</h2><h3 id="语法-4"><a href="#语法-4" class="headerlink" title="语法"></a>语法</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">filetype:&lt;文件类型&gt; &lt;搜索关键字&gt;</div></pre></td></tr></table></figure>
-<h3 id="举例-4"><a href="#举例-4" class="headerlink" title="举例"></a>举例</h3><p>搜索所有带有python关键字的PDF文档<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">filetype:pdf python</div></pre></td></tr></table></figure></p>
+        <h1 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h1><p>新买了一个TF卡，Class10的，应该能挺快。原来的卡是class4的，如果用新卡做系统，然后所有软件都重装重配，太麻烦！所以将现有系统，做成镜像（img），然后直接<code>dd</code>到新卡上，然后再执行<code>raspi-conf</code>进行容量扩展就可以正常使用了。</p>
+<h1 id="版本"><a href="#版本" class="headerlink" title="版本"></a>版本</h1><ul>
+<li>硬件，RaspberryPi3</li>
+<li>OS，raspbian jessie</li>
+</ul>
+<h1 id="步骤"><a href="#步骤" class="headerlink" title="步骤"></a>步骤</h1><h2 id="安装需要的软件"><a href="#安装需要的软件" class="headerlink" title="安装需要的软件"></a>安装需要的软件</h2><p>安装<code>dosfstools</code>、<code>parted</code>、<code>kpartx</code>软件及依赖包。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo apt-get install dosfstools parted kpartx</div></pre></td></tr></table></figure></p>
+<h2 id="计算镜像大小"><a href="#计算镜像大小" class="headerlink" title="计算镜像大小"></a>计算镜像大小</h2><p>获取<code>/dev/root</code>和<code>/dev/mmcblk0p1</code>占用的空间，然后计算镜像大小，计算公式：1.2 * (size(/dev/root) + size(/dev/mmcblk0p1))</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">$ df -P</div><div class="line">Filesystem     1024-blocks      Used Available Capacity Mounted on</div><div class="line">/dev/root         30690780   1390740  28024812       5% /</div><div class="line">/dev/mmcblk0p1       64366     20698     43668      33% /boot</div></pre></td></tr></table></figure>
+<p><code>df</code>返回的容量单位为KB。</p>
+<h2 id="生成空白镜像文件"><a href="#生成空白镜像文件" class="headerlink" title="生成空白镜像文件"></a>生成空白镜像文件</h2><p>使用<code>dd</code>和<code>/dev/zero</code>生成空白镜像文件<code>sudo dd if=/dev/zero of={镜像文件} bs=1K count={镜像大小（单位为K）}</code></p>
+<h2 id="分区镜像文件并格式化"><a href="#分区镜像文件并格式化" class="headerlink" title="分区镜像文件并格式化"></a>分区镜像文件并格式化</h2><h3 id="分区"><a href="#分区" class="headerlink" title="分区"></a>分区</h3><p>使用<code>parted</code>为img文件分区<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">sudo parted &#123;镜像文件&#125; -s -- mklabel msdos</div><div class="line">sudo parted &#123;镜像文件&#125; -s -- mkpart primary fat32 &#123;开始扇区&#125;s &#123;结束扇区&#125;s</div><div class="line">sudo parted &#123;镜像文件&#125; -s -- mkpart primary ext4 &#123;开始扇区&#125;s -1</div></pre></td></tr></table></figure></p>
+<p>开始扇区和结束扇区可是通过<code>sudo fdisk -l /dev/mmcblk0</code>来查看。</p>
+<h3 id="格式化"><a href="#格式化" class="headerlink" title="格式化"></a>格式化</h3><p>在格式化前，需要先将img文件映射给系统的loop设备，然后在将loop设备映射给device mapper。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"># 映射loop设备</div><div class="line">$ sudo losetup -f --show &#123;镜像文件&#125;</div><div class="line">/dev/loop0</div><div class="line"></div><div class="line"># device mapper</div><div class="line">$ sudo kpartx -va /dev/loop0</div><div class="line">add map loop0p1 (254:0): 0 257 linear /dev/loop0 256</div><div class="line">add map loop0p2 (254:1): 0 18015 linear /dev/loop0 513</div><div class="line"></div><div class="line"># 格式化</div><div class="line">$ sudo mkfs.vfat /dev/mapper/loop0p1</div><div class="line">......</div><div class="line">$ sudo mkfs.ext4 /dev/mapper/loop0p2</div><div class="line">......</div></pre></td></tr></table></figure></p>
+<h2 id="挂载并备份系统"><a href="#挂载并备份系统" class="headerlink" title="挂载并备份系统"></a>挂载并备份系统</h2><p>备份<code>/boot</code><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">$ sudo mount -f vfat /dev/mapper/loop0p1 /media</div><div class="line">$ sudo cp -rfp /boot/* /media/</div><div class="line">$ sudo umount /media</div></pre></td></tr></table></figure></p>
+<p>备份<code>/</code><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">$ sudo mount -t ext4 /dev/mapper/loop0p2 /media</div><div class="line">$ sudo rsync -aP --exclude=&#123;镜像文件&#125; --exclude=/media/* --exclude=/sys/* --exclude=/proc/* --exclude=/tmp/* / /media/</div><div class="line">...</div><div class="line">$ sudo umount /media</div></pre></td></tr></table></figure></p>
+<h2 id="卸载打包镜像文件"><a href="#卸载打包镜像文件" class="headerlink" title="卸载打包镜像文件"></a>卸载打包镜像文件</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"># 关闭device mapper</div><div class="line">sudo kpartx -d /dev/loop0</div><div class="line"></div><div class="line">＃关闭 loop 设备</div><div class="line">sudo losetup -d /dev/loop0</div></pre></td></tr></table></figure>
 <h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a href="http://www.360doc.com/content/13/1014/11/1956846_321333210.shtml" target="_blank" rel="external">intile,inurl,filetype,site作用及在google中的用法</a></li>
+<li><a href="http://blog.csdn.net/talkxin/article/details/50456282" target="_blank" rel="external">制作树莓派最小镜像-img裁剪瘦身</a></li>
 </ul>
 
       
@@ -396,7 +411,9 @@
       
         <div class="post-tags">
           
-            <a href="/tags/search/" rel="tag"># search</a>
+            <a href="/tags/rpi3/" rel="tag"># rpi3</a>
+          
+            <a href="/tags/image/" rel="tag"># image</a>
           
         </div>
       
@@ -405,8 +422,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2016/11/15/python/python-argparse-use/" rel="next" title="python-argparse-use">
-                <i class="fa fa-chevron-left"></i> python-argparse-use
+              <a href="/2017/01/13/linux/filesystem-userspace-usage/" rel="next" title="FUSE的使用及示例">
+                <i class="fa fa-chevron-left"></i> FUSE的使用及示例
               </a>
             
           </div>
@@ -414,10 +431,6 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2016/11/17/storage/ceph/rbd-nbd/" rel="prev" title="rbd-nbd分析">
-                rbd-nbd分析 <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -557,7 +570,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#搜索引擎"><span class="nav-number">1.</span> <span class="nav-text">搜索引擎</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#特殊用法"><span class="nav-number">2.</span> <span class="nav-text">特殊用法</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#指定标题搜索"><span class="nav-number">2.1.</span> <span class="nav-text">指定标题搜索</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#语法"><span class="nav-number">2.1.1.</span> <span class="nav-text">语法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#举例"><span class="nav-number">2.1.2.</span> <span class="nav-text">举例</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#指定URL搜索"><span class="nav-number">2.2.</span> <span class="nav-text">指定URL搜索</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#语法-1"><span class="nav-number">2.2.1.</span> <span class="nav-text">语法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#举例-1"><span class="nav-number">2.2.2.</span> <span class="nav-text">举例</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#指定正文内容搜索"><span class="nav-number">2.3.</span> <span class="nav-text">指定正文内容搜索</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#语法-2"><span class="nav-number">2.3.1.</span> <span class="nav-text">语法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#举例-2"><span class="nav-number">2.3.2.</span> <span class="nav-text">举例</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#指定网站（站点）搜索"><span class="nav-number">2.4.</span> <span class="nav-text">指定网站（站点）搜索</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#语法-3"><span class="nav-number">2.4.1.</span> <span class="nav-text">语法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#举例-3"><span class="nav-number">2.4.2.</span> <span class="nav-text">举例</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#指定文件类型搜索"><span class="nav-number">2.5.</span> <span class="nav-text">指定文件类型搜索</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#语法-4"><span class="nav-number">2.5.1.</span> <span class="nav-text">语法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#举例-4"><span class="nav-number">2.5.2.</span> <span class="nav-text">举例</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考-amp-鸣谢"><span class="nav-number">3.</span> <span class="nav-text">参考&鸣谢</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#介绍"><span class="nav-number">1.</span> <span class="nav-text">介绍</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#版本"><span class="nav-number">2.</span> <span class="nav-text">版本</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#步骤"><span class="nav-number">3.</span> <span class="nav-text">步骤</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#安装需要的软件"><span class="nav-number">3.1.</span> <span class="nav-text">安装需要的软件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#计算镜像大小"><span class="nav-number">3.2.</span> <span class="nav-text">计算镜像大小</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#生成空白镜像文件"><span class="nav-number">3.3.</span> <span class="nav-text">生成空白镜像文件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#分区镜像文件并格式化"><span class="nav-number">3.4.</span> <span class="nav-text">分区镜像文件并格式化</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#分区"><span class="nav-number">3.4.1.</span> <span class="nav-text">分区</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#格式化"><span class="nav-number">3.4.2.</span> <span class="nav-text">格式化</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#挂载并备份系统"><span class="nav-number">3.5.</span> <span class="nav-text">挂载并备份系统</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#卸载打包镜像文件"><span class="nav-number">3.6.</span> <span class="nav-text">卸载打包镜像文件</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考-amp-鸣谢"><span class="nav-number">4.</span> <span class="nav-text">参考&鸣谢</span></a></li></ol></div>
             
 
           </div>
