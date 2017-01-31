@@ -256,7 +256,7 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/12/28/container/docker/docker-machine/">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/12/30/container/docker/dockerfile-write/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
     <meta itemprop="name" content="博">
@@ -281,8 +281,8 @@
             
               
                 
-                <a class="post-title-link" href="/2016/12/28/container/docker/docker-machine/" itemprop="url">
-                  Docker Machine使用介绍
+                <a class="post-title-link" href="/2016/12/30/container/docker/dockerfile-write/" itemprop="url">
+                  Dockerfile
                 </a>
               
             
@@ -295,8 +295,8 @@
               <i class="fa fa-calendar-o"></i>
             </span>
             <span class="post-meta-item-text">发表于</span>
-            <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-12-28T10:20:07+08:00">
-              2016-12-28
+            <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-12-30T10:01:58+08:00">
+              2016-12-30
             </time>
 
             &nbsp;|&nbsp;
@@ -304,8 +304,8 @@
             <span class="post-meta-item-icon">
               <i class="fa fa-calendar-check-o"></i>
             </span>
-            <time title="Post modified" itemprop="dateModified" datetime="2016-12-28T10:20:07+08:00">
-              2016-12-28
+            <time title="Post modified" itemprop="dateModified" datetime="2016-12-30T14:12:33+08:00">
+              2016-12-30
             </time>
             
           </span>
@@ -357,7 +357,46 @@
       
         
           
-            <h1 id="Deploy"><a href="#Deploy" class="headerlink" title="Deploy"></a>Deploy</h1><h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1>
+            <h1 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h1><p>Dockerfile是docker image构建脚本，是用于生成image。Dockerfile忽略大小写，使用‘#’注释，每行只执行一条指令。Dockerfile指令分为两种，构建指令和设置指令。</p>
+<ul>
+<li>构建指令，用于构建image，不会在image的容器上执行</li>
+<li>设置指令，用于设置image属性，会在image的容器上执行</li>
+</ul>
+<h1 id="Dockerfile指令"><a href="#Dockerfile指令" class="headerlink" title="Dockerfile指令"></a>Dockerfile指令</h1><h2 id="FROM"><a href="#FROM" class="headerlink" title="FROM"></a>FROM</h2><p>构建指令，用于指定基础image。该指令必须指定在Dockerfile其它指令的前面，后面的Dockerfile指令都依赖于该指令指定的image。FROM指令指定的基础image可以是官方docker hub仓库中的，也可以是位于本地仓库中的。</p>
+<p>指令格式：<code>FROM &lt;image&gt;[:&lt;tag&gt;]</code><br>若不指定<code>:&lt;tag&gt;</code>，默认使用<code>:latest</code>。</p>
+<h2 id="MAINTAINER"><a href="#MAINTAINER" class="headerlink" title="MAINTAINER"></a>MAINTAINER</h2><p>构建指令，用于将image的制作者相关信息写入到image中。</p>
+<p>指令格式：<code>MAINTAINER &lt;name&gt;</code></p>
+<h2 id="RUN"><a href="#RUN" class="headerlink" title="RUN"></a>RUN</h2><p>构建指令，可以运行任何被基础image支持的命令。</p>
+<p>指令格式：<code>RUN &lt;command&gt;</code> 或 <code>RUN [&quot;executable&quot;,&quot;param 1&quot;,&quot;param n&quot;]</code><br>一般用于软件安装</p>
+<h2 id="CMD"><a href="#CMD" class="headerlink" title="CMD"></a>CMD</h2><p>设置指令，用于container启动时指定的操作。该操作可以是执行自定义脚本，也可以是执行系统命令。该指令只能在文件中存在一次，如果有多个，则只执行最后一条。</p>
+<p>指令格式：<code>CMD &lt;executable&gt; &lt;param 1&gt; &lt;param n&gt;</code> 或 <code>CMD [&quot;executable&quot;, &quot;param 1&quot;, &quot;param n&quot;]</code></p>
+<h2 id="ENTRYPOINT"><a href="#ENTRYPOINT" class="headerlink" title="ENTRYPOINT"></a>ENTRYPOINT</h2><p>设置指令，指定容器启动时执行的命令，可以多次设置，但是只有最后一个有效。</p>
+<p>指令格式：<code>ENTRYPOINT [&quot;executable&quot;, &quot;param 1&quot;, &quot;param n&quot;]</code> 或 <code>ENTRYPOINT &lt;executable&gt; &lt;param 1&gt; &lt;param n&gt;</code><br>CMD指令和ENTRYPOINT会互相覆盖只有最后一个CMD或者ENTRYPOINT有效。</p>
+<p>和CMD指令配合使用来指定ENTRYPOINT的默认参数，这时CMD指令不是一个完整的可执行命令，仅仅是参数部分。ENTRYPOINT指令只能使用JSON方式指定执行命令，而不能指定参数。<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">FROM centos7</div><div class="line">CMD [<span class="string">"-l"</span>]</div><div class="line">ENTRYPOINT [<span class="string">"/usr/bin/ls"</span>]</div></pre></td></tr></table></figure></p>
+<h2 id="USER"><a href="#USER" class="headerlink" title="USER"></a>USER</h2><p>设置指令，设置启动容器的用户，默认是root用户</p>
+<p>指令格式：<code>USER &lt;user name&gt;</code></p>
+<h2 id="EXPOSE"><a href="#EXPOSE" class="headerlink" title="EXPOSE"></a>EXPOSE</h2><p>设置指令，该指令会将容器中的端口映射成宿主机器中的某个端口。需要访问容器的时候，可以不是用容器的IP地址而是使用宿主机器的IP地址和映射后的端口。首先在Dockerfile使用EXPOSE设置需要映射的容器端口，然后在运行容器的时候指定-p选项加上EXPOSE设置的端口，这样EXPOSE设置的端口号会被随机映射成宿主机器中的一个端口号。也可以指定需要映射到宿主机器的那个端口，这时要确保宿主机器上的端口号没有被使用。EXPOSE指令可以一次设置多个端口号，相应的运行容器的时候，可以配套的多次使用-p选项。</p>
+<p>指令格式：<code>EXPOSE &lt;port&gt; [&lt;port&gt;...]</code></p>
+<h2 id="ENV"><a href="#ENV" class="headerlink" title="ENV"></a>ENV</h2><p>构建指令，在image中设置一个环境变量</p>
+<p>指令格式：<code>ENV &lt;key&gt; &lt;value&gt;</code><br>设置了后，后续的RUN命令都可以使用，container启动后，可以通过docker inspect查看这个环境变量，也可以通过在docker run –env key=value时设置或修改环境变量。</p>
+<h2 id="ADD"><a href="#ADD" class="headerlink" title="ADD"></a>ADD</h2><p>构建指令，从src复制文件到container的dest路径。</p>
+<p>指令格式：<code>ADD &lt;src&gt; &lt;dest&gt;</code></p>
+<ul>
+<li><code>&lt;src&gt;</code>是相对被构建的源目录的相对路径，可以是文件或目录的路径，也可以是一个远程的文件url</li>
+<li><code>&lt;dest&gt;</code>是container中的绝对路径<br>所有拷贝到container中的文件和文件夹权限为0755，uid和gid为0；如果是一个目录，那么会将该目录下的所有文件添加到container中，不包括目录；如果文件是可识别的压缩格式，则docker会帮忙解压缩（注意压缩格式）；如果<code>&lt;src&gt;</code>是文件且<code>&lt;dest&gt;</code>中不使用斜杠结束，则会将<code>&lt;dest&gt;</code>视为文件，<code>&lt;src&gt;</code>的内容会写入<code>&lt;dest&gt;</code>；如果<code>&lt;src&gt;</code>是文件且<code>&lt;dest&gt;</code>中使用斜杠结束，则会<code>&lt;src&gt;</code>文件拷贝到<code>&lt;dest&gt;</code>目录下。</li>
+</ul>
+<h2 id="VOLUME"><a href="#VOLUME" class="headerlink" title="VOLUME"></a>VOLUME</h2><p>设置指令，指定挂载点。使容器中的一个目录具有持久化存储数据的功能，该目录可以被容器本身使用，也可以共享给其他容器使用。我们知道容器使用的是AUFS，这种文件系统不能持久化数据，当容器关闭后，所有的更改都会丢失。当容器中的应用有持久化数据的需求时可以在Dockerfile中使用该指令。</p>
+<p>指令格式：<code>VOLUME [&quot;&lt;mount point path&gt;&quot;]</code></p>
+<h2 id="WORKDIR"><a href="#WORKDIR" class="headerlink" title="WORKDIR"></a>WORKDIR</h2><p>设置指令，切换目录，可多次切换（相当于cd命令），对<code>RUN</code>、<code>CMD</code>、<code>ENTRYPOINT</code>生效</p>
+<p>指令格式：<code>WORKDIR &lt;path&gt;</code></p>
+<h2 id="ONBUILD"><a href="#ONBUILD" class="headerlink" title="ONBUILD"></a>ONBUILD</h2><p>设置指令，在子镜像中执行，在构建镜像时并不执行，而是在它的子镜像中执行</p>
+<p>指令格式：<code>ONBUILD &lt;Dockerfile指令&gt;</code></p>
+<h1 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h1><p>Todo…</p>
+<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a href="http://blog.csdn.net/qinyushuang/article/details/43342553" target="_blank" rel="external">如何使用Dockerfile构建镜像</a></li>
+<li><a href="http://blog.csdn.net/i6448038/article/details/50855538" target="_blank" rel="external">Dockerfile指令详解</a></li>
+</ul>
+
           
         
       
@@ -1609,6 +1648,157 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/11/15/vim/vi-bin-text-change/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="博">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.png">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="Bolog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="Bolog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2016/11/15/vim/vi-bin-text-change/" itemprop="url">
+                  vi(m)进制转换
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-11-15T00:00:00+08:00">
+              2016-11-15
+            </time>
+
+            &nbsp;|&nbsp;
+
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-check-o"></i>
+            </span>
+            <time title="Post modified" itemprop="dateModified" datetime="2016-11-15T16:23:03+08:00">
+              2016-11-15
+            </time>
+            
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/vim/" itemprop="url" rel="index">
+                    <span itemprop="name">vim</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+          
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="vi命令"><a href="#vi命令" class="headerlink" title="vi命令"></a>vi命令</h1><p>使用“xxd”或“od”工具转换十六进制<br>方法如下：</p>
+<ul>
+<li><code>:%!xxd</code>将当前文本转换为16进制格式</li>
+<li><code>:%!xxd -c 12</code>将当前文本转换为16进制格式,并每行显示12个字节</li>
+<li><p><code>:%!xxd -r</code>将当前文件转换回文本格式</p>
+</li>
+<li><h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1></li>
+<li><ol>
+<li><a href="http://lwg2001s.iteye.com/blog/2035826" target="_blank" rel="external">vi下以16进制查看二进制文件</a></li>
+</ol>
+</li>
+</ul>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
   <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/11/15/mysql/mysql-password-functions/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1752,157 +1942,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/11/15/vim/vi-bin-text-change/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="博">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.png">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="Bolog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="Bolog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/11/15/vim/vi-bin-text-change/" itemprop="url">
-                  vi(m)进制转换
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-11-15T00:00:00+08:00">
-              2016-11-15
-            </time>
-
-            &nbsp;|&nbsp;
-
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-check-o"></i>
-            </span>
-            <time title="Post modified" itemprop="dateModified" datetime="2016-11-15T16:23:03+08:00">
-              2016-11-15
-            </time>
-            
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/vim/" itemprop="url" rel="index">
-                    <span itemprop="name">vim</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-          
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="vi命令"><a href="#vi命令" class="headerlink" title="vi命令"></a>vi命令</h1><p>使用“xxd”或“od”工具转换十六进制<br>方法如下：</p>
-<ul>
-<li><code>:%!xxd</code>将当前文本转换为16进制格式</li>
-<li><code>:%!xxd -c 12</code>将当前文本转换为16进制格式,并每行显示12个字节</li>
-<li><p><code>:%!xxd -r</code>将当前文件转换回文本格式</p>
-</li>
-<li><h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1></li>
-<li><ol>
-<li><a href="http://lwg2001s.iteye.com/blog/2035826" target="_blank" rel="external">vi下以16进制查看二进制文件</a></li>
-</ol>
-</li>
-</ul>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1965,7 +2004,7 @@
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">57</span>
+                <span class="site-state-item-count">58</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

@@ -1,0 +1,778 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="docker,namespace,cgroup," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="介绍docker不是一项新技术，docker是老旧技术的组合，为了更方便使用容器技术，docker提供了简单方便的UI。docker隔离资源主要用到了两种技术namespace、cgroup。
+Namespacenamespace是linux内核提供的隔离技术，它包括六种资源隔离，UTS（主机名与域名）、IPC（信号量、消息队列和共享内存）、PID（进程编号）、NET（网络设备、网络栈、端口…）、">
+<meta property="og:type" content="article">
+<meta property="og:title" content="docker 资源隔离">
+<meta property="og:url" content="http://yoursite.com/2017/01/25/container/docker/docker-resource-separation/index.html">
+<meta property="og:site_name" content="Bolog">
+<meta property="og:description" content="介绍docker不是一项新技术，docker是老旧技术的组合，为了更方便使用容器技术，docker提供了简单方便的UI。docker隔离资源主要用到了两种技术namespace、cgroup。
+Namespacenamespace是linux内核提供的隔离技术，它包括六种资源隔离，UTS（主机名与域名）、IPC（信号量、消息队列和共享内存）、PID（进程编号）、NET（网络设备、网络栈、端口…）、">
+<meta property="og:image" content="http://yoursite.com/images/docker/docker-resource-separation-pid.png">
+<meta property="og:image" content="http://yoursite.com/images/docker/docker-resource-separation-network.png">
+<meta property="og:image" content="http://yoursite.com/images/docker/docker-resource-separation-mount.png">
+<meta property="og:updated_time" content="2017-01-31T02:33:50.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="docker 资源隔离">
+<meta name="twitter:description" content="介绍docker不是一项新技术，docker是老旧技术的组合，为了更方便使用容器技术，docker提供了简单方便的UI。docker隔离资源主要用到了两种技术namespace、cgroup。
+Namespacenamespace是linux内核提供的隔离技术，它包括六种资源隔离，UTS（主机名与域名）、IPC（信号量、消息队列和共享内存）、PID（进程编号）、NET（网络设备、网络栈、端口…）、">
+<meta name="twitter:image" content="http://yoursite.com/images/docker/docker-resource-separation-pid.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2017/01/25/container/docker/docker-resource-separation/"/>
+
+
+
+
+
+  <title> docker 资源隔离 | Bolog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">Bolog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/01/25/container/docker/docker-resource-separation/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="博">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.png">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="Bolog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="Bolog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                docker 资源隔离
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-01-25T14:44:23+08:00">
+              2017-01-25
+            </time>
+
+            &nbsp;|&nbsp;
+
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-check-o"></i>
+            </span>
+            <time title="Post modified" itemprop="dateModified" datetime="2017-01-31T10:33:50+08:00">
+              2017-01-31
+            </time>
+            
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/container/" itemprop="url" rel="index">
+                    <span itemprop="name">container</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+          
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h1><p>docker不是一项新技术，docker是老旧技术的组合，为了更方便使用容器技术，docker提供了简单方便的UI。docker隔离资源主要用到了两种技术namespace、cgroup。</p>
+<h1 id="Namespace"><a href="#Namespace" class="headerlink" title="Namespace"></a>Namespace</h1><p>namespace是linux内核提供的隔离技术，它包括六种资源隔离，UTS（主机名与域名）、IPC（信号量、消息队列和共享内存）、PID（进程编号）、NET（网络设备、网络栈、端口…）、Mount（文件系统、挂载点）、User（用户和用户组）。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">Type</th>
+<th style="text-align:center">Sys Params</th>
+<th style="text-align:center">ker ver</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">UTS</td>
+<td style="text-align:center">CLONE_NEWUTS</td>
+<td style="text-align:center">2.6.19</td>
+</tr>
+<tr>
+<td style="text-align:center">IPC</td>
+<td style="text-align:center">CLONE_NEWIPC</td>
+<td style="text-align:center">2.6.19</td>
+</tr>
+<tr>
+<td style="text-align:center">PID</td>
+<td style="text-align:center">CLONE_NEWPID</td>
+<td style="text-align:center">2.6.24</td>
+</tr>
+<tr>
+<td style="text-align:center">NET</td>
+<td style="text-align:center">CLONE_NEWNET</td>
+<td style="text-align:center">2.6.29</td>
+</tr>
+<tr>
+<td style="text-align:center">Mount</td>
+<td style="text-align:center">CLONE_NEWNS</td>
+<td style="text-align:center">2.4.19</td>
+</tr>
+<tr>
+<td style="text-align:center">User</td>
+<td style="text-align:center">CLONE_NEWUSER</td>
+<td style="text-align:center">3.8</td>
+</tr>
+</tbody>
+</table>
+<p>操作系统调用接口：</p>
+<ul>
+<li>clone()<br>  创建一个独立的进程独立的namespace</li>
+<li>setns()<br>  使用已有的一个namespace</li>
+<li>unshare()<br>  不启动新进程，在原进程上进行namespace隔离</li>
+</ul>
+<p>docker run中提供了使用namespace的接口:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"># docker run --help | grep -i namespace</div><div class="line">--ipc string                  IPC namespace to use</div><div class="line">--pid string                  PID namespace to use</div><div class="line">--userns string               User namespace to use</div><div class="line">--uts string                  UTS namespace to use</div></pre></td></tr></table></figure></p>
+<h2 id="UTS"><a href="#UTS" class="headerlink" title="UTS"></a>UTS</h2><p>提供了主机名和域名的隔离，这样每个容器就可以拥有了独立的主机名和域名，在网络上可以被视作一个独立的节点而非宿主机上的一个进程。<br>docker在run或create时，使用<code>-h</code>或<code>--hostname</code>指定hostname</p>
+<h2 id="IPC"><a href="#IPC" class="headerlink" title="IPC"></a>IPC</h2><p>IPC是Unix／linux下进程间通讯的一种方式，包括信号量、消息队列、共享内存。容器内部进程间通信对宿主机来说，实际上是具有相同PID namespace中的进程间通信，因此需要一个唯一的标识符来进行区别。申请IPC资源就申请了这样一个全局唯一的32位ID，所以IPC namespace中实际上包含了系统IPC标识符以及实现POSIX消息队列的文件系统。在同一个IPC namespace下的进程彼此可见，而与其他的IPC namespace下的进程则互相不可见。</p>
+<p>在宿主机上创建IPC（以消息队列为例）：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"># ipcmk -Q</div><div class="line">消息队列 id：32768</div></pre></td></tr></table></figure></p>
+<p>在宿主机上查询IPC：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"># ipcs</div><div class="line"></div><div class="line">--------- 消息队列 -----------</div><div class="line">键        msqid      拥有者  权限     已用字节数 消息</div><div class="line">0xabba8164 32768      root       644        0            0</div></pre></td></tr></table></figure></p>
+<p>在容器中查询IPC：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"># docker exec -it net_5 ipcs</div><div class="line"></div><div class="line">------ Message Queues --------</div><div class="line">key        msqid      owner      perms      used-bytes   messages</div><div class="line"></div><div class="line">------ Shared Memory Segments --------</div><div class="line">key        shmid      owner      perms      bytes      nattch     status</div><div class="line"></div><div class="line">------ Semaphore Arrays --------</div><div class="line">key        semid      owner      perms      nsems</div></pre></td></tr></table></figure></p>
+<h2 id="PID"><a href="#PID" class="headerlink" title="PID"></a>PID</h2><p>它对进程PID重新标号，即两个不同namespace下的进程可以有同一个PID。每个PID namespace都有自己的计数程序。内核为所有的PID namespace维护了一个树状结构，最顶层的是系统初始时创建的，我们称之为root namespace。他创建的新PID namespace就称之为child namespace（树的子节点），而原先的PID namespace就是新创建的PID namespace的parent namespace（树的父节点）。通过这种方式，不同的PID namespaces会形成一个等级体系。所属的父节点可以看到子节点中的进程，并可以通过信号等方式对子节点中的进程产生影响。反过来，子节点不能看到父节点PID namespace中的任何内容。</p>
+<pre><code>* 每个PID namespace中的第一个进程“PID 1“，都会像传统Linux中的init进程一样拥有特权，起特殊作用。
+* 一个namespace中的进程，不可能通过kill或ptrace影响父节点或者兄弟节点中的进程，因为其他节点的PID在这个namespace中没有任何意义。
+* 如果你在新的PID namespace中重新挂载/proc文件系统，会发现其下只显示同属一个PID namespace中的其他进程。（挂载/proc 文件系统尤为重要）
+* 在root namespace中可以看到所有的进程，并且递归包含所有子节点中的进程。
+</code></pre><p><img src="/images/docker/docker-resource-separation-pid.png" alt="docker-resource-separation-pid"></p>
+<p>以容器的ceph-mon节点为例：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"># 宿主机上查看 ceph-mon 进程</div><div class="line"># ps -ef| grep 9184</div><div class="line">root      9184  3122  0 1月20 ?       00:00:04 docker-containerd-shim be0583fade06df3f6510dd629bde4a636e68c755aa8b0733db6702493b1d0c38 /var/run/docker/libcontainerd/be0583fade06df3f6510dd629bde4a636e68c755aa8b0733db6702493b1d0c38 docker-runc</div><div class="line">64045     9200  9184  0 1月20 ?       00:01:03 /usr/bin/ceph-mon --cluster ceph -d -i rhel82 --public-addr 192.168.1.82:6789 --setuser ceph --setgroup ceph</div><div class="line">root     21893  9855  0 16:15 pts/5    00:00:00 grep --color=auto 9184</div><div class="line"></div><div class="line"># 容器中查看 ceph-mon 进程</div><div class="line"># docker exec -it ceph-mon ps -ef</div><div class="line">UID        PID  PPID  C STIME TTY          TIME CMD</div><div class="line">ceph         1     0  0 Jan20 ?        00:01:03 /usr/bin/ceph-mon --cluster ceph</div><div class="line">root        26     0  0 08:15 ?        00:00:00 ps -ef</div></pre></td></tr></table></figure></p>
+<h2 id="NET"><a href="#NET" class="headerlink" title="NET"></a>NET</h2><p>Pv4和IPv6协议栈、IP路由表、防火墙、/proc/net目录、/sys/class/net目录、端口（socket）等等。一个物理的网络设备最多存在在一个network namespace中，你可以通过创建veth pair（虚拟网络设备对：有两端，类似管道，如果数据从一端传入另一端也能接收到，反之亦然）在不同的network namespace间创建通道，以此达到通信的目的。</p>
+<p>一般情况下，物理网络设备都分配在最初的root namespace（表示系统默认的namespace，在PID namespace中已经提及）中。但是如果你有多块物理网卡，也可以把其中一块或多块分配给新创建的network namespace。需要注意的是，当新创建的network namespace被释放时（所有内部的进程都终止并且namespace文件没有被挂载或打开），在这个namespace中的物理网卡会返回到root namespace而非创建该进程的父进程所在的network namespace。</p>
+<p>当我们说到network namespace时，其实我们指的未必是真正的网络隔离，而是把网络独立出来，给外部用户一种透明的感觉，仿佛跟另外一个网络实体在进行通信。为了达到这个目的，容器的经典做法就是创建一个veth pair，一端放置在新的namespace中，通常命名为eth0，一端放在原先的namespace中连接物理网络设备，再通过网桥把别的设备连接进来或者进行路由转发，以此网络实现通信的目的。</p>
+<p><img src="/images/docker/docker-resource-separation-network.png" alt="docker-resource-separation-network"></p>
+<p>可通过<code>ip netns</code>、<code>brctl</code>管理Network Namespace，docker创建的netns路径为<code>/proc/{进程ID}/ns/net</code>，<code>ip netns</code>访问的默认路径为<code>/var/run/netns/</code>。<br>若需要访问其Network Namespace内部，先创建软连接链至<code>ip netns</code>访问路径，然后使用<code>ip netns exec</code>访问该网络内部。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line"># 在ip netns访问路径下创建network namespace的软链接</div><div class="line"># ln -s /proc/7013/ns/net /var/run/netns/net_5</div><div class="line"></div><div class="line"># 使用 ip netns exec 访问指定network namespace的网络</div><div class="line"># ip netns exec net_5 ip addr</div><div class="line">1: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu 65536 qdisc noqueue state UNKNOWN group default</div><div class="line">  link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00</div><div class="line">  inet 127.0.0.1/8 scope host lo</div><div class="line">  valid_lft forever preferred_lft forever</div><div class="line">  inet6 ::1/128 scope host</div><div class="line">  valid_lft forever preferred_lft forever</div><div class="line">15: eth0: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc noqueue state UP group default</div><div class="line">  link/ether 02:42:ac:11:00:03 brd ff:ff:ff:ff:ff:ff</div><div class="line">  inet 172.17.0.3/16 scope global eth0</div><div class="line">  valid_lft forever preferred_lft forever</div><div class="line">  inet6 fe80::42:acff:fe11:3/64 scope link</div><div class="line">  valid_lft forever preferred_lft forever</div></pre></td></tr></table></figure>
+<h2 id="Mount"><a href="#Mount" class="headerlink" title="Mount"></a>Mount</h2><p>隔离后，不同mount namespace中的文件结构发生变化也互不影响。你可以通过<code>/proc/[pid]/mounts</code>查看到所有挂载在当前namespace中的文件系统，还可以通过<code>/proc/[pid]/mountstats</code>看到mount namespace中文件设备的统计信息，包括挂载文件的名字、文件系统类型、挂载位置等等。（此处用到了<a href="https://zhoubofsy.github.io/2017/01/24/linux/mount-usage/" target="_blank" rel="external">mount propagation </a> 技术）</p>
+<p><img src="/images/docker/docker-resource-separation-mount.png" alt="docker-resource-separation-mount.png"></p>
+<h2 id="USER"><a href="#USER" class="headerlink" title="USER"></a>USER</h2><p>主要隔离了安全相关的标识符（identifiers）和属性（attributes），包括用户ID、用户组ID、root目录、key（指密钥）以及特殊权限。说得通俗一点，一个普通用户的进程通过clone()创建的新进程在新user namespace中可以拥有不同的用户和用户组。这意味着一个进程在容器外属于一个没有特权的普通用户，但是他创建的容器进程却属于拥有所有权限的超级用户，这个技术为容器提供了极大的自由。</p>
+<p>docker通过<code>/proc/{进程ID}/uid_map</code>和<code>/proc/{进程ID}/gid_map</code>把容器中的uid、gid和真实系统的uid、gid给映射在一起，格式为：<code>ID-inside-ns   ID-outside-ns   length</code>。</p>
+<ul>
+<li>ID-inside-ns 表示在容器内显示的uid或gid</li>
+<li>ID-outside-ns 表示在容器外映射的真实的uid或gid</li>
+<li>length 表示映射范围，一般为1，表示一一对应(把ID-outside-ns ~（ID-outside-ns+length） 映射到 ID-inside-ns ～（ID-inside-ns+length）上)</li>
+</ul>
+<h1 id="Cgroup"><a href="#Cgroup" class="headerlink" title="Cgroup"></a>Cgroup</h1><p>Todo…</p>
+<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a href="http://www.infoq.com/cn/articles/docker-kernel-knowledge-namespace-resource-isolation?utm_source=tuicool" target="_blank" rel="external">Docker背后的内核知识——Namespace资源隔离</a></li>
+<li><a href="http://www.cnblogs.com/sammyliu/p/5878973.html" target="_blank" rel="external">理解Docker（3）：Docker 使用 Linux namespace 隔离容器的运行环境</a></li>
+<li><a href="http://www.cnblogs.com/ilinuxer/p/6188450.html" target="_blank" rel="external">Linux Namespace 介绍</a></li>
+<li><a href="https://segmentfault.com/a/1190000006913195" target="_blank" rel="external">Linux Namespace系列（07）：user namespace (CLONE_NEWUSER) (第一部分)</a></li>
+<li><a href="http://www.07net01.com/2017/01/1778663.html" target="_blank" rel="external">理解Docker容器网络之Linux Network Namespace</a></li>
+<li><a href="http://coolshell.cn/articles/17010.html" target="_blank" rel="external">DOCKER基础技术：LINUX NAMESPACE（上）</a></li>
+<li><a href="http://coolshell.cn/articles/17029.html" target="_blank" rel="external">DOCKER基础技术：LINUX NAMESPACE（下）</a></li>
+</ul>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/docker/" rel="tag"># docker</a>
+          
+            <a href="/tags/namespace/" rel="tag"># namespace</a>
+          
+            <a href="/tags/cgroup/" rel="tag"># cgroup</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/01/24/linux/mount-usage/" rel="next" title="mount更多用法">
+                <i class="fa fa-chevron-left"></i> mount更多用法
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="博" />
+          <p class="site-author-name" itemprop="name">博</p>
+          <p class="site-description motion-element" itemprop="description"></p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">50</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">15</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">58</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/zhoubofsy" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/5448295640" target="_blank" title="Weibo">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#介绍"><span class="nav-number">1.</span> <span class="nav-text">介绍</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Namespace"><span class="nav-number">2.</span> <span class="nav-text">Namespace</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#UTS"><span class="nav-number">2.1.</span> <span class="nav-text">UTS</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#IPC"><span class="nav-number">2.2.</span> <span class="nav-text">IPC</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#PID"><span class="nav-number">2.3.</span> <span class="nav-text">PID</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#NET"><span class="nav-number">2.4.</span> <span class="nav-text">NET</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Mount"><span class="nav-number">2.5.</span> <span class="nav-text">Mount</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#USER"><span class="nav-number">2.6.</span> <span class="nav-text">USER</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Cgroup"><span class="nav-number">3.</span> <span class="nav-text">Cgroup</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考-amp-鸣谢"><span class="nav-number">4.</span> <span class="nav-text">参考&鸣谢</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">博</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+	
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+
+</body>
+</html>
