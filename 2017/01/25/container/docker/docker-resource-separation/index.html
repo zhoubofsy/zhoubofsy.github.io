@@ -95,7 +95,7 @@ Namespacenamespace是linux内核提供的隔离技术，它包括六种资源隔
 <meta property="og:image" content="http://yoursite.com/images/docker/docker-resource-separation-pid.png">
 <meta property="og:image" content="http://yoursite.com/images/docker/docker-resource-separation-network.png">
 <meta property="og:image" content="http://yoursite.com/images/docker/docker-resource-separation-mount.png">
-<meta property="og:updated_time" content="2017-02-07T13:41:49.000Z">
+<meta property="og:updated_time" content="2017-02-08T06:51:08.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="docker 资源隔离">
 <meta name="twitter:description" content="介绍docker不是一项新技术，docker是老旧技术的组合，为了更方便使用容器技术，docker提供了简单方便的UI。docker隔离资源主要用到了两种技术namespace、cgroup。
@@ -310,8 +310,8 @@ Namespacenamespace是linux内核提供的隔离技术，它包括六种资源隔
             <span class="post-meta-item-icon">
               <i class="fa fa-calendar-check-o"></i>
             </span>
-            <time title="Post modified" itemprop="dateModified" datetime="2017-02-07T21:41:49+08:00">
-              2017-02-07
+            <time title="Post modified" itemprop="dateModified" datetime="2017-02-08T14:51:08+08:00">
+              2017-02-08
             </time>
             
           </span>
@@ -442,7 +442,6 @@ Namespacenamespace是linux内核提供的隔离技术，它包括六种资源隔
 <p>cgroups子系统：</p>
 <ul>
 <li>cpu<br>  使用调度程序提供对 CPU 的 cgroup 任务访问</li>
-<li>cpuacct<br>  自动生成 cgroup 中任务所使用的 CPU 报告</li>
 <li>cpuset<br>  为cgroup中的任务分配独立CPU（在多核系统）和内存节点</li>
 <li>devices<br>  可允许或者拒绝 cgroup 中的任务访问设备</li>
 <li>blkio<br>  为块设备设定输入/输出限制，比如物理设备（磁盘，固态硬盘，USB 等等）</li>
@@ -450,7 +449,6 @@ Namespacenamespace是linux内核提供的隔离技术，它包括六种资源隔
 <li>memory<br>  设定 cgroup 中任务使用的内存限制，并自动生成由那些任务使用的内存资源报告</li>
 <li>net_cls<br>  使用等级识别符（classid）标记网络数据包，可允许 Linux 流量控制程序（tc）识别从具体 cgroup 中生成的数据包</li>
 <li>ns<br>  命名空间子系统(上文的Namespace)</li>
-<li>perf_event<br>  对每group的监测跟踪的能力，即可以监测属于某个特定的group的所有线程以及运行在特定CPU上的线程</li>
 </ul>
 <h2 id="CPU"><a href="#CPU" class="headerlink" title="CPU"></a>CPU</h2><h3 id="cpu-shares"><a href="#cpu-shares" class="headerlink" title="cpu-shares"></a>cpu-shares</h3><p>在<code>docker create/run</code>容器时可以通过<code>--cpu-shares</code>参数来指定容器所使用的CPU加权值。默认情况下，每个docker容器的cpu-shares值都是1024。单独一个容器的cpu-shares是没有意义的，只在多个容器分配的资源紧缺时，也就是说在需要对容器使用的资源进行限制时，才会生效。配之后，可通过<code>./cgroup/cpu/docker/&lt;容器ID&gt;/cpu.shares</code>查看。</p>
 <h3 id="cpu-period-amp-cpu-quota"><a href="#cpu-period-amp-cpu-quota" class="headerlink" title="cpu-period &amp; cpu-quota"></a>cpu-period &amp; cpu-quota</h3><ul>
@@ -475,7 +473,7 @@ Namespacenamespace是linux内核提供的隔离技术，它包括六种资源隔
 <li>blkio-weight<br>  容器默认磁盘IO的加权值，有效值范围为10-100。要使<code>-–blkio-weight</code>生效，需要保证IO的调度算法为CFQ<br>  <code>echo &quot;cfq&quot; &gt; /sys/block/&lt;设备名&gt;/queue/scheduler</code></li>
 <li>blkio-weight-device<br>  针对特定设备的IO加权控制。其格式为DEVICE_NAME:WEIGHT</li>
 </ul>
-<h3 id="Volume"><a href="#Volume" class="headerlink" title="Volume"></a>Volume</h3><p>使用参数<code>--storage-opt</code>，传入<code>dm.basesize=&lt;容量大小&gt;</code>可以设置rootfs大小。如果不设置<code>dm.basesize</code>，容器rootfs的大小与宿主机的rootfs大小相同。<br>设置rootfs大小后，需要重启docker服务，并且<code>--storage-opts</code>参数需要在启动docker服务时使用。</p>
+<h3 id="Volume"><a href="#Volume" class="headerlink" title="Volume"></a>Volume</h3><p>使用参数<code>--storage-opt</code>，传入<code>dm.basesize=&lt;容量大小&gt;</code>可以设置rootfs大小。如果不设置<code>dm.basesize</code>，默认值为10G，若要使<code>dm.basesize</code>生效，storage driver 必须是 device mapper。<br>设置rootfs大小后，需要重启docker服务，并且<code>--storage-opts</code>参数需要在启动docker服务时使用。<br>以RHEL7.2为例，需要修改<code>/etc/systemd/system/multi-user.target.wants/docker.service</code>中<code>/usr/bin/dockerd</code>的参数。</p>
 <h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
 <li><a href="http://www.infoq.com/cn/articles/docker-kernel-knowledge-namespace-resource-isolation?utm_source=tuicool" target="_blank" rel="external">Docker背后的内核知识——Namespace资源隔离</a></li>
 <li><a href="http://www.cnblogs.com/sammyliu/p/5878973.html" target="_blank" rel="external">理解Docker（3）：Docker 使用 Linux namespace 隔离容器的运行环境</a></li>
@@ -611,7 +609,7 @@ Namespacenamespace是linux内核提供的隔离技术，它包括六种资源隔
           
             <div class="site-state-item site-state-categories">
               <a href="/categories">
-                <span class="site-state-item-count">15</span>
+                <span class="site-state-item-count">14</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
