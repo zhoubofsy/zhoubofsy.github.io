@@ -781,8 +781,8 @@
             <span class="post-meta-item-icon">
               <i class="fa fa-calendar-check-o"></i>
             </span>
-            <time title="Post modified" itemprop="dateModified" datetime="2017-01-17T16:07:58+08:00">
-              2017-01-17
+            <time title="Post modified" itemprop="dateModified" datetime="2017-02-09T09:25:47+08:00">
+              2017-02-09
             </time>
             
           </span>
@@ -834,7 +834,8 @@
       
         
           
-            <h1 id="Deploy"><a href="#Deploy" class="headerlink" title="Deploy"></a>Deploy</h1><h2 id="Linux部署"><a href="#Linux部署" class="headerlink" title="Linux部署"></a>Linux部署</h2><p>（由于Linux发行版众多，本文以RHEL7.2为例）</p>
+            <p><img src="/images/docker/docker-vs-vms.jpg" alt="docker-vs-vms"></p>
+<h1 id="Deploy"><a href="#Deploy" class="headerlink" title="Deploy"></a>Deploy</h1><h2 id="Linux部署"><a href="#Linux部署" class="headerlink" title="Linux部署"></a>Linux部署</h2><p>（由于Linux发行版众多，本文以RHEL7.2为例）</p>
 <h3 id="单机版环境docker部署"><a href="#单机版环境docker部署" class="headerlink" title="单机版环境docker部署"></a>单机版环境docker部署</h3><p>通过yum源安装docker，<code>yum install docker</code>。</p>
 <p>安装完成后，使用<code>docker version</code>查看docker客户端和服务端版本号<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line">$ docker version</div><div class="line">Client:</div><div class="line"> Version:      1.12.5</div><div class="line"> API version:  1.24</div><div class="line"> Go version:   go1.6.4</div><div class="line"> Git commit:   7392c3b</div><div class="line"> Built:        Fri Dec 16 02:23:59 2016</div><div class="line"> OS/Arch:      linux/amd64</div><div class="line"></div><div class="line">Server:</div><div class="line"> Version:      1.12.5</div><div class="line"> API version:  1.24</div><div class="line"> Go version:   go1.6.4</div><div class="line"> Git commit:   7392c3b</div><div class="line"> Built:        Fri Dec 16 02:23:59 2016</div><div class="line"> OS/Arch:      linux/amd64</div></pre></td></tr></table></figure></p>
 <h3 id="分布式环境docker部署"><a href="#分布式环境docker部署" class="headerlink" title="分布式环境docker部署"></a>分布式环境docker部署</h3><p>详细请见：<a href="https://docs.docker.com/engine/installation/linux/rhel/" target="_blank" rel="external">docker官网关于linux环境安装部分</a></p>
