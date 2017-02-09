@@ -95,7 +95,7 @@ Namespacenamespace是linux内核提供的隔离技术，它包括六种资源隔
 <meta property="og:image" content="http://yoursite.com/images/docker/docker-resource-separation-pid.png">
 <meta property="og:image" content="http://yoursite.com/images/docker/docker-resource-separation-network.png">
 <meta property="og:image" content="http://yoursite.com/images/docker/docker-resource-separation-mount.png">
-<meta property="og:updated_time" content="2017-02-08T06:51:08.000Z">
+<meta property="og:updated_time" content="2017-02-09T01:06:01.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="docker 资源隔离">
 <meta name="twitter:description" content="介绍docker不是一项新技术，docker是老旧技术的组合，为了更方便使用容器技术，docker提供了简单方便的UI。docker隔离资源主要用到了两种技术namespace、cgroup。
@@ -310,8 +310,8 @@ Namespacenamespace是linux内核提供的隔离技术，它包括六种资源隔
             <span class="post-meta-item-icon">
               <i class="fa fa-calendar-check-o"></i>
             </span>
-            <time title="Post modified" itemprop="dateModified" datetime="2017-02-08T14:51:08+08:00">
-              2017-02-08
+            <time title="Post modified" itemprop="dateModified" datetime="2017-02-09T09:06:01+08:00">
+              2017-02-09
             </time>
             
           </span>
@@ -448,7 +448,6 @@ Namespacenamespace是linux内核提供的隔离技术，它包括六种资源隔
 <li>freezer<br>  挂起或者恢复 cgroup 中的任务</li>
 <li>memory<br>  设定 cgroup 中任务使用的内存限制，并自动生成由那些任务使用的内存资源报告</li>
 <li>net_cls<br>  使用等级识别符（classid）标记网络数据包，可允许 Linux 流量控制程序（tc）识别从具体 cgroup 中生成的数据包</li>
-<li>ns<br>  命名空间子系统(上文的Namespace)</li>
 </ul>
 <h2 id="CPU"><a href="#CPU" class="headerlink" title="CPU"></a>CPU</h2><h3 id="cpu-shares"><a href="#cpu-shares" class="headerlink" title="cpu-shares"></a>cpu-shares</h3><p>在<code>docker create/run</code>容器时可以通过<code>--cpu-shares</code>参数来指定容器所使用的CPU加权值。默认情况下，每个docker容器的cpu-shares值都是1024。单独一个容器的cpu-shares是没有意义的，只在多个容器分配的资源紧缺时，也就是说在需要对容器使用的资源进行限制时，才会生效。配之后，可通过<code>./cgroup/cpu/docker/&lt;容器ID&gt;/cpu.shares</code>查看。</p>
 <h3 id="cpu-period-amp-cpu-quota"><a href="#cpu-period-amp-cpu-quota" class="headerlink" title="cpu-period &amp; cpu-quota"></a>cpu-period &amp; cpu-quota</h3><ul>
