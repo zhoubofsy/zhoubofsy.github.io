@@ -256,6 +256,576 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/01/07/linux/deploy-vpn-server/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="博">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.png">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="Bolog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="Bolog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2017/01/07/linux/deploy-vpn-server/" itemprop="url">
+                  搭建VPN服务
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-01-07T20:21:56+08:00">
+              2017-01-07
+            </time>
+
+            &nbsp;|&nbsp;
+
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-check-o"></i>
+            </span>
+            <time title="Post modified" itemprop="dateModified" datetime="2017-01-07T22:34:43+08:00">
+              2017-01-07
+            </time>
+            
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/linux/" itemprop="url" rel="index">
+                    <span itemprop="name">linux</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+          
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>VPN(virtual private network)虚拟专用网络，目前主要能接触到的协议包括PPTP(点对点隧道协议)和L2TP(2层隧道协议)</p>
+<ul>
+<li>PPTP(2层VPN) 由微软和3Com等公司组成的PPTP论坛开发的点对点隧道协议，基于PPP协议使用PAP或CHAP之类的加密算法。</li>
+<li>L2TP(2层VPN) 是IETF基于L2F (Cisco的第二层转发协议)开发的PPTP的后续版本，是一种工业标准 Internet 隧道协议，其可以为跨越面向数据包的媒体发送点到点协议 (PPP) 框架提供封装。<br>PPTP和L2TP都使用PPP协议对数据进行封装，然后添加附加包头用于数据在互联网络上的传输。PPTP只能在两端点间建立单一隧道。 L2TP支持在两端点间使用多隧道，用户可以针对不同的服务质量创建不同的隧道。L2TP可以提供隧道验证，而PPTP则不支持隧道验证。但是当L2TP 或PPTP与IPSEC共同使用时，可以由IPSEC提供隧道验证，不需要在第2层协议上验证隧道使用L2TP。PPTP要求互联网络为IP网络。L2TP只要求隧道媒介提供面向数据包的点对点的连接，L2TP可以在IP(使用UDP)，桢中继永久虚拟电路 (PVCs),X.25虚拟电路(VCs)或ATM VCs网络上使用。</li>
+</ul>
+<p>IPSec(3层VPN)，隧道模式隧道是封装、路由与解封装的整个过程。隧道将原始数据包隐藏(或封装)在新的数据包内部。该新的数据包可能会有新的寻址与路由信息，从而使其能够通过网络传输。隧道与数据保密性结合使用时，在网络上窃听通讯的人将无法获取原始数据包数据(以及原始的源和目标)。封装的数据包到达目的地后，会删除封装，原始数据包头用于将数据包路由到最终目的地。</p>
+<h1 id="搭建环境"><a href="#搭建环境" class="headerlink" title="搭建环境"></a>搭建环境</h1><ul>
+<li>OS, raspbian jessie</li>
+<li>硬件，Raspbarry Pi 3B</li>
+<li>ppp，2.4.6</li>
+<li>pptpd，1.4.0</li>
+<li>openswan，2.6.38</li>
+<li>xl2tp，1.3.6</li>
+</ul>
+<h1 id="PPTP部署"><a href="#PPTP部署" class="headerlink" title="PPTP部署"></a>PPTP部署</h1><h2 id="软件安装"><a href="#软件安装" class="headerlink" title="软件安装"></a>软件安装</h2><p>安装<code>ppp</code>、<code>pptpd</code><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">sudo apt-get install ppp</div><div class="line">sudo apt-get install pptpd</div></pre></td></tr></table></figure></p>
+<h2 id="配置pptpd"><a href="#配置pptpd" class="headerlink" title="配置pptpd"></a>配置pptpd</h2><p>在配置文件<code>/etc/pptpd.conf</code>中，增加如下内容：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">localip 192.168.1.101       # 本地ip</div><div class="line">remoteip 192.168.1.110-120  # 设置ip分配范围</div></pre></td></tr></table></figure></p>
+<p><strong><em> 注：ip地址不要有冲突 </em></strong></p>
+<h2 id="配置ppp"><a href="#配置ppp" class="headerlink" title="配置ppp"></a>配置ppp</h2><p>在配置文件<code>/etc/ppp/chap-secrets</code>中，增加用户名密码<br>格式: <code>{用户名}&lt;tab&gt;*&lt;tab&gt;{密码}&lt;tab&gt;*</code></p>
+<p>在配置文件<code>/etc/ppp/options</code>中，设置MTU<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">-mru        # 关闭MRU协商</div><div class="line">mru 1496    # 设置MTU值为1496</div></pre></td></tr></table></figure></p>
+<h2 id="ip转发配置"><a href="#ip转发配置" class="headerlink" title="ip转发配置"></a>ip转发配置</h2><p>如果需要通过VPN访问宿主机本地网络，需要开通ip转发功能，在<code>/etc/sysctl.conf</code>中设置<code>net.ipv4.ip_forward=1</code>。并执行<code>sudo sysctl -p</code>使修改生效。</p>
+<h2 id="重启pptpd服务"><a href="#重启pptpd服务" class="headerlink" title="重启pptpd服务"></a>重启pptpd服务</h2><p><code>sudo systemctl restart pptpd</code></p>
+<h1 id="IPsec-over-L2TP部署"><a href="#IPsec-over-L2TP部署" class="headerlink" title="IPsec over L2TP部署"></a>IPsec over L2TP部署</h1><h2 id="软件安装-1"><a href="#软件安装-1" class="headerlink" title="软件安装"></a>软件安装</h2><p>安装<code>ppp</code>、<code>xl2tpd</code>、<code>openswan</code><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">sudo apt-get install ppp</div><div class="line">sudo apt-get install xl2tpd</div><div class="line">sudo apt-get install openswan</div></pre></td></tr></table></figure></p>
+<h2 id="IPsec配置及测试"><a href="#IPsec配置及测试" class="headerlink" title="IPsec配置及测试"></a>IPsec配置及测试</h2><h3 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h3><p>在<code>/etc/ipsec.conf</code>中，增加：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line">onn L2TP-PSK-NAT</div><div class="line">    rightsubnet=vhost:%priv</div><div class="line">    also=L2TP-PSK-noNAT</div><div class="line"></div><div class="line">conn L2TP-PSK-noNAT</div><div class="line">    authby=secret</div><div class="line">    pfs=no</div><div class="line">    auto=add</div><div class="line">    keyingtries=3</div><div class="line">    rekey=no</div><div class="line">    ikelifetime=8h</div><div class="line">    keylife=1h</div><div class="line">    type=transport</div><div class="line">    left=192.168.3.100      # 本机ip</div><div class="line">    leftprotoport=17/1701</div><div class="line">    right=%any</div><div class="line">    rightprotoport=17/%any</div></pre></td></tr></table></figure></p>
+<p>在<code>/etc/ipsec.secrets</code>中增加预共享密钥<code>{本地IP}&lt;tab&gt;%any: PSK&lt;tab&gt;&quot;{密码}&quot;</code><br>eg: <code>192.168.3.100      %any: PSK   &quot;lsjflsdkfj&quot;</code></p>
+<p>关闭内核ICMP重定向<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">for abspath in /proc/sys/net/ipv4/conf/*</div><div class="line">do</div><div class="line">    echo 0 &gt; $abspath/accept_redirects</div><div class="line">    echo 0 &gt; $abspath/send_redirects</div><div class="line">done</div></pre></td></tr></table></figure></p>
+<p>修改<code>/etc/sysctl.conf</code>中的配置<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">net.ipv4.ip_forward = 1</div><div class="line">net.ipv4.conf.default.rp_filter = 0</div><div class="line">net.ipv4.conf.all.send_redirects = 0</div><div class="line">net.ipv4.conf.default.send_redirects = 0</div><div class="line">net.ipv4.conf.all.log_martians = 0</div><div class="line">net.ipv4.conf.default.log_martians = 0</div><div class="line">net.ipv4.conf.default.accept_source_route = 0</div><div class="line">net.ipv4.conf.all.accept_redirects = 0</div><div class="line">net.ipv4.conf.default.accept_redirects = 0</div><div class="line">net.ipv4.icmp_ignore_bogus_error_responses = 1</div></pre></td></tr></table></figure></p>
+<p>执行<code>sudo sysctl -p</code>立即生效</p>
+<h3 id="测试"><a href="#测试" class="headerlink" title="测试"></a>测试</h3><p>使用<code>ipsec verify</code>验证ipsec配置。在验证前，请先重启ipsec服务<code>sudo systemctl restart ipsec</code></p>
+<h2 id="L2TP配置"><a href="#L2TP配置" class="headerlink" title="L2TP配置"></a>L2TP配置</h2><p>在<code>/etc/xl2tpd/xl2tpd.conf</code>中增加<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line">[global]</div><div class="line"></div><div class="line">listen-addr = 192.168.3.100</div><div class="line">ipsec saref = yes</div><div class="line"></div><div class="line">[lns default]</div><div class="line">ip range = 192.168.3.120-192.168.3.123</div><div class="line">local ip = 192.168.3.100</div><div class="line">refuse chap = yes</div><div class="line">refuse pap = yes</div><div class="line">require authentication = yes</div><div class="line">name = l2tp</div><div class="line">ppp debug = yes</div><div class="line"></div><div class="line">pppoptfile = /etc/ppp/options.xl2tpd</div><div class="line"></div><div class="line">length bit = yes</div></pre></td></tr></table></figure></p>
+<h3 id="PPP配置"><a href="#PPP配置" class="headerlink" title="PPP配置"></a>PPP配置</h3><h4 id="options配置"><a href="#options配置" class="headerlink" title="options配置"></a>options配置</h4><p>新建xl2tpd专用options，并增加内容<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">ipcp-accept-local</div><div class="line">ipcp-accept-remote</div><div class="line"></div><div class="line">#ms-dns 192.168.3.1</div><div class="line">ms-dns 8.8.8.8</div><div class="line">ms-dns 8.8.4.4</div><div class="line"></div><div class="line">noccp</div><div class="line">auth</div><div class="line">crtscts</div><div class="line">debug</div><div class="line">hide-password</div><div class="line">modem</div><div class="line">lock</div><div class="line">proxyarp</div></pre></td></tr></table></figure></p>
+<h4 id="账户配置"><a href="#账户配置" class="headerlink" title="账户配置"></a>账户配置</h4><p>可复用PPTP部署中的PPP配置的账户</p>
+<h3 id="重启L2TP服务"><a href="#重启L2TP服务" class="headerlink" title="重启L2TP服务"></a>重启L2TP服务</h3><p><code>sudo systemctl restart xl2tpd</code></p>
+<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a href="http://www.cnblogs.com/alexsun/p/5894338.html" target="_blank" rel="external">树莓派使用pptpd搭建VPN（PPTP）服务器</a></li>
+<li><a href="http://blog.csdn.net/wxlguitar/article/details/51474771" target="_blank" rel="external">树莓派搭建L2TP/IPSec</a></li>
+<li><a href="http://www.linuxidc.com/Linux/2010-08/27616.htm" target="_blank" rel="external">CentOS安装L2TP/IPSEC 与简单故障处理</a></li>
+<li><a href="http://struggle01.blog.51cto.com/6956448/1336029" target="_blank" rel="external">linux下搭建Ipsec+L2TP VPN服务</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/01/04/linux/nettools-vs-iproute2/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="博">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.png">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="Bolog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="Bolog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2017/01/04/linux/nettools-vs-iproute2/" itemprop="url">
+                  net-tools <--> iproute2
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-01-04T12:53:44+08:00">
+              2017-01-04
+            </time>
+
+            &nbsp;|&nbsp;
+
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-check-o"></i>
+            </span>
+            <time title="Post modified" itemprop="dateModified" datetime="2017-01-04T13:06:51+08:00">
+              2017-01-04
+            </time>
+            
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/linux/" itemprop="url" rel="index">
+                    <span itemprop="name">linux</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+          
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>linux的ip命令和ifconfig类似，ifconfig属于net-tools套件中，ip命令属于iproute2套件中。由于net-tools中的部分命令已经长时间没有更新维护了，所以iproute2的套件大有取代net-tools套件的趋势。</p>
+<h1 id="NET-TOOLS-IPROUTE2对比"><a href="#NET-TOOLS-IPROUTE2对比" class="headerlink" title="NET-TOOLS IPROUTE2对比"></a>NET-TOOLS IPROUTE2对比</h1><table>
+<thead>
+<tr>
+<th style="text-align:center">net-tools</th>
+<th style="text-align:center">iproute2</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">arp -na</td>
+<td style="text-align:center">ip neigh</td>
+</tr>
+<tr>
+<td style="text-align:center">ifconfig</td>
+<td style="text-align:center">ip link</td>
+</tr>
+<tr>
+<td style="text-align:center">ifconfig -a</td>
+<td style="text-align:center">ip addr show</td>
+</tr>
+<tr>
+<td style="text-align:center">ifconfig –help</td>
+<td style="text-align:center">ip help</td>
+</tr>
+<tr>
+<td style="text-align:center">ifconfig -s</td>
+<td style="text-align:center">ip -s link</td>
+</tr>
+<tr>
+<td style="text-align:center">ifconfig eth0 up</td>
+<td style="text-align:center">ip link set eth0 up</td>
+</tr>
+<tr>
+<td style="text-align:center">ipmaddr</td>
+<td style="text-align:center">ip maddr</td>
+</tr>
+<tr>
+<td style="text-align:center">iptunnel</td>
+<td style="text-align:center">ip tunnel</td>
+</tr>
+<tr>
+<td style="text-align:center">netstat</td>
+<td style="text-align:center">ss</td>
+</tr>
+<tr>
+<td style="text-align:center">netstat -i</td>
+<td style="text-align:center">ip -s link</td>
+</tr>
+<tr>
+<td style="text-align:center">netstat -g</td>
+<td style="text-align:center">ip maddr</td>
+</tr>
+<tr>
+<td style="text-align:center">netstat -l</td>
+<td style="text-align:center">ss -l</td>
+</tr>
+<tr>
+<td style="text-align:center">netstat -r</td>
+<td style="text-align:center">ip route</td>
+</tr>
+<tr>
+<td style="text-align:center">route add</td>
+<td style="text-align:center">ip route add</td>
+</tr>
+<tr>
+<td style="text-align:center">route del</td>
+<td style="text-align:center">ip route del</td>
+</tr>
+<tr>
+<td style="text-align:center">route -n</td>
+<td style="text-align:center">ip route show</td>
+</tr>
+<tr>
+<td style="text-align:center">vconfig</td>
+<td style="text-align:center">ip link</td>
+</tr>
+</tbody>
+</table>
+<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a href="http://os.51cto.com/art/201406/441461.htm" target="_blank" rel="external">试试Linux下的ip命令，ifconfig已经过时了</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/01/04/container/docker/docker-mk-base-image/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="博">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.png">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="Bolog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="Bolog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2017/01/04/container/docker/docker-mk-base-image/" itemprop="url">
+                  Docker Base Image制作
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-01-04T10:30:32+08:00">
+              2017-01-04
+            </time>
+
+            &nbsp;|&nbsp;
+
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-check-o"></i>
+            </span>
+            <time title="Post modified" itemprop="dateModified" datetime="2017-01-04T12:40:36+08:00">
+              2017-01-04
+            </time>
+            
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/container/" itemprop="url" rel="index">
+                    <span itemprop="name">container</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+          
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>docker容器的创建依赖于镜像，镜像的创建依赖于目录树，不同的linux发行版，有自己的目录树。本文主要介绍debian族发行版与fedora族发行版base image的创建。如果您想从零创建一个linux发行版base image，请参考LFS（linux from scratch）。</p>
+<h2 id="测试环境"><a href="#测试环境" class="headerlink" title="测试环境"></a>测试环境</h2><ul>
+<li>OS Version, RHEL7.2</li>
+<li>docker Version, 1.12.5 </li>
+</ul>
+<h1 id="debian"><a href="#debian" class="headerlink" title="debian"></a>debian</h1><p>debian类的操作系统包括debian、ubuntu，这一类操作系统的目录树都是用<code>debootstrap</code>来生成的。其中<code>de</code>取debian之意。</p>
+<h2 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h2><p>可直接使用yum安装<code>yum install debootstrap</code>。</p>
+<h2 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h2><p>debian默认的mirror为<a href="https://deb.debian.org/debian/" target="_blank" rel="external">https://deb.debian.org/debian/</a></p>
+<p>debootstrap格式:<br><code>debootstrap [OPTION...] &lt;版本&gt; &lt;目录树存放位置目录&gt; [&lt;镜像（mirror）位置&gt;]</code></p>
+<p>eg: <code>sudo debootstrap jessie my_jessie</code></p>
+<h1 id="fedora"><a href="#fedora" class="headerlink" title="fedora"></a>fedora</h1><p>fedora类的操作系统包括fedora、RHEL、CentOS，这一类操作系统的目录树都是用<code>febootstrap</code>来生成的。其中<code>fe</code>取fedora之意。</p>
+<h2 id="安装-1"><a href="#安装-1" class="headerlink" title="安装"></a>安装</h2><p><code>febootstrap</code>并没有存在于RHEL7.2（或CentOS7.2）Repo中，目前可以直接安装6.8 repo中的<code>febootstrap-3.21-4</code>。</p>
+<p>febootstrap-3.21-4依赖包如下所示：</p>
+<ul>
+<li>fakechroot-2.9-24.5.el6_1.1.x86_64</li>
+<li>fakechroot-libs-2.9-24.5.el6_1.1.x86_64</li>
+<li>fakeroot-1.12.2-22.2.el6.x86_64</li>
+<li>fakeroot-libs-1.12.2-22.2.el6.x86_64</li>
+<li>febootstrap-supermin-helper-3.21-4.el6.x86_64</li>
+</ul>
+<h2 id="使用-1"><a href="#使用-1" class="headerlink" title="使用"></a>使用</h2><p>febootstrap格式:<br><code>febootstrap [OPTION...] &lt;版本&gt; &lt;目录树存放位置目录&gt; [镜像（mirror）位置]</code></p>
+<p>eg: <code>febootstrap -i bash 6.8 my_centos6.8 http://mirrors.163.com/centos/6.8/os/x86_64/</code></p>
+<h1 id="LFS"><a href="#LFS" class="headerlink" title="LFS"></a>LFS</h1><p>Todo…</p>
+<h1 id="镜像导入"><a href="#镜像导入" class="headerlink" title="镜像导入"></a>镜像导入</h1><h2 id="Tar导入方式创建镜像"><a href="#Tar导入方式创建镜像" class="headerlink" title="Tar导入方式创建镜像"></a>Tar导入方式创建镜像</h2><p>无论是debootstrap还是febootstrap生成的目录，其导入docker image的方法是一样的。</p>
+<p>格式:<br><code>tar -C &lt;目录树目录&gt; -c . | docker import - &lt;docker image 名称&gt;</code></p>
+<p>eg: <code>tar -C ./my_jessie -c . | docker import - my_jessie_base</code></p>
+<h2 id="空镜像创建"><a href="#空镜像创建" class="headerlink" title="空镜像创建"></a>空镜像创建</h2><p>格式:<br><code>tar cv --files-from /dev/null | docker import - &lt;docker image 名称&gt;</code></p>
+<p>eg: <code>tar cv --files-from /dev/null | docker import - empty_image</code></p>
+<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a href="https://linux.cn/article-5427-1.html" target="_blank" rel="external">两种方式创建你自己的 Docker 基本映像</a></li>
+<li><a href="http://www.latelee.org/using-gnu-linux/ubuntu-debootstrap.html" target="_blank" rel="external">ubuntu系统debootstrap的使用</a></li>
+<li><a href="https://my.oschina.net/ylchou/blog/490412" target="_blank" rel="external">CentOS下febootstrap自制Docker的CentOS6.6和7.1 Docker镜像</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
   <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/01/02/raspbarrypi/rpi3-wifi-usr-pwd-configuration/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1478,467 +2048,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/11/17/storage/ceph/rbd-nbd/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="博">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.png">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="Bolog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="Bolog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/11/17/storage/ceph/rbd-nbd/" itemprop="url">
-                  rbd-nbd分析
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-11-17T17:00:33+08:00">
-              2016-11-17
-            </time>
-
-            &nbsp;|&nbsp;
-
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-check-o"></i>
-            </span>
-            <time title="Post modified" itemprop="dateModified" datetime="2017-02-07T21:45:38+08:00">
-              2017-02-07
-            </time>
-            
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/storage/" itemprop="url" rel="index">
-                    <span itemprop="name">storage</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-          
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h1><p>rbd通过内核的NBD驱动映射成网络设备，用户可以通过读写nbd0…等网络设备，来实现对rbd设备的读写。</p>
-<p>优点：</p>
-<ul>
-<li>nbd设备成功将客户端和rbd隔离开，不再依赖以往的内核rbd驱动；</li>
-<li>nbd与librbd的读写在应用层完成，可使用rbd cache提高性能；</li>
-<li>rbd的数据保护，可通过ceph命令完成，不需要nbd支持。</li>
-</ul>
-<p>缺点：</p>
-<ul>
-<li>要求系统必须支持nbd驱动；</li>
-<li>内核nbd与librbd通信，需要通过文件socket通信，增加数据拷贝，会影响性能；</li>
-</ul>
-<h1 id="架构"><a href="#架构" class="headerlink" title="架构"></a>架构</h1><p><img src="/images/ceph/rbd-nbd.png" alt="rbd-nbd_frame"></p>
-<ul>
-<li>客户端直接读写nbd设备（同步）</li>
-<li>内核nbd驱动，将客户端的读写信息转化成nbd_request，并通过socket发送给NBDServer（rbd－nbd实现）</li>
-<li>NBDServer是守护进程，一个快设备对应一个nbd设备，对应一个守护进程</li>
-<li>NBDServer收到内核nbd驱动的nbd_reqeust后，向librbd发起同步读写请求</li>
-<li>librbd 向 Ceph集群读写数据</li>
-<li>NBDServer接收到librbd同步读写结果后，向内核nbd驱动发送reply</li>
-<li>内核nbd驱动收到reply，向客户端return</li>
-</ul>
-<h1 id="关键数据结构"><a href="#关键数据结构" class="headerlink" title="关键数据结构"></a>关键数据结构</h1><h2 id="Reqeust-amp-Reply"><a href="#Reqeust-amp-Reply" class="headerlink" title="Reqeust &amp; Reply"></a>Reqeust &amp; Reply</h2><figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> nbd_request &#123;</div><div class="line">    u32 magic;</div><div class="line">    u32 type;   <span class="comment">/* == READ || == WRITE */</span></div><div class="line">    <span class="keyword">char</span> handle[<span class="number">8</span>];</div><div class="line">    u64 from;</div><div class="line">    u32 len;</div><div class="line">&#125;</div><div class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> __GNUC__</span></div><div class="line">__attribute__ ((packed))</div><div class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></div><div class="line">;</div><div class="line"></div><div class="line"><span class="keyword">struct</span> nbd_reply &#123;</div><div class="line">    u32 magic;</div><div class="line">    u32 error; <span class="comment">/* 0 = ok, else error */</span></div><div class="line">    <span class="keyword">char</span> handle[<span class="number">8</span>]; <span class="comment">/* handle you got from reqeust */</span></div><div class="line">&#125;;</div></pre></td></tr></table></figure>
-<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a href="http://www.codeforge.com/read/47918/nbd.h__html" target="_blank" rel="external">nbd.h</a></li>
-<li><a href="http://lxr.free-electrons.com/source/drivers/block/nbd.c?v=3.6" target="_blank" rel="external">nbd.c</a></li>
-</ul>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/11/17/search-engine-command/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="博">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.png">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="Bolog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="Bolog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/11/17/search-engine-command/" itemprop="url">
-                  搜索引擎命令用法
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-11-17T09:57:58+08:00">
-              2016-11-17
-            </time>
-
-            &nbsp;|&nbsp;
-
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-check-o"></i>
-            </span>
-            <time title="Post modified" itemprop="dateModified" datetime="2016-11-17T10:39:22+08:00">
-              2016-11-17
-            </time>
-            
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/other/" itemprop="url" rel="index">
-                    <span itemprop="name">other</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-          
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="搜索引擎"><a href="#搜索引擎" class="headerlink" title="搜索引擎"></a>搜索引擎</h1><p>搜索引擎对于每一个码农来说都是一个互联网数据库，在这个数据库中有很多信息，我们在这个数据库中检索数据不需要指定数据库，也不需要数据表，只需要指定你需要检索的关键字即可。但这种搜索方式虽然搜索范围大，无漏网之鱼，可也搜到了很多于我们需要无关的内容。为了精确查找，筛选掉不需要的信息。搜索引擎还有如下用法，接下来，就让我们一探究竟吧。</p>
-<h1 id="特殊用法"><a href="#特殊用法" class="headerlink" title="特殊用法"></a>特殊用法</h1><p>由于天朝屏蔽Google，所以以下可在baidu搜索输入框中操作实现。</p>
-<h2 id="指定标题搜索"><a href="#指定标题搜索" class="headerlink" title="指定标题搜索"></a>指定标题搜索</h2><h3 id="语法"><a href="#语法" class="headerlink" title="语法"></a>语法</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">intitle:&quot;&lt;网页title内容(标签上显示的内容)&gt;&quot;</div></pre></td></tr></table></figure>
-<h3 id="举例"><a href="#举例" class="headerlink" title="举例"></a>举例</h3><p>搜索title中含有“Bolog”的网页<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">intitle:&quot;Bolog&quot;</div></pre></td></tr></table></figure></p>
-<h2 id="指定URL搜索"><a href="#指定URL搜索" class="headerlink" title="指定URL搜索"></a>指定URL搜索</h2><h3 id="语法-1"><a href="#语法-1" class="headerlink" title="语法"></a>语法</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">inurl:&lt;全部或部分URL信息&gt;</div></pre></td></tr></table></figure>
-<h3 id="举例-1"><a href="#举例-1" class="headerlink" title="举例"></a>举例</h3><p>搜索url中包含<code>nginx-1-11-6</code>的网页<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">inurl:nginx-1-11-6</div></pre></td></tr></table></figure></p>
-<h2 id="指定正文内容搜索"><a href="#指定正文内容搜索" class="headerlink" title="指定正文内容搜索"></a>指定正文内容搜索</h2><h3 id="语法-2"><a href="#语法-2" class="headerlink" title="语法"></a>语法</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">intext:&quot;&lt;搜索关键字&gt;&quot;</div></pre></td></tr></table></figure>
-<p>此方法也是搜索引擎默认使用方法（猜的）</p>
-<h3 id="举例-2"><a href="#举例-2" class="headerlink" title="举例"></a>举例</h3><p>搜索正文内容含有“python” 和“golang”关键字的网页<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">intext:&quot;&lt;python golang&gt;&quot;</div></pre></td></tr></table></figure></p>
-<h2 id="指定网站（站点）搜索"><a href="#指定网站（站点）搜索" class="headerlink" title="指定网站（站点）搜索"></a>指定网站（站点）搜索</h2><h3 id="语法-3"><a href="#语法-3" class="headerlink" title="语法"></a>语法</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">site:&lt;网站域名&gt; &lt;搜索关键字&gt;</div></pre></td></tr></table></figure>
-<h3 id="举例-3"><a href="#举例-3" class="headerlink" title="举例"></a>举例</h3><p>在oschina上搜索python关键字<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">site:oschina.net python</div></pre></td></tr></table></figure></p>
-<h2 id="指定文件类型搜索"><a href="#指定文件类型搜索" class="headerlink" title="指定文件类型搜索"></a>指定文件类型搜索</h2><h3 id="语法-4"><a href="#语法-4" class="headerlink" title="语法"></a>语法</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">filetype:&lt;文件类型&gt; &lt;搜索关键字&gt;</div></pre></td></tr></table></figure>
-<h3 id="举例-4"><a href="#举例-4" class="headerlink" title="举例"></a>举例</h3><p>搜索所有带有python关键字的PDF文档<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">filetype:pdf python</div></pre></td></tr></table></figure></p>
-<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a href="http://www.360doc.com/content/13/1014/11/1956846_321333210.shtml" target="_blank" rel="external">intile,inurl,filetype,site作用及在google中的用法</a></li>
-</ul>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/11/15/python/python-argparse-use/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="博">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.png">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="Bolog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="Bolog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/11/15/python/python-argparse-use/" itemprop="url">
-                  python-argparse-use
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-11-15T16:10:53+08:00">
-              2016-11-15
-            </time>
-
-            &nbsp;|&nbsp;
-
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-check-o"></i>
-            </span>
-            <time title="Post modified" itemprop="dateModified" datetime="2016-11-15T16:16:19+08:00">
-              2016-11-15
-            </time>
-            
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/python/" itemprop="url" rel="index">
-                    <span itemprop="name">python</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-          
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># -*- coding: utf-8 -*-</span></div><div class="line"><span class="keyword">import</span> argparse</div><div class="line">args = <span class="string">"-f hello.txt -n 1 2 3 -x 100 -y b -z a -q hello @args.txt i_am_bar -h"</span>.split()</div><div class="line"></div><div class="line"><span class="comment"># 使用@args.txt要求fromfile_prefix_chars="@"</span></div><div class="line"><span class="comment"># args.txt文件中应该一行一个参数，想改变行为参考convert_arg_line_to_args()</span></div><div class="line"><span class="comment"># ArgumentParser参数的简单说明</span></div><div class="line"><span class="comment">## description - 命令行帮助的开始文字，大部分情况下，我们只会用到这个参数</span></div><div class="line"><span class="comment"># epilog - 命令行帮助的结尾文字</span></div><div class="line"><span class="comment"># prog - (default: sys.argv[0])程序的名字，一般不需要修改，另外，如果你需要在help中使用到程序的名字，可以使用%(prog)s</span></div><div class="line"><span class="comment"># prefix_chars - 命令的前缀，默认是-，例如-f/--file。有些程序可能希望支持/f这样的选项，可以使用prefix_chars="/"</span></div><div class="line"><span class="comment"># fromfile_prefix_chars - (default: None)如果你希望命令行参数可以从文件中读取，就可能用到。例如，如果fromfile_prefix_chars='@',命令行参数中有一个为"@args.txt"，args.txt的内容会作为命令行参数</span></div><div class="line"><span class="comment"># add_help - 是否增加-h/-help选项 (default: True)，一般help信息都是必须的，所以不用设置啦。</span></div><div class="line"><span class="comment">## parents - 类型是list，如果这个parser的一些选项跟其他某些parser的选项一样，可以用parents来实现继承，例如parents=[parent_parser]</span></div><div class="line"><span class="comment">## formatter_class - 自定义帮助信息的格式（description和epilog）。默认情况下会将长的帮助信息进行&lt;自动换行和消除多个连续空白&gt;。</span></div><div class="line"><span class="comment">#三个允许的值：</span></div><div class="line"><span class="comment"># class argparse.RawDescriptionHelpFormatter 直接输出description和epilog的原始形式（不进行自动换行和消除空白的操作）</span></div><div class="line"><span class="comment"># class argparse.RawTextHelpFormatter 直接输出description和epilog以及add_argument中的help字符串的原始形式（不进行自动换行和消除空白的操作）</span></div><div class="line"><span class="comment">## class argparse.ArgumentDefaultsHelpFormatter 在每个选项的帮助信息后面输出他们对应的缺省值，如果有设置的话。这个最常用吧！</span></div><div class="line"><span class="comment"># argument_default - (default: None)设置一个全局的选项的缺省值，一般每个选项单独设置，所以这个参数用得少，不细说</span></div><div class="line"><span class="comment"># usage - (default: generated)如果你需要修改usage的信息（usage: PROG [-h] [--foo [FOO]] bar [bar ...]），那么可以修改这个，一般不要修改。</span></div><div class="line"><span class="comment"># conflict_handler - 不建议使用。这个在极端情况下才会用到，主要是定义两个add_argument中添加的选项的名字发生冲突时怎么处理，默认处理是抛出异常。</span></div><div class="line"><span class="comment">#注释一行有##表示这几个参数比较常用</span></div><div class="line">parser = argparse.ArgumentParser(description=<span class="string">"This is a description of %(prog)s"</span>, epilog=<span class="string">"This is a epilog of %(prog)s"</span>, prefix_chars=<span class="string">"-+"</span>, fromfile_prefix_chars=<span class="string">"@"</span>, formatter_class=argparse.ArgumentDefaultsHelpFormatter)</div><div class="line"></div><div class="line"><span class="comment"># ArgumentParser.add_argument(name or flags...[, action][, nargs][, const][, default][, type][, choices][, required][, help][, metavar][, dest])</span></div><div class="line"><span class="comment"># add_argument的参数是比较复杂的。。。</span></div><div class="line"><span class="comment"># name or flags - 指定参数的形式，想写几个写几个，不过我们一般就写两个，一个短参数，一个长参数，看下面的例子"-f", "--file"</span></div><div class="line"><span class="comment"># 可选的选项，位置不固定，想怎么写就怎么写，默认是可选的</span></div><div class="line">parser.add_argument(<span class="string">"-f"</span>, <span class="string">"--file"</span>, help=<span class="string">"test test test"</span>)</div><div class="line"></div><div class="line"><span class="comment"># 位置固定的选项，例如"prog i_am_bar"，这样子的话，i_am_bar就是bar选项的值啦，默认是必须有的</span></div><div class="line">parser.add_argument(<span class="string">"bar"</span>, help=<span class="string">"test test test"</span>)</div><div class="line"></div><div class="line"><span class="comment"># nargs - 指定这个参数后面的value有多少个，例如，我们希望使用-n 1 2 3 4，来设置n的值为[1, 2, 3, 4]</span></div><div class="line">parser.add_argument(<span class="string">"-n"</span>, <span class="string">"--num"</span>, nargs=<span class="string">"+"</span>, type=int)</div><div class="line"></div><div class="line"><span class="comment"># 这里nargs="+"表示，如果你指定了-n选项，那么-n后面至少要跟一个参数，+表示至少一个,?表示一个或0个,*0个或多个，</span></div><div class="line"><span class="comment"># default - 如果命令行没有出现这个选项，那么使用default指定的默认值</span></div><div class="line">parser.add_argument(<span class="string">"+g"</span>, <span class="string">"++gold"</span>, help=<span class="string">"test test test"</span>, default=<span class="string">"test_gold"</span>)<span class="comment">#需要prefix_chars包含"+"</span></div><div class="line"></div><div class="line"><span class="comment"># type - 如果希望传进来的参数是指定的类型（例如 float, int or file等可以从字符串转化过来的类型），可以使用</span></div><div class="line">parser.add_argument(<span class="string">"-x"</span>, type=int)</div><div class="line"></div><div class="line"><span class="comment"># choices - 设置参数值的范围，如果choices中的类型不是字符串，记得指定type哦</span></div><div class="line">parser.add_argument(<span class="string">"-y"</span>, choices=[<span class="string">'a'</span>, <span class="string">'b'</span>, <span class="string">'d'</span>])</div><div class="line"></div><div class="line"><span class="comment"># required - 通常-f这样的选项是可选的，但是如果required=True那么就是必须的了</span></div><div class="line">parser.add_argument(<span class="string">"-z"</span>, choices=[<span class="string">'a'</span>, <span class="string">'b'</span>, <span class="string">'d'</span>], required=<span class="keyword">True</span>)</div><div class="line"></div><div class="line"><span class="comment"># metavar - 参数的名字，在显示 帮助信息时才用到.</span></div><div class="line">parser.add_argument(<span class="string">"-o"</span>, metavar=<span class="string">"OOOOOO"</span>)</div><div class="line"></div><div class="line"><span class="comment"># help - 设置这个选项的帮助信息</span></div><div class="line"><span class="comment"># dest - 设置这个选项的值就是解析出来后放到哪个属性中</span></div><div class="line">parser.add_argument(<span class="string">"-q"</span>, dest=<span class="string">"world"</span>)</div><div class="line"></div><div class="line">args = parser.parse_args(args) <span class="comment"># 如果你没有args参数，那么就使用sys.argv，也就是命令行参数啦。有这个参数，就方便我们调试啊</span></div><div class="line"><span class="comment"># args.world就是-q的值啦</span></div><div class="line"><span class="comment"># action - The basic type of action to be taken when this argument is encountered at the command line.</span></div><div class="line"><span class="comment"># const - A constant value required by some action and nargs selections.</span></div><div class="line"><span class="comment"># 这两个自己看帮助文档啦，比较复杂</span></div><div class="line"><span class="comment"># http://docs.python.org/library/argparse.html</span></div><div class="line"><span class="keyword">print</span> args</div></pre></td></tr></table></figure>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1984,7 +2093,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">53</span>
+              <span class="site-state-item-count">56</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -1992,7 +2101,7 @@
           
             <div class="site-state-item site-state-categories">
               <a href="/categories">
-                <span class="site-state-item-count">14</span>
+                <span class="site-state-item-count">16</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -2001,7 +2110,7 @@
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">60</span>
+                <span class="site-state-item-count">64</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
