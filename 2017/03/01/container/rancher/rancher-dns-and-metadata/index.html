@@ -85,27 +85,30 @@
 
 
 <meta name="description" content="什么是服务发现容器可以对其它容器提供服务，如mysql（数据库服务）、nginx、mangodb等等。这些服务都可以通过IP＋Port方式访问。由于容器会经常重建迁移，所以IP会发生变化，如果调用服务的程序使用IP访问就会很不方便，为此可以使用DNS、zookeeper、etcd等技术实现服务访问与IP的解耦。这种解耦方式叫做服务发现。
-Rancher服务发现构成及更新流程
+版本
+rancher-dns v0.13.3
 
-Cattle  容器">
+Ranche">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Rancher服务发现分析">
 <meta property="og:url" content="http://yoursite.com/2017/03/01/container/rancher/rancher-dns-and-metadata/index.html">
 <meta property="og:site_name" content="Bolog">
 <meta property="og:description" content="什么是服务发现容器可以对其它容器提供服务，如mysql（数据库服务）、nginx、mangodb等等。这些服务都可以通过IP＋Port方式访问。由于容器会经常重建迁移，所以IP会发生变化，如果调用服务的程序使用IP访问就会很不方便，为此可以使用DNS、zookeeper、etcd等技术实现服务访问与IP的解耦。这种解耦方式叫做服务发现。
-Rancher服务发现构成及更新流程
+版本
+rancher-dns v0.13.3
 
-Cattle  容器">
+Ranche">
 <meta property="og:image" content="http://yoursite.com/images/rancher/rancher-dns-and-metadata.png">
 <meta property="og:image" content="http://yoursite.com/images/rancher/rancher-dns-struct.png">
 <meta property="og:image" content="http://yoursite.com/images/rancher/rancher-dns-route-workflow.png">
-<meta property="og:updated_time" content="2017-03-03T03:06:51.000Z">
+<meta property="og:updated_time" content="2017-03-03T03:25:56.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Rancher服务发现分析">
 <meta name="twitter:description" content="什么是服务发现容器可以对其它容器提供服务，如mysql（数据库服务）、nginx、mangodb等等。这些服务都可以通过IP＋Port方式访问。由于容器会经常重建迁移，所以IP会发生变化，如果调用服务的程序使用IP访问就会很不方便，为此可以使用DNS、zookeeper、etcd等技术实现服务访问与IP的解耦。这种解耦方式叫做服务发现。
-Rancher服务发现构成及更新流程
+版本
+rancher-dns v0.13.3
 
-Cattle  容器">
+Ranche">
 <meta name="twitter:image" content="http://yoursite.com/images/rancher/rancher-dns-and-metadata.png">
 
 
@@ -316,7 +319,7 @@ Cattle  容器">
             <span class="post-meta-item-icon">
               <i class="fa fa-calendar-check-o"></i>
             </span>
-            <time title="Post modified" itemprop="dateModified" datetime="2017-03-03T11:06:51+08:00">
+            <time title="Post modified" itemprop="dateModified" datetime="2017-03-03T11:25:56+08:00">
               2017-03-03
             </time>
             
@@ -368,19 +371,22 @@ Cattle  容器">
 
       
         <h1 id="什么是服务发现"><a href="#什么是服务发现" class="headerlink" title="什么是服务发现"></a>什么是服务发现</h1><p>容器可以对其它容器提供服务，如mysql（数据库服务）、nginx、mangodb等等。这些服务都可以通过IP＋Port方式访问。由于容器会经常重建迁移，所以IP会发生变化，如果调用服务的程序使用IP访问就会很不方便，为此可以使用DNS、zookeeper、etcd等技术实现服务访问与IP的解耦。这种解耦方式叫做服务发现。</p>
+<h1 id="版本"><a href="#版本" class="headerlink" title="版本"></a>版本</h1><ul>
+<li>rancher-dns v0.13.3</li>
+</ul>
 <h1 id="Rancher服务发现构成及更新流程"><a href="#Rancher服务发现构成及更新流程" class="headerlink" title="Rancher服务发现构成及更新流程"></a>Rancher服务发现构成及更新流程</h1><p><img src="/images/rancher/rancher-dns-and-metadata.png" alt="rancher-dns-and-metadata"></p>
 <ul>
 <li>Cattle<br>  容器管理器（rancher核心）。</li>
 <li>Event Subscriber<br>  轻量级的消息队列，用于通知rancher-metadata更新数据<br>  <strong> 猜测：采用websocket协议通讯，Cattle为消息生产者，rancher-metadata、scheduler、rancher-agent为消费者或消息订阅者 </strong></li>
 <li>rancher-dns<br>  向容器提供DNS服务</li>
-<li>rancher-metadata<br>  用于存储DNS服务需要的元数据</li>
+<li>rancher-metadata<br>  rancher中的元数据管理器</li>
 </ul>
 <h1 id="rancher-dns结构"><a href="#rancher-dns结构" class="headerlink" title="rancher-dns结构"></a>rancher-dns结构</h1><p><img src="/images/rancher/rancher-dns-struct.png" alt="rancher-dns-struct"></p>
 <ul>
 <li>TCP、UDP Listen<br>  rancher-dns监听53端口，用于接收域名解析请求。</li>
 <li>miekg DNS<br>  DNS协议封装解析库</li>
 <li>ROUTE<br>  处理域名解析业务逻辑</li>
-<li>metadata client<br>  负责与rancher-dns-metadata同步answer数据，每5秒同步一次。</li>
+<li>metadata client<br>  负责与rancher-metadata同步answer数据，每5秒同步一次。</li>
 <li>answers<br>  负责存储解析<code>metadata client</code>同步来的answer数据（<code>/etc/rancher/answers.json</code>）</li>
 </ul>
 <h1 id="rancher-dns-ROUTE工作流程"><a href="#rancher-dns-ROUTE工作流程" class="headerlink" title="rancher-dns ROUTE工作流程"></a>rancher-dns ROUTE工作流程</h1><p><img src="/images/rancher/rancher-dns-route-workflow.png" alt="rancher-dns-route-workflow"></p>
@@ -428,6 +434,10 @@ Cattle  容器">
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/03/03/container/docker/docker-network/" rel="prev" title="Docker网络">
+                Docker网络 <i class="fa fa-chevron-right"></i>
+              </a>
             
           </div>
         </div>
@@ -495,7 +505,7 @@ Cattle  容器">
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">58</span>
+              <span class="site-state-item-count">59</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -567,7 +577,7 @@ Cattle  容器">
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#什么是服务发现"><span class="nav-number">1.</span> <span class="nav-text">什么是服务发现</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Rancher服务发现构成及更新流程"><span class="nav-number">2.</span> <span class="nav-text">Rancher服务发现构成及更新流程</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#rancher-dns结构"><span class="nav-number">3.</span> <span class="nav-text">rancher-dns结构</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#rancher-dns-ROUTE工作流程"><span class="nav-number">4.</span> <span class="nav-text">rancher-dns ROUTE工作流程</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#什么是服务发现"><span class="nav-number">1.</span> <span class="nav-text">什么是服务发现</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#版本"><span class="nav-number">2.</span> <span class="nav-text">版本</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Rancher服务发现构成及更新流程"><span class="nav-number">3.</span> <span class="nav-text">Rancher服务发现构成及更新流程</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#rancher-dns结构"><span class="nav-number">4.</span> <span class="nav-text">rancher-dns结构</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#rancher-dns-ROUTE工作流程"><span class="nav-number">5.</span> <span class="nav-text">rancher-dns ROUTE工作流程</span></a></li></ol></div>
             
 
           </div>
