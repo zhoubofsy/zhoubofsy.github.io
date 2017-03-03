@@ -256,7 +256,7 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/09/23/uwsgi/uwsgi-limit-process-resource/">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/09/23/mysql/mysql-priv-mng-md/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
     <meta itemprop="name" content="博">
@@ -281,8 +281,8 @@
             
               
                 
-                <a class="post-title-link" href="/2016/09/23/uwsgi/uwsgi-limit-process-resource/" itemprop="url">
-                  limit-as限制子进程资源，导致Mysqld服务无法启动
+                <a class="post-title-link" href="/2016/09/23/mysql/mysql-priv-mng-md/" itemprop="url">
+                  MySQL 权限管理
                 </a>
               
             
@@ -304,7 +304,7 @@
             <span class="post-meta-item-icon">
               <i class="fa fa-calendar-check-o"></i>
             </span>
-            <time title="Post modified" itemprop="dateModified" datetime="2016-11-15T16:44:21+08:00">
+            <time title="Post modified" itemprop="dateModified" datetime="2016-11-15T16:09:46+08:00">
               2016-11-15
             </time>
             
@@ -319,8 +319,8 @@
               <span class="post-meta-item-text">分类于</span>
               
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/uwsgi/" itemprop="url" rel="index">
-                    <span itemprop="name">uwsgi</span>
+                  <a href="/categories/mysql/" itemprop="url" rel="index">
+                    <span itemprop="name">mysql</span>
                   </a>
                 </span>
 
@@ -357,93 +357,823 @@
       
         
           
-            <h1 id="问题发现"><a href="#问题发现" class="headerlink" title="问题发现"></a>问题发现</h1><h3 id="现象"><a href="#现象" class="headerlink" title="现象"></a>现象</h3><p>在nginx+uwsgi+python环境中，启动mysqld服务，发生服务无法正常启动现象（闪退）。而在shell终端中可以正常启动mysqld服务。说明“nginx+uwsgi+python”这个环境限制了某些资源，导致mysqld服务启动失败。</p>
-<h3 id="uwsgi错误日志-var-log-uwsgi-log"><a href="#uwsgi错误日志-var-log-uwsgi-log" class="headerlink" title="uwsgi错误日志(/var/log/uwsgi.log)"></a>uwsgi错误日志(/var/log/uwsgi.log)</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">Starting MySQL. ERROR! The server quit without updating PID file (/store/xxx.pid)</div></pre></td></tr></table></figure>
-<h3 id="mysql错误日志-mysqldatadir-hostname-err"><a href="#mysql错误日志-mysqldatadir-hostname-err" class="headerlink" title="mysql错误日志(/{mysqldatadir}/{hostname}.err)"></a>mysql错误日志(/{mysqldatadir}/{hostname}.err)</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">2016-09-22 16:21:41 28084 [Note] InnoDB: Using atomics to ref count buffer pool pages</div><div class="line">2016-09-22 16:21:41 28084 [Note] InnoDB: The InnoDB memory heap is disabled</div><div class="line">2016-09-22 16:21:41 28084 [Note] InnoDB: Mutexes and rw_locks use GCC atomic builtins</div><div class="line">2016-09-22 16:21:41 28084 [Note] InnoDB: Memory barrier is not used</div><div class="line">2016-09-22 16:21:41 28084 [Note] InnoDB: Compressed tables use zlib 1.2.3</div><div class="line">2016-09-22 16:21:41 28084 [Note] InnoDB: Using CPU crc32 instructions</div><div class="line">2016-09-22 16:21:41 28084 [Note] InnoDB: Initializing buffer pool, size = 1.0G</div><div class="line">InnoDB: mmap(137363456 bytes) failed; errno 12</div><div class="line">2016-09-22 16:21:41 28084 [ERROR] InnoDB: Cannot allocate memory for the buffer pool</div><div class="line">2016-09-22 16:21:41 28084 [ERROR] Plugin &apos;InnoDB&apos; init function returned error.</div><div class="line">2016-09-22 16:21:41 28084 [ERROR] Plugin &apos;InnoDB&apos; registration as a STORAGE ENGINE failed.</div><div class="line">2016-09-22 16:21:41 28084 [ERROR] Unknown/unsupported storage engine: InnoDB</div><div class="line">2016-09-22 16:21:41 28084 [ERROR] Aborting</div><div class="line">2016-09-22 16:21:41 28084 [Note] Binlog end</div></pre></td></tr></table></figure>
-<h3 id="分析"><a href="#分析" class="headerlink" title="分析"></a>分析</h3><p>根据mysql错误日志提示，mysql在初始化InnoDB引擎时，申请“Buffer Pool”内存失败，此处的mmap是用来申请内存的（allocate申请内存时，小于128KB的在栈上进行分配内存，大于128K的，从堆上分配内存）。<br>使用shell终端正常启动mysqld服务，查看mysqld占用内存大小发现需要2GB左右的虚拟内存，如下所示：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">[root@host]# ps aux | grep mysqld | grep -v grep</div><div class="line">root 31635 0.0 0.1 11300 1520 ? S Sep22 0:00 /bin/sh /cs/mysql/bin/mysqld_safe --datadir=/store --pid-file=/store/zhoubo.pid</div><div class="line">root 32165 0.0 25.5 2041620 259716 ? Sl Sep22 0:15 /cs/mysql/bin/mysqld --basedir=/cs/mysql --datadir=/store --plugin-dir=/cs/mysql/lib/plugin --user=root --log-error=/store/zhoubo.err --open-files-limit=65535 --pid-file=/store/zhoubo.pid --socket=/cs/mysql/data/mysql.sock --port=3306</div></pre></td></tr></table></figure>
-<p>由此可以看出，“nginx+uwsgi+python”这个组合在其中某个环节对内存做了内存限制导致内存不能正常分配；nginx父进程为init，uwsgi父进程也为init，二者之间使用管道进行通信，所以不可能由nginx限制uwsgi进程资源。而uwsgi以fork形式调用python，fork过程中可以限制资源，python进程的资源被限制后再启动mysqld服务，就会导致mysqld分配内存失败，从而出现上述的错误现象。</p>
-<h3 id="解决"><a href="#解决" class="headerlink" title="解决"></a>解决</h3><p>根据上诉分析，找到了问题的原因出在uwsgi对进程资源进行了限制，所以将uwsgi.ini中关于资源限制的配置去掉，即可解决。<br>在uwsgi.ini中去掉<code>limit-as 256</code>选项。</p>
-<h1 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h1><p>uwsgi.ini中资源限制项包括<code>limit-as</code>，<code>limit-nproc</code>，<code>limit-port</code>等，他们对进程资源的限制的访问获取都是通过系统接口getrlimt和setrlimit来实现的(POSIX API)。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/time.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/resource.h&gt;</span></span></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">getrlimit</span><span class="params">(<span class="keyword">int</span> resource, <span class="keyword">struct</span> rlimit *rlim)</span></span>;</div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">setrlimit</span><span class="params">(<span class="keyword">int</span> resource, <span class="keyword">const</span> <span class="keyword">struct</span> rlimit *rlim)</span></span>;</div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">prlimit</span><span class="params">(<span class="keyword">pid_t</span> pid, <span class="keyword">int</span> resource, <span class="keyword">const</span> <span class="keyword">struct</span> rlimit *new_limit,<span class="keyword">struct</span> rlimit *old_limit)</span></span>;</div></pre></td></tr></table></figure>
-<h3 id="核心结构体"><a href="#核心结构体" class="headerlink" title="核心结构体"></a>核心结构体</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> rlimit&#123;</div><div class="line">    <span class="keyword">rlim_t</span> rlim_cur;  <span class="comment">// soft limit</span></div><div class="line">    <span class="keyword">rlim_t</span> rlim_max;  <span class="comment">// hard limit</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p><strong>rlim_cur</strong></p>
-<p>为soft limit是指内核所能支持的资源上限。比如对于RLIMIT_NOFILE(一个进程能打开的最大文件数，内核默认是1024)，soft limit最大也只能达到1024。对于RLIMIT_CORE(core文件的大小，内核不做限制)，soft limit最大能是unlimited。</p>
-<p><strong>rlim_max</strong></p>
-<p>为hard limit在资源中只是作为soft limit的上限。当你设置hard limit后，你以后设置的soft limit只能小于hard limit。要说明的是，hard limit只针对非特权进程，也就是进程的有效用户ID(effective user ID)不是0的进程。具有特权级别的进程(具有属性CAP_SYS_RESOURCE)，soft limit则只有内核上限。</p>
-<h3 id="可限制资源列表"><a href="#可限制资源列表" class="headerlink" title="可限制资源列表"></a>可限制资源列表</h3><table>
+            <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><ul>
+<li>OS Version : rhel 6.4</li>
+<li>MySQL Version : 5.6.31</li>
+</ul>
+<h1 id="权限"><a href="#权限" class="headerlink" title="权限"></a>权限</h1><h2 id="权限列表"><a href="#权限列表" class="headerlink" title="权限列表"></a>权限列表</h2><table>
 <thead>
 <tr>
-<th style="text-align:center">资源</th>
-<th style="text-align:left">描述</th>
+<th style="text-align:left">Privilege</th>
+<th style="text-align:left">Column</th>
+<th style="text-align:left">Context</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align:center">RLIMIT_AS</td>
-<td style="text-align:left">进程的最大虚拟内存空间，字节为单位</td>
+<td style="text-align:left">CREATE</td>
+<td style="text-align:left">Create_priv</td>
+<td style="text-align:left">databases, tables, or indexes</td>
 </tr>
 <tr>
-<td style="text-align:center">RLIMIT_CORE</td>
-<td style="text-align:left">内核转存文件的最大长度</td>
+<td style="text-align:left">DROP</td>
+<td style="text-align:left">Drop_priv</td>
+<td style="text-align:left">database, tables, or views</td>
 </tr>
 <tr>
-<td style="text-align:center">RLIMIT_CPU</td>
-<td style="text-align:left">最大允许的CPU使用时间，秒为单位</td>
+<td style="text-align:left">GRANT OPTION</td>
+<td style="text-align:left">Grant_priv</td>
+<td style="text-align:left">database, tables, or stored routines</td>
 </tr>
 <tr>
-<td style="text-align:center">RLIMIT_DATA</td>
-<td style="text-align:left">进程数据段的最大</td>
+<td style="text-align:left">LOCK TABLES</td>
+<td style="text-align:left">lock_tables_priv</td>
+<td style="text-align:left">databases</td>
 </tr>
 <tr>
-<td style="text-align:center">RLIMIT_FSIZE</td>
-<td style="text-align:left">进程可建立的文件的最大长度</td>
+<td style="text-align:left">REFERENCES</td>
+<td style="text-align:left">References_priv</td>
+<td style="text-align:left">databases or tables, columns</td>
 </tr>
 <tr>
-<td style="text-align:center">RLIMIT_LOCKS</td>
-<td style="text-align:left">进程可建立的锁和租赁的最大值</td>
+<td style="text-align:left">EVENT</td>
+<td style="text-align:left">Event_priv</td>
+<td style="text-align:left">databases</td>
 </tr>
 <tr>
-<td style="text-align:center">RLIMIT_MEMLOCK</td>
-<td style="text-align:left">进程可锁定在内存中的最大数据量，字节为单位</td>
+<td style="text-align:left">ALTER</td>
+<td style="text-align:left">Alter_priv</td>
+<td style="text-align:left">tables</td>
 </tr>
 <tr>
-<td style="text-align:center">RLIMIT_MSGQUEUE</td>
-<td style="text-align:left">进程可为POSIX消息队列分配的最大字节数</td>
+<td style="text-align:left">DELETE</td>
+<td style="text-align:left">Delete_priv</td>
+<td style="text-align:left">tables</td>
 </tr>
 <tr>
-<td style="text-align:center">RLIMIT_NICE</td>
-<td style="text-align:left">进程可通过setpriority() 或 nice()调用设置的最大完美值</td>
+<td style="text-align:left">INDEX</td>
+<td style="text-align:left">Index_priv</td>
+<td style="text-align:left">tables</td>
 </tr>
 <tr>
-<td style="text-align:center">RLIMIT_NOFILE</td>
-<td style="text-align:left">指定比进程可打开的最大文件描述词大一的值，超出此值，将会产生EMFILE错误</td>
+<td style="text-align:left">INSERT</td>
+<td style="text-align:left">Insert_priv</td>
+<td style="text-align:left">tables or columns</td>
 </tr>
 <tr>
-<td style="text-align:center">RLIMIT_NPROC</td>
-<td style="text-align:left">用户可拥有的最大进程数</td>
+<td style="text-align:left">SELECT</td>
+<td style="text-align:left">Select_priv</td>
+<td style="text-align:left">tables or columns</td>
 </tr>
 <tr>
-<td style="text-align:center">RLIMIT_RTPRIO</td>
-<td style="text-align:left">进程可通过sched_setscheduler 和 sched_setparam设置的最大实时优先级</td>
+<td style="text-align:left">UPDATE</td>
+<td style="text-align:left">Update_priv</td>
+<td style="text-align:left">tables or columns</td>
 </tr>
 <tr>
-<td style="text-align:center">RLIMIT_SIGPENDING</td>
-<td style="text-align:left">用户可拥有的最大挂起信号数</td>
+<td style="text-align:left">CREATE TEMPORARY TABLES</td>
+<td style="text-align:left">Create_tmp_table_priv</td>
+<td style="text-align:left">tables</td>
 </tr>
 <tr>
-<td style="text-align:center">RLIMIT_STACK</td>
-<td style="text-align:left">最大的进程堆栈，以字节为单位</td>
+<td style="text-align:left">TRIGGER</td>
+<td style="text-align:left">trigger_priv</td>
+<td style="text-align:left">tables</td>
+</tr>
+<tr>
+<td style="text-align:left">CREATE VIEW</td>
+<td style="text-align:left">Create_view_priv</td>
+<td style="text-align:left">views</td>
+</tr>
+<tr>
+<td style="text-align:left">SHOW VIEW</td>
+<td style="text-align:left">Show_view_priv</td>
+<td style="text-align:left">views</td>
+</tr>
+<tr>
+<td style="text-align:left">ALTER ROUTINE</td>
+<td style="text-align:left">alter_routine_priv</td>
+<td style="text-align:left">stored routines</td>
+</tr>
+<tr>
+<td style="text-align:left">CREATE ROUTINE</td>
+<td style="text-align:left">create_routine_priv</td>
+<td style="text-align:left">stored routines</td>
+</tr>
+<tr>
+<td style="text-align:left">EXECUTE</td>
+<td style="text-align:left">execute_priv</td>
+<td style="text-align:left">stored routines</td>
+</tr>
+<tr>
+<td style="text-align:left">FILE</td>
+<td style="text-align:left">file_priv</td>
+<td style="text-align:left">file access on server host (Global)</td>
+</tr>
+<tr>
+<td style="text-align:left">CREATE TABLESPACE</td>
+<td style="text-align:left">create_tablespace_priv</td>
+<td style="text-align:left">server administration (Global)</td>
+</tr>
+<tr>
+<td style="text-align:left">CREATE USER</td>
+<td style="text-align:left">create_user_priv</td>
+<td style="text-align:left">server administration (Global)</td>
+</tr>
+<tr>
+<td style="text-align:left">PROCESS</td>
+<td style="text-align:left">process_priv</td>
+<td style="text-align:left">server administration (Global)</td>
+</tr>
+<tr>
+<td style="text-align:left">PROXY</td>
+<td style="text-align:left">proxy_priv</td>
+<td style="text-align:left">server administration (user to user)</td>
+</tr>
+<tr>
+<td style="text-align:left">RELOAD</td>
+<td style="text-align:left">reload_priv</td>
+<td style="text-align:left">server administration (Global)</td>
+</tr>
+<tr>
+<td style="text-align:left">REPLICATION CLIENT</td>
+<td style="text-align:left">repl_client_priv</td>
+<td style="text-align:left">server administration (Global)</td>
+</tr>
+<tr>
+<td style="text-align:left">REPLICATION SLAVE</td>
+<td style="text-align:left">repl_slave_priv</td>
+<td style="text-align:left">server administration (Global)</td>
+</tr>
+<tr>
+<td style="text-align:left">SHOW DATABASES</td>
+<td style="text-align:left">show_db_priv</td>
+<td style="text-align:left">server administration (Global)</td>
+</tr>
+<tr>
+<td style="text-align:left">SHUTDOWN</td>
+<td style="text-align:left">shutdown_priv</td>
+<td style="text-align:left">server administration (Global)</td>
+</tr>
+<tr>
+<td style="text-align:left">SUPER</td>
+<td style="text-align:left">super_priv</td>
+<td style="text-align:left">server administration (Global)</td>
+</tr>
+<tr>
+<td style="text-align:left">ALL [PRIVILEGES]</td>
+<td style="text-align:left"></td>
+<td style="text-align:left">server administration</td>
+</tr>
+<tr>
+<td style="text-align:left">USAGE</td>
+<td style="text-align:left"></td>
+<td style="text-align:left">server administration</td>
 </tr>
 </tbody>
 </table>
-<h1 id="参考及鸣谢"><a href="#参考及鸣谢" class="headerlink" title="参考及鸣谢"></a>参考及鸣谢</h1><ul>
-<li><a href="http://blog.csdn.net/todd911/article/details/14055745" target="_blank" rel="external">《UNIX环境高级编程》笔记–getrlimit和setrlimit函数</a></li>
-<li><a href="http://blog.csdn.net/kevin6216/article/details/15378617" target="_blank" rel="external">uWSGI参考资料</a></li>
-<li><a href="http://uwsgi-docs.readthedocs.io/en/latest/Options.html?highlight=limit-as" target="_blank" rel="external">uWSGI Options(官方)</a></li>
-<li><a href="http://blog.csdn.net/pennyliang/article/details/41678953" target="_blank" rel="external">mmap ENOMEM（errno 12） 错误 </a></li>
-<li><a href="http://www.cnblogs.com/vinozly/p/5489138.html" target="_blank" rel="external">Linux进程分配内存的两种方式–brk() 和mmap()</a></li>
+<h2 id="按权限的种类分类"><a href="#按权限的种类分类" class="headerlink" title="按权限的种类分类"></a>按权限的种类分类</h2><ul>
+<li>数据访问相关权限</li>
+<li>库表结构相关权限</li>
+<li>服务相关权限</li>
 </ul>
+<h1 id="权限相关表单"><a href="#权限相关表单" class="headerlink" title="权限相关表单"></a>权限相关表单</h1><p>MySQL权限信息存储在“mysql”数据中<br>其中:</p>
+<ul>
+<li>“user”表负责存储用户信息，及用户本身所拥有的权限；</li>
+<li>“db”表负责存储用户与db的权限关系;</li>
+<li>“tables_priv”负责存在用户与table的权限关系;</li>
+<li>“columns_priv”负责存储用户与column的权限关系;</li>
+</ul>
+<h2 id="user表结构"><a href="#user表结构" class="headerlink" title="user表结构"></a>user表结构</h2><table>
+<thead>
+<tr>
+<th style="text-align:left">Field</th>
+<th style="text-align:left">Type</th>
+<th style="text-align:center">Null</th>
+<th style="text-align:center">Key</th>
+<th style="text-align:left">Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">Host</td>
+<td style="text-align:left">char(60)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">User</td>
+<td style="text-align:left">char(16)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">Password</td>
+<td style="text-align:left">char(41)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">Select_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Insert_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Update_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Delete_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Create_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Drop_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Reload_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Shutdown_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Process_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">File_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Grant_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">References_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Index_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Alter_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Show_db_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Super_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Create_tmp_table_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Lock_tables_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Execute_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Repl_slave_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Repl_client_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Create_view_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Show_view_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Create_routine_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Alter_routine_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Create_user_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Event_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Trigger_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Create_tablespace_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">ssl_type</td>
+<td style="text-align:left">enum(‘’,’ANY’,’X509’,’SPECIFIED’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">ssl_cipher</td>
+<td style="text-align:left">blob</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">NULL</td>
+</tr>
+<tr>
+<td style="text-align:left">x509_issuer</td>
+<td style="text-align:left">blob</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">NULL</td>
+</tr>
+<tr>
+<td style="text-align:left">x509_subject</td>
+<td style="text-align:left">blob</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">NULL</td>
+</tr>
+<tr>
+<td style="text-align:left">max_questions</td>
+<td style="text-align:left">int(11) unsigned</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">0</td>
+</tr>
+<tr>
+<td style="text-align:left">max_updates</td>
+<td style="text-align:left">int(11) unsigned</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">0</td>
+</tr>
+<tr>
+<td style="text-align:left">max_connections</td>
+<td style="text-align:left">int(11) unsigned</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">0</td>
+</tr>
+<tr>
+<td style="text-align:left">max_user_connections</td>
+<td style="text-align:left">int(11) unsigned</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">0</td>
+</tr>
+<tr>
+<td style="text-align:left">plugin</td>
+<td style="text-align:left">char(64)</td>
+<td style="text-align:center">YES</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">mysql_native_password</td>
+</tr>
+<tr>
+<td style="text-align:left">authentication_string</td>
+<td style="text-align:left">text</td>
+<td style="text-align:center">YES</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">NULL</td>
+</tr>
+<tr>
+<td style="text-align:left">password_expired</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+</tbody>
+</table>
+<h2 id="db表结构"><a href="#db表结构" class="headerlink" title="db表结构"></a>db表结构</h2><table>
+<thead>
+<tr>
+<th style="text-align:left">Field</th>
+<th style="text-align:left">Type</th>
+<th style="text-align:center">Null</th>
+<th style="text-align:center">Key</th>
+<th style="text-align:left">Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">Host</td>
+<td style="text-align:left">char(60)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">Db</td>
+<td style="text-align:left">char(64)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">User</td>
+<td style="text-align:left">char(16)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">Select_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Insert_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Update_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Delete_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Create_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Drop_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Grant_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">References_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Index_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Alter_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Create_tmp_table_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Lock_tables_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Create_view_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Show_view_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Create_routine_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Alter_routine_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Execute_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Event_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Trigger_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+</tbody>
+</table>
+<h2 id="tables-priv表结构"><a href="#tables-priv表结构" class="headerlink" title="tables_priv表结构"></a>tables_priv表结构</h2><table>
+<thead>
+<tr>
+<th style="text-align:left">Field</th>
+<th style="text-align:left">Type</th>
+<th style="text-align:center">Null</th>
+<th style="text-align:center">Key</th>
+<th style="text-align:left">Default</th>
+<th style="text-align:left">Extra</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">Host</td>
+<td style="text-align:left">char(60)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">Db</td>
+<td style="text-align:left">char(64)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">User</td>
+<td style="text-align:left">char(16)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">Table_name</td>
+<td style="text-align:left">char(64)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">Grantor</td>
+<td style="text-align:left">char(77)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">MUL</td>
+<td style="text-align:left"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">Timestamp</td>
+<td style="text-align:left">timestamp</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">CURRENT_TIMESTAMP</td>
+<td style="text-align:left">on update CURRENT_TIMESTAMP</td>
+</tr>
+<tr>
+<td style="text-align:left">Table_priv</td>
+<td style="text-align:left">set(‘Select’,’Insert’,<br>‘Update’,’Delete’,<br>‘Create’,’Drop’,<br>‘Grant’,’References’,<br>‘Index’,’Alter’,<br>‘Create View’,<br>‘Show view’,’Trigger’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">Column_priv</td>
+<td style="text-align:left">set(‘Select’,’Insert’,<br>‘Update’,’References’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left"></td>
+<td style="text-align:left"><br></td>
+</tr>
+</tbody>
+</table>
+<h2 id="columns-priv表结构"><a href="#columns-priv表结构" class="headerlink" title="columns_priv表结构"></a>columns_priv表结构</h2><table>
+<thead>
+<tr>
+<th style="text-align:left">Field</th>
+<th style="text-align:left">Type</th>
+<th style="text-align:center">Null</th>
+<th style="text-align:center">Key</th>
+<th style="text-align:left">Default</th>
+<th style="text-align:left">Extra</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">Host</td>
+<td style="text-align:left">char(60)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">Db</td>
+<td style="text-align:left">char(64)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">User</td>
+<td style="text-align:left">char(16)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">Table_name</td>
+<td style="text-align:left">char(64)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">Column_name</td>
+<td style="text-align:left">char(64)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">Timestamp</td>
+<td style="text-align:left">timestamp</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">CURRENT_TIMESTAMP</td>
+<td style="text-align:left">on update <br>CURRENT_TIMESTAMP</td>
+</tr>
+<tr>
+<td style="text-align:left">Column_priv</td>
+<td style="text-align:left">set(‘Select’,<br>‘Insert’,<br>‘Update’,<br>‘References’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left"></td>
+<td style="text-align:left"><br></td>
+</tr>
+</tbody>
+</table>
+<h1 id="验证流程"><a href="#验证流程" class="headerlink" title="验证流程"></a>验证流程</h1><p><img src="/images/mysql/mysql_privilege_flow.png" alt="mysql_privilege_flow"></p>
 
           
         

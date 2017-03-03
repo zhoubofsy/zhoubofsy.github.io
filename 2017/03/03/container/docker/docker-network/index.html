@@ -101,7 +101,7 @@ OS 版本  Red Hat Enterprise Linux Server release 7.2 (M">
 <meta property="og:image" content="http://yoursite.com/images/docker/docker-network-bridge-main.png">
 <meta property="og:image" content="http://yoursite.com/images/docker/docker-network-bridge-downflow.png">
 <meta property="og:image" content="http://yoursite.com/images/docker/docker-network-bridge-downflow-detail.png">
-<meta property="og:updated_time" content="2017-03-03T13:45:16.000Z">
+<meta property="og:updated_time" content="2017-03-03T13:46:27.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Docker网络技术(Bridge)">
 <meta name="twitter:description" content="Docker网络技术，用来保证Container之间正常通讯的技术，作为Docker自身提供的网络分为4种，Bridge、Host、None、Container。本文重点介绍 Bridge 
@@ -318,7 +318,7 @@ OS 版本  Red Hat Enterprise Linux Server release 7.2 (M">
             <span class="post-meta-item-icon">
               <i class="fa fa-calendar-check-o"></i>
             </span>
-            <time title="Post modified" itemprop="dateModified" datetime="2017-03-03T21:45:16+08:00">
+            <time title="Post modified" itemprop="dateModified" datetime="2017-03-03T21:46:27+08:00">
               2017-03-03
             </time>
             
@@ -389,7 +389,8 @@ OS 版本  Red Hat Enterprise Linux Server release 7.2 (M">
 <p>在桥接模式下，Docker Daemon将veth0附加到docker0网桥上，保证宿主机的报文有能力发往veth0。再将veth1添加到Docker容器所属的网络命名空间，保证宿主机的网络报文若发往veth0可以立即被veth1收到。容器如果需要联网，则需要采用NAT方式。准确的说，是NATP(网络地址端口转换)方式。NATP包含两种转换方式：SNAT和DNAT。</p>
 <h3 id="下行访问流程"><a href="#下行访问流程" class="headerlink" title="下行访问流程"></a>下行访问流程</h3><p><img src="/images/docker/docker-network-bridge-downflow.png" alt="docker-network-bridge-downflow"><br>由于容器的IP与端口对外都是不可见的，所以数据包的目的地址为宿主机的ip和端口，为192.168.1.10:24。<br>数据包经过路由器发给宿主机eth0，再经eth0转发给docker0网桥。<br>由于存在DNAT(Destination NAT，修改数据包的目的地址)规则，会将数据包的目的地址转换为容器的ip和端口，为172.17.0.n:24。宿主机上的docker0网桥识别到容器ip和端口，于是将数据包发送附加到docker0网桥上的veth0接口，veth0接口再将数据包发送给容器内部的veth1接口，容器接收数据包并作出响应。<br><img src="/images/docker/docker-network-bridge-downflow-detail.png" alt="docker-network-bridge-downflow-detail"></p>
 <h3 id="上行访问流程"><a href="#上行访问流程" class="headerlink" title="上行访问流程"></a>上行访问流程</h3><p>看了上面的<code>下行访问流程</code>用到了DNAT，那么上行访问一定会使用SNAT了吧。可实时却并非如此。<br>容器内的请求可以正常发送到host外，是因为host开启的<code>ip_forward</code>。</p>
-<h1 id="PIPEwork"><a href="#PIPEwork" class="headerlink" title="PIPEwork"></a>PIPEwork</h1><h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<h1 id="PIPEwork"><a href="#PIPEwork" class="headerlink" title="PIPEwork"></a>PIPEwork</h1><p>Todo…</p>
+<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
 <li><a href="http://www.tuicool.com/wx/nyQFfaZ" target="_blank" rel="external">探索 Docker bridge 的正确姿势，亲测有效！</a></li>
 </ul>
 
