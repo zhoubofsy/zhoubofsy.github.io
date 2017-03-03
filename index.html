@@ -282,7 +282,7 @@
               
                 
                 <a class="post-title-link" href="/2017/03/03/container/docker/docker-network/" itemprop="url">
-                  Docker网络
+                  Docker网络技术(Bridge)
                 </a>
               
             
@@ -304,7 +304,7 @@
             <span class="post-meta-item-icon">
               <i class="fa fa-calendar-check-o"></i>
             </span>
-            <time title="Post modified" itemprop="dateModified" datetime="2017-03-03T11:27:06+08:00">
+            <time title="Post modified" itemprop="dateModified" datetime="2017-03-03T21:45:16+08:00">
               2017-03-03
             </time>
             
@@ -357,7 +357,29 @@
       
         
           
-            <p>Todo…</p>
+            <p>Docker网络技术，用来保证Container之间正常通讯的技术，作为Docker自身提供的网络分为4种，Bridge、Host、None、Container。本文重点介绍<strong> Bridge </strong></p>
+<h1 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h1><ul>
+<li>Docker 版本<br>  Docker version 1.12.5, build 7392c3b</li>
+<li>OS 版本<br>  Red Hat Enterprise Linux Server release 7.2 (Maipo)</li>
+<li>kernel 版本<br>  Linux 3.10.0-327.el7.x86_64</li>
+</ul>
+<h1 id="Bridge介绍"><a href="#Bridge介绍" class="headerlink" title="Bridge介绍"></a>Bridge介绍</h1><h2 id="longlong-ago"><a href="#longlong-ago" class="headerlink" title="longlong ago :-)"></a>longlong ago :-)</h2><p><img src="/images/docker/docker-network-bridge-br0.png" alt="docker-network-bridge-br0"></p>
+<p>早期的二层网络中，bridge可以连接不同的LAN网，当host1 发出一个数据包时，LAN1的其他主机和网桥br0都会收到该数据包。网桥再将数据包从入口端广播到其他端口上（我的理解是，多端口网桥叫交换机）。因此，LAN2上的主机也会接收到host1发出的数据包，从而实现不同LAN网上所有主机的通信。</p>
+<p><img src="/images/docker/docker-network-bridge-linux.png" alt="docker-network-bridge-linux"></p>
+<p>后来linux kernel借鉴桥设备的原理实现了虚拟bridge，用到了veth pair技术，实现了不同子网通讯的二层基础。</p>
+<h2 id="Docker-Bridge"><a href="#Docker-Bridge" class="headerlink" title="Docker Bridge"></a>Docker Bridge</h2><p>(正题)<code>Docker Bridge</code>不同于<code>linux bridge</code>也不同于<code>桥设备</code>，但<code>Docker Bridge</code>的构建基于<code>linux bridge</code>、<code>Network Namespace</code>、<code>iptables</code>。</p>
+<ul>
+<li>Network Namespace<br>  实现了子网之间的隔离</li>
+<li>iptables<br>  解决了NAT映射问题，使容器有(被)访问外网的能力。</li>
+<li>linux bridge<br>  实现了Host内跨子网通讯</li>
+</ul>
+<p><img src="/images/docker/docker-network-bridge-main.png" alt="docker-network-bridge-main"></p>
+<p>在桥接模式下，Docker Daemon将veth0附加到docker0网桥上，保证宿主机的报文有能力发往veth0。再将veth1添加到Docker容器所属的网络命名空间，保证宿主机的网络报文若发往veth0可以立即被veth1收到。容器如果需要联网，则需要采用NAT方式。准确的说，是NATP(网络地址端口转换)方式。NATP包含两种转换方式：SNAT和DNAT。</p>
+<h3 id="下行访问流程"><a href="#下行访问流程" class="headerlink" title="下行访问流程"></a>下行访问流程</h3><p><img src="/images/docker/docker-network-bridge-downflow.png" alt="docker-network-bridge-downflow"><br>由于容器的IP与端口对外都是不可见的，所以数据包的目的地址为宿主机的ip和端口，为192.168.1.10:24。<br>数据包经过路由器发给宿主机eth0，再经eth0转发给docker0网桥。<br>由于存在DNAT(Destination NAT，修改数据包的目的地址)规则，会将数据包的目的地址转换为容器的ip和端口，为172.17.0.n:24。宿主机上的docker0网桥识别到容器ip和端口，于是将数据包发送附加到docker0网桥上的veth0接口，veth0接口再将数据包发送给容器内部的veth1接口，容器接收数据包并作出响应。<br><img src="/images/docker/docker-network-bridge-downflow-detail.png" alt="docker-network-bridge-downflow-detail"></p>
+<h3 id="上行访问流程"><a href="#上行访问流程" class="headerlink" title="上行访问流程"></a>上行访问流程</h3><p>看了上面的<code>下行访问流程</code>用到了DNAT，那么上行访问一定会使用SNAT了吧。可实时却并非如此。<br>容器内的请求可以正常发送到host外，是因为host开启的<code>ip_forward</code>。</p>
+<h1 id="PIPEwork"><a href="#PIPEwork" class="headerlink" title="PIPEwork"></a>PIPEwork</h1><h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a href="http://www.tuicool.com/wx/nyQFfaZ" target="_blank" rel="external">探索 Docker bridge 的正确姿势，亲测有效！</a></li>
+</ul>
 
           
         
