@@ -84,40 +84,40 @@
 
 
 
-<meta name="description" content="概述依托现有虚拟化资源引入docker容器机制
+<meta name="description" content="概依托现有虚拟化资源引入docker容器机制
 
 
 scheduler  根据VM宿主机的负载或其他情况，决定容器运行在哪个VM上。
 monitor  监控VM宿主机和容器健康情况，当有容器或宿主机宕掉时，报告想过情况，其他模块根据monitor的报告做出相应的响应。
 controller  控制容器的启动停止、迁移、扩展等操作
 docker engine  ……
-pipework  管理容器网络">
+pipework  管理容器网络，">
 <meta property="og:type" content="article">
 <meta property="og:title" content="XenServer中Docker容器实施方案（Preview）">
 <meta property="og:url" content="http://yoursite.com/2017/05/11/works/docker-over-xenserver-plans/index.html">
 <meta property="og:site_name" content="Bolog">
-<meta property="og:description" content="概述依托现有虚拟化资源引入docker容器机制
+<meta property="og:description" content="概依托现有虚拟化资源引入docker容器机制
 
 
 scheduler  根据VM宿主机的负载或其他情况，决定容器运行在哪个VM上。
 monitor  监控VM宿主机和容器健康情况，当有容器或宿主机宕掉时，报告想过情况，其他模块根据monitor的报告做出相应的响应。
 controller  控制容器的启动停止、迁移、扩展等操作
 docker engine  ……
-pipework  管理容器网络">
+pipework  管理容器网络，">
 <meta property="og:image" content="http://yoursite.com/images/work/xen_container_plan.png">
 <meta property="og:image" content="http://yoursite.com/images/work/xen_container_network_plan.png">
 <meta property="og:image" content="http://yoursite.com/images/work/xen_container_flow.png">
-<meta property="og:updated_time" content="2017-05-11T08:51:08.000Z">
+<meta property="og:updated_time" content="2017-05-11T09:02:24.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="XenServer中Docker容器实施方案（Preview）">
-<meta name="twitter:description" content="概述依托现有虚拟化资源引入docker容器机制
+<meta name="twitter:description" content="概依托现有虚拟化资源引入docker容器机制
 
 
 scheduler  根据VM宿主机的负载或其他情况，决定容器运行在哪个VM上。
 monitor  监控VM宿主机和容器健康情况，当有容器或宿主机宕掉时，报告想过情况，其他模块根据monitor的报告做出相应的响应。
 controller  控制容器的启动停止、迁移、扩展等操作
 docker engine  ……
-pipework  管理容器网络">
+pipework  管理容器网络，">
 <meta name="twitter:image" content="http://yoursite.com/images/work/xen_container_plan.png">
 
 
@@ -328,7 +328,7 @@ pipework  管理容器网络">
             <span class="post-meta-item-icon">
               <i class="fa fa-calendar-check-o"></i>
             </span>
-            <time title="Post modified" itemprop="dateModified" datetime="2017-05-11T16:51:08+08:00">
+            <time title="Post modified" itemprop="dateModified" datetime="2017-05-11T17:02:24+08:00">
               2017-05-11
             </time>
             
@@ -379,7 +379,7 @@ pipework  管理容器网络">
       
 
       
-        <h1 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h1><p>依托现有虚拟化资源引入docker容器机制</p>
+        <h1 id="概"><a href="#概" class="headerlink" title="概"></a>概</h1><p>依托现有虚拟化资源引入docker容器机制</p>
 <p><img src="/images/work/xen_container_plan.png" alt="xen_container_plan.png"></p>
 <ul>
 <li>scheduler<br>  根据VM宿主机的负载或其他情况，决定容器运行在哪个VM上。</li>
@@ -389,20 +389,28 @@ pipework  管理容器网络">
 <li>pipework<br>  管理容器网络，目前pipework支持手动配置容器ip，网关及路由；对DHCP支持存在问题；（考虑将pipework以plugin方式加入docker engine）</li>
 <li>xe-daemon<br>  采集容器监控数据，并通过xenbus将数据发给xenserver</li>
 </ul>
-<h1 id="网络方案"><a href="#网络方案" class="headerlink" title="网络方案"></a>网络方案</h1><p><img src="/images/work/xen_container_network_plan.png" alt="xen_container_network_plan.png"></p>
+<h1 id="网"><a href="#网" class="headerlink" title="网"></a>网</h1><p><img src="/images/work/xen_container_network_plan.png" alt="xen_container_network_plan.png"></p>
 <ul>
 <li>宿主机有两个网络，一个管理网，一个数据网，宿主机内的所有容器使用数据网络</li>
 <li>利用linux自带的bridge将宿主机的数据网与容器的veth pair相连，由此二层网络联通</li>
 <li>宿主机开通ip_forward，实现三层转发</li>
 <li>容器通过<code>pipework</code>脚本完成ip地址、路由、网关的配置</li>
 </ul>
-<h1 id="工作流"><a href="#工作流" class="headerlink" title="工作流"></a>工作流</h1><p>服务发现（DNS）、负载均衡、容器镜像库均已容器形式提供服务。</p>
+<h1 id="流"><a href="#流" class="headerlink" title="流"></a>流</h1><p>服务发现（DNS）、负载均衡、容器镜像库均已容器形式提供服务。</p>
 <p><img src="/images/work/xen_container_flow.png" alt="xen_container_flow.png"></p>
-<h1 id="存储方案-Todo"><a href="#存储方案-Todo" class="headerlink" title="存储方案(Todo)"></a>存储方案(Todo)</h1><ul>
+<h1 id="储"><a href="#储" class="headerlink" title="储"></a>储</h1><ul>
 <li>一般容器<br>  使用RBD块设备存储</li>
 <li>Registry容<br>  使用RGW对象存储（S3/Swift）</li>
 </ul>
-<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><ul>
+<p>容器存储相关内容，有待深入调研</p>
+<h1 id="注"><a href="#注" class="headerlink" title="注"></a>注</h1><ul>
+<li>scheduler、monitor、controller 从头写吧</li>
+<li>docker engine 需要修改一些api接口</li>
+<li>pipework 需要从shell改成golang，以plugin方式加入docker engine</li>
+<li>xe-daemon 需要增加ip地址采集</li>
+<li>DNS Container 从头写吧</li>
+</ul>
+<h1 id="参"><a href="#参" class="headerlink" title="参"></a>参</h1><ul>
 <li><a href="https://zhoubofsy.github.io/2017/05/08/container/docker/docker-network-pipework/" target="_blank" rel="external">Docker网络管理——PIPEWORK</a></li>
 <li><a href="https://zhoubofsy.github.io/2017/04/27/container/k8s/k8s-analyze-service-discovery/" target="_blank" rel="external">K8s服务发现分析</a></li>
 <li><a href="https://zhoubofsy.github.io/2017/03/29/container/k8s/k8s-service-expose/" target="_blank" rel="external">k8s service expose</a></li>
@@ -593,7 +601,7 @@ pipework  管理容器网络">
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#概述"><span class="nav-number">1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#网络方案"><span class="nav-number">2.</span> <span class="nav-text">网络方案</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#工作流"><span class="nav-number">3.</span> <span class="nav-text">工作流</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#存储方案-Todo"><span class="nav-number">4.</span> <span class="nav-text">存储方案(Todo)</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考"><span class="nav-number">5.</span> <span class="nav-text">参考</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#概"><span class="nav-number">1.</span> <span class="nav-text">概</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#网"><span class="nav-number">2.</span> <span class="nav-text">网</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#流"><span class="nav-number">3.</span> <span class="nav-text">流</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#储"><span class="nav-number">4.</span> <span class="nav-text">储</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#注"><span class="nav-number">5.</span> <span class="nav-text">注</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参"><span class="nav-number">6.</span> <span class="nav-text">参</span></a></li></ol></div>
             
 
           </div>
