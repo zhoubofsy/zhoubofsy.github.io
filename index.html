@@ -304,7 +304,7 @@
             <span class="post-meta-item-icon">
               <i class="fa fa-calendar-check-o"></i>
             </span>
-            <time title="Post modified" itemprop="dateModified" datetime="2017-05-18T23:07:09+08:00">
+            <time title="Post modified" itemprop="dateModified" datetime="2017-05-18T23:12:07+08:00">
               2017-05-18
             </time>
             
@@ -357,7 +357,7 @@
       
         
           
-            <p>加密的一个简单但又实用的任务就是发送加密电子邮件。多年来，为电子邮件进行加密的标准一直是PGP（Pretty Good Privacy）。程序员Phil Zimmermann特别为电子邮件的保密编写的PGP。这个软件非常好用，迅速流传开来，成了许多程序员的必备工具。但是，它是商业软件，不能自由使用。作为PGP的替代，如今已经有一个开放源代码的类似产品可供使用。GPG（Gnu Privacy Guard），它不包含专利算法，能够无限制的用于商业应用。</p>
+            <p><img src="/images/security/gpg/gpg_usage.png" alt="gpg_usage.png"><br>加密的一个简单但又实用的任务就是发送加密电子邮件。多年来，为电子邮件进行加密的标准一直是PGP（Pretty Good Privacy）。程序员Phil Zimmermann特别为电子邮件的保密编写的PGP。这个软件非常好用，迅速流传开来，成了许多程序员的必备工具。但是，它是商业软件，不能自由使用。作为PGP的替代，如今已经有一个开放源代码的类似产品可供使用。GPG（Gnu Privacy Guard），它不包含专利算法，能够无限制的用于商业应用。</p>
 <h1 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h1><ul>
 <li>RHEL7.2<br>  默认以安装GPG</li>
 <li>GPG 2.0.22<br>  libgcrypt 1.5.3</li>
@@ -491,7 +491,7 @@
             <span class="post-meta-item-icon">
               <i class="fa fa-calendar-check-o"></i>
             </span>
-            <time title="Post modified" itemprop="dateModified" datetime="2017-05-18T16:38:41+08:00">
+            <time title="Post modified" itemprop="dateModified" datetime="2017-05-18T23:13:11+08:00">
               2017-05-18
             </time>
             
@@ -568,7 +568,7 @@
 </ul>
 <h2 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h2><p><strong><em> 经过上述步骤的操作，已经将coreos镜像制作完成，并放置在”./src/build/images/amd64-usr”目录下。 </em></strong></p>
 <p>安装的过程需要使用liveCD启动，然后挂在需要安装的裸盘，使用<code>coreos-install</code>安装。镜像的传递是，先将镜像放置到一个webserver上，然后<code>coreos-install</code>再通过这个webserver下载、并安装。</p>
-<p><strong><em> 在将镜像放置到webserver之前，需要先将镜像压缩成bz2文件，然后再将bz2进行签名 </em></strong>（签名无法使用官方的私钥，只能自己申请，<a href="http://www.baidu.com" target="_blank" rel="external">详细请见</a>）。</p>
+<p><strong><em> 在将镜像放置到webserver之前，需要先将镜像压缩成bz2文件，然后再将bz2进行签名 </em></strong>（签名无法使用官方的私钥，只能自己申请，<a href="https://zhoubofsy.github.io/2017/05/18/security/gpg-usage/" target="_blank" rel="external">详细请见</a>）。</p>
 <h3 id="步骤"><a href="#步骤" class="headerlink" title="步骤"></a>步骤</h3><p><strong><em> 本人的安装步骤，不是唯一的、方便、快捷的方法，更多安装方式建议阅者自行调研 </em></strong></p>
 <h4 id="下载coreos-install安装脚本"><a href="#下载coreos-install安装脚本" class="headerlink" title="下载coreos-install安装脚本"></a>下载coreos-install安装脚本</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">wget https://raw.githubusercontent.com/coreos/init/master/bin/coreos-install</div></pre></td></tr></table></figure>
 <h4 id="修改coreos-install中的公钥"><a href="#修改coreos-install中的公钥" class="headerlink" title="修改coreos-install中的公钥"></a>修改coreos-install中的公钥</h4><p>在coreos-install中有个变量<code>GPG_KEY</code>用于存储官方的公钥，需要将这个公钥换成你给镜像签名时对应的公钥。</p>
