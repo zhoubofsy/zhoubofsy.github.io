@@ -92,7 +92,7 @@
 <meta property="og:site_name" content="Bolog">
 <meta property="og:description" content="今天是2017年6月12日，在此之前Docker就已经更名为moby了，就moby的的编译与之前docker的编译无异，为什么呢，因为无论是docker还是moby，都将自己的编译放在了容器中，编译所依赖的包也在容器中完成安装，目前moby（以下都以此替代docker）能直接编译出rpm、deb两种安装包，具体支持哪些平台，哪些操作系统，请见./contrib/builder/。
 本文主要以编译c">
-<meta property="og:updated_time" content="2017-06-12T06:22:32.000Z">
+<meta property="og:updated_time" content="2017-06-12T06:24:08.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Moby（Docker）编译趟坑">
 <meta name="twitter:description" content="今天是2017年6月12日，在此之前Docker就已经更名为moby了，就moby的的编译与之前docker的编译无异，为什么呢，因为无论是docker还是moby，都将自己的编译放在了容器中，编译所依赖的包也在容器中完成安装，目前moby（以下都以此替代docker）能直接编译出rpm、deb两种安装包，具体支持哪些平台，哪些操作系统，请见./contrib/builder/。
@@ -306,7 +306,7 @@
             <span class="post-meta-item-icon">
               <i class="fa fa-calendar-check-o"></i>
             </span>
-            <time title="Post modified" itemprop="dateModified" datetime="2017-06-12T14:22:32+08:00">
+            <time title="Post modified" itemprop="dateModified" datetime="2017-06-12T14:24:08+08:00">
               2017-06-12
             </time>
             
@@ -363,7 +363,6 @@
 <p>Moby先创建一个Debian的容器，编译Moby，然后该容器根据用户输入的参数决定使用哪些容器编译哪些安装包，在编译目标安装包之前会使用golang容器编译manpage。总之moby的所有编译工作都是在容器中进行的。</p>
 <h1 id="编译方法"><a href="#编译方法" class="headerlink" title="编译方法"></a>编译方法</h1><h2 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h2><ul>
 <li>宿主机<br>  RHEL7.2</li>
-<li>golang<br>  1.8</li>
 <li>docker<br>  17.04.0-ce</li>
 </ul>
 <h2 id="RPM-Only-CentOS"><a href="#RPM-Only-CentOS" class="headerlink" title="RPM (Only CentOS)"></a>RPM (Only CentOS)</h2><ul>
