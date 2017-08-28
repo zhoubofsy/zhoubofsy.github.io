@@ -387,7 +387,7 @@
 <p><img src="/images/gluster/glusterfs-volume-stripe-replica.png" alt="glusterfs-volume-stripe-replica"></p>
 <h3 id="Distribute-Stripe-Replica卷"><a href="#Distribute-Stripe-Replica卷" class="headerlink" title="Distribute Stripe Replica卷"></a>Distribute Stripe Replica卷</h3><p>分布式条带复制卷，三种基本卷的复合卷，通常用于类 Map Reduce 应用。</p>
 <p><img src="/images/gluster/glusterfs-volume-distribute-stripe-replica.png" alt="glusterfs-volume-distribute-stripe-replica"></p>
-<h1 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h1><p>使用docker部署GlusterFS，dockerfile如下：<br><figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">FROM</span> centos:<span class="number">7.3</span>.<span class="number">1611</span></div><div class="line"></div><div class="line"><span class="keyword">MAINTAINER</span> zhoub</div><div class="line"></div><div class="line"><span class="keyword">RUN</span> yum update -y</div><div class="line"><span class="keyword">RUN</span> yum install -y centos-release-gluster310.noarch</div><div class="line"><span class="keyword">RUN</span> yum update -y</div><div class="line"></div><div class="line"><span class="keyword">RUN</span> yum clean all</div></pre></td></tr></table></figure></p>
+<h1 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h1><p>使用docker部署GlusterFS，dockerfile如下：<br><figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">FROM</span> centos:<span class="number">7.3</span>.<span class="number">1611</span></div><div class="line"></div><div class="line"><span class="keyword">MAINTAINER</span> zhoub</div><div class="line"></div><div class="line"><span class="keyword">RUN</span><span class="bash"> yum update -y</span></div><div class="line"><span class="keyword">RUN</span><span class="bash"> yum install -y centos-release-gluster310.noarch</span></div><div class="line"><span class="keyword">RUN</span><span class="bash"> yum update -y</span></div><div class="line"></div><div class="line"><span class="keyword">RUN</span><span class="bash"> yum clean all</span></div></pre></td></tr></table></figure></p>
 <p>创建GlusterFS镜像<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"># docker build -t glusterfs:3.10 -f ./dockerfile .</div><div class="line">...</div></pre></td></tr></table></figure></p>
 <p>创建docker容器脚本<code>mkgfs.sh</code>，创建两个容器，用来组件gluster集群<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">#!/bin/sh</div><div class="line"></div><div class="line">count=2</div><div class="line">image=glusterfs:3.10</div><div class="line"></div><div class="line">for((i=1;i&lt;=$count;i++))</div><div class="line">do</div><div class="line">    docker run -d -e &quot;container=docker&quot; --privileged=true -v /sys/fs/cgroup:/sys/fs/cgroup -h glf-client-$i --name glf_client_$i $&#123;image&#125; /usr/sbin/init</div><div class="line">done</div></pre></td></tr></table></figure></p>
 <h1 id="部署-amp-使用"><a href="#部署-amp-使用" class="headerlink" title="部署&amp;使用"></a>部署&amp;使用</h1><h2 id="部署"><a href="#部署" class="headerlink" title="部署"></a>部署</h2><p>安装<code>glusterfs-server</code><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"># yum install -y glusterfs-server</div><div class="line">...</div></pre></td></tr></table></figure></p>
@@ -447,6 +447,10 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/08/28/linux/dist-linux-codename/" rel="prev" title="dist-linux-codename">
+                dist-linux-codename <i class="fa fa-chevron-right"></i>
+              </a>
             
           </div>
         </div>
@@ -514,7 +518,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">71</span>
+              <span class="site-state-item-count">72</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -531,7 +535,7 @@
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">77</span>
+                <span class="site-state-item-count">78</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
