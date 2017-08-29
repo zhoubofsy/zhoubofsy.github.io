@@ -5,7 +5,7 @@
   
 
 
-<html class="theme-next muse use-motion" lang="zh-Hans">
+<html class="theme-next gemini use-motion" lang="zh-Hans">
 <head>
   <meta charset="UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -95,44 +95,19 @@
 
 
 
-<meta name="description" content="PIPEWORK 是一个简单易用的Docker容器网络配置工具，由Docker的工程师Jérôme Petazzoni开发。通过使用ip、brctl、ovs-vsctl等命令来为Docker容器配置自定义的网桥、网卡、路由等。
-
-
-使用新建的br0网桥替代默认的docker0网桥
-容器网络类型选择none
-
-配置步骤
-在Github上获取pipework Todo
-创建网桥
- 1$ sudo br">
+<meta name="description" content="PIPEWORK 是一个简单易用的Docker容器网络配置工具，由Docker的工程师Jérôme Petazzoni开发。通过使用ip、brctl、ovs-vsctl等命令来为Docker容器配置自定义的网桥、网卡、路由等。   使用新建的br0网桥替代默认的docker0网桥 容器网络类型选择none  配置步骤 在Github上获取pipework Todo 创建网桥  1$ sudo br">
+<meta name="keywords" content="docker">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Docker网络管理——PIPEWORK">
 <meta property="og:url" content="http://yoursite.com/2017/05/08/container/docker/docker-network-pipework/index.html">
 <meta property="og:site_name" content="Bolog">
-<meta property="og:description" content="PIPEWORK 是一个简单易用的Docker容器网络配置工具，由Docker的工程师Jérôme Petazzoni开发。通过使用ip、brctl、ovs-vsctl等命令来为Docker容器配置自定义的网桥、网卡、路由等。
-
-
-使用新建的br0网桥替代默认的docker0网桥
-容器网络类型选择none
-
-配置步骤
-在Github上获取pipework Todo
-创建网桥
- 1$ sudo br">
+<meta property="og:description" content="PIPEWORK 是一个简单易用的Docker容器网络配置工具，由Docker的工程师Jérôme Petazzoni开发。通过使用ip、brctl、ovs-vsctl等命令来为Docker容器配置自定义的网桥、网卡、路由等。   使用新建的br0网桥替代默认的docker0网桥 容器网络类型选择none  配置步骤 在Github上获取pipework Todo 创建网桥  1$ sudo br">
+<meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://yoursite.com/images/docker/docker-network-pipework-frame.png">
 <meta property="og:updated_time" content="2017-05-09T02:30:03.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Docker网络管理——PIPEWORK">
-<meta name="twitter:description" content="PIPEWORK 是一个简单易用的Docker容器网络配置工具，由Docker的工程师Jérôme Petazzoni开发。通过使用ip、brctl、ovs-vsctl等命令来为Docker容器配置自定义的网桥、网卡、路由等。
-
-
-使用新建的br0网桥替代默认的docker0网桥
-容器网络类型选择none
-
-配置步骤
-在Github上获取pipework Todo
-创建网桥
- 1$ sudo br">
+<meta name="twitter:description" content="PIPEWORK 是一个简单易用的Docker容器网络配置工具，由Docker的工程师Jérôme Petazzoni开发。通过使用ip、brctl、ovs-vsctl等命令来为Docker容器配置自定义的网桥、网卡、路由等。   使用新建的br0网桥替代默认的docker0网桥 容器网络类型选择none  配置步骤 在Github上获取pipework Todo 创建网桥  1$ sudo br">
 <meta name="twitter:image" content="http://yoursite.com/images/docker/docker-network-pipework-frame.png">
 
 
@@ -141,7 +116,7 @@
   var NexT = window.NexT || {};
   var CONFIG = {
     root: '/',
-    scheme: 'Muse',
+    scheme: 'Gemini',
     version: '5.1.2',
     sidebar: {"position":"left","display":"post","offset":12,"offset_float":12,"b2t":false,"scrollpercent":false,"onmobile":false},
     fancybox: true,
@@ -153,8 +128,8 @@
     },
     algolia: {
       applicationID: '',
-      apiKey: '',
-      indexName: '',
+      apiKey: 'ea19d365600df16c1e8ef4c09ccb9bea',
+      indexName: 'bolog',
       hits: {"per_page":10},
       labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
     }
@@ -233,11 +208,89 @@
           </a>
         </li>
       
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
 
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
       
     </ul>
   
 
+  
+    <div class="site-search">
+      
+  
+  <div class="algolia-popup popup search-popup">
+    <div class="algolia-search">
+      <div class="algolia-search-input-icon">
+        <i class="fa fa-search"></i>
+      </div>
+      <div class="algolia-search-input" id="algolia-search-input"></div>
+    </div>
+
+    <div class="algolia-results">
+      <div id="algolia-stats"></div>
+      <div id="algolia-hits"></div>
+      <div id="algolia-pagination" class="algolia-pagination"></div>
+    </div>
+
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+  </div>
+
+
+
+
+    </div>
   
 </nav>
 
@@ -504,7 +557,7 @@
           
             <div class="site-state-item site-state-posts">
             
-              <a href="/archives">
+              <a href="/archives/ || archive">
             
                 <span class="site-state-item-count">73</span>
                 <span class="site-state-item-name">日志</span>
@@ -600,7 +653,7 @@
 
   <span class="post-meta-divider">|</span>
 
-  <div class="theme-info">主题 &mdash; <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">NexT.Muse</a> v5.1.2</div>
+  <div class="theme-info">主题 &mdash; <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">NexT.Gemini</a> v5.1.2</div>
 
 
         
@@ -684,6 +737,13 @@
   
   
 
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.2"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.2"></script>
+
+
+
   <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
 <script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
 
@@ -733,6 +793,19 @@
   
 
 
+
+
+  
+  
+  
+  <link rel="stylesheet" href="/lib/algolia-instant-search/instantsearch.min.css">
+
+  
+  
+  <script src="/lib/algolia-instant-search/instantsearch.min.js"></script>
+  
+
+  <script src="/js/src/algolia-search.js?v=5.1.2"></script>
 
 
 

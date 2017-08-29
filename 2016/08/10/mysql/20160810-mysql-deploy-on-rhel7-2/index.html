@@ -5,7 +5,7 @@
   
 
 
-<html class="theme-next muse use-motion" lang="zh-Hans">
+<html class="theme-next gemini use-motion" lang="zh-Hans">
 <head>
   <meta charset="UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -95,25 +95,18 @@
 
 
 
-<meta name="description" content="环境OSRHEL7.2
-步骤1、安装mysql，详细见mysql官网2、启动mysql servicerhel7.2中，使用service mysqld start启动mysql服务。【status：查服务状态；stop：停止服务；restart：重启服务】
-3、修改root密码
-首先使客户端登陆掉过密码检测，然后重启mysql服务echo &amp;quot;skip-grant-tables&amp;quot">
+<meta name="description" content="环境OSRHEL7.2 步骤1、安装mysql，详细见mysql官网2、启动mysql servicerhel7.2中，使用service mysqld start启动mysql服务。【status：查服务状态；stop：停止服务；restart：重启服务】 3、修改root密码 首先使客户端登陆掉过密码检测，然后重启mysql服务echo &amp;quot;skip-grant-tables&amp;quot">
+<meta name="keywords" content="mysql,rhel">
 <meta property="og:type" content="article">
 <meta property="og:title" content="MySQL环境配置搭建">
 <meta property="og:url" content="http://yoursite.com/2016/08/10/mysql/20160810-mysql-deploy-on-rhel7-2/index.html">
 <meta property="og:site_name" content="Bolog">
-<meta property="og:description" content="环境OSRHEL7.2
-步骤1、安装mysql，详细见mysql官网2、启动mysql servicerhel7.2中，使用service mysqld start启动mysql服务。【status：查服务状态；stop：停止服务；restart：重启服务】
-3、修改root密码
-首先使客户端登陆掉过密码检测，然后重启mysql服务echo &amp;quot;skip-grant-tables&amp;quot">
+<meta property="og:description" content="环境OSRHEL7.2 步骤1、安装mysql，详细见mysql官网2、启动mysql servicerhel7.2中，使用service mysqld start启动mysql服务。【status：查服务状态；stop：停止服务；restart：重启服务】 3、修改root密码 首先使客户端登陆掉过密码检测，然后重启mysql服务echo &amp;quot;skip-grant-tables&amp;quot">
+<meta property="og:locale" content="zh-Hans">
 <meta property="og:updated_time" content="2016-11-13T10:02:51.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="MySQL环境配置搭建">
-<meta name="twitter:description" content="环境OSRHEL7.2
-步骤1、安装mysql，详细见mysql官网2、启动mysql servicerhel7.2中，使用service mysqld start启动mysql服务。【status：查服务状态；stop：停止服务；restart：重启服务】
-3、修改root密码
-首先使客户端登陆掉过密码检测，然后重启mysql服务echo &amp;quot;skip-grant-tables&amp;quot">
+<meta name="twitter:description" content="环境OSRHEL7.2 步骤1、安装mysql，详细见mysql官网2、启动mysql servicerhel7.2中，使用service mysqld start启动mysql服务。【status：查服务状态；stop：停止服务；restart：重启服务】 3、修改root密码 首先使客户端登陆掉过密码检测，然后重启mysql服务echo &amp;quot;skip-grant-tables&amp;quot">
 
 
 
@@ -121,7 +114,7 @@
   var NexT = window.NexT || {};
   var CONFIG = {
     root: '/',
-    scheme: 'Muse',
+    scheme: 'Gemini',
     version: '5.1.2',
     sidebar: {"position":"left","display":"post","offset":12,"offset_float":12,"b2t":false,"scrollpercent":false,"onmobile":false},
     fancybox: true,
@@ -133,8 +126,8 @@
     },
     algolia: {
       applicationID: '',
-      apiKey: '',
-      indexName: '',
+      apiKey: 'ea19d365600df16c1e8ef4c09ccb9bea',
+      indexName: 'bolog',
       hits: {"per_page":10},
       labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
     }
@@ -213,11 +206,89 @@
           </a>
         </li>
       
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
 
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
       
     </ul>
   
 
+  
+    <div class="site-search">
+      
+  
+  <div class="algolia-popup popup search-popup">
+    <div class="algolia-search">
+      <div class="algolia-search-input-icon">
+        <i class="fa fa-search"></i>
+      </div>
+      <div class="algolia-search-input" id="algolia-search-input"></div>
+    </div>
+
+    <div class="algolia-results">
+      <div id="algolia-stats"></div>
+      <div id="algolia-hits"></div>
+      <div id="algolia-pagination" class="algolia-pagination"></div>
+    </div>
+
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+  </div>
+
+
+
+
+    </div>
   
 </nav>
 
@@ -466,7 +537,7 @@
           
             <div class="site-state-item site-state-posts">
             
-              <a href="/archives">
+              <a href="/archives/ || archive">
             
                 <span class="site-state-item-count">73</span>
                 <span class="site-state-item-name">日志</span>
@@ -562,7 +633,7 @@
 
   <span class="post-meta-divider">|</span>
 
-  <div class="theme-info">主题 &mdash; <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">NexT.Muse</a> v5.1.2</div>
+  <div class="theme-info">主题 &mdash; <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">NexT.Gemini</a> v5.1.2</div>
 
 
         
@@ -646,6 +717,13 @@
   
   
 
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.2"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.2"></script>
+
+
+
   <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
 <script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
 
@@ -695,6 +773,19 @@
   
 
 
+
+
+  
+  
+  
+  <link rel="stylesheet" href="/lib/algolia-instant-search/instantsearch.min.css">
+
+  
+  
+  <script src="/lib/algolia-instant-search/instantsearch.min.js"></script>
+  
+
+  <script src="/js/src/algolia-search.js?v=5.1.2"></script>
 
 
 

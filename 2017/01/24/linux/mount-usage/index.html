@@ -5,7 +5,7 @@
   
 
 
-<html class="theme-next muse use-motion" lang="zh-Hans">
+<html class="theme-next gemini use-motion" lang="zh-Hans">
 <head>
   <meta charset="UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -95,29 +95,19 @@
 
 
 
-<meta name="description" content="介绍每一个使用linux或类unix系统的人都会用到的命令mount，它用来挂载／卸载文件系统。这是该命令基本功能，除了基本功能该命令还有其它功能。
-更多多多多多多多多多多多多多多多用法绑定挂载(bind mount)windows的快捷方式、linux的软硬链接，相信你已很熟悉了，下面我来说说mount的绑定挂载--bind。
-linux的软硬链接原理:
-
-软连接受应用程序影响，不是所有应用程序">
+<meta name="description" content="介绍每一个使用linux或类unix系统的人都会用到的命令mount，它用来挂载／卸载文件系统。这是该命令基本功能，除了基本功能该命令还有其它功能。 更多多多多多多多多多多多多多多多用法绑定挂载(bind mount)windows的快捷方式、linux的软硬链接，相信你已很熟悉了，下面我来说说mount的绑定挂载--bind。 linux的软硬链接原理:  软连接受应用程序影响，不是所有应用程序">
+<meta name="keywords" content="mount">
 <meta property="og:type" content="article">
 <meta property="og:title" content="mount更多用法">
 <meta property="og:url" content="http://yoursite.com/2017/01/24/linux/mount-usage/index.html">
 <meta property="og:site_name" content="Bolog">
-<meta property="og:description" content="介绍每一个使用linux或类unix系统的人都会用到的命令mount，它用来挂载／卸载文件系统。这是该命令基本功能，除了基本功能该命令还有其它功能。
-更多多多多多多多多多多多多多多多用法绑定挂载(bind mount)windows的快捷方式、linux的软硬链接，相信你已很熟悉了，下面我来说说mount的绑定挂载--bind。
-linux的软硬链接原理:
-
-软连接受应用程序影响，不是所有应用程序">
+<meta property="og:description" content="介绍每一个使用linux或类unix系统的人都会用到的命令mount，它用来挂载／卸载文件系统。这是该命令基本功能，除了基本功能该命令还有其它功能。 更多多多多多多多多多多多多多多多用法绑定挂载(bind mount)windows的快捷方式、linux的软硬链接，相信你已很熟悉了，下面我来说说mount的绑定挂载--bind。 linux的软硬链接原理:  软连接受应用程序影响，不是所有应用程序">
+<meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://yoursite.com/images/linux/soft_hard_link.jpg">
 <meta property="og:updated_time" content="2017-01-24T06:35:13.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="mount更多用法">
-<meta name="twitter:description" content="介绍每一个使用linux或类unix系统的人都会用到的命令mount，它用来挂载／卸载文件系统。这是该命令基本功能，除了基本功能该命令还有其它功能。
-更多多多多多多多多多多多多多多多用法绑定挂载(bind mount)windows的快捷方式、linux的软硬链接，相信你已很熟悉了，下面我来说说mount的绑定挂载--bind。
-linux的软硬链接原理:
-
-软连接受应用程序影响，不是所有应用程序">
+<meta name="twitter:description" content="介绍每一个使用linux或类unix系统的人都会用到的命令mount，它用来挂载／卸载文件系统。这是该命令基本功能，除了基本功能该命令还有其它功能。 更多多多多多多多多多多多多多多多用法绑定挂载(bind mount)windows的快捷方式、linux的软硬链接，相信你已很熟悉了，下面我来说说mount的绑定挂载--bind。 linux的软硬链接原理:  软连接受应用程序影响，不是所有应用程序">
 <meta name="twitter:image" content="http://yoursite.com/images/linux/soft_hard_link.jpg">
 
 
@@ -126,7 +116,7 @@ linux的软硬链接原理:
   var NexT = window.NexT || {};
   var CONFIG = {
     root: '/',
-    scheme: 'Muse',
+    scheme: 'Gemini',
     version: '5.1.2',
     sidebar: {"position":"left","display":"post","offset":12,"offset_float":12,"b2t":false,"scrollpercent":false,"onmobile":false},
     fancybox: true,
@@ -138,8 +128,8 @@ linux的软硬链接原理:
     },
     algolia: {
       applicationID: '',
-      apiKey: '',
-      indexName: '',
+      apiKey: 'ea19d365600df16c1e8ef4c09ccb9bea',
+      indexName: 'bolog',
       hits: {"per_page":10},
       labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
     }
@@ -218,11 +208,89 @@ linux的软硬链接原理:
           </a>
         </li>
       
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
 
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
       
     </ul>
   
 
+  
+    <div class="site-search">
+      
+  
+  <div class="algolia-popup popup search-popup">
+    <div class="algolia-search">
+      <div class="algolia-search-input-icon">
+        <i class="fa fa-search"></i>
+      </div>
+      <div class="algolia-search-input" id="algolia-search-input"></div>
+    </div>
+
+    <div class="algolia-results">
+      <div id="algolia-stats"></div>
+      <div id="algolia-hits"></div>
+      <div id="algolia-pagination" class="algolia-pagination"></div>
+    </div>
+
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+  </div>
+
+
+
+
+    </div>
   
 </nav>
 
@@ -481,7 +549,7 @@ linux的软硬链接原理:
           
             <div class="site-state-item site-state-posts">
             
-              <a href="/archives">
+              <a href="/archives/ || archive">
             
                 <span class="site-state-item-count">73</span>
                 <span class="site-state-item-name">日志</span>
@@ -577,7 +645,7 @@ linux的软硬链接原理:
 
   <span class="post-meta-divider">|</span>
 
-  <div class="theme-info">主题 &mdash; <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">NexT.Muse</a> v5.1.2</div>
+  <div class="theme-info">主题 &mdash; <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">NexT.Gemini</a> v5.1.2</div>
 
 
         
@@ -661,6 +729,13 @@ linux的软硬链接原理:
   
   
 
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.2"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.2"></script>
+
+
+
   <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
 <script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
 
@@ -710,6 +785,19 @@ linux的软硬链接原理:
   
 
 
+
+
+  
+  
+  
+  <link rel="stylesheet" href="/lib/algolia-instant-search/instantsearch.min.css">
+
+  
+  
+  <script src="/lib/algolia-instant-search/instantsearch.min.js"></script>
+  
+
+  <script src="/js/src/algolia-search.js?v=5.1.2"></script>
 
 
 

@@ -5,7 +5,7 @@
   
 
 
-<html class="theme-next muse use-motion" lang="zh-Hans">
+<html class="theme-next gemini use-motion" lang="zh-Hans">
 <head>
   <meta charset="UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -95,35 +95,19 @@
 
 
 
-<meta name="description" content="概述ceph-deploy官方认可的ceph部署工具。它不同于ansible、puppet。
-架构
-各个模块parser主命令参数解析，子命令参数解析
-cli加载子命令模块，选择调用哪个子命令执行操作
-new 子命令创建集群，及 ceph.conf 配置文件
-install 子命令跟据节点的不通角色（mon、mds、osd、rgw等），安装相关的软件包
-uninstall 子命令卸载节点的ceph">
+<meta name="description" content="概述ceph-deploy官方认可的ceph部署工具。它不同于ansible、puppet。 架构 各个模块parser主命令参数解析，子命令参数解析 cli加载子命令模块，选择调用哪个子命令执行操作 new 子命令创建集群，及 ceph.conf 配置文件 install 子命令跟据节点的不通角色（mon、mds、osd、rgw等），安装相关的软件包 uninstall 子命令卸载节点的ceph">
+<meta name="keywords" content="ceph,ceph-deploy">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Ceph-deploy 解析">
 <meta property="og:url" content="http://yoursite.com/2016/07/27/storage/ceph/20160727-ceph-deploy-parse/index.html">
 <meta property="og:site_name" content="Bolog">
-<meta property="og:description" content="概述ceph-deploy官方认可的ceph部署工具。它不同于ansible、puppet。
-架构
-各个模块parser主命令参数解析，子命令参数解析
-cli加载子命令模块，选择调用哪个子命令执行操作
-new 子命令创建集群，及 ceph.conf 配置文件
-install 子命令跟据节点的不通角色（mon、mds、osd、rgw等），安装相关的软件包
-uninstall 子命令卸载节点的ceph">
+<meta property="og:description" content="概述ceph-deploy官方认可的ceph部署工具。它不同于ansible、puppet。 架构 各个模块parser主命令参数解析，子命令参数解析 cli加载子命令模块，选择调用哪个子命令执行操作 new 子命令创建集群，及 ceph.conf 配置文件 install 子命令跟据节点的不通角色（mon、mds、osd、rgw等），安装相关的软件包 uninstall 子命令卸载节点的ceph">
+<meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://yoursite.com/images/ceph/ceph-deploy-frame.png">
 <meta property="og:updated_time" content="2017-02-07T13:46:15.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Ceph-deploy 解析">
-<meta name="twitter:description" content="概述ceph-deploy官方认可的ceph部署工具。它不同于ansible、puppet。
-架构
-各个模块parser主命令参数解析，子命令参数解析
-cli加载子命令模块，选择调用哪个子命令执行操作
-new 子命令创建集群，及 ceph.conf 配置文件
-install 子命令跟据节点的不通角色（mon、mds、osd、rgw等），安装相关的软件包
-uninstall 子命令卸载节点的ceph">
+<meta name="twitter:description" content="概述ceph-deploy官方认可的ceph部署工具。它不同于ansible、puppet。 架构 各个模块parser主命令参数解析，子命令参数解析 cli加载子命令模块，选择调用哪个子命令执行操作 new 子命令创建集群，及 ceph.conf 配置文件 install 子命令跟据节点的不通角色（mon、mds、osd、rgw等），安装相关的软件包 uninstall 子命令卸载节点的ceph">
 <meta name="twitter:image" content="http://yoursite.com/images/ceph/ceph-deploy-frame.png">
 
 
@@ -132,7 +116,7 @@ uninstall 子命令卸载节点的ceph">
   var NexT = window.NexT || {};
   var CONFIG = {
     root: '/',
-    scheme: 'Muse',
+    scheme: 'Gemini',
     version: '5.1.2',
     sidebar: {"position":"left","display":"post","offset":12,"offset_float":12,"b2t":false,"scrollpercent":false,"onmobile":false},
     fancybox: true,
@@ -144,8 +128,8 @@ uninstall 子命令卸载节点的ceph">
     },
     algolia: {
       applicationID: '',
-      apiKey: '',
-      indexName: '',
+      apiKey: 'ea19d365600df16c1e8ef4c09ccb9bea',
+      indexName: 'bolog',
       hits: {"per_page":10},
       labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
     }
@@ -224,11 +208,89 @@ uninstall 子命令卸载节点的ceph">
           </a>
         </li>
       
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
 
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
       
     </ul>
   
 
+  
+    <div class="site-search">
+      
+  
+  <div class="algolia-popup popup search-popup">
+    <div class="algolia-search">
+      <div class="algolia-search-input-icon">
+        <i class="fa fa-search"></i>
+      </div>
+      <div class="algolia-search-input" id="algolia-search-input"></div>
+    </div>
+
+    <div class="algolia-results">
+      <div id="algolia-stats"></div>
+      <div id="algolia-hits"></div>
+      <div id="algolia-pagination" class="algolia-pagination"></div>
+    </div>
+
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+  </div>
+
+
+
+
+    </div>
   
 </nav>
 
@@ -492,7 +554,7 @@ uninstall 子命令卸载节点的ceph">
           
             <div class="site-state-item site-state-posts">
             
-              <a href="/archives">
+              <a href="/archives/ || archive">
             
                 <span class="site-state-item-count">73</span>
                 <span class="site-state-item-name">日志</span>
@@ -588,7 +650,7 @@ uninstall 子命令卸载节点的ceph">
 
   <span class="post-meta-divider">|</span>
 
-  <div class="theme-info">主题 &mdash; <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">NexT.Muse</a> v5.1.2</div>
+  <div class="theme-info">主题 &mdash; <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">NexT.Gemini</a> v5.1.2</div>
 
 
         
@@ -672,6 +734,13 @@ uninstall 子命令卸载节点的ceph">
   
   
 
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.2"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.2"></script>
+
+
+
   <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
 <script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
 
@@ -721,6 +790,19 @@ uninstall 子命令卸载节点的ceph">
   
 
 
+
+
+  
+  
+  
+  <link rel="stylesheet" href="/lib/algolia-instant-search/instantsearch.min.css">
+
+  
+  
+  <script src="/lib/algolia-instant-search/instantsearch.min.js"></script>
+  
+
+  <script src="/js/src/algolia-search.js?v=5.1.2"></script>
 
 
 

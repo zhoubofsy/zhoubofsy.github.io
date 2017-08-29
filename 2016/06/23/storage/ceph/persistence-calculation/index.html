@@ -5,7 +5,7 @@
   
 
 
-<html class="theme-next muse use-motion" lang="zh-Hans">
+<html class="theme-next gemini use-motion" lang="zh-Hans">
 <head>
   <meta charset="UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -95,25 +95,18 @@
 
 
 
-<meta name="description" content="持久性持久性是数据丢失的概率，可以用于度量一个存储系统的可靠性，俗称 “多少个9”。数据的放置(DataPlacement)决定了数据持久性，而Ceph的CRUSH MAP又决定了数据的放置，因此CRUSH MAP的设置决定了数据持久性。
-数学模型公式P = Pr x M / C（R，N）
-解释PP为丢失数据的概率，持久性，可用1-P来计算。
-PrPr = P1（any） x P2（any） x">
+<meta name="description" content="持久性持久性是数据丢失的概率，可以用于度量一个存储系统的可靠性，俗称 “多少个9”。数据的放置(DataPlacement)决定了数据持久性，而Ceph的CRUSH MAP又决定了数据的放置，因此CRUSH MAP的设置决定了数据持久性。 数学模型公式P = Pr x M / C（R，N） 解释PP为丢失数据的概率，持久性，可用1-P来计算。 PrPr = P1（any） x P2（any） x">
+<meta name="keywords" content="ceph,persistence">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Ceph 持久性计算">
 <meta property="og:url" content="http://yoursite.com/2016/06/23/storage/ceph/persistence-calculation/index.html">
 <meta property="og:site_name" content="Bolog">
-<meta property="og:description" content="持久性持久性是数据丢失的概率，可以用于度量一个存储系统的可靠性，俗称 “多少个9”。数据的放置(DataPlacement)决定了数据持久性，而Ceph的CRUSH MAP又决定了数据的放置，因此CRUSH MAP的设置决定了数据持久性。
-数学模型公式P = Pr x M / C（R，N）
-解释PP为丢失数据的概率，持久性，可用1-P来计算。
-PrPr = P1（any） x P2（any） x">
+<meta property="og:description" content="持久性持久性是数据丢失的概率，可以用于度量一个存储系统的可靠性，俗称 “多少个9”。数据的放置(DataPlacement)决定了数据持久性，而Ceph的CRUSH MAP又决定了数据的放置，因此CRUSH MAP的设置决定了数据持久性。 数学模型公式P = Pr x M / C（R，N） 解释PP为丢失数据的概率，持久性，可用1-P来计算。 PrPr = P1（any） x P2（any） x">
+<meta property="og:locale" content="zh-Hans">
 <meta property="og:updated_time" content="2017-02-07T13:47:43.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Ceph 持久性计算">
-<meta name="twitter:description" content="持久性持久性是数据丢失的概率，可以用于度量一个存储系统的可靠性，俗称 “多少个9”。数据的放置(DataPlacement)决定了数据持久性，而Ceph的CRUSH MAP又决定了数据的放置，因此CRUSH MAP的设置决定了数据持久性。
-数学模型公式P = Pr x M / C（R，N）
-解释PP为丢失数据的概率，持久性，可用1-P来计算。
-PrPr = P1（any） x P2（any） x">
+<meta name="twitter:description" content="持久性持久性是数据丢失的概率，可以用于度量一个存储系统的可靠性，俗称 “多少个9”。数据的放置(DataPlacement)决定了数据持久性，而Ceph的CRUSH MAP又决定了数据的放置，因此CRUSH MAP的设置决定了数据持久性。 数学模型公式P = Pr x M / C（R，N） 解释PP为丢失数据的概率，持久性，可用1-P来计算。 PrPr = P1（any） x P2（any） x">
 
 
 
@@ -121,7 +114,7 @@ PrPr = P1（any） x P2（any） x">
   var NexT = window.NexT || {};
   var CONFIG = {
     root: '/',
-    scheme: 'Muse',
+    scheme: 'Gemini',
     version: '5.1.2',
     sidebar: {"position":"left","display":"post","offset":12,"offset_float":12,"b2t":false,"scrollpercent":false,"onmobile":false},
     fancybox: true,
@@ -133,8 +126,8 @@ PrPr = P1（any） x P2（any） x">
     },
     algolia: {
       applicationID: '',
-      apiKey: '',
-      indexName: '',
+      apiKey: 'ea19d365600df16c1e8ef4c09ccb9bea',
+      indexName: 'bolog',
       hits: {"per_page":10},
       labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
     }
@@ -213,11 +206,89 @@ PrPr = P1（any） x P2（any） x">
           </a>
         </li>
       
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
 
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
       
     </ul>
   
 
+  
+    <div class="site-search">
+      
+  
+  <div class="algolia-popup popup search-popup">
+    <div class="algolia-search">
+      <div class="algolia-search-input-icon">
+        <i class="fa fa-search"></i>
+      </div>
+      <div class="algolia-search-input" id="algolia-search-input"></div>
+    </div>
+
+    <div class="algolia-results">
+      <div id="algolia-stats"></div>
+      <div id="algolia-hits"></div>
+      <div id="algolia-pagination" class="algolia-pagination"></div>
+    </div>
+
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+  </div>
+
+
+
+
+    </div>
   
 </nav>
 
@@ -485,7 +556,7 @@ PrPr = P1（any） x P2（any） x">
           
             <div class="site-state-item site-state-posts">
             
-              <a href="/archives">
+              <a href="/archives/ || archive">
             
                 <span class="site-state-item-count">73</span>
                 <span class="site-state-item-name">日志</span>
@@ -581,7 +652,7 @@ PrPr = P1（any） x P2（any） x">
 
   <span class="post-meta-divider">|</span>
 
-  <div class="theme-info">主题 &mdash; <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">NexT.Muse</a> v5.1.2</div>
+  <div class="theme-info">主题 &mdash; <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">NexT.Gemini</a> v5.1.2</div>
 
 
         
@@ -665,6 +736,13 @@ PrPr = P1（any） x P2（any） x">
   
   
 
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.2"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.2"></script>
+
+
+
   <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
 <script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
 
@@ -714,6 +792,19 @@ PrPr = P1（any） x P2（any） x">
   
 
 
+
+
+  
+  
+  
+  <link rel="stylesheet" href="/lib/algolia-instant-search/instantsearch.min.css">
+
+  
+  
+  <script src="/lib/algolia-instant-search/instantsearch.min.js"></script>
+  
+
+  <script src="/js/src/algolia-search.js?v=5.1.2"></script>
 
 
 

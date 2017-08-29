@@ -5,7 +5,7 @@
   
 
 
-<html class="theme-next muse use-motion" lang="zh-Hans">
+<html class="theme-next gemini use-motion" lang="zh-Hans">
 <head>
   <meta charset="UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -95,92 +95,19 @@
 
 
 
-<meta name="description" content="背景
-OS Version : rhel 6.4
-MySQL Version : 5.6.31
-
-权限权限列表
-
-
-Privilege
-Column
-Context
-
-
-
-
-CREATE
-Create_priv
-databases, tables, or indexes
-
-
-DROP
-Drop_priv
-database, tables, or views
-
-
-GRANT OPTION
-Grant">
+<meta name="description" content="背景 OS Version : rhel 6.4 MySQL Version : 5.6.31  权限权限列表   Privilege Column Context     CREATE Create_priv databases, tables, or indexes   DROP Drop_priv database, tables, or views   GRANT OPTION Grant">
+<meta name="keywords" content="mysql">
 <meta property="og:type" content="article">
 <meta property="og:title" content="MySQL 权限管理">
 <meta property="og:url" content="http://yoursite.com/2016/09/23/mysql/mysql-priv-mng-md/index.html">
 <meta property="og:site_name" content="Bolog">
-<meta property="og:description" content="背景
-OS Version : rhel 6.4
-MySQL Version : 5.6.31
-
-权限权限列表
-
-
-Privilege
-Column
-Context
-
-
-
-
-CREATE
-Create_priv
-databases, tables, or indexes
-
-
-DROP
-Drop_priv
-database, tables, or views
-
-
-GRANT OPTION
-Grant">
+<meta property="og:description" content="背景 OS Version : rhel 6.4 MySQL Version : 5.6.31  权限权限列表   Privilege Column Context     CREATE Create_priv databases, tables, or indexes   DROP Drop_priv database, tables, or views   GRANT OPTION Grant">
+<meta property="og:locale" content="zh-Hans">
 <meta property="og:image" content="http://yoursite.com/images/mysql/mysql_privilege_flow.png">
 <meta property="og:updated_time" content="2016-11-15T08:09:46.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="MySQL 权限管理">
-<meta name="twitter:description" content="背景
-OS Version : rhel 6.4
-MySQL Version : 5.6.31
-
-权限权限列表
-
-
-Privilege
-Column
-Context
-
-
-
-
-CREATE
-Create_priv
-databases, tables, or indexes
-
-
-DROP
-Drop_priv
-database, tables, or views
-
-
-GRANT OPTION
-Grant">
+<meta name="twitter:description" content="背景 OS Version : rhel 6.4 MySQL Version : 5.6.31  权限权限列表   Privilege Column Context     CREATE Create_priv databases, tables, or indexes   DROP Drop_priv database, tables, or views   GRANT OPTION Grant">
 <meta name="twitter:image" content="http://yoursite.com/images/mysql/mysql_privilege_flow.png">
 
 
@@ -189,7 +116,7 @@ Grant">
   var NexT = window.NexT || {};
   var CONFIG = {
     root: '/',
-    scheme: 'Muse',
+    scheme: 'Gemini',
     version: '5.1.2',
     sidebar: {"position":"left","display":"post","offset":12,"offset_float":12,"b2t":false,"scrollpercent":false,"onmobile":false},
     fancybox: true,
@@ -201,8 +128,8 @@ Grant">
     },
     algolia: {
       applicationID: '',
-      apiKey: '',
-      indexName: '',
+      apiKey: 'ea19d365600df16c1e8ef4c09ccb9bea',
+      indexName: 'bolog',
       hits: {"per_page":10},
       labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
     }
@@ -281,11 +208,89 @@ Grant">
           </a>
         </li>
       
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
 
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
       
     </ul>
   
 
+  
+    <div class="site-search">
+      
+  
+  <div class="algolia-popup popup search-popup">
+    <div class="algolia-search">
+      <div class="algolia-search-input-icon">
+        <i class="fa fa-search"></i>
+      </div>
+      <div class="algolia-search-input" id="algolia-search-input"></div>
+    </div>
+
+    <div class="algolia-results">
+      <div id="algolia-stats"></div>
+      <div id="algolia-hits"></div>
+      <div id="algolia-pagination" class="algolia-pagination"></div>
+    </div>
+
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+  </div>
+
+
+
+
+    </div>
   
 </nav>
 
@@ -1250,8 +1255,8 @@ Grant">
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2016/09/23/uwsgi/uwsgi-config-problem-1/" rel="next" title="uWSGI中设置“cap = setuid,setpid”导致python脚本权限降低">
-                <i class="fa fa-chevron-left"></i> uWSGI中设置“cap = setuid,setpid”导致python脚本权限降低
+              <a href="/2016/09/23/uwsgi/uwsgi-limit-process-resource/" rel="next" title="limit-as限制子进程资源，导致Mysqld服务无法启动">
+                <i class="fa fa-chevron-left"></i> limit-as限制子进程资源，导致Mysqld服务无法启动
               </a>
             
           </div>
@@ -1339,7 +1344,7 @@ Grant">
           
             <div class="site-state-item site-state-posts">
             
-              <a href="/archives">
+              <a href="/archives/ || archive">
             
                 <span class="site-state-item-count">73</span>
                 <span class="site-state-item-name">日志</span>
@@ -1435,7 +1440,7 @@ Grant">
 
   <span class="post-meta-divider">|</span>
 
-  <div class="theme-info">主题 &mdash; <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">NexT.Muse</a> v5.1.2</div>
+  <div class="theme-info">主题 &mdash; <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">NexT.Gemini</a> v5.1.2</div>
 
 
         
@@ -1519,6 +1524,13 @@ Grant">
   
   
 
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.2"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.2"></script>
+
+
+
   <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
 <script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
 
@@ -1568,6 +1580,19 @@ Grant">
   
 
 
+
+
+  
+  
+  
+  <link rel="stylesheet" href="/lib/algolia-instant-search/instantsearch.min.css">
+
+  
+  
+  <script src="/lib/algolia-instant-search/instantsearch.min.js"></script>
+  
+
+  <script src="/js/src/algolia-search.js?v=5.1.2"></script>
 
 
 
