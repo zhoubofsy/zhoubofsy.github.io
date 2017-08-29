@@ -256,6 +256,176 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/08/29/bigdata/zeppelin-usage/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="博">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/avatar.png">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="Bolog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="Bolog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2017/08/29/bigdata/zeppelin-usage/" itemprop="url">
+                  Zeppelin 搭建配置及使用
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-08-29T09:43:05+08:00">
+              2017-08-29
+            </time>
+
+            &nbsp;|&nbsp;
+
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-check-o"></i>
+            </span>
+            <time title="Post modified" itemprop="dateModified" datetime="2017-08-29T15:01:55+08:00">
+              2017-08-29
+            </time>
+            
+          </span>
+
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Big-Data/" itemprop="url" rel="index">
+                    <span itemprop="name">Big-Data</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+          
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p><img src="/images/zeppelin/zeppelin_logo.png" alt="zeppelin_logo"></p>
+<p>Apache Zeppelin是一个让交互式数据分析变得可行的基于网页的开源框架。Zeppelin提供了数据分析、数据可视化等功能。Zeppelin 是一个提供交互数据分析且基于Web的笔记本。方便你做出可数据驱动的、可交互且可协作的精美文档，并且支持多种语言，包括 Scala(使用 Apache Spark)、Python(Apache Spark)、SparkSQL、 Hive、 Markdown、Shell等等。</p>
+<h1 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h1><p>采用docker环境部署zeppelin</p>
+<p>OS：CentOS 7.3.1611<br>JAVA：OpenJDK 1.8<br>zeppelin: 0.7.2</p>
+<p>dockerfile:<br><figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">FROM</span> centos:<span class="number">7.3</span>.<span class="number">1611</span></div><div class="line"></div><div class="line"><span class="keyword">MAINTAINER</span> zhoub</div><div class="line"></div><div class="line"><span class="keyword">RUN</span> yum update -y</div><div class="line"><span class="keyword">RUN</span> yum install -y java-1.8.0-openjdk.x86_64</div><div class="line"><span class="keyword">RUN</span> echo "JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.141-1.b16.el7_3.x86_64/jre" | tee -a /etc/bashrc</div><div class="line"><span class="keyword">RUN</span> echo "export JAVA_HOME" | tee -a /etc/bashrc</div></pre></td></tr></table></figure></p>
+<h1 id="下载安装"><a href="#下载安装" class="headerlink" title="下载安装"></a>下载安装</h1><p>从<a href="http://zeppelin.apache.org/download.html" target="_blank" rel="external">zeppelin官网</a>或github上下载，推荐下载最新版。解压tar包，然后在准备好的环境中运行<code>zeppelin/bin/zeppelin-daemon.sh start</code></p>
+<p>docker:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">#!/bin/sh</div><div class="line"></div><div class="line">cmd=&quot;/root/run/entry.sh&quot;</div><div class="line">image=&quot;centos7.3:java1.8&quot;</div><div class="line">net=&quot;hadoop_net&quot;</div><div class="line"></div><div class="line">docker run -d --rm -w /root/ -v $&#123;PWD&#125;/run:/root/run -v $&#123;PWD&#125;/zeppelin:/root/zeppelin -v $&#123;PWD&#125;/hbase:/root/hbase -p 8080 --network $&#123;net&#125; -h zeppelin --name zeppelin $&#123;image&#125; $&#123;cmd&#125;</div></pre></td></tr></table></figure></p>
+<p>entry.sh:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">#!/bin/sh</div><div class="line"></div><div class="line">/root/zeppelin/bin/zeppelin-daemon.sh start</div><div class="line"></div><div class="line">while true</div><div class="line">do</div><div class="line">    sleep 10s</div><div class="line">done</div></pre></td></tr></table></figure></p>
+<h1 id="架构"><a href="#架构" class="headerlink" title="架构"></a>架构</h1><p><img src="/images/zeppelin/zeppelin_arch.jpg" alt="zeppelin_arch"><br>Zeppelin具有客户端/服务器架构，客户端一般就是指浏览器。服务器接收客户端的请求，并将请求通过Thrift协议发送给翻译器组。翻译器组物理表现为JVM进程，负责实际处理客户端的请求并与服务器进行通信。</p>
+<p><img src="/images/zeppelin/zeppelin_interpreter_arch.jpg" alt="zeppelin_interpreter_arch"><br>翻译器是一个插件式的体系结构，允许任何语言/后端数据处理程序以插件的形式添加到Zeppelin中。当前的Zeppelin已经支持<a href="http://zeppelin.apache.org/docs/0.7.2/manual/interpreters.html" target="_blank" rel="external">很多翻译器</a>。插件式架构允许用户在Zeppelin中使用自己熟悉的特定程序语言或数据处理方式。例如，通过使用%spark翻译器，可以在Zeppelin中使用Scala语言代码。</p>
+<h1 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h1><p>zeppelin的配置主要指interpreter的设置，然后note通过配置好的interpreter进行解释执行。</p>
+<h2 id="JDBC-hive配置"><a href="#JDBC-hive配置" class="headerlink" title="JDBC-hive配置"></a>JDBC-hive配置</h2><p>zeppelin想要通过jdbc连接hive需要对hive、hdfs、zeppelin三者进行配置</p>
+<h3 id="hive"><a href="#hive" class="headerlink" title="hive"></a>hive</h3><p>需要在hive节点上启动<code>hiveserver2</code>服务<code>nohup /shared-disk/apache-hive-2.1.1-bin/bin/hive --service hiveserver2&amp;</code></p>
+<h3 id="zeepelin"><a href="#zeepelin" class="headerlink" title="zeepelin"></a>zeepelin</h3><h4 id="拷贝连接hive-jdbc需要用到的jar包"><a href="#拷贝连接hive-jdbc需要用到的jar包" class="headerlink" title="拷贝连接hive-jdbc需要用到的jar包"></a>拷贝连接hive-jdbc需要用到的jar包</h4><p>将包<code>hive-jdbc-1.1.0+cdh5.9.1+795-1.cdh5.9.1.p0.4.el7.noarch.rpm</code>解开后的jar文件拷贝到<code>zeppelin/lib/interpreter/</code>目录下<br><code>hive-jdbc-1.1.0+cdh5.9.1+795-1.cdh5.9.1.p0.4.el7.noarch.rpm</code>包内容：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line">total 51448</div><div class="line">-rw-r--r-- 1 root root    62050 Aug 25 10:18 commons-logging-1.1.3.jar</div><div class="line">-rw-r--r-- 1 root root 19386631 Aug 25 10:18 hive-exec-1.1.0-cdh5.9.1.jar</div><div class="line">lrwxrwxrwx 1 root root       28 Aug 25 10:18 hive-exec.jar -&gt; hive-exec-1.1.0-cdh5.9.1.jar</div><div class="line">-rw-r--r-- 1 root root    96598 Aug 25 10:19 hive-jdbc-1.1.0-cdh5.9.1.jar</div><div class="line">-rw-r--r-- 1 root root 23635048 Aug 25 10:19 hive-jdbc-1.1.0-cdh5.9.1-standalone.jar</div><div class="line">lrwxrwxrwx 1 root root       28 Aug 25 10:19 hive-jdbc.jar -&gt; hive-jdbc-1.1.0-cdh5.9.1.jar</div><div class="line">lrwxrwxrwx 1 root root       39 Aug 25 10:19 hive-jdbc-standalone.jar -&gt; hive-jdbc-1.1.0-cdh5.9.1-standalone.jar</div><div class="line">-rw-r--r-- 1 root root  5558969 Aug 25 10:19 hive-metastore-1.1.0-cdh5.9.1.jar</div><div class="line">lrwxrwxrwx 1 root root       33 Aug 25 10:19 hive-metastore.jar -&gt; hive-metastore-1.1.0-cdh5.9.1.jar</div><div class="line">-rw-r--r-- 1 root root   827980 Aug 25 10:19 hive-serde-1.1.0-cdh5.9.1.jar</div><div class="line">lrwxrwxrwx 1 root root       29 Aug 25 10:19 hive-serde.jar -&gt; hive-serde-1.1.0-cdh5.9.1.jar</div><div class="line">-rw-r--r-- 1 root root  2058121 Aug 25 10:19 hive-service-1.1.0-cdh5.9.1.jar</div><div class="line">lrwxrwxrwx 1 root root       31 Aug 25 10:19 hive-service.jar -&gt; hive-service-1.1.0-cdh5.9.1.jar</div><div class="line">-rw-r--r-- 1 root root   313702 Aug 25 10:19 libfb303-0.9.3.jar</div><div class="line">-rw-r--r-- 1 root root   234201 Aug 25 10:19 libthrift-0.9.3.jar</div><div class="line">-rw-r--r-- 1 root root   481535 Aug 25 10:19 log4j-1.2.16.jar</div></pre></td></tr></table></figure></p>
+<h4 id="配置jdbc-interpreter"><a href="#配置jdbc-interpreter" class="headerlink" title="配置jdbc interpreter"></a>配置jdbc interpreter</h4><ul>
+<li>default.driver: org.apache.hive.jdbc.HiveDriver</li>
+<li>default.url: jdbc:hive2://172.26.1.177:10000/default<br>  hiveserver2的默认端口为10000</li>
+<li>default.user: root<br>  此处我使用root用户，后文中的hdfs的proxy设置也要用root</li>
+</ul>
+<p><img src="/images/zeppelin/zeppelin_hive_jdbc_setting.png" alt="zeppelin_hive_jdbc_setting"></p>
+<h3 id="hdfs"><a href="#hdfs" class="headerlink" title="hdfs"></a>hdfs</h3><p>若zeppelin使用jdbc连接hive出错，报如下错误：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div></pre></td><td class="code"><pre><div class="line">Could not establish connection to jdbc:hive2://192.168.0.51:10000: Required field &apos;serverProtocolVersion&apos; is unset! Struct:TOpenSessionResp(status:TStatus(statusCode:ERROR_STATUS, infoMessages:[*org.apache.hive.service.cli.HiveSQLException:Failed to open new session: java.lang.RuntimeException:</div><div class="line">java.lang.RuntimeException:</div><div class="line">    org.apache.hadoop.ipc.RemoteException(org.apache.hadoop.security.authorize.AuthorizationException): User: hive is not allowed to impersonate hive:13:12,</div><div class="line">    org.apache.hive.service.cli.session.SessionManager:openSession:SessionManager.java:266, </div><div class="line">    org.apache.hive.service.cli.CLIService:openSessionWithImpersonation:CLIService.java:202, </div><div class="line">    org.apache.hive.service.cli.thrift.ThriftCLIService:getSessionHandle:ThriftCLIService.java:402, </div><div class="line">    org.apache.hive.service.cli.thrift.ThriftCLIService:OpenSession:ThriftCLIService.java:297, </div><div class="line">    org.apache.hive.service.cli.thrift.TCLIService$Processor$OpenSession:getResult:TCLIService.java:1253, </div><div class="line">    org.apache.hive.service.cli.thrift.TCLIService$Processor$OpenSession:getResult:TCLIService.java:1238, </div><div class="line">    org.apache.thrift.ProcessFunction:process:ProcessFunction.java:39, </div><div class="line">    org.apache.thrift.TBaseProcessor:process:TBaseProcessor.java:39, </div><div class="line">    org.apache.hive.service.auth.TSetIpAddressProcessor:process:TSetIpAddressProcessor.java:56, </div><div class="line">    org.apache.thrift.server.TThreadPoolServer$WorkerProcess:run:TThreadPoolServer.java:285, </div><div class="line">    java.util.concurrent.ThreadPoolExecutor:runWorker:ThreadPoolExecutor.java:1145, </div><div class="line">    java.util.concurrent.ThreadPoolExecutor$Worker:run:ThreadPoolExecutor.java:615, </div><div class="line">    java.lang.Thread:run:Thread.java:745,</div><div class="line">*java.lang.RuntimeException:java.lang.RuntimeException: </div><div class="line">    org.apache.hadoop.ipc.RemoteException(org.apache.hadoop.security.authorize.AuthorizationException): User: hive is not allowed to impersonate hive:21:8,</div><div class="line">    org.apache.hive.service.cli.session.HiveSessionProxy:invoke:HiveSessionProxy.java:83, </div><div class="line">    org.apache.hive.service.cli.session.HiveSessionProxy:access$000:HiveSessionProxy.java:36, </div><div class="line">    org.apache.hive.service.cli.session.HiveSessionProxy$1:run:HiveSessionProxy.java:63, </div><div class="line">    java.security.AccessController:doPrivileged:AccessController.java:-2, </div><div class="line">    javax.security.auth.Subject:doAs:Subject.java:415, </div><div class="line">    org.apache.hadoop.security.UserGroupInformation:doAs:UserGroupInformation.java:1657, </div><div class="line">    org.apache.hive.service.cli.session.HiveSessionProxy:invoke:HiveSessionProxy.java:59, </div><div class="line">    com.sun.proxy.$Proxy19:open::-1, </div><div class="line">    org.apache.hive.service.cli.session.SessionManager:openSession:SessionManager.java:258, </div><div class="line">*java.lang.RuntimeException:</div><div class="line">    org.apache.hadoop.ipc.RemoteException(org.apache.hadoop.security.authorize.AuthorizationException): User: hive is not allowed to impersonate hive:26:5, </div><div class="line">    org.apache.hadoop.hive.ql.session.SessionState:start:SessionState.java:494, </div><div class="line">    org.apache.hive.service.cli.session.HiveSessionImpl:open:HiveSessionImpl.java:137, </div><div class="line">    sun.reflect.GeneratedMethodAccessor11:invoke::-1, </div><div class="line">    sun.reflect.DelegatingMethodAccessorImpl:invoke:DelegatingMethodAccessorImpl.java:43, </div><div class="line">    java.lang.reflect.Method:invoke:Method.java:606, </div><div class="line">    org.apache.hive.service.cli.session.HiveSessionProxy:invoke:HiveSessionProxy.java:78, </div><div class="line">    *org.apache.hadoop.ipc.RemoteException:User: hive is not allowed to impersonate hive:45:19, </div><div class="line">    org.apache.hadoop.ipc.Client:call:Client.java:1427, </div><div class="line">    org.apache.hadoop.ipc.Client:call:Client.java:1358, </div><div class="line">    org.apache.hadoop.ipc.ProtobufRpcEngine$Invoker:invoke:ProtobufRpcEngine.java:229, </div><div class="line">    com.sun.proxy.$Proxy14:getFileInfo::-1, </div><div class="line">    org.apache.hadoop.hdfs.protocolPB.ClientNamenodeProtocolTranslatorPB:getFileInfo:ClientNamenodeProtocolTranslatorPB.java:771, </div><div class="line">    sun.reflect.GeneratedMethodAccessor7:invoke::-1, </div><div class="line">    sun.reflect.DelegatingMethodAccessorImpl:invoke:DelegatingMethodAccessorImpl.java:43, </div><div class="line">    java.lang.reflect.Method:invoke:Method.java:606, </div><div class="line">    org.apache.hadoop.io.retry.RetryInvocationHandler:invokeMethod:RetryInvocationHandler.java:252, </div><div class="line">    org.apache.hadoop.io.retry.RetryInvocationHandler:invoke:RetryInvocationHandler.java:104, </div><div class="line">    com.sun.proxy.$Proxy15:getFileInfo::-1, </div><div class="line">    org.apache.hadoop.hdfs.DFSClient:getFileInfo:DFSClient.java:2116, </div><div class="line">    org.apache.hadoop.hdfs.DistributedFileSystem$22:doCall:DistributedFileSystem.java:1315, </div><div class="line">    org.apache.hadoop.hdfs.DistributedFileSystem$22:doCall:DistributedFileSystem.java:1311, </div><div class="line">    org.apache.hadoop.fs.FileSystemLinkResolver:resolve:FileSystemLinkResolver.java:81, </div><div class="line">    org.apache.hadoop.hdfs.DistributedFileSystem:getFileStatus:DistributedFileSystem.java:1311, </div><div class="line">    org.apache.hadoop.fs.FileSystem:exists:FileSystem.java:1424, </div><div class="line">    org.apache.hadoop.hive.ql.session.SessionState:createRootHDFSDir:SessionState.java:568, </div><div class="line">    org.apache.hadoop.hive.ql.session.SessionState:createSessionDirs:SessionState.java:526, </div><div class="line">    org.apache.hadoop.hive.ql.session.SessionState:start:SessionState.java:480], </div><div class="line">errorCode:0, errorMessage:Failed to open new session: java.lang.RuntimeException: java.lang.RuntimeException: org.apache.hadoop.ipc.RemoteException(org.apache.hadoop.security.authorize.AuthorizationException): User: hive is not allowed to impersonate hive), serverProtocolVersion:null)</div></pre></td></tr></table></figure></p>
+<p>需要在hdfs <code>core-site.xml</code>中增加配置<br><figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">...</div><div class="line"><span class="tag">&lt;<span class="name">property</span>&gt;</span></div><div class="line"><span class="tag">&lt;<span class="name">name</span>&gt;</span>hadoop.proxyuser.hive.groups<span class="tag">&lt;/<span class="name">name</span>&gt;</span></div><div class="line"><span class="tag">&lt;<span class="name">value</span>&gt;</span>*<span class="tag">&lt;/<span class="name">value</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">property</span>&gt;</span></div><div class="line"></div><div class="line"><span class="tag">&lt;<span class="name">property</span>&gt;</span></div><div class="line"><span class="tag">&lt;<span class="name">name</span>&gt;</span>hadoop.proxyuser.hive.hosts<span class="tag">&lt;/<span class="name">name</span>&gt;</span></div><div class="line"><span class="tag">&lt;<span class="name">value</span>&gt;</span>*<span class="tag">&lt;/<span class="name">value</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">property</span>&gt;</span></div><div class="line">...</div></pre></td></tr></table></figure></p>
+<p>然后重启<code>hdfs namenode</code></p>
+<h1 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h1><p><img src="/images/zeppelin/zeppelin_main_ui.png" alt="zeppelin_main_ui"></p>
+<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a href="http://zeppelin.apache.org/docs/0.7.2/" target="_blank" rel="external">zeppelin</a></li>
+<li><a href="http://www.2cto.com/database/201608/543466.html" target="_blank" rel="external">基于hadoop生态圈的数据仓库实践——OLAP与数据可视化（五）</a></li>
+<li><a href="http://www.aboutyun.com/thread-12278-1-1.html" target="_blank" rel="external">Hive学习之HiveServer2服务端配置与启动</a></li>
+<li><a href="http://blog.csdn.net/niityzu/article/details/42639369" target="_blank" rel="external">Hive用户接口（二）—使用Hive JDBC驱动连接Hive操作实例</a></li>
+<li><a href="http://www.cnblogs.com/zeppelin/p/6184077.html" target="_blank" rel="external">Zeppelin 用jdbc连接hive报错</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
   <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/08/28/linux/dist-linux-codename/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -868,7 +1038,7 @@
 <h1 id="获取"><a href="#获取" class="headerlink" title="获取"></a>获取</h1><p>从github上下载release版本（<code>https://github.com/intel-cloud/cosbench</code>）。解压后可以获取<code>COSBenchUserGuide.pdf</code>（只有英文版）和<code>workload</code>配置文件（<code>./conf/*.xml</code>）。</p>
 <h1 id="部署-amp-启动"><a href="#部署-amp-启动" class="headerlink" title="部署&amp;启动"></a>部署&amp;启动</h1><p>COSBench的运行依赖于java和curl这两个包，并且调用linux的nc来做数据分析，如果没有安装nc，请手动安装。<br>本人将COSBench部署到docker中，为的是方便以后运行，不要将有限的生命耗费到无限的折腾当中。</p>
 <p>docker镜像使用的是<code>centos:7.3.1611</code>，具体dockerfile如下：</p>
-<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">FROM</span> centos:<span class="number">7.3</span>.<span class="number">1611</span></div><div class="line"></div><div class="line"><span class="keyword">RUN</span> yum update -y</div><div class="line"><span class="keyword">RUN</span> yum install -y java-1.8.0-openjdk</div><div class="line"></div><div class="line"><span class="keyword">RUN</span> yum clean all</div><div class="line"></div><div class="line"><span class="keyword">EXPOSE</span> <span class="number">19088</span> <span class="number">18088</span></div><div class="line"></div><div class="line"><span class="keyword">ADD</span> ./cosbench.tar.gz /root/</div><div class="line"><span class="keyword">ADD</span> ./entry.sh /root/</div><div class="line"></div><div class="line"><span class="keyword">ENTRYPOINT</span> ["/root/entry.sh"]</div></pre></td></tr></table></figure>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">FROM</span> centos:<span class="number">7.3</span>.<span class="number">1611</span></div><div class="line"></div><div class="line"><span class="keyword">RUN</span><span class="bash"> yum update -y</span></div><div class="line"><span class="keyword">RUN</span><span class="bash"> yum install -y java-1.8.0-openjdk</span></div><div class="line"></div><div class="line"><span class="keyword">RUN</span><span class="bash"> yum clean all</span></div><div class="line"></div><div class="line"><span class="keyword">EXPOSE</span> <span class="number">19088</span> <span class="number">18088</span></div><div class="line"></div><div class="line"><span class="keyword">ADD</span><span class="bash"> ./cosbench.tar.gz /root/</span></div><div class="line"><span class="keyword">ADD</span><span class="bash"> ./entry.sh /root/</span></div><div class="line"></div><div class="line"><span class="keyword">ENTRYPOINT</span><span class="bash"> [<span class="string">"/root/entry.sh"</span>]</span></div></pre></td></tr></table></figure>
 <p><code>entry.sh</code>是容器的启动脚本，脚本中主要用于启动COSBench服务，具体实现如下：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">#!/bin/sh</div><div class="line"></div><div class="line">./start-all.sh</div><div class="line"></div><div class="line">while true; do</div><div class="line">    sleep 10s</div><div class="line">done</div></pre></td></tr></table></figure>
 <p>完成docker镜像的生成后，使用<code>docker run -d -w /root/cosbench/ --rm -P s3test:performance</code>命令运行容器。然后通过<code>docker ps</code>查看可访问的端口。</p>
@@ -1815,188 +1985,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/05/11/works/docker-over-xenserver-plans/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="博">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/avatar.png">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="Bolog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="Bolog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/05/11/works/docker-over-xenserver-plans/" itemprop="url">
-                  XenServer中Docker容器实施方案（Preview）
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-o"></i>
-            </span>
-            <span class="post-meta-item-text">发表于</span>
-            <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-05-11T14:51:41+08:00">
-              2017-05-11
-            </time>
-
-            &nbsp;|&nbsp;
-
-            <span class="post-meta-item-icon">
-              <i class="fa fa-calendar-check-o"></i>
-            </span>
-            <time title="Post modified" itemprop="dateModified" datetime="2017-07-12T10:30:07+08:00">
-              2017-07-12
-            </time>
-            
-          </span>
-
-          
-            <span class="post-category" >
-              &nbsp; | &nbsp;
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/works/" itemprop="url" rel="index">
-                    <span itemprop="name">works</span>
-                  </a>
-                </span>
-
-                
-                
-
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-
-          
-          
-
-          
-          
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="概"><a href="#概" class="headerlink" title="概"></a>概</h1><p>依托现有虚拟化资源引入docker容器机制</p>
-<p><img src="/images/work/xen_container_plan.png" alt="xen_container_plan.png"></p>
-<ul>
-<li>scheduler<br>  根据VM宿主机的负载或其他情况，决定容器运行在哪个VM上。</li>
-<li>monitor<br>  监控VM宿主机和容器健康情况，当有容器或宿主机宕掉时，报告想过情况，其他模块根据monitor的报告做出相应的响应。</li>
-<li>controller<br>  控制容器的启动停止、迁移、扩展等操作</li>
-<li>docker engine<br>  ……</li>
-<li>pipework<br>  管理容器网络，目前pipework支持手动配置容器ip，网关及路由；对DHCP支持存在问题；（考虑将pipework以plugin方式加入docker engine）</li>
-<li>xe-daemon<br>  采集容器监控数据，并通过xenbus将数据发给xenserver</li>
-</ul>
-<h1 id="方案"><a href="#方案" class="headerlink" title="方案"></a>方案</h1><h2 id="网络"><a href="#网络" class="headerlink" title="网络"></a>网络</h2><p><img src="/images/work/xen_container_network_plan.png" alt="xen_container_network_plan.png"></p>
-<ul>
-<li>宿主机有两个网络，一个管理网，一个数据网，宿主机内的所有容器使用数据网络</li>
-<li>利用linux自带的bridge将宿主机的数据网与容器的veth pair相连，由此二层网络联通</li>
-<li>宿主机开通ip_forward，实现三层转发</li>
-<li>容器通过<code>pipework</code>脚本完成ip地址、路由、网关的配置</li>
-</ul>
-<h2 id="共享存储"><a href="#共享存储" class="headerlink" title="共享存储"></a>共享存储</h2><h2 id="通过虚拟机挂载共享存储"><a href="#通过虚拟机挂载共享存储" class="headerlink" title="通过虚拟机挂载共享存储"></a>通过虚拟机挂载共享存储</h2><ul>
-<li>需要记录虚机挂载共享存储与容器的对应关系</li>
-<li>在创建、迁移、删除容器时，需要对相关存储资源进行分配或回收</li>
-</ul>
-<h2 id="容器直接挂载共享存储"><a href="#容器直接挂载共享存储" class="headerlink" title="容器直接挂载共享存储"></a>容器直接挂载共享存储</h2><ul>
-<li>一般容器<br>  使用RBD／NBD-RBD块设备存储，或NFS存储。对于RBD／NBD-RBD方式需要添加驱动；对于NFS方式docker原生支持。</li>
-<li>Registry容<br>  使用RGW对象存储（S3/Swift），测试中。。。</li>
-</ul>
-<h2 id="监控"><a href="#监控" class="headerlink" title="监控"></a>监控</h2><p>XenContainer</p>
-<h2 id="调度"><a href="#调度" class="headerlink" title="调度"></a>调度</h2><h1 id="接口"><a href="#接口" class="headerlink" title="接口"></a>接口</h1><h1 id="流"><a href="#流" class="headerlink" title="流"></a>流</h1><p>服务发现（DNS）、负载均衡、容器镜像库均已容器形式提供服务。</p>
-<p><img src="/images/work/xen_container_flow.png" alt="xen_container_flow.png"></p>
-<h1 id="注"><a href="#注" class="headerlink" title="注"></a>注</h1><ul>
-<li>scheduler、monitor、controller 从头写吧</li>
-<li>docker engine 需要修改一些api接口</li>
-<li>pipework 需要从shell改成golang，以plugin方式加入docker engine</li>
-<li>xe-daemon 需要增加ip地址采集</li>
-<li>DNS Container 从头写吧</li>
-</ul>
-<p><strong><em> 技术相关调研，请见下节“参” </em></strong></p>
-<h1 id="参"><a href="#参" class="headerlink" title="参"></a>参</h1><ul>
-<li><a href="https://zhoubofsy.github.io/2017/05/08/container/docker/docker-network-pipework/" target="_blank" rel="external">Docker网络管理——PIPEWORK</a></li>
-<li><a href="https://zhoubofsy.github.io/2017/04/27/container/k8s/k8s-analyze-service-discovery/" target="_blank" rel="external">K8s服务发现分析</a></li>
-<li><a href="https://zhoubofsy.github.io/2017/03/29/container/k8s/k8s-service-expose/" target="_blank" rel="external">k8s service expose</a></li>
-<li><a href="https://zhoubofsy.github.io/2017/03/03/container/docker/docker-network/" target="_blank" rel="external">Docker网络技术(Bridge)</a></li>
-<li><a href="https://zhoubofsy.github.io/2017/03/01/container/rancher/rancher-dns-and-metadata/" target="_blank" rel="external">Rancher服务发现分析</a></li>
-</ul>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -2042,7 +2030,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">72</span>
+              <span class="site-state-item-count">73</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -2050,7 +2038,7 @@
           
             <div class="site-state-item site-state-categories">
               <a href="/categories">
-                <span class="site-state-item-count">17</span>
+                <span class="site-state-item-count">18</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -2059,7 +2047,7 @@
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">78</span>
+                <span class="site-state-item-count">79</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
