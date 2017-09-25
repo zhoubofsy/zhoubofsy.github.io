@@ -313,6 +313,155 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/09/25/language/python/python-thrift-hbase/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/09/25/language/python/python-thrift-hbase/" itemprop="url">python访问hbase方法</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-09-25T14:57:09+08:00">
+                2017-09-25
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/language/" itemprop="url" rel="index">
+                    <span itemprop="name">language</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h1><p>python不能直接访问hbase，必须通过thrift插件才能访问hbase，下面是对<code>hbase</code>和<code>thrift</code>python插件的安装</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">pip install thrift</div><div class="line">pip install hbase-thrift</div></pre></td></tr></table></figure>
+<h1 id="访问hbase"><a href="#访问hbase" class="headerlink" title="访问hbase"></a>访问hbase</h1><p>hbase_client.py<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#!/usr/bin/python</span></div><div class="line"><span class="comment">#encoding=utf-8</span></div><div class="line"></div><div class="line"><span class="keyword">from</span> thrift.transport <span class="keyword">import</span> TSocket</div><div class="line"><span class="keyword">from</span> thrift.transport <span class="keyword">import</span> TTransport</div><div class="line"><span class="keyword">from</span> thrift.protocol <span class="keyword">import</span> TBinaryProtocol</div><div class="line"></div><div class="line"><span class="keyword">from</span> hbase <span class="keyword">import</span> Hbase</div><div class="line"><span class="keyword">from</span> hbase.ttypes <span class="keyword">import</span> *</div><div class="line"></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">HbaseClient</span><span class="params">(object)</span>:</span></div><div class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self, host=<span class="string">''</span>, port=<span class="number">9090</span>)</span>:</span></div><div class="line">        self.sock = TSocket.TSocket(host, port)</div><div class="line">        self.transport = TTransport.TBufferedTransport(self.sock)</div><div class="line">        self.proto = TBinaryProtocol.TBinaryProtocol(self.transport)</div><div class="line">        self.client = Hbase.Client(self.proto)</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">def</span> <span class="title">get_tables</span><span class="params">(self)</span>:</span></div><div class="line">        self.transport.open()</div><div class="line">        tables = self.client.getTableNames()</div><div class="line">        self.transport.close()</div><div class="line">        <span class="keyword">return</span> tables</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">def</span> <span class="title">get_column_desp</span><span class="params">(self, table_name)</span>:</span></div><div class="line">        self.transport.open()</div><div class="line">        column_desp = self.client.getColumnDescriptors(table_name)</div><div class="line">        self.transport.close()</div><div class="line">        <span class="keyword">return</span> column_desp</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">def</span> <span class="title">get_hbase_client</span><span class="params">(self)</span>:</span></div><div class="line">        <span class="keyword">return</span> self.client</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">def</span> <span class="title">open</span><span class="params">(self)</span>:</span></div><div class="line">        self.transport.open()</div><div class="line">    <span class="function"><span class="keyword">def</span> <span class="title">close</span><span class="params">(self)</span>:</span></div><div class="line">        self.transport.close()</div></pre></td></tr></table></figure></p>
+<p>test.py<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">import</span> hbase_client <span class="keyword">as</span> hc</div><div class="line"></div><div class="line">con = hc.HbaseClient(host=<span class="string">'x.x.x.x'</span>)</div><div class="line">client = con.get_hbase_client()</div><div class="line"></div><div class="line">con.open()</div><div class="line">tbls = client.getTableNames()</div><div class="line"><span class="keyword">print</span> tbls</div><div class="line">mytbls = []</div><div class="line"><span class="keyword">for</span> tbl <span class="keyword">in</span> tbls:</div><div class="line">    <span class="keyword">if</span> <span class="keyword">not</span> (tbl == <span class="string">'YJDD:myApp'</span> <span class="keyword">or</span> tbl == <span class="string">'YJDD:myAppDetail'</span>):</div><div class="line">        <span class="keyword">continue</span></div><div class="line">    <span class="keyword">print</span> <span class="string">"ColumnDescriptors:"</span></div><div class="line">    tbl_desp = client.getColumnDescriptors(tbl)</div><div class="line">    <span class="keyword">print</span> tbl_desp</div><div class="line">    <span class="keyword">print</span> <span class="string">"TableRegions:"</span></div><div class="line">    tbl_reg = client.getTableRegions(tbl)</div><div class="line">    <span class="keyword">print</span> tbl_reg</div><div class="line">    mytbls.append(tbl)</div><div class="line">                                            </div><div class="line"><span class="keyword">print</span> <span class="string">"============== scannerGet ============"</span></div><div class="line"><span class="keyword">for</span> tbl <span class="keyword">in</span> mytbls:</div><div class="line">    sid = client.scannerOpen(tbl, <span class="string">''</span>, [<span class="string">'user'</span>,<span class="string">'app'</span>])</div><div class="line">    row_result = client.scannerGet(sid)</div><div class="line">    <span class="keyword">print</span> row_result</div><div class="line">    <span class="keyword">while</span> row_result:</div><div class="line">        row_result = client.scannerGet(sid)</div><div class="line">        <span class="keyword">if</span> row_result:</div><div class="line">            <span class="keyword">print</span> row_result</div><div class="line">    <span class="keyword">print</span> <span class="string">"--------------------------"</span></div><div class="line"></div><div class="line">    client.scannerClose(sid)</div><div class="line"></div><div class="line"><span class="keyword">print</span> <span class="string">"=============== scannerGetList ============"</span></div><div class="line"><span class="keyword">for</span> tbl <span class="keyword">in</span> mytbls:</div><div class="line">    sid = client.scannerOpen(tbl, <span class="string">''</span>, [<span class="string">'user'</span>,<span class="string">'app'</span>])</div><div class="line">    row_result = client.scannerGetList(sid, <span class="number">20</span>)</div><div class="line">    <span class="keyword">print</span> row_result</div><div class="line">    client.scannerClose(sid)</div><div class="line">    <span class="keyword">print</span> <span class="string">"--------------------------"</span></div><div class="line">con.close()</div></pre></td></tr></table></figure></p>
+<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a href="http://www.jianshu.com/p/e916815470f1" target="_blank" rel="external">python 通过thrift访问hbase</a></li>
+<li><a href="https://wiki.apache.org/hadoop/Hbase/ThriftApi" target="_blank" rel="external">ThriftAPI</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/09/25/language/python/python-encode-decode/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -2089,7 +2238,7 @@
 <p>Apache Zeppelin是一个让交互式数据分析变得可行的基于网页的开源框架。Zeppelin提供了数据分析、数据可视化等功能。Zeppelin 是一个提供交互数据分析且基于Web的笔记本。方便你做出可数据驱动的、可交互且可协作的精美文档，并且支持多种语言，包括 Scala(使用 Apache Spark)、Python(Apache Spark)、SparkSQL、 Hive、 Markdown、Shell等等。</p>
 <h1 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h1><p>采用docker环境部署zeppelin</p>
 <p>OS：CentOS 7.3.1611<br>JAVA：OpenJDK 1.8<br>zeppelin: 0.7.2</p>
-<p>dockerfile:<br><figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">FROM</span> centos:<span class="number">7.3</span>.<span class="number">1611</span></div><div class="line"></div><div class="line"><span class="keyword">MAINTAINER</span> zhoub</div><div class="line"></div><div class="line"><span class="keyword">RUN</span> yum update -y</div><div class="line"><span class="keyword">RUN</span> yum install -y java-1.8.0-openjdk.x86_64</div><div class="line"><span class="keyword">RUN</span> echo "JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.141-1.b16.el7_3.x86_64/jre" | tee -a /etc/bashrc</div><div class="line"><span class="keyword">RUN</span> echo "export JAVA_HOME" | tee -a /etc/bashrc</div></pre></td></tr></table></figure></p>
+<p>dockerfile:<br><figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">FROM</span> centos:<span class="number">7.3</span>.<span class="number">1611</span></div><div class="line"></div><div class="line"><span class="keyword">MAINTAINER</span> zhoub</div><div class="line"></div><div class="line"><span class="keyword">RUN</span><span class="bash"> yum update -y</span></div><div class="line"><span class="keyword">RUN</span><span class="bash"> yum install -y java-1.8.0-openjdk.x86_64</span></div><div class="line"><span class="keyword">RUN</span><span class="bash"> <span class="built_in">echo</span> <span class="string">"JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.141-1.b16.el7_3.x86_64/jre"</span> | tee <span class="_">-a</span> /etc/bashrc</span></div><div class="line"><span class="keyword">RUN</span><span class="bash"> <span class="built_in">echo</span> <span class="string">"export JAVA_HOME"</span> | tee <span class="_">-a</span> /etc/bashrc</span></div></pre></td></tr></table></figure></p>
 <h1 id="下载安装"><a href="#下载安装" class="headerlink" title="下载安装"></a>下载安装</h1><p>从<a href="http://zeppelin.apache.org/download.html" target="_blank" rel="external">zeppelin官网</a>或github上下载，推荐下载最新版。解压tar包，然后在准备好的环境中运行<code>zeppelin/bin/zeppelin-daemon.sh start</code></p>
 <p>docker:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">#!/bin/sh</div><div class="line"></div><div class="line">cmd=&quot;/root/run/entry.sh&quot;</div><div class="line">image=&quot;centos7.3:java1.8&quot;</div><div class="line">net=&quot;hadoop_net&quot;</div><div class="line"></div><div class="line">docker run -d --rm -w /root/ -v $&#123;PWD&#125;/run:/root/run -v $&#123;PWD&#125;/zeppelin:/root/zeppelin -v $&#123;PWD&#125;/hbase:/root/hbase -p 8080 --network $&#123;net&#125; -h zeppelin --name zeppelin $&#123;image&#125; $&#123;cmd&#125;</div></pre></td></tr></table></figure></p>
 <p>entry.sh:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">#!/bin/sh</div><div class="line"></div><div class="line">/root/zeppelin/bin/zeppelin-daemon.sh start</div><div class="line"></div><div class="line">while true</div><div class="line">do</div><div class="line">    sleep 10s</div><div class="line">done</div></pre></td></tr></table></figure></p>
@@ -2116,148 +2265,6 @@
 <li><a href="http://blog.csdn.net/niityzu/article/details/42639369" target="_blank" rel="external">Hive用户接口（二）—使用Hive JDBC驱动连接Hive操作实例</a></li>
 <li><a href="http://www.cnblogs.com/zeppelin/p/6184077.html" target="_blank" rel="external">Zeppelin 用jdbc连接hive报错</a></li>
 </ul>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/08/28/linux/dist-linux-codename/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/08/28/linux/dist-linux-codename/" itemprop="url">dist-linux-codename</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-08-28T14:33:00+08:00">
-                2017-08-28
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/linux/" itemprop="url" rel="index">
-                    <span itemprop="name">linux</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="ubuntu"><a href="#ubuntu" class="headerlink" title="ubuntu"></a>ubuntu</h1><h3 id="Xenial-Xerus-好客的非洲地松鼠"><a href="#Xenial-Xerus-好客的非洲地松鼠" class="headerlink" title="Xenial Xerus (好客的非洲地松鼠)"></a>Xenial Xerus (好客的非洲地松鼠)</h3><p>Ubuntu 16.04 的发布代号，简称XX。Canonical和Ubuntu的创始人马克·沙特尔沃思(Mark Shuttleworth) 在他的个人博文中写道：“这是如此的巧合幸运，我们的下个LTS应该为X，因为‘xenial’代表着主人和客人之间融洽的友好关系，而且对于推进Ubuntu OpenStack的LXD和KVM工作起到了非常积极的作用。Xerus则是非洲地松鼠，是我的祖国最为常见的动物。他们在沙漠环境中繁殖，并且以小型团体的方式生活，能够和邻居和谐生活的社会群体。”</p>
 
           
         
@@ -2345,7 +2352,7 @@
             
               <a href="/archives/ || archive">
             
-                <span class="site-state-item-count">82</span>
+                <span class="site-state-item-count">83</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -2367,7 +2374,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">90</span>
+                <span class="site-state-item-count">91</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
