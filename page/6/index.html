@@ -313,6 +313,1342 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/09/23/uwsgi/uwsgi-config-problem-1/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2016/09/23/uwsgi/uwsgi-config-problem-1/" itemprop="url">uWSGI中设置“cap = setuid,setpid”导致python脚本权限降低</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-09-23T00:00:00+08:00">
+                2016-09-23
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/uwsgi/" itemprop="url" rel="index">
+                    <span itemprop="name">uwsgi</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="问题发现"><a href="#问题发现" class="headerlink" title="问题发现"></a>问题发现</h1><h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><ul>
+<li>uwsgi version： 2.0.13.1</li>
+<li>python version: 2.6.6</li>
+<li>采用 Nginx + uWSGI + Python 架构，均拥有ROOT权限</li>
+</ul>
+<h3 id="现象"><a href="#现象" class="headerlink" title="现象"></a>现象</h3><p>Python执行os.mkdir操作，提示“Permission Denied”</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">Traceback (most recent call last):</div><div class="line">File &quot;/cs/nginx/uwsgi/main.py&quot;, line 24, in application</div><div class="line">result = process().entry(environ, start_response)</div><div class="line">File &quot;/cs/nginx/uwsgi/rds/base_mng.py&quot;, line 90, in entry</div><div class="line">self.process_put_request(env)</div><div class="line">File &quot;/cs/nginx/uwsgi/rds/init_rds.py&quot;, line 149, in process_put_request</div><div class="line">result = self.do_put_request(env)</div><div class="line">File &quot;/cs/nginx/uwsgi/rds/init_rds.py&quot;, line 140, in do_put_request</div><div class="line">err_code = op.do()</div><div class="line">File &quot;/cs/nginx/uwsgi/rds/init_rds.py&quot;, line 70, in do</div><div class="line">if 0 == init_create_mp(mp):</div><div class="line">File &quot;/cs/nginx/uwsgi/rds/init/main.py&quot;, line 44, in init_create_mp</div><div class="line">os.mkdir(mp,0755)</div><div class="line">OSError: [Errno 13] Permission denied: &apos;/aaab&apos;</div></pre></td></tr></table></figure>
+<h1 id="解决"><a href="#解决" class="headerlink" title="解决"></a>解决</h1><p>Python脚本的权限，有uWSGI来决定，所以该错误肯定跟uWSGI有关，通过调整uwsgi.ini文件中的用户和权限相关配置发现，将<code>cap = setuid,setgid</code>去掉，可以正常创建目录。</p>
+<p>但：<strong><em>具体原因不明，可能跟setuid和setgid的使用有关，有可能是个Bug</em></strong></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/09/23/uwsgi/uwsgi-limit-process-resource/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2016/09/23/uwsgi/uwsgi-limit-process-resource/" itemprop="url">limit-as限制子进程资源，导致Mysqld服务无法启动</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-09-23T00:00:00+08:00">
+                2016-09-23
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/uwsgi/" itemprop="url" rel="index">
+                    <span itemprop="name">uwsgi</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="问题发现"><a href="#问题发现" class="headerlink" title="问题发现"></a>问题发现</h1><h3 id="现象"><a href="#现象" class="headerlink" title="现象"></a>现象</h3><p>在nginx+uwsgi+python环境中，启动mysqld服务，发生服务无法正常启动现象（闪退）。而在shell终端中可以正常启动mysqld服务。说明“nginx+uwsgi+python”这个环境限制了某些资源，导致mysqld服务启动失败。</p>
+<h3 id="uwsgi错误日志-var-log-uwsgi-log"><a href="#uwsgi错误日志-var-log-uwsgi-log" class="headerlink" title="uwsgi错误日志(/var/log/uwsgi.log)"></a>uwsgi错误日志(/var/log/uwsgi.log)</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">Starting MySQL. ERROR! The server quit without updating PID file (/store/xxx.pid)</div></pre></td></tr></table></figure>
+<h3 id="mysql错误日志-mysqldatadir-hostname-err"><a href="#mysql错误日志-mysqldatadir-hostname-err" class="headerlink" title="mysql错误日志(/{mysqldatadir}/{hostname}.err)"></a>mysql错误日志(/{mysqldatadir}/{hostname}.err)</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">2016-09-22 16:21:41 28084 [Note] InnoDB: Using atomics to ref count buffer pool pages</div><div class="line">2016-09-22 16:21:41 28084 [Note] InnoDB: The InnoDB memory heap is disabled</div><div class="line">2016-09-22 16:21:41 28084 [Note] InnoDB: Mutexes and rw_locks use GCC atomic builtins</div><div class="line">2016-09-22 16:21:41 28084 [Note] InnoDB: Memory barrier is not used</div><div class="line">2016-09-22 16:21:41 28084 [Note] InnoDB: Compressed tables use zlib 1.2.3</div><div class="line">2016-09-22 16:21:41 28084 [Note] InnoDB: Using CPU crc32 instructions</div><div class="line">2016-09-22 16:21:41 28084 [Note] InnoDB: Initializing buffer pool, size = 1.0G</div><div class="line">InnoDB: mmap(137363456 bytes) failed; errno 12</div><div class="line">2016-09-22 16:21:41 28084 [ERROR] InnoDB: Cannot allocate memory for the buffer pool</div><div class="line">2016-09-22 16:21:41 28084 [ERROR] Plugin &apos;InnoDB&apos; init function returned error.</div><div class="line">2016-09-22 16:21:41 28084 [ERROR] Plugin &apos;InnoDB&apos; registration as a STORAGE ENGINE failed.</div><div class="line">2016-09-22 16:21:41 28084 [ERROR] Unknown/unsupported storage engine: InnoDB</div><div class="line">2016-09-22 16:21:41 28084 [ERROR] Aborting</div><div class="line">2016-09-22 16:21:41 28084 [Note] Binlog end</div></pre></td></tr></table></figure>
+<h3 id="分析"><a href="#分析" class="headerlink" title="分析"></a>分析</h3><p>根据mysql错误日志提示，mysql在初始化InnoDB引擎时，申请“Buffer Pool”内存失败，此处的mmap是用来申请内存的（allocate申请内存时，小于128KB的在栈上进行分配内存，大于128K的，从堆上分配内存）。<br>使用shell终端正常启动mysqld服务，查看mysqld占用内存大小发现需要2GB左右的虚拟内存，如下所示：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">[root@host]# ps aux | grep mysqld | grep -v grep</div><div class="line">root 31635 0.0 0.1 11300 1520 ? S Sep22 0:00 /bin/sh /cs/mysql/bin/mysqld_safe --datadir=/store --pid-file=/store/zhoubo.pid</div><div class="line">root 32165 0.0 25.5 2041620 259716 ? Sl Sep22 0:15 /cs/mysql/bin/mysqld --basedir=/cs/mysql --datadir=/store --plugin-dir=/cs/mysql/lib/plugin --user=root --log-error=/store/zhoubo.err --open-files-limit=65535 --pid-file=/store/zhoubo.pid --socket=/cs/mysql/data/mysql.sock --port=3306</div></pre></td></tr></table></figure>
+<p>由此可以看出，“nginx+uwsgi+python”这个组合在其中某个环节对内存做了内存限制导致内存不能正常分配；nginx父进程为init，uwsgi父进程也为init，二者之间使用管道进行通信，所以不可能由nginx限制uwsgi进程资源。而uwsgi以fork形式调用python，fork过程中可以限制资源，python进程的资源被限制后再启动mysqld服务，就会导致mysqld分配内存失败，从而出现上述的错误现象。</p>
+<h3 id="解决"><a href="#解决" class="headerlink" title="解决"></a>解决</h3><p>根据上诉分析，找到了问题的原因出在uwsgi对进程资源进行了限制，所以将uwsgi.ini中关于资源限制的配置去掉，即可解决。<br>在uwsgi.ini中去掉<code>limit-as 256</code>选项。</p>
+<h1 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h1><p>uwsgi.ini中资源限制项包括<code>limit-as</code>，<code>limit-nproc</code>，<code>limit-port</code>等，他们对进程资源的限制的访问获取都是通过系统接口getrlimt和setrlimit来实现的(POSIX API)。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/time.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/resource.h&gt;</span></span></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">getrlimit</span><span class="params">(<span class="keyword">int</span> resource, <span class="keyword">struct</span> rlimit *rlim)</span></span>;</div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">setrlimit</span><span class="params">(<span class="keyword">int</span> resource, <span class="keyword">const</span> <span class="keyword">struct</span> rlimit *rlim)</span></span>;</div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">prlimit</span><span class="params">(<span class="keyword">pid_t</span> pid, <span class="keyword">int</span> resource, <span class="keyword">const</span> <span class="keyword">struct</span> rlimit *new_limit,<span class="keyword">struct</span> rlimit *old_limit)</span></span>;</div></pre></td></tr></table></figure>
+<h3 id="核心结构体"><a href="#核心结构体" class="headerlink" title="核心结构体"></a>核心结构体</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> rlimit&#123;</div><div class="line">    <span class="keyword">rlim_t</span> rlim_cur;  <span class="comment">// soft limit</span></div><div class="line">    <span class="keyword">rlim_t</span> rlim_max;  <span class="comment">// hard limit</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p><strong>rlim_cur</strong></p>
+<p>为soft limit是指内核所能支持的资源上限。比如对于RLIMIT_NOFILE(一个进程能打开的最大文件数，内核默认是1024)，soft limit最大也只能达到1024。对于RLIMIT_CORE(core文件的大小，内核不做限制)，soft limit最大能是unlimited。</p>
+<p><strong>rlim_max</strong></p>
+<p>为hard limit在资源中只是作为soft limit的上限。当你设置hard limit后，你以后设置的soft limit只能小于hard limit。要说明的是，hard limit只针对非特权进程，也就是进程的有效用户ID(effective user ID)不是0的进程。具有特权级别的进程(具有属性CAP_SYS_RESOURCE)，soft limit则只有内核上限。</p>
+<h3 id="可限制资源列表"><a href="#可限制资源列表" class="headerlink" title="可限制资源列表"></a>可限制资源列表</h3><table>
+<thead>
+<tr>
+<th style="text-align:center">资源</th>
+<th style="text-align:left">描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">RLIMIT_AS</td>
+<td style="text-align:left">进程的最大虚拟内存空间，字节为单位</td>
+</tr>
+<tr>
+<td style="text-align:center">RLIMIT_CORE</td>
+<td style="text-align:left">内核转存文件的最大长度</td>
+</tr>
+<tr>
+<td style="text-align:center">RLIMIT_CPU</td>
+<td style="text-align:left">最大允许的CPU使用时间，秒为单位</td>
+</tr>
+<tr>
+<td style="text-align:center">RLIMIT_DATA</td>
+<td style="text-align:left">进程数据段的最大</td>
+</tr>
+<tr>
+<td style="text-align:center">RLIMIT_FSIZE</td>
+<td style="text-align:left">进程可建立的文件的最大长度</td>
+</tr>
+<tr>
+<td style="text-align:center">RLIMIT_LOCKS</td>
+<td style="text-align:left">进程可建立的锁和租赁的最大值</td>
+</tr>
+<tr>
+<td style="text-align:center">RLIMIT_MEMLOCK</td>
+<td style="text-align:left">进程可锁定在内存中的最大数据量，字节为单位</td>
+</tr>
+<tr>
+<td style="text-align:center">RLIMIT_MSGQUEUE</td>
+<td style="text-align:left">进程可为POSIX消息队列分配的最大字节数</td>
+</tr>
+<tr>
+<td style="text-align:center">RLIMIT_NICE</td>
+<td style="text-align:left">进程可通过setpriority() 或 nice()调用设置的最大完美值</td>
+</tr>
+<tr>
+<td style="text-align:center">RLIMIT_NOFILE</td>
+<td style="text-align:left">指定比进程可打开的最大文件描述词大一的值，超出此值，将会产生EMFILE错误</td>
+</tr>
+<tr>
+<td style="text-align:center">RLIMIT_NPROC</td>
+<td style="text-align:left">用户可拥有的最大进程数</td>
+</tr>
+<tr>
+<td style="text-align:center">RLIMIT_RTPRIO</td>
+<td style="text-align:left">进程可通过sched_setscheduler 和 sched_setparam设置的最大实时优先级</td>
+</tr>
+<tr>
+<td style="text-align:center">RLIMIT_SIGPENDING</td>
+<td style="text-align:left">用户可拥有的最大挂起信号数</td>
+</tr>
+<tr>
+<td style="text-align:center">RLIMIT_STACK</td>
+<td style="text-align:left">最大的进程堆栈，以字节为单位</td>
+</tr>
+</tbody>
+</table>
+<h1 id="参考及鸣谢"><a href="#参考及鸣谢" class="headerlink" title="参考及鸣谢"></a>参考及鸣谢</h1><ul>
+<li><a href="http://blog.csdn.net/todd911/article/details/14055745" target="_blank" rel="external">《UNIX环境高级编程》笔记–getrlimit和setrlimit函数</a></li>
+<li><a href="http://blog.csdn.net/kevin6216/article/details/15378617" target="_blank" rel="external">uWSGI参考资料</a></li>
+<li><a href="http://uwsgi-docs.readthedocs.io/en/latest/Options.html?highlight=limit-as" target="_blank" rel="external">uWSGI Options(官方)</a></li>
+<li><a href="http://blog.csdn.net/pennyliang/article/details/41678953" target="_blank" rel="external">mmap ENOMEM（errno 12） 错误 </a></li>
+<li><a href="http://www.cnblogs.com/vinozly/p/5489138.html" target="_blank" rel="external">Linux进程分配内存的两种方式–brk() 和mmap()</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/09/23/mysql/mysql-priv-mng-md/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2016/09/23/mysql/mysql-priv-mng-md/" itemprop="url">MySQL 权限管理</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-09-23T00:00:00+08:00">
+                2016-09-23
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/mysql/" itemprop="url" rel="index">
+                    <span itemprop="name">mysql</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><ul>
+<li>OS Version : rhel 6.4</li>
+<li>MySQL Version : 5.6.31</li>
+</ul>
+<h1 id="权限"><a href="#权限" class="headerlink" title="权限"></a>权限</h1><h2 id="权限列表"><a href="#权限列表" class="headerlink" title="权限列表"></a>权限列表</h2><table>
+<thead>
+<tr>
+<th style="text-align:left">Privilege</th>
+<th style="text-align:left">Column</th>
+<th style="text-align:left">Context</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">CREATE</td>
+<td style="text-align:left">Create_priv</td>
+<td style="text-align:left">databases, tables, or indexes</td>
+</tr>
+<tr>
+<td style="text-align:left">DROP</td>
+<td style="text-align:left">Drop_priv</td>
+<td style="text-align:left">database, tables, or views</td>
+</tr>
+<tr>
+<td style="text-align:left">GRANT OPTION</td>
+<td style="text-align:left">Grant_priv</td>
+<td style="text-align:left">database, tables, or stored routines</td>
+</tr>
+<tr>
+<td style="text-align:left">LOCK TABLES</td>
+<td style="text-align:left">lock_tables_priv</td>
+<td style="text-align:left">databases</td>
+</tr>
+<tr>
+<td style="text-align:left">REFERENCES</td>
+<td style="text-align:left">References_priv</td>
+<td style="text-align:left">databases or tables, columns</td>
+</tr>
+<tr>
+<td style="text-align:left">EVENT</td>
+<td style="text-align:left">Event_priv</td>
+<td style="text-align:left">databases</td>
+</tr>
+<tr>
+<td style="text-align:left">ALTER</td>
+<td style="text-align:left">Alter_priv</td>
+<td style="text-align:left">tables</td>
+</tr>
+<tr>
+<td style="text-align:left">DELETE</td>
+<td style="text-align:left">Delete_priv</td>
+<td style="text-align:left">tables</td>
+</tr>
+<tr>
+<td style="text-align:left">INDEX</td>
+<td style="text-align:left">Index_priv</td>
+<td style="text-align:left">tables</td>
+</tr>
+<tr>
+<td style="text-align:left">INSERT</td>
+<td style="text-align:left">Insert_priv</td>
+<td style="text-align:left">tables or columns</td>
+</tr>
+<tr>
+<td style="text-align:left">SELECT</td>
+<td style="text-align:left">Select_priv</td>
+<td style="text-align:left">tables or columns</td>
+</tr>
+<tr>
+<td style="text-align:left">UPDATE</td>
+<td style="text-align:left">Update_priv</td>
+<td style="text-align:left">tables or columns</td>
+</tr>
+<tr>
+<td style="text-align:left">CREATE TEMPORARY TABLES</td>
+<td style="text-align:left">Create_tmp_table_priv</td>
+<td style="text-align:left">tables</td>
+</tr>
+<tr>
+<td style="text-align:left">TRIGGER</td>
+<td style="text-align:left">trigger_priv</td>
+<td style="text-align:left">tables</td>
+</tr>
+<tr>
+<td style="text-align:left">CREATE VIEW</td>
+<td style="text-align:left">Create_view_priv</td>
+<td style="text-align:left">views</td>
+</tr>
+<tr>
+<td style="text-align:left">SHOW VIEW</td>
+<td style="text-align:left">Show_view_priv</td>
+<td style="text-align:left">views</td>
+</tr>
+<tr>
+<td style="text-align:left">ALTER ROUTINE</td>
+<td style="text-align:left">alter_routine_priv</td>
+<td style="text-align:left">stored routines</td>
+</tr>
+<tr>
+<td style="text-align:left">CREATE ROUTINE</td>
+<td style="text-align:left">create_routine_priv</td>
+<td style="text-align:left">stored routines</td>
+</tr>
+<tr>
+<td style="text-align:left">EXECUTE</td>
+<td style="text-align:left">execute_priv</td>
+<td style="text-align:left">stored routines</td>
+</tr>
+<tr>
+<td style="text-align:left">FILE</td>
+<td style="text-align:left">file_priv</td>
+<td style="text-align:left">file access on server host (Global)</td>
+</tr>
+<tr>
+<td style="text-align:left">CREATE TABLESPACE</td>
+<td style="text-align:left">create_tablespace_priv</td>
+<td style="text-align:left">server administration (Global)</td>
+</tr>
+<tr>
+<td style="text-align:left">CREATE USER</td>
+<td style="text-align:left">create_user_priv</td>
+<td style="text-align:left">server administration (Global)</td>
+</tr>
+<tr>
+<td style="text-align:left">PROCESS</td>
+<td style="text-align:left">process_priv</td>
+<td style="text-align:left">server administration (Global)</td>
+</tr>
+<tr>
+<td style="text-align:left">PROXY</td>
+<td style="text-align:left">proxy_priv</td>
+<td style="text-align:left">server administration (user to user)</td>
+</tr>
+<tr>
+<td style="text-align:left">RELOAD</td>
+<td style="text-align:left">reload_priv</td>
+<td style="text-align:left">server administration (Global)</td>
+</tr>
+<tr>
+<td style="text-align:left">REPLICATION CLIENT</td>
+<td style="text-align:left">repl_client_priv</td>
+<td style="text-align:left">server administration (Global)</td>
+</tr>
+<tr>
+<td style="text-align:left">REPLICATION SLAVE</td>
+<td style="text-align:left">repl_slave_priv</td>
+<td style="text-align:left">server administration (Global)</td>
+</tr>
+<tr>
+<td style="text-align:left">SHOW DATABASES</td>
+<td style="text-align:left">show_db_priv</td>
+<td style="text-align:left">server administration (Global)</td>
+</tr>
+<tr>
+<td style="text-align:left">SHUTDOWN</td>
+<td style="text-align:left">shutdown_priv</td>
+<td style="text-align:left">server administration (Global)</td>
+</tr>
+<tr>
+<td style="text-align:left">SUPER</td>
+<td style="text-align:left">super_priv</td>
+<td style="text-align:left">server administration (Global)</td>
+</tr>
+<tr>
+<td style="text-align:left">ALL [PRIVILEGES]</td>
+<td style="text-align:left"></td>
+<td style="text-align:left">server administration</td>
+</tr>
+<tr>
+<td style="text-align:left">USAGE</td>
+<td style="text-align:left"></td>
+<td style="text-align:left">server administration</td>
+</tr>
+</tbody>
+</table>
+<h2 id="按权限的种类分类"><a href="#按权限的种类分类" class="headerlink" title="按权限的种类分类"></a>按权限的种类分类</h2><ul>
+<li>数据访问相关权限</li>
+<li>库表结构相关权限</li>
+<li>服务相关权限</li>
+</ul>
+<h1 id="权限相关表单"><a href="#权限相关表单" class="headerlink" title="权限相关表单"></a>权限相关表单</h1><p>MySQL权限信息存储在“mysql”数据中<br>其中:</p>
+<ul>
+<li>“user”表负责存储用户信息，及用户本身所拥有的权限；</li>
+<li>“db”表负责存储用户与db的权限关系;</li>
+<li>“tables_priv”负责存在用户与table的权限关系;</li>
+<li>“columns_priv”负责存储用户与column的权限关系;</li>
+</ul>
+<h2 id="user表结构"><a href="#user表结构" class="headerlink" title="user表结构"></a>user表结构</h2><table>
+<thead>
+<tr>
+<th style="text-align:left">Field</th>
+<th style="text-align:left">Type</th>
+<th style="text-align:center">Null</th>
+<th style="text-align:center">Key</th>
+<th style="text-align:left">Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">Host</td>
+<td style="text-align:left">char(60)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">User</td>
+<td style="text-align:left">char(16)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">Password</td>
+<td style="text-align:left">char(41)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">Select_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Insert_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Update_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Delete_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Create_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Drop_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Reload_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Shutdown_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Process_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">File_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Grant_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">References_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Index_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Alter_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Show_db_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Super_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Create_tmp_table_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Lock_tables_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Execute_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Repl_slave_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Repl_client_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Create_view_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Show_view_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Create_routine_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Alter_routine_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Create_user_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Event_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Trigger_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Create_tablespace_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">ssl_type</td>
+<td style="text-align:left">enum(‘’,’ANY’,’X509’,’SPECIFIED’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">ssl_cipher</td>
+<td style="text-align:left">blob</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">NULL</td>
+</tr>
+<tr>
+<td style="text-align:left">x509_issuer</td>
+<td style="text-align:left">blob</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">NULL</td>
+</tr>
+<tr>
+<td style="text-align:left">x509_subject</td>
+<td style="text-align:left">blob</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">NULL</td>
+</tr>
+<tr>
+<td style="text-align:left">max_questions</td>
+<td style="text-align:left">int(11) unsigned</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">0</td>
+</tr>
+<tr>
+<td style="text-align:left">max_updates</td>
+<td style="text-align:left">int(11) unsigned</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">0</td>
+</tr>
+<tr>
+<td style="text-align:left">max_connections</td>
+<td style="text-align:left">int(11) unsigned</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">0</td>
+</tr>
+<tr>
+<td style="text-align:left">max_user_connections</td>
+<td style="text-align:left">int(11) unsigned</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">0</td>
+</tr>
+<tr>
+<td style="text-align:left">plugin</td>
+<td style="text-align:left">char(64)</td>
+<td style="text-align:center">YES</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">mysql_native_password</td>
+</tr>
+<tr>
+<td style="text-align:left">authentication_string</td>
+<td style="text-align:left">text</td>
+<td style="text-align:center">YES</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">NULL</td>
+</tr>
+<tr>
+<td style="text-align:left">password_expired</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+</tbody>
+</table>
+<h2 id="db表结构"><a href="#db表结构" class="headerlink" title="db表结构"></a>db表结构</h2><table>
+<thead>
+<tr>
+<th style="text-align:left">Field</th>
+<th style="text-align:left">Type</th>
+<th style="text-align:center">Null</th>
+<th style="text-align:center">Key</th>
+<th style="text-align:left">Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">Host</td>
+<td style="text-align:left">char(60)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">Db</td>
+<td style="text-align:left">char(64)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">User</td>
+<td style="text-align:left">char(16)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">Select_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Insert_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Update_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Delete_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Create_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Drop_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Grant_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">References_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Index_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Alter_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Create_tmp_table_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Lock_tables_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Create_view_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Show_view_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Create_routine_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Alter_routine_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Execute_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Event_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Trigger_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+</tbody>
+</table>
+<h2 id="tables-priv表结构"><a href="#tables-priv表结构" class="headerlink" title="tables_priv表结构"></a>tables_priv表结构</h2><table>
+<thead>
+<tr>
+<th style="text-align:left">Field</th>
+<th style="text-align:left">Type</th>
+<th style="text-align:center">Null</th>
+<th style="text-align:center">Key</th>
+<th style="text-align:left">Default</th>
+<th style="text-align:left">Extra</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">Host</td>
+<td style="text-align:left">char(60)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">Db</td>
+<td style="text-align:left">char(64)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">User</td>
+<td style="text-align:left">char(16)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">Table_name</td>
+<td style="text-align:left">char(64)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">Grantor</td>
+<td style="text-align:left">char(77)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">MUL</td>
+<td style="text-align:left"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">Timestamp</td>
+<td style="text-align:left">timestamp</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">CURRENT_TIMESTAMP</td>
+<td style="text-align:left">on update CURRENT_TIMESTAMP</td>
+</tr>
+<tr>
+<td style="text-align:left">Table_priv</td>
+<td style="text-align:left">set(‘Select’,’Insert’,<br>‘Update’,’Delete’,<br>‘Create’,’Drop’,<br>‘Grant’,’References’,<br>‘Index’,’Alter’,<br>‘Create View’,<br>‘Show view’,’Trigger’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">Column_priv</td>
+<td style="text-align:left">set(‘Select’,’Insert’,<br>‘Update’,’References’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left"></td>
+<td style="text-align:left"><br></td>
+</tr>
+</tbody>
+</table>
+<h2 id="columns-priv表结构"><a href="#columns-priv表结构" class="headerlink" title="columns_priv表结构"></a>columns_priv表结构</h2><table>
+<thead>
+<tr>
+<th style="text-align:left">Field</th>
+<th style="text-align:left">Type</th>
+<th style="text-align:center">Null</th>
+<th style="text-align:center">Key</th>
+<th style="text-align:left">Default</th>
+<th style="text-align:left">Extra</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">Host</td>
+<td style="text-align:left">char(60)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">Db</td>
+<td style="text-align:left">char(64)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">User</td>
+<td style="text-align:left">char(16)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">Table_name</td>
+<td style="text-align:left">char(64)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">Column_name</td>
+<td style="text-align:left">char(64)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">Timestamp</td>
+<td style="text-align:left">timestamp</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">CURRENT_TIMESTAMP</td>
+<td style="text-align:left">on update <br>CURRENT_TIMESTAMP</td>
+</tr>
+<tr>
+<td style="text-align:left">Column_priv</td>
+<td style="text-align:left">set(‘Select’,<br>‘Insert’,<br>‘Update’,<br>‘References’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left"></td>
+<td style="text-align:left"><br></td>
+</tr>
+</tbody>
+</table>
+<h1 id="验证流程"><a href="#验证流程" class="headerlink" title="验证流程"></a>验证流程</h1><p><img src="/images/mysql/mysql_privilege_flow.png" alt="mysql_privilege_flow"></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/08/10/mysql/20160810-mysql-python-install-on-rhel7-2/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1561,511 +2897,11 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/06/02/storage/ceph/20160602-osd-node-optimize/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2016/06/02/storage/ceph/20160602-osd-node-optimize/" itemprop="url">OSD 节点优化</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-06-02T17:07:48+08:00">
-                2016-06-02
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/storage/" itemprop="url" rel="index">
-                    <span itemprop="name">storage</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="目标"><a href="#目标" class="headerlink" title="目标"></a>目标</h1><ul>
-<li>优化OSD节点性能</li>
-<li>关闭OSD节点瓶颈项</li>
-</ul>
-<h1 id="优化项"><a href="#优化项" class="headerlink" title="优化项"></a>优化项</h1><h2 id="CPU-Status"><a href="#CPU-Status" class="headerlink" title="CPU Status"></a>CPU Status</h2><p>将cpu status 设置为 performance，可通过BIOS设置，或在系统中进行如下配置，修改后需要重启生效<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">for CPUFREQ in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do [ -f $CPUFREQ ] || continue; echo -n performance &gt; $CPUFREQ; done</div></pre></td></tr></table></figure></p>
-<h2 id="Hyper-Threading（HT）"><a href="#Hyper-Threading（HT）" class="headerlink" title="Hyper-Threading（HT）"></a>Hyper-Threading（HT）</h2><p>开启VT和HT，在BIOS中配置</p>
-<h2 id="NUMA"><a href="#NUMA" class="headerlink" title="NUMA"></a>NUMA</h2><p>关闭NUMA，可通过BIOS关闭，也可在加载Kernel是设置<br>打开<code>/etc/grub2-efi.cfg</code>，修改kernel加载部分，修改后需要重启生效</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">linuxefi /vmlinuz-3.10.0-327.el7.x86_64 root=/dev/mapper/rhel-root ro crashkernel=auto rd.lvm.lv=rhel/root rd.lvm.lv=rhel/swap rhgb quiet LANG=en_US.UTF-8 numa=off</div></pre></td></tr></table></figure>
-<p>关闭前<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">$ lscpu | grep -i numa</div><div class="line">NUMA node(s):          2</div><div class="line">NUMA node0 CPU(s):     0-5,12-17</div><div class="line">NUMA node1 CPU(s):     6-11,18-23</div></pre></td></tr></table></figure></p>
-<p>关闭后<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">$ lscpu | grep -i numa</div><div class="line">NUMA node(s):          1</div><div class="line">NUMA node0 CPU(s):     0-23</div></pre></td></tr></table></figure></p>
-<h2 id="Jumbo-Frames"><a href="#Jumbo-Frames" class="headerlink" title="Jumbo Frames"></a>Jumbo Frames</h2><p>将cluster network 的网卡MTU设置为9000，修改后需要重启生效<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">echo &quot;MTU=9000&quot; | tee -a /etc/sysconfig/network-script/ifcfg-&#123;网卡&#125;</div></pre></td></tr></table></figure></p>
-<p>通过ifconfig查看mtu修改情况<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">$ ifconfig</div><div class="line">ens5f0: flags=4163&lt;UP,BROADCAST,RUNNING,MULTICAST&gt;  mtu 9000</div><div class="line">        inet 192.168.43.5  netmask 255.255.255.0  broadcast 192.168.43.255</div><div class="line">        inet6 fe80::92e2:baff:febf:3800  prefixlen 64  scopeid 0x20&lt;link&gt;</div><div class="line">        ether 90:e2:ba:bf:38:00  txqueuelen 1000  (Ethernet)</div><div class="line">        RX packets 5218040  bytes 661253942 (630.6 MiB)</div><div class="line">        RX errors 0  dropped 0  overruns 0  frame 0</div><div class="line">        TX packets 5170015  bytes 605082933 (577.0 MiB)</div><div class="line">        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0</div></pre></td></tr></table></figure></p>
-<h2 id="SSD-Trim"><a href="#SSD-Trim" class="headerlink" title="SSD Trim"></a>SSD Trim</h2><p>为减少SSD写放大，需要开启Trim。<br>判断SSD是否支持Trim<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ hdparm -I /dev/&#123;SSD硬盘&#125; | grep -i trim</div><div class="line">          *    Data Set Management TRIM supported (limit 8 blocks)</div></pre></td></tr></table></figure></p>
-<p>出现 “TRIM supported” 表示支持Trim，否则表示不支持Trim指令.</p>
-<p>在xfs文件系统中开启trim指令，需要挂载xfs文件系统时，option中增加<code>discard</code></p>
-<h2 id="Scheduler"><a href="#Scheduler" class="headerlink" title="Scheduler"></a>Scheduler</h2><p>硬盘I/O调度机制配置，SSD 推荐采用“noop”，机械硬盘推荐采用“deadline”<br>修改<code>/etc/udev/rules.d/60-schedulers.rules</code>，增加如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"># system default: set cfq scheduler for rotating disks</div><div class="line">ACTION==&quot;add|change&quot;,KERNEL==&quot;sd[a-z]&quot;,ATTR&#123;queue/rotational&#125;==&quot;1&quot;,ATTR&#123;queue/scheduler&#125;=&quot;deadline&quot;</div><div class="line">ACTION==&quot;add|change&quot;,KERNEL==&quot;sd[a-z]&quot;,ATTR&#123;queue/rotational&#125;==&quot;0&quot;,ATTR&#123;queue/scheduler&#125;=&quot;noop&quot;</div></pre></td></tr></table></figure></p>
-<p>rotational 为 “1” 表示机械硬盘，为“0”表示SSD</p>
-<p>查看修改是否生效<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">cat /sys/block/&#123;硬盘&#125;/queue/scheduler</div></pre></td></tr></table></figure></p>
-<h2 id="read-ahead-kb"><a href="#read-ahead-kb" class="headerlink" title="read_ahead_kb"></a>read_ahead_kb</h2><p>设置硬盘预读大小为8k<br>修改<code>/etc/udev/rules.d/60-schedulers.rules</code>，增加如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ACTION==&quot;add|change&quot;,KERNEL==&quot;sd[b-z]&quot;,ATTR&#123;queue/read_ahead_kb&#125;=&quot;8192&quot;</div></pre></td></tr></table></figure></p>
-<p>查看是否生效<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">cat /sys/block/&#123;硬盘&#125;/queue/read_ahead_kb</div></pre></td></tr></table></figure></p>
-<h2 id="xfs-option"><a href="#xfs-option" class="headerlink" title="xfs option"></a>xfs option</h2><p>xfs 挂载增加如下option：</p>
-<table>
-<thead>
-<tr>
-<th></th>
-<th style="text-align:center"></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>rw</td>
-<td style="text-align:center">允许读写操作</td>
-</tr>
-<tr>
-<td>noexec</td>
-<td style="text-align:center">不允许运行操作</td>
-</tr>
-<tr>
-<td>nodev</td>
-<td style="text-align:center">不支持设备文件</td>
-</tr>
-<tr>
-<td>noatime</td>
-<td style="text-align:center">不更新inode访问时间</td>
-</tr>
-<tr>
-<td>nobarrier</td>
-<td style="text-align:center">关闭cache 回写机制</td>
-</tr>
-</tbody>
-</table>
-<h2 id="FD-core-amp-PID"><a href="#FD-core-amp-PID" class="headerlink" title="FD,core &amp; PID"></a>FD,core &amp; PID</h2><h3 id="FD-amp-core"><a href="#FD-amp-core" class="headerlink" title="FD &amp; core"></a>FD &amp; core</h3><p>修改 max open files 最大值，系统默认是1024，将其修改为131072<br>修改 core 值，当程序崩溃时，会输出core文件，便于分析错误原因<br>修改<code>/etc/security/limits.conf</code>文件，增加：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">*   soft    core    10240</div><div class="line">*   soft    nofile  131072</div><div class="line">*   hard    nofile  131072</div></pre></td></tr></table></figure></p>
-<p>修改后，可通过<code>ulimit -a</code>查看。</p>
-<h3 id="PID"><a href="#PID" class="headerlink" title="PID"></a>PID</h3><p>修改pid max值，打破系统运行进程数量瓶颈，将其设置为4194303（系统默认是 32768）<br>修改<code>/etc/sysctl.conf</code>文件,增加<code>kernel.pid_max=4194303</code></p>
-<h2 id="cgroup"><a href="#cgroup" class="headerlink" title="cgroup"></a>cgroup</h2><p>若集群搭建采用超融合方案（计算节点与存储节点混搭），使用cgroup将cpu与OSD进程绑定，减少cpu时间片切换次数，提高OSD相应速度</p>
-<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a href="https://www.mylesgray.com/hardware/test-jumbo-frames-working/" target="_blank" rel="external">How to test if 9000 MTU/Jumbo Frames are working</a></li>
-<li><a href="http://puremonkey2010.blogspot.tw/2014/10/linux-jumbo-frame.html" target="_blank" rel="external">设置Jumbo frame</a></li>
-<li><a href="http://ycnian.org/blog/archives/832" target="_blank" rel="external">linux存储架构图</a></li>
-<li><a href="http://my.oschina.net/manmao/blog/593851" target="_blank" rel="external">linuxI/O子系统框架图</a></li>
-<li><a href="http://xiaoquqi.github.io/blog/2015/06/28/ceph-performance-optimization-summary/" target="_blank" rel="external">Ceph性能优化总结（v.94）</a></li>
-</ul>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/05/25/20160525-xunlei-download-parse/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2016/05/25/20160525-xunlei-download-parse/" itemprop="url">迅雷下载解析（上）</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-05-25T14:39:03+08:00">
-                2016-05-25
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/other/" itemprop="url" rel="index">
-                    <span itemprop="name">other</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="需求"><a href="#需求" class="headerlink" title="需求"></a>需求</h1><p>所有使用非windows的用户在需要下载迅雷资源的时候，大概都有两种方法。其一，使用wine，装一个xunlei，然后下载资源；其二，利用离线下载，先下载到离线服务器上，然后利用http或ftp协议下载到本地。</p>
-<p>为啥迅雷不开发一个linux版呢！（个人猜测，估计是怕linux里面的license吧）相信为啥没有linux版本，只有迅雷知道。</p>
-<p>为了能让linux下载迅雷资源，做了如下调研。。。</p>
-<h1 id="thunder-地址解码"><a href="#thunder-地址解码" class="headerlink" title="thunder 地址解码"></a>thunder 地址解码</h1><p>通常能看到的 thunder 地址，都是通过base64 encode 过的 http 或 ftp 地址。所以解码，也需要用base64</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"># base64 加密后的http 或 ftp 地址</div><div class="line">thunder://QUFmdHA6Ly9keWdvZDE6ZHlnb2QxQGQxMzEuZHlnb2QuY246MzA0OS/pnZ7or5rli7/mibBEVkRzY3IvW+eUteW9seWkqeWggnd3dy5keWdvZC5jbl3pnZ7or5rli7/mibBjZDEucm12Ylpa</div><div class="line"></div><div class="line"># 经过 base64 -d decode 之后</div><div class="line">echo QUFmdHA6Ly9keWdvZDE6ZHlnb2QxQGQxMzEuZHlnb2QuY246MzA0OS/pnZ7or5rli7/mibBEVkRzY3IvW+eUteW9seWkqeWggnd3dy5keWdvZC5jbl3pnZ7or5rli7/mibBjZDEucm12Ylpa | base64 -d</div><div class="line"></div><div class="line">AAftp://dygod1:dygod1@d131.dygod.cn:3049/非诚勿扰DVDscr/[电影天堂www.dygod.cn]非诚勿扰cd1.rmvbZZ%</div></pre></td></tr></table></figure>
-<p>看到了吧，去掉开头的“AA”，去掉结尾的“ZZ%”，就剩下了一个ftp地址，这个ftp地址，就是迅雷下载时使用的ftp地址。</p>
-<h1 id="迅雷资源下载"><a href="#迅雷资源下载" class="headerlink" title="迅雷资源下载"></a>迅雷资源下载</h1><p>使用 wget 下载上文中的ftp资源<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">$ wget -v ftp://i:i@d3.dl1234.com:6958/\[电影天堂www.dy2018.com\]神战权力之眼BD中英双字.rmvb</div><div class="line">--2016-05-25 14:58:52--  ftp://i:*password*@d3.dl1234.com:6958/[%E7%94%B5%E5%BD%B1%E5%A4%A9%E5%A0%82www.dy2018.com]%E7%A5%9E%E6%88%98%E6%9D%83%E5%8A%9B%E4%B9%8B%E7%9C%BCBD%E4%B8%AD%E8%8B%B1%E5%8F%8C%E5%AD%97.rmvb</div><div class="line">           =&gt; ‘.listing’</div><div class="line">Resolving d3.dl1234.com (d3.dl1234.com)... 218.93.205.139</div><div class="line">Connecting to d3.dl1234.com (d3.dl1234.com)|218.93.205.139|:6958... failed: Connection refused.</div><div class="line">--2016-05-25 14:58:52--  ftp://i:*password*@d3.dl1234.com:6958/[%E7%94%B5%E5%BD%B1%E5%A4%A9%E5%A0%82www.dy2018.com]%E7%A5%9E%E6%88%98%E6%9D%83%E5%8A%9B%E4%B9%8B%E7%9C%BCBD%E4%B8%AD%E8%8B%B1%E5%8F%8C%E5%AD%97.rmvb</div><div class="line">           =&gt; ‘.listing’</div><div class="line">Connecting to d3.dl1234.com (d3.dl1234.com)|218.93.205.139|:6958... failed: Connection refused.</div></pre></td></tr></table></figure></p>
-<p>结果被无情的 refused 了，后来又用别的ftp客户端尝试下载结果，依然失败。。。</p>
-<p>痛定思痛，上网搜索了一下，有片文章的分析我觉得可能是正确的，其文如下：</p>
-<p>”（我揣测）迅雷走的是P2SP，也就是先访问它的索引server，找到真实可用的ip。换句话说，这个URL仅仅起到一个资源标识符的作用，本身也许未必能直接用于下载。 所以说这个东西，不逆向官方客户端恐怕是没法搞的，因为不知道它和服务器之间的协议。“</p>
-<h1 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h1><p>根据网友的分析，后续可以下载一个迅雷软件分析看看</p>
-<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a href="https://github.com/soimort/you-get/issues/929" target="_blank" rel="external">能支持迅雷下载地址么？（类似thunder://）</a></li>
-</ul>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/05/13/storage/20160513-linux-ssd-check/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2016/05/13/storage/20160513-linux-ssd-check/" itemprop="url">Linux中查看硬盘类型</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-05-13T10:01:51+08:00">
-                2016-05-13
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/storage/" itemprop="url" rel="index">
-                    <span itemprop="name">storage</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="查看SCSI总线上的设备"><a href="#查看SCSI总线上的设备" class="headerlink" title="查看SCSI总线上的设备"></a>查看SCSI总线上的设备</h1><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">lsscsi</div></pre></td></tr></table></figure>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/page/5/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/5/">5</a><span class="page-number current">6</span><a class="page-number" href="/page/7/">7</a><a class="page-number" href="/page/8/">8</a><a class="extend next" rel="next" href="/page/7/"><i class="fa fa-angle-right"></i></a>
+    <a class="extend prev" rel="prev" href="/page/5/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/5/">5</a><span class="page-number current">6</span><a class="page-number" href="/page/7/">7</a><span class="space">&hellip;</span><a class="page-number" href="/page/9/">9</a><a class="extend next" rel="next" href="/page/7/"><i class="fa fa-angle-right"></i></a>
   </nav>
 
 
@@ -2113,7 +2949,7 @@
             
               <a href="/archives/ || archive">
             
-                <span class="site-state-item-count">78</span>
+                <span class="site-state-item-count">82</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -2124,7 +2960,7 @@
             
             <div class="site-state-item site-state-categories">
               <a href="/categories/index.html">
-                <span class="site-state-item-count">18</span>
+                <span class="site-state-item-count">19</span>
                 <span class="site-state-item-name">分类</span>
               </a>
             </div>
@@ -2135,7 +2971,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">89</span>
+                <span class="site-state-item-count">90</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
