@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.2" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="python,exception," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.2" />
+
+
+
+
+
+
+<meta name="description" content="Exception语法try-except12345678910try:    &amp;lt;语句&amp;gt;except &amp;lt;异常名字&amp;gt;:    &amp;lt;语句&amp;gt;except &amp;lt;异常名字&amp;gt;, &amp;lt;异常数据变量&amp;gt;:    &amp;lt;语句&amp;gt;except (&amp;lt;异常名字&amp;gt;,&amp;lt;异常名字&amp;gt;,...)[, &amp;lt;异常数据变量&amp;gt;]:    &amp;lt;语">
+<meta name="keywords" content="python,exception">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Exception">
+<meta property="og:url" content="http://yoursite.com/2017/10/02/language/python/python-exception/index.html">
+<meta property="og:site_name" content="Bolog">
+<meta property="og:description" content="Exception语法try-except12345678910try:    &amp;lt;语句&amp;gt;except &amp;lt;异常名字&amp;gt;:    &amp;lt;语句&amp;gt;except &amp;lt;异常名字&amp;gt;, &amp;lt;异常数据变量&amp;gt;:    &amp;lt;语句&amp;gt;except (&amp;lt;异常名字&amp;gt;,&amp;lt;异常名字&amp;gt;,...)[, &amp;lt;异常数据变量&amp;gt;]:    &amp;lt;语">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2017-10-02T16:24:10.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Exception">
+<meta name="twitter:description" content="Exception语法try-except12345678910try:    &amp;lt;语句&amp;gt;except &amp;lt;异常名字&amp;gt;:    &amp;lt;语句&amp;gt;except &amp;lt;异常名字&amp;gt;, &amp;lt;异常数据变量&amp;gt;:    &amp;lt;语句&amp;gt;except (&amp;lt;异常名字&amp;gt;,&amp;lt;异常名字&amp;gt;,...)[, &amp;lt;异常数据变量&amp;gt;]:    &amp;lt;语">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '5.1.2',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: 'ea19d365600df16c1e8ef4c09ccb9bea',
+      indexName: 'bolog',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2017/10/02/language/python/python-exception/"/>
+
+
+
+
+
+  <title>Exception | Bolog</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Bolog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  
+  <div class="algolia-popup popup search-popup">
+    <div class="algolia-search">
+      <div class="algolia-search-input-icon">
+        <i class="fa fa-search"></i>
+      </div>
+      <div class="algolia-search-input" id="algolia-search-input"></div>
+    </div>
+
+    <div class="algolia-results">
+      <div id="algolia-stats"></div>
+      <div id="algolia-hits"></div>
+      <div id="algolia-pagination" class="algolia-pagination"></div>
+    </div>
+
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+  </div>
+
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/10/02/language/python/python-exception/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Exception</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-02T23:41:44+08:00">
+                2017-10-02
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/languages/" itemprop="url" rel="index">
+                    <span itemprop="name">languages</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="Exception语法"><a href="#Exception语法" class="headerlink" title="Exception语法"></a>Exception语法</h1><h2 id="try-except"><a href="#try-except" class="headerlink" title="try-except"></a>try-except</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">try</span>:</div><div class="line">    &lt;语句&gt;</div><div class="line"><span class="keyword">except</span> &lt;异常名字&gt;:</div><div class="line">    &lt;语句&gt;</div><div class="line"><span class="keyword">except</span> &lt;异常名字&gt;, &lt;异常数据变量&gt;:</div><div class="line">    &lt;语句&gt;</div><div class="line"><span class="keyword">except</span> (&lt;异常名字&gt;,&lt;异常名字&gt;,...)[, &lt;异常数据变量&gt;]:</div><div class="line">    &lt;语句&gt;</div><div class="line"><span class="keyword">else</span>:</div><div class="line">    &lt;语句&gt;</div></pre></td></tr></table></figure>
+<h2 id="try-finally"><a href="#try-finally" class="headerlink" title="try-finally"></a>try-finally</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">try</span>:</div><div class="line">    &lt;语句&gt;</div><div class="line"><span class="keyword">finally</span>:</div><div class="line">    <span class="comment"># 无论是否发生异常都将执行最后的代码</span></div><div class="line">    <span class="comment"># 退出try时总会执行</span></div><div class="line">    &lt;语句&gt;</div></pre></td></tr></table></figure>
+<h2 id="raise"><a href="#raise" class="headerlink" title="raise"></a>raise</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">raise</span> [Exception [, args [, traceback]]]</div></pre></td></tr></table></figure>
+<p>Exception是异常的类型（例如，NameError）参数是一个异常参数值。该参数是可选的，如果不提供，异常的参数是”None”。最后一个参数是可选的（在实践中很少使用），如果存在，是跟踪异常对象。</p>
+<h1 id="标准异常"><a href="#标准异常" class="headerlink" title="标准异常"></a>标准异常</h1><table>
+<thead>
+<tr>
+<th style="text-align:center">异常名称</th>
+<th style="text-align:left">描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">BaseException</td>
+<td style="text-align:left">所有异常的基类</td>
+</tr>
+<tr>
+<td style="text-align:center">SystemExit</td>
+<td style="text-align:left">解释器请求退出</td>
+</tr>
+<tr>
+<td style="text-align:center">KeyboardInterrupt</td>
+<td style="text-align:left">用户中断执行(通常是输入^C)</td>
+</tr>
+<tr>
+<td style="text-align:center">Exception</td>
+<td style="text-align:left">常规错误的基类</td>
+</tr>
+<tr>
+<td style="text-align:center">StopIteration</td>
+<td style="text-align:left">迭代器没有更多的值</td>
+</tr>
+<tr>
+<td style="text-align:center">GeneratorExit</td>
+<td style="text-align:left">生成器(generator)发生异常来通知退出</td>
+</tr>
+<tr>
+<td style="text-align:center">StandardError</td>
+<td style="text-align:left">所有的内建标准异常的基类</td>
+</tr>
+<tr>
+<td style="text-align:center">ArithmeticError</td>
+<td style="text-align:left">所有数值计算错误的基类</td>
+</tr>
+<tr>
+<td style="text-align:center">FloatingPointError</td>
+<td style="text-align:left">浮点计算错误</td>
+</tr>
+<tr>
+<td style="text-align:center">OverflowError</td>
+<td style="text-align:left">数值运算超出最大限制</td>
+</tr>
+<tr>
+<td style="text-align:center">ZeroDivisionError</td>
+<td style="text-align:left">除(或取模)零 (所有数据类型)</td>
+</tr>
+<tr>
+<td style="text-align:center">AssertionError</td>
+<td style="text-align:left">断言语句失败</td>
+</tr>
+<tr>
+<td style="text-align:center">AttributeError</td>
+<td style="text-align:left">对象没有这个属性</td>
+</tr>
+<tr>
+<td style="text-align:center">EOFError</td>
+<td style="text-align:left">没有内建输入,到达EOF 标记</td>
+</tr>
+<tr>
+<td style="text-align:center">EnvironmentError</td>
+<td style="text-align:left">操作系统错误的基类</td>
+</tr>
+<tr>
+<td style="text-align:center">IOError</td>
+<td style="text-align:left">输入/输出操作失败</td>
+</tr>
+<tr>
+<td style="text-align:center">OSError</td>
+<td style="text-align:left">操作系统错误</td>
+</tr>
+<tr>
+<td style="text-align:center">WindowsError</td>
+<td style="text-align:left">系统调用失败</td>
+</tr>
+<tr>
+<td style="text-align:center">ImportError</td>
+<td style="text-align:left">导入模块/对象失败</td>
+</tr>
+<tr>
+<td style="text-align:center">LookupError</td>
+<td style="text-align:left">无效数据查询的基类</td>
+</tr>
+<tr>
+<td style="text-align:center">IndexError</td>
+<td style="text-align:left">序列中没有此索引(index)</td>
+</tr>
+<tr>
+<td style="text-align:center">KeyError</td>
+<td style="text-align:left">映射中没有这个键</td>
+</tr>
+<tr>
+<td style="text-align:center">MemoryError</td>
+<td style="text-align:left">内存溢出错误(对于Python 解释器不是致命的)</td>
+</tr>
+<tr>
+<td style="text-align:center">NameError</td>
+<td style="text-align:left">未声明/初始化对象 (没有属性)</td>
+</tr>
+<tr>
+<td style="text-align:center">UnboundLocalError</td>
+<td style="text-align:left">访问未初始化的本地变量</td>
+</tr>
+<tr>
+<td style="text-align:center">ReferenceError</td>
+<td style="text-align:left">弱引用(Weak reference)试图访问已经垃圾回收了的对象</td>
+</tr>
+<tr>
+<td style="text-align:center">RuntimeError</td>
+<td style="text-align:left">一般的运行时错误</td>
+</tr>
+<tr>
+<td style="text-align:center">NotImplementedError</td>
+<td style="text-align:left">尚未实现的方法</td>
+</tr>
+<tr>
+<td style="text-align:center">SyntaxError</td>
+<td style="text-align:left">Python 语法错误</td>
+</tr>
+<tr>
+<td style="text-align:center">IndentationError</td>
+<td style="text-align:left">缩进错误</td>
+</tr>
+<tr>
+<td style="text-align:center">TabError</td>
+<td style="text-align:left">Tab 和空格混用</td>
+</tr>
+<tr>
+<td style="text-align:center">SystemError</td>
+<td style="text-align:left">一般的解释器系统错误</td>
+</tr>
+<tr>
+<td style="text-align:center">TypeError</td>
+<td style="text-align:left">对类型无效的操作</td>
+</tr>
+<tr>
+<td style="text-align:center">ValueError</td>
+<td style="text-align:left">传入无效的参数</td>
+</tr>
+<tr>
+<td style="text-align:center">UnicodeError</td>
+<td style="text-align:left">Unicode 相关的错误</td>
+</tr>
+<tr>
+<td style="text-align:center">UnicodeDecodeError</td>
+<td style="text-align:left">Unicode 解码时的错误</td>
+</tr>
+<tr>
+<td style="text-align:center">UnicodeEncodeError</td>
+<td style="text-align:left">Unicode 编码时错误</td>
+</tr>
+<tr>
+<td style="text-align:center">UnicodeTranslateError</td>
+<td style="text-align:left">Unicode 转换时错误</td>
+</tr>
+<tr>
+<td style="text-align:center">Warning</td>
+<td style="text-align:left">警告的基类</td>
+</tr>
+<tr>
+<td style="text-align:center">DeprecationWarning</td>
+<td style="text-align:left">关于被弃用的特征的警告</td>
+</tr>
+<tr>
+<td style="text-align:center">FutureWarning</td>
+<td style="text-align:left">关于构造将来语义会有改变的警告</td>
+</tr>
+<tr>
+<td style="text-align:center">OverflowWarning</td>
+<td style="text-align:left">旧的关于自动提升为长整型(long)的警告</td>
+</tr>
+<tr>
+<td style="text-align:center">PendingDeprecationWarning</td>
+<td style="text-align:left">关于特性将会被废弃的警告</td>
+</tr>
+<tr>
+<td style="text-align:center">RuntimeWarning</td>
+<td style="text-align:left">可疑的运行时行为(runtime behavior)的警告</td>
+</tr>
+<tr>
+<td style="text-align:center">SyntaxWarning</td>
+<td style="text-align:left">可疑的语法的警告</td>
+</tr>
+<tr>
+<td style="text-align:center">UserWarning</td>
+<td style="text-align:left">用户代码生成的警告</td>
+</tr>
+</tbody>
+</table>
+<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a href="http://www.runoob.com/python/python-exceptions.html" target="_blank" rel="external">Python 异常处理</a></li>
+</ul>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/python/" rel="tag"># python</a>
+          
+            <a href="/tags/exception/" rel="tag"># exception</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/09/25/language/python/python-thrift-hbase/" rel="next" title="python访问hbase方法">
+                <i class="fa fa-chevron-left"></i> python访问hbase方法
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.gif"
+               alt="博" />
+          <p class="site-author-name" itemprop="name">博</p>
+           
+              <p class="site-description motion-element" itemprop="description"></p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+            
+              <a href="/archives/ || archive">
+            
+                <span class="site-state-item-count">84</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">20</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">92</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Exception语法"><span class="nav-number">1.</span> <span class="nav-text">Exception语法</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#try-except"><span class="nav-number">1.1.</span> <span class="nav-text">try-except</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#try-finally"><span class="nav-number">1.2.</span> <span class="nav-text">try-finally</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#raise"><span class="nav-number">1.3.</span> <span class="nav-text">raise</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#标准异常"><span class="nav-number">2.</span> <span class="nav-text">标准异常</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考-amp-鸣谢"><span class="nav-number">3.</span> <span class="nav-text">参考&鸣谢</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">博</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+  <span class="post-meta-divider">|</span>
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">NexT.Gemini</a> v5.1.2</div>
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.2"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.2"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.2"></script>
+
+
+
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  
+  
+  <link rel="stylesheet" href="/lib/algolia-instant-search/instantsearch.min.css">
+
+  
+  
+  <script src="/lib/algolia-instant-search/instantsearch.min.js"></script>
+  
+
+  <script src="/js/src/algolia-search.js?v=5.1.2"></script>
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
