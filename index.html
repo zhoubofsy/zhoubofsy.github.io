@@ -1581,7 +1581,7 @@
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$  ls -i</div><div class="line">975311 file1 975312 file2</div></pre></td></tr></table></figure>
 <p>接着，根据file1对应的inode号重建inode4，并通过文件数据与inode4重建file1的dentry节点。最后，就可以通过inode4节点访问文件了。</p>
 <p><img src="/images/vfs/dentry_3.png" alt="dentry_3.png"></p>
-<h3 id="Dentry-Cache"><a href="#Dentry-Cache" class="headerlink" title="Dentry Cache"></a>Dentry Cache</h3><p>为了避免资源浪费，VFS采用了dentry cache的设计。当有用户用ls命令查看某一个目录或用open命令打开一个文件时，VFS会为这里用的每个目录项与文件建立dentry项与inode，即“按需创建”。然后维护一个LRU（Least Recently Used）列表，当Linux认为VFS占用太多资源时，VFS会释放掉长时间没有被使用的dentry项与inode项。</p>
+<h3 id="Dentry-Cache"><a href="#Dentry-Cache" class="headerlink" title="Dentry Cache"></a>Dentry Cache</h3><p>由于从硬盘读入一个目录项并构造相应的目录项对象需要花费大量的时间，也为了最大限度提高目处理这些录项对象的效率，VFS采用了dentry cache的设计。当有用户用ls命令查看某一个目录或用open命令打开一个文件时，VFS会为这里用的每个目录项与文件建立dentry项与inode，即“按需创建”。然后维护一个LRU（Least Recently Used）列表，当Linux认为VFS占用太多资源时，VFS会释放掉长时间没有被使用的dentry项与inode项。</p>
 <p>这里的建立于释放是从内存占用的角度看。从Linux角度看，dentry与inode是VFS中固有的东西。所不同的只是VFS是否把dentry与inode读到了内存中。对于Ext2/3文件系统，构建dentry与inode的过程非常简单，但对于其他文件系统，则会慢得多。</p>
 <h2 id="Process-amp-File"><a href="#Process-amp-File" class="headerlink" title="Process &amp; File"></a>Process &amp; File</h2><p><img src="/images/vfs/file_1.png" alt="file_1.png"></p>
 <p>task_struct (<code>include/linux/sched.h</code>)<br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> task_struct &#123;</div><div class="line">    ...</div><div class="line"><span class="comment">/* CPU-specific state of this task */</span></div><div class="line">    <span class="keyword">struct</span> thread_struct thread;</div><div class="line"><span class="comment">/* filesystem information */</span></div><div class="line">    <span class="keyword">struct</span> fs_struct *fs;</div><div class="line"><span class="comment">/* open file information */</span></div><div class="line">    <span class="keyword">struct</span> files_struct *files;</div><div class="line"><span class="comment">/* namespaces */</span></div><div class="line">    <span class="keyword">struct</span> nsproxy *nsproxy;</div><div class="line">    ...</div><div class="line">&#125;;</div></pre></td></tr></table></figure></p>
@@ -1591,7 +1591,97 @@
 <p><code>fs</code>中存储着<code>root</code>与<code>pwd</code>两个指向<code>dentry</code>项的指针。用户定路径时，绝对路径会通过<code>root</code>进行定位；相对路径会通过<code>pwd</code>进行定位。进程的<code>root</code>不一定是文件系统的根目录。如ftp进程的根目录不是文件系统的根目录，这样才能保证用户只能访问ftp目录下的内容。<br><code>files</code>是一个file object列表，其中每一个节点对应着一个被打开了的文件。</p>
 <p>files_struct (<code>include/linux/fdtable.h</code>)<br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> files_struct &#123;</div><div class="line">  <span class="comment">/*</span></div><div class="line">   * read mostly part</div><div class="line">   */</div><div class="line">    <span class="keyword">atomic_t</span> count;</div><div class="line">    <span class="keyword">struct</span> fdtable __rcu *fdt;</div><div class="line">    <span class="keyword">struct</span> fdtable fdtab;</div><div class="line">  <span class="comment">/*</span></div><div class="line">   * written part on a separate cache line in SMP</div><div class="line">   */</div><div class="line">    <span class="keyword">spinlock_t</span> file_lock ____cacheline_aligned_in_smp;</div><div class="line">    <span class="keyword">int</span> next_fd;</div><div class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> close_on_exec_init[<span class="number">1</span>];</div><div class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> open_fds_init[<span class="number">1</span>];</div><div class="line">    <span class="keyword">struct</span> file __rcu * fd_array[NR_OPEN_DEFAULT];</div><div class="line">&#125;;</div></pre></td></tr></table></figure></p>
 <p>当进程定位到文件时，会构造一个file object，并通过<code>f_inode</code>关联到<code>inode</code>节点。文件关闭时（close），进程会释放对应对应file object。</p>
-<h1 id="文件系统类型"><a href="#文件系统类型" class="headerlink" title="文件系统类型"></a>文件系统类型</h1><h2 id="特殊文件系统"><a href="#特殊文件系统" class="headerlink" title="特殊文件系统"></a>特殊文件系统</h2><h1 id="KeyPoint"><a href="#KeyPoint" class="headerlink" title="KeyPoint"></a>KeyPoint</h1><h2 id="启动流程"><a href="#启动流程" class="headerlink" title="启动流程"></a>启动流程</h2><ol>
+<p>fdtable (<code>include/linux/fdtable.h</code>)<br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> fdtable &#123;</div><div class="line">    <span class="keyword">unsigned</span> <span class="keyword">int</span> max_fds;</div><div class="line">    <span class="keyword">struct</span> file __rcu **fd;      <span class="comment">/* current fd array */</span></div><div class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> *close_on_exec;</div><div class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> *open_fds;</div><div class="line">    <span class="keyword">struct</span> rcu_head rcu;</div><div class="line">&#125;;</div></pre></td></tr></table></figure></p>
+<p><img src="/images/vfs/file_2.jpg" alt="file_2.jpg"></p>
+<p>fd数组第一个元素[0]是进程的标准输入文件；第二个元素[1]是进程的标准输出文件；第三个元素[2]是进程的标准错误文件。</p>
+<h1 id="文件系统类型"><a href="#文件系统类型" class="headerlink" title="文件系统类型"></a>文件系统类型</h1><h2 id="特殊文件系统"><a href="#特殊文件系统" class="headerlink" title="特殊文件系统"></a>特殊文件系统</h2><table>
+<thead>
+<tr>
+<th style="text-align:left">文件系统</th>
+<th style="text-align:left">安装点</th>
+<th style="text-align:left">说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">bdev</td>
+<td style="text-align:left">无</td>
+<td style="text-align:left">块设备</td>
+</tr>
+<tr>
+<td style="text-align:left">binfmt_misc</td>
+<td style="text-align:left">任意</td>
+<td style="text-align:left">其他可执行格式</td>
+</tr>
+<tr>
+<td style="text-align:left">devpts</td>
+<td style="text-align:left">/dev/pts</td>
+<td style="text-align:left">伪终端支持</td>
+</tr>
+<tr>
+<td style="text-align:left">eventpollfs</td>
+<td style="text-align:left">无</td>
+<td style="text-align:left">由事件轮询机制使用</td>
+</tr>
+<tr>
+<td style="text-align:left">futexfs</td>
+<td style="text-align:left">无</td>
+<td style="text-align:left">由futex（快速用户空间加锁）机制使用</td>
+</tr>
+<tr>
+<td style="text-align:left">pipefs</td>
+<td style="text-align:left">无</td>
+<td style="text-align:left">管道</td>
+</tr>
+<tr>
+<td style="text-align:left">proc</td>
+<td style="text-align:left">/proc</td>
+<td style="text-align:left">对内核数据结构的常规访问点</td>
+</tr>
+<tr>
+<td style="text-align:left">rootfs</td>
+<td style="text-align:left">无</td>
+<td style="text-align:left">为启动阶段提供一个空的根目录</td>
+</tr>
+<tr>
+<td style="text-align:left">shm</td>
+<td style="text-align:left">无</td>
+<td style="text-align:left">IPC共享线性区</td>
+</tr>
+<tr>
+<td style="text-align:left">mqueue</td>
+<td style="text-align:left">任意</td>
+<td style="text-align:left">实现POSIX消息队列时使用</td>
+</tr>
+<tr>
+<td style="text-align:left">sockfs</td>
+<td style="text-align:left">无</td>
+<td style="text-align:left">套接字</td>
+</tr>
+<tr>
+<td style="text-align:left">sysfs</td>
+<td style="text-align:left">/sys</td>
+<td style="text-align:left">对系统数据的常规访问点</td>
+</tr>
+<tr>
+<td style="text-align:left">tmpfs</td>
+<td style="text-align:left">任意</td>
+<td style="text-align:left">临时文件（若不被交换出去，则常驻内存中）</td>
+</tr>
+<tr>
+<td style="text-align:left">usbfs</td>
+<td style="text-align:left">/proc/bus/usb</td>
+<td style="text-align:left">USB设备</td>
+</tr>
+</tbody>
+</table>
+<p>内核给每个安装的特殊文件系统分配一个虚拟的块设备，让其主设备号为0，次设备号有任意值（每个特殊的文件系统有不同的值）</p>
+<h2 id="文件系统类型注册"><a href="#文件系统类型注册" class="headerlink" title="文件系统类型注册"></a>文件系统类型注册</h2><p>文件系统的源码要么包含在内核映像中，要么作为一个模块被动态装入。每个注册的文件系统都用一个类型为<code>file_system_type</code>的对象来表示。<br>file_system_type (<code>include/linux/fs.h</code>)<br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> file_system_type &#123;</div><div class="line">    <span class="keyword">const</span> <span class="keyword">char</span> *name;       <span class="comment">/* 文件系统名称 */</span></div><div class="line">    <span class="keyword">int</span> fs_flags;           <span class="comment">/* 文件系统类型标志 */</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> FS_REQUIRES_DEV     1</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> FS_BINARY_MOUNTDATA 2</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> FS_HAS_SUBTYPE      4</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> FS_USERNS_MOUNT     8   <span class="comment">/* Can be mounted by userns root */</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> FS_USERNS_DEV_MOUNT 16 <span class="comment">/* A userns mount does not imply MNT_NODEV */</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> FS_RENAME_DOES_D_MOVE   32768   <span class="comment">/* FS will handle d_move() during rename() internally. */</span></span></div><div class="line">    <span class="keyword">struct</span> dentry *(*mount) (<span class="keyword">struct</span> file_system_type *, <span class="keyword">int</span>, <span class="keyword">const</span> <span class="keyword">char</span> *, <span class="keyword">void</span> *);</div><div class="line">    <span class="keyword">void</span> (*kill_sb) (<span class="keyword">struct</span> super_block *);     <span class="comment">/* 删除超级块的方法 */</span></div><div class="line">    <span class="keyword">struct</span> <span class="keyword">module</span> *owner;                       <span class="comment">/* 指向实现文件系统的模块指针 */</span></div><div class="line">    <span class="keyword">struct</span> file_system_type * next;             <span class="comment">/* 指向文件系统类型链表下一个元素的指针 */</span></div><div class="line">    <span class="keyword">struct</span> hlist_head fs_supers;                <span class="comment">/* 具有相同文件系统类型的超级块对象链表的头*/</span></div><div class="line"></div><div class="line">    <span class="keyword">struct</span> lock_class_key s_lock_key;</div><div class="line">    <span class="keyword">struct</span> lock_class_key s_umount_key;</div><div class="line">    <span class="keyword">struct</span> lock_class_key s_vfs_rename_key;</div><div class="line">    <span class="keyword">struct</span> lock_class_key s_writers_key[SB_FREEZE_LEVELS];</div><div class="line"></div><div class="line">    <span class="keyword">struct</span> lock_class_key i_lock_key;</div><div class="line">    <span class="keyword">struct</span> lock_class_key i_mutex_key;</div><div class="line">    <span class="keyword">struct</span> lock_class_key i_mutex_dir_key;</div><div class="line">&#125;;</div></pre></td></tr></table></figure></p>
+<p>所有文件系统类型的对象都插入道一个单向链表中，由变量<code>file_systems</code>指向链表的第一个元素，<code>file_systems-&gt;next</code>指向链表的下一个元素。</p>
+<p><code>int register_filesystem(struct file_system_type * fs)</code>[fs/filesystems.c]<br>注册一个新的文件系统，传入要注册文件系统的结构体，在<code>file_systems</code>列表中查找受否与传入<code>fs-&gt;name</code>同名的文件系统，如果存在则返回找到的fs，若不存在将传入文件系统<code>fs</code>加入<code>file_systems</code>列表</p>
+<p>对比一下<code>ramfs_fs_type</code>和<code>root_fs_type</code><br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">static</span> <span class="keyword">struct</span> file_system_type ramfs_fs_type = &#123;</div><div class="line">    .name       = <span class="string">"ramfs"</span>,</div><div class="line">    .mount      = ramfs_mount,</div><div class="line">    .kill_sb    = ramfs_kill_sb,</div><div class="line">    .fs_flags   = FS_USERNS_MOUNT,</div><div class="line">&#125;;</div><div class="line"><span class="keyword">static</span> <span class="keyword">struct</span> file_system_type rootfs_fs_type = &#123;</div><div class="line">    .name       = <span class="string">"rootfs"</span>,</div><div class="line">    .mount      = rootfs_mount,</div><div class="line">    .kill_sb    = kill_litter_super,</div><div class="line">&#125;;</div></pre></td></tr></table></figure></p>
+<p>发现<code>fs_flags = FS_USERNS_MOUNT</code>，这个flag似乎想告诉我们，ramfs是挂载到用户命名空间的，言外之意rootfs不是挂载到用户空间的，那便是内核空间喽。</p>
+<h1 id="KeyPoint"><a href="#KeyPoint" class="headerlink" title="KeyPoint"></a>KeyPoint</h1><h2 id="启动流程"><a href="#启动流程" class="headerlink" title="启动流程"></a>启动流程</h2><ol>
 <li>start_kernel[init/main.c]</li>
 <li>vfs_caches_init(totalram_pages)[fs/dcache.c]</li>
 <li>dcache_init()[fs/dcache.c]<br> 初始化<code>dentry_cache</code>和<code>dentry_hashtable</code></li>
@@ -1609,9 +1699,6 @@
 </li>
 <li>chrdev_init()[fs/char_dev.c]<br> 初始化<code>cdev_map</code></li>
 </ol>
-<h2 id="注册文件系统"><a href="#注册文件系统" class="headerlink" title="注册文件系统"></a>注册文件系统</h2><p><code>int register_filesystem(struct file_system_type * fs)</code>[fs/filesystems.c]<br>注册一个新的文件系统，传入要注册文件系统的结构体，在<code>file_systems</code>列表中查找受否与传入<code>fs-&gt;name</code>同名的文件系统，如果存在则返回找到的fs，若不存在将传入文件系统<code>fs</code>加入<code>file_systems</code>列表</p>
-<p>对比一下<code>ramfs_fs_type</code>和<code>root_fs_type</code><br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">static</span> <span class="keyword">struct</span> file_system_type ramfs_fs_type = &#123;</div><div class="line">    .name       = <span class="string">"ramfs"</span>,</div><div class="line">    .mount      = ramfs_mount,</div><div class="line">    .kill_sb    = ramfs_kill_sb,</div><div class="line">    .fs_flags   = FS_USERNS_MOUNT,</div><div class="line">&#125;;</div><div class="line"><span class="keyword">static</span> <span class="keyword">struct</span> file_system_type rootfs_fs_type = &#123;</div><div class="line">    .name       = <span class="string">"rootfs"</span>,</div><div class="line">    .mount      = rootfs_mount,</div><div class="line">    .kill_sb    = kill_litter_super,</div><div class="line">&#125;;</div></pre></td></tr></table></figure></p>
-<p>发现<code>fs_flags = FS_USERNS_MOUNT</code>，这个flag似乎想告诉我们，ramfs是挂载到用户命名空间的，言外之意rootfs不是挂载到用户空间的，那便是内核空间喽。</p>
 <h2 id="Mount文件系统"><a href="#Mount文件系统" class="headerlink" title="Mount文件系统"></a>Mount文件系统</h2><p><img src="/images/vfs/mount_1.png" alt="mount_1.png"></p>
 <p>mount时，linux先找到磁盘分区的super block，然后通过解析磁盘的inode table与file data，构建出自己的dentry列表与inode列表。需要注意的是，VFS实际上是按照Ext的方式进行构建的，所以两者非常相似（毕竟Ext是Linux的原生文件系统）。比如inode节点，Ext与VFS中都把文件管理结构称为inode，但实际上它们是不一样的。Ext的inode节点在磁盘上；VFS的inode节点在内存里。Ext-inode中的一些成员变量其实是没有用的，如引用计数等。保留它们的目的是为了与vfs-node保持一致。这样在用ext-inode节点构造vfs-inode节点时，就不需要一个一个赋值，只需一次内存拷贝即可。</p>
 <h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
