@@ -7,6 +7,19 @@ $(document).ready(function () {
                                algoliaSettings.apiKey &&
                                algoliaSettings.indexName;
 
+  if (!algoliaSettings.indexName) {
+    window.console.error('Algolia indexName Settings are invalid. ' + algoliaSettings.indexName);
+    return;
+  }
+  window.console.log('algolia indexName:' + algoliaSettings.indexName);
+  if (!algoliaSettings.applicationID) {
+    window.console.error('Algolia applicationID Settings are invalid. ' + algoliaSettings.applicationID);
+    return;
+  }
+  if (!algoliaSettings.apiKey) {
+    window.console.error('Algolia apiKey Settings are invalid. ' + algoliaSettings.apiKey);
+    return;
+  }
   if (!isAlgoliaSettingsValid) {
     window.console.error('Algolia Settings are invalid.');
     return;
