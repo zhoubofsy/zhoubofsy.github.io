@@ -313,7 +313,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/11/15/mysql/mysql-password-functions/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/11/17/search-engine-command/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="博">
@@ -332,7 +332,7 @@
         
           <h1 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2016/11/15/mysql/mysql-password-functions/" itemprop="url">MySQL修改密码方法</a></h1>
+                <a class="post-title-link" href="/2016/11/17/search-engine-command/" itemprop="url">搜索引擎命令用法</a></h1>
         
 
         <div class="post-meta">
@@ -344,8 +344,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-11-15T00:00:00+08:00">
-                2016-11-15
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-11-17T09:57:58+08:00">
+                2016-11-17
               </time>
             
 
@@ -367,8 +367,8 @@
               
               
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/mysql/" itemprop="url" rel="index">
-                    <span itemprop="name">mysql</span>
+                  <a href="/categories/other/" itemprop="url" rel="index">
+                    <span itemprop="name">other</span>
                   </a>
                 </span>
 
@@ -406,19 +406,164 @@
       
         
           
-            <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><ul>
-<li>OS Version : rhel 6.4</li>
-<li>MySQL Version : 5.6.31</li>
+            <h1 id="搜索引擎"><a href="#搜索引擎" class="headerlink" title="搜索引擎"></a>搜索引擎</h1><p>搜索引擎对于每一个码农来说都是一个互联网数据库，在这个数据库中有很多信息，我们在这个数据库中检索数据不需要指定数据库，也不需要数据表，只需要指定你需要检索的关键字即可。但这种搜索方式虽然搜索范围大，无漏网之鱼，可也搜到了很多于我们需要无关的内容。为了精确查找，筛选掉不需要的信息。搜索引擎还有如下用法，接下来，就让我们一探究竟吧。</p>
+<h1 id="特殊用法"><a href="#特殊用法" class="headerlink" title="特殊用法"></a>特殊用法</h1><p>由于天朝屏蔽Google，所以以下可在baidu搜索输入框中操作实现。</p>
+<h2 id="指定标题搜索"><a href="#指定标题搜索" class="headerlink" title="指定标题搜索"></a>指定标题搜索</h2><h3 id="语法"><a href="#语法" class="headerlink" title="语法"></a>语法</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">intitle:&quot;&lt;网页title内容(标签上显示的内容)&gt;&quot;</div></pre></td></tr></table></figure>
+<h3 id="举例"><a href="#举例" class="headerlink" title="举例"></a>举例</h3><p>搜索title中含有“Bolog”的网页<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">intitle:&quot;Bolog&quot;</div></pre></td></tr></table></figure></p>
+<h2 id="指定URL搜索"><a href="#指定URL搜索" class="headerlink" title="指定URL搜索"></a>指定URL搜索</h2><h3 id="语法-1"><a href="#语法-1" class="headerlink" title="语法"></a>语法</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">inurl:&lt;全部或部分URL信息&gt;</div></pre></td></tr></table></figure>
+<h3 id="举例-1"><a href="#举例-1" class="headerlink" title="举例"></a>举例</h3><p>搜索url中包含<code>nginx-1-11-6</code>的网页<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">inurl:nginx-1-11-6</div></pre></td></tr></table></figure></p>
+<h2 id="指定正文内容搜索"><a href="#指定正文内容搜索" class="headerlink" title="指定正文内容搜索"></a>指定正文内容搜索</h2><h3 id="语法-2"><a href="#语法-2" class="headerlink" title="语法"></a>语法</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">intext:&quot;&lt;搜索关键字&gt;&quot;</div></pre></td></tr></table></figure>
+<p>此方法也是搜索引擎默认使用方法（猜的）</p>
+<h3 id="举例-2"><a href="#举例-2" class="headerlink" title="举例"></a>举例</h3><p>搜索正文内容含有“python” 和“golang”关键字的网页<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">intext:&quot;&lt;python golang&gt;&quot;</div></pre></td></tr></table></figure></p>
+<h2 id="指定网站（站点）搜索"><a href="#指定网站（站点）搜索" class="headerlink" title="指定网站（站点）搜索"></a>指定网站（站点）搜索</h2><h3 id="语法-3"><a href="#语法-3" class="headerlink" title="语法"></a>语法</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">site:&lt;网站域名&gt; &lt;搜索关键字&gt;</div></pre></td></tr></table></figure>
+<h3 id="举例-3"><a href="#举例-3" class="headerlink" title="举例"></a>举例</h3><p>在oschina上搜索python关键字<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">site:oschina.net python</div></pre></td></tr></table></figure></p>
+<h2 id="指定文件类型搜索"><a href="#指定文件类型搜索" class="headerlink" title="指定文件类型搜索"></a>指定文件类型搜索</h2><h3 id="语法-4"><a href="#语法-4" class="headerlink" title="语法"></a>语法</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">filetype:&lt;文件类型&gt; &lt;搜索关键字&gt;</div></pre></td></tr></table></figure>
+<h3 id="举例-4"><a href="#举例-4" class="headerlink" title="举例"></a>举例</h3><p>搜索所有带有python关键字的PDF文档<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">filetype:pdf python</div></pre></td></tr></table></figure></p>
+<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a href="http://www.360doc.com/content/13/1014/11/1956846_321333210.shtml" target="_blank" rel="external">intile,inurl,filetype,site作用及在google中的用法</a></li>
 </ul>
-<h1 id="改密权限"><a href="#改密权限" class="headerlink" title="改密权限"></a>改密权限</h1><ul>
-<li>root可以修改所有用户密码</li>
-<li>所有用户在无任何权限情况下可修改自己密码</li>
-<li>获得“update所有库”权限的用户可修改任何用户密码（包括root）</li>
-</ul>
-<p><strong>(以上所诉，均使用<code>set password</code>方法)</strong></p>
-<h1 id="改密三种方法"><a href="#改密三种方法" class="headerlink" title="改密三种方法"></a>改密三种方法</h1><h2 id="Set-Password"><a href="#Set-Password" class="headerlink" title="Set Password"></a>Set Password</h2><p><code>set password for &lt;用户名&gt;@{localhost|%|...} =password(&#39;&lt;密码&gt;&#39;);</code></p>
-<h2 id="grant-…-identified-by"><a href="#grant-…-identified-by" class="headerlink" title="grant … identified by"></a>grant … identified by</h2><p><code>grant &lt;权限&gt; on &lt;数据库&gt;.&lt;数据表&gt; to &lt;user&gt;@{localhost|%|...} identified by &#39;&lt;密码&gt;&#39;;</code></p>
-<h2 id="update"><a href="#update" class="headerlink" title="update"></a>update</h2><p><code>update &lt;库名&gt;.&lt;表名&gt; set password=password(&#39;&lt;密码&gt;&#39;) where user=&#39;&lt;用户名&gt;&#39; and host=&#39;{localhost | % | ...}&#39;;</code></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/11/15/language/python/python-argparse-use/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2016/11/15/language/python/python-argparse-use/" itemprop="url">python-argparse-use</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-11-15T16:10:53+08:00">
+                2016-11-15
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/language/" itemprop="url" rel="index">
+                    <span itemprop="name">language</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># -*- coding: utf-8 -*-</span></div><div class="line"><span class="keyword">import</span> argparse</div><div class="line">args = <span class="string">"-f hello.txt -n 1 2 3 -x 100 -y b -z a -q hello @args.txt i_am_bar -h"</span>.split()</div><div class="line"></div><div class="line"><span class="comment"># 使用@args.txt要求fromfile_prefix_chars="@"</span></div><div class="line"><span class="comment"># args.txt文件中应该一行一个参数，想改变行为参考convert_arg_line_to_args()</span></div><div class="line"><span class="comment"># ArgumentParser参数的简单说明</span></div><div class="line"><span class="comment">## description - 命令行帮助的开始文字，大部分情况下，我们只会用到这个参数</span></div><div class="line"><span class="comment"># epilog - 命令行帮助的结尾文字</span></div><div class="line"><span class="comment"># prog - (default: sys.argv[0])程序的名字，一般不需要修改，另外，如果你需要在help中使用到程序的名字，可以使用%(prog)s</span></div><div class="line"><span class="comment"># prefix_chars - 命令的前缀，默认是-，例如-f/--file。有些程序可能希望支持/f这样的选项，可以使用prefix_chars="/"</span></div><div class="line"><span class="comment"># fromfile_prefix_chars - (default: None)如果你希望命令行参数可以从文件中读取，就可能用到。例如，如果fromfile_prefix_chars='@',命令行参数中有一个为"@args.txt"，args.txt的内容会作为命令行参数</span></div><div class="line"><span class="comment"># add_help - 是否增加-h/-help选项 (default: True)，一般help信息都是必须的，所以不用设置啦。</span></div><div class="line"><span class="comment">## parents - 类型是list，如果这个parser的一些选项跟其他某些parser的选项一样，可以用parents来实现继承，例如parents=[parent_parser]</span></div><div class="line"><span class="comment">## formatter_class - 自定义帮助信息的格式（description和epilog）。默认情况下会将长的帮助信息进行&lt;自动换行和消除多个连续空白&gt;。</span></div><div class="line"><span class="comment">#三个允许的值：</span></div><div class="line"><span class="comment"># class argparse.RawDescriptionHelpFormatter 直接输出description和epilog的原始形式（不进行自动换行和消除空白的操作）</span></div><div class="line"><span class="comment"># class argparse.RawTextHelpFormatter 直接输出description和epilog以及add_argument中的help字符串的原始形式（不进行自动换行和消除空白的操作）</span></div><div class="line"><span class="comment">## class argparse.ArgumentDefaultsHelpFormatter 在每个选项的帮助信息后面输出他们对应的缺省值，如果有设置的话。这个最常用吧！</span></div><div class="line"><span class="comment"># argument_default - (default: None)设置一个全局的选项的缺省值，一般每个选项单独设置，所以这个参数用得少，不细说</span></div><div class="line"><span class="comment"># usage - (default: generated)如果你需要修改usage的信息（usage: PROG [-h] [--foo [FOO]] bar [bar ...]），那么可以修改这个，一般不要修改。</span></div><div class="line"><span class="comment"># conflict_handler - 不建议使用。这个在极端情况下才会用到，主要是定义两个add_argument中添加的选项的名字发生冲突时怎么处理，默认处理是抛出异常。</span></div><div class="line"><span class="comment">#注释一行有##表示这几个参数比较常用</span></div><div class="line">parser = argparse.ArgumentParser(description=<span class="string">"This is a description of %(prog)s"</span>, epilog=<span class="string">"This is a epilog of %(prog)s"</span>, prefix_chars=<span class="string">"-+"</span>, fromfile_prefix_chars=<span class="string">"@"</span>, formatter_class=argparse.ArgumentDefaultsHelpFormatter)</div><div class="line"></div><div class="line"><span class="comment"># ArgumentParser.add_argument(name or flags...[, action][, nargs][, const][, default][, type][, choices][, required][, help][, metavar][, dest])</span></div><div class="line"><span class="comment"># add_argument的参数是比较复杂的。。。</span></div><div class="line"><span class="comment"># name or flags - 指定参数的形式，想写几个写几个，不过我们一般就写两个，一个短参数，一个长参数，看下面的例子"-f", "--file"</span></div><div class="line"><span class="comment"># 可选的选项，位置不固定，想怎么写就怎么写，默认是可选的</span></div><div class="line">parser.add_argument(<span class="string">"-f"</span>, <span class="string">"--file"</span>, help=<span class="string">"test test test"</span>)</div><div class="line"></div><div class="line"><span class="comment"># 位置固定的选项，例如"prog i_am_bar"，这样子的话，i_am_bar就是bar选项的值啦，默认是必须有的</span></div><div class="line">parser.add_argument(<span class="string">"bar"</span>, help=<span class="string">"test test test"</span>)</div><div class="line"></div><div class="line"><span class="comment"># nargs - 指定这个参数后面的value有多少个，例如，我们希望使用-n 1 2 3 4，来设置n的值为[1, 2, 3, 4]</span></div><div class="line">parser.add_argument(<span class="string">"-n"</span>, <span class="string">"--num"</span>, nargs=<span class="string">"+"</span>, type=int)</div><div class="line"></div><div class="line"><span class="comment"># 这里nargs="+"表示，如果你指定了-n选项，那么-n后面至少要跟一个参数，+表示至少一个,?表示一个或0个,*0个或多个，</span></div><div class="line"><span class="comment"># default - 如果命令行没有出现这个选项，那么使用default指定的默认值</span></div><div class="line">parser.add_argument(<span class="string">"+g"</span>, <span class="string">"++gold"</span>, help=<span class="string">"test test test"</span>, default=<span class="string">"test_gold"</span>)<span class="comment">#需要prefix_chars包含"+"</span></div><div class="line"></div><div class="line"><span class="comment"># type - 如果希望传进来的参数是指定的类型（例如 float, int or file等可以从字符串转化过来的类型），可以使用</span></div><div class="line">parser.add_argument(<span class="string">"-x"</span>, type=int)</div><div class="line"></div><div class="line"><span class="comment"># choices - 设置参数值的范围，如果choices中的类型不是字符串，记得指定type哦</span></div><div class="line">parser.add_argument(<span class="string">"-y"</span>, choices=[<span class="string">'a'</span>, <span class="string">'b'</span>, <span class="string">'d'</span>])</div><div class="line"></div><div class="line"><span class="comment"># required - 通常-f这样的选项是可选的，但是如果required=True那么就是必须的了</span></div><div class="line">parser.add_argument(<span class="string">"-z"</span>, choices=[<span class="string">'a'</span>, <span class="string">'b'</span>, <span class="string">'d'</span>], required=<span class="keyword">True</span>)</div><div class="line"></div><div class="line"><span class="comment"># metavar - 参数的名字，在显示 帮助信息时才用到.</span></div><div class="line">parser.add_argument(<span class="string">"-o"</span>, metavar=<span class="string">"OOOOOO"</span>)</div><div class="line"></div><div class="line"><span class="comment"># help - 设置这个选项的帮助信息</span></div><div class="line"><span class="comment"># dest - 设置这个选项的值就是解析出来后放到哪个属性中</span></div><div class="line">parser.add_argument(<span class="string">"-q"</span>, dest=<span class="string">"world"</span>)</div><div class="line"></div><div class="line">args = parser.parse_args(args) <span class="comment"># 如果你没有args参数，那么就使用sys.argv，也就是命令行参数啦。有这个参数，就方便我们调试啊</span></div><div class="line"><span class="comment"># args.world就是-q的值啦</span></div><div class="line"><span class="comment"># action - The basic type of action to be taken when this argument is encountered at the command line.</span></div><div class="line"><span class="comment"># const - A constant value required by some action and nargs selections.</span></div><div class="line"><span class="comment"># 这两个自己看帮助文档啦，比较复杂</span></div><div class="line"><span class="comment"># http://docs.python.org/library/argparse.html</span></div><div class="line"><span class="keyword">print</span> args</div></pre></td></tr></table></figure>
 
           
         
@@ -620,6 +765,160 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/11/15/mysql/mysql-password-functions/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2016/11/15/mysql/mysql-password-functions/" itemprop="url">MySQL修改密码方法</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-11-15T00:00:00+08:00">
+                2016-11-15
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/mysql/" itemprop="url" rel="index">
+                    <span itemprop="name">mysql</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><ul>
+<li>OS Version : rhel 6.4</li>
+<li>MySQL Version : 5.6.31</li>
+</ul>
+<h1 id="改密权限"><a href="#改密权限" class="headerlink" title="改密权限"></a>改密权限</h1><ul>
+<li>root可以修改所有用户密码</li>
+<li>所有用户在无任何权限情况下可修改自己密码</li>
+<li>获得“update所有库”权限的用户可修改任何用户密码（包括root）</li>
+</ul>
+<p><strong>(以上所诉，均使用<code>set password</code>方法)</strong></p>
+<h1 id="改密三种方法"><a href="#改密三种方法" class="headerlink" title="改密三种方法"></a>改密三种方法</h1><h2 id="Set-Password"><a href="#Set-Password" class="headerlink" title="Set Password"></a>Set Password</h2><p><code>set password for &lt;用户名&gt;@{localhost|%|...} =password(&#39;&lt;密码&gt;&#39;);</code></p>
+<h2 id="grant-…-identified-by"><a href="#grant-…-identified-by" class="headerlink" title="grant … identified by"></a>grant … identified by</h2><p><code>grant &lt;权限&gt; on &lt;数据库&gt;.&lt;数据表&gt; to &lt;user&gt;@{localhost|%|...} identified by &#39;&lt;密码&gt;&#39;;</code></p>
+<h2 id="update"><a href="#update" class="headerlink" title="update"></a>update</h2><p><code>update &lt;库名&gt;.&lt;表名&gt; set password=password(&#39;&lt;密码&gt;&#39;) where user=&#39;&lt;用户名&gt;&#39; and host=&#39;{localhost | % | ...}&#39;;</code></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/09/23/uwsgi/uwsgi-config-problem-1/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -722,6 +1021,234 @@
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">Traceback (most recent call last):</div><div class="line">File &quot;/cs/nginx/uwsgi/main.py&quot;, line 24, in application</div><div class="line">result = process().entry(environ, start_response)</div><div class="line">File &quot;/cs/nginx/uwsgi/rds/base_mng.py&quot;, line 90, in entry</div><div class="line">self.process_put_request(env)</div><div class="line">File &quot;/cs/nginx/uwsgi/rds/init_rds.py&quot;, line 149, in process_put_request</div><div class="line">result = self.do_put_request(env)</div><div class="line">File &quot;/cs/nginx/uwsgi/rds/init_rds.py&quot;, line 140, in do_put_request</div><div class="line">err_code = op.do()</div><div class="line">File &quot;/cs/nginx/uwsgi/rds/init_rds.py&quot;, line 70, in do</div><div class="line">if 0 == init_create_mp(mp):</div><div class="line">File &quot;/cs/nginx/uwsgi/rds/init/main.py&quot;, line 44, in init_create_mp</div><div class="line">os.mkdir(mp,0755)</div><div class="line">OSError: [Errno 13] Permission denied: &apos;/aaab&apos;</div></pre></td></tr></table></figure>
 <h1 id="解决"><a href="#解决" class="headerlink" title="解决"></a>解决</h1><p>Python脚本的权限，有uWSGI来决定，所以该错误肯定跟uWSGI有关，通过调整uwsgi.ini文件中的用户和权限相关配置发现，将<code>cap = setuid,setgid</code>去掉，可以正常创建目录。</p>
 <p>但：<strong><em>具体原因不明，可能跟setuid和setgid的使用有关，有可能是个Bug</em></strong></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/09/23/uwsgi/uwsgi-limit-process-resource/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2016/09/23/uwsgi/uwsgi-limit-process-resource/" itemprop="url">limit-as限制子进程资源，导致Mysqld服务无法启动</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-09-23T00:00:00+08:00">
+                2016-09-23
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/uwsgi/" itemprop="url" rel="index">
+                    <span itemprop="name">uwsgi</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="问题发现"><a href="#问题发现" class="headerlink" title="问题发现"></a>问题发现</h1><h3 id="现象"><a href="#现象" class="headerlink" title="现象"></a>现象</h3><p>在nginx+uwsgi+python环境中，启动mysqld服务，发生服务无法正常启动现象（闪退）。而在shell终端中可以正常启动mysqld服务。说明“nginx+uwsgi+python”这个环境限制了某些资源，导致mysqld服务启动失败。</p>
+<h3 id="uwsgi错误日志-var-log-uwsgi-log"><a href="#uwsgi错误日志-var-log-uwsgi-log" class="headerlink" title="uwsgi错误日志(/var/log/uwsgi.log)"></a>uwsgi错误日志(/var/log/uwsgi.log)</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">Starting MySQL. ERROR! The server quit without updating PID file (/store/xxx.pid)</div></pre></td></tr></table></figure>
+<h3 id="mysql错误日志-mysqldatadir-hostname-err"><a href="#mysql错误日志-mysqldatadir-hostname-err" class="headerlink" title="mysql错误日志(/{mysqldatadir}/{hostname}.err)"></a>mysql错误日志(/{mysqldatadir}/{hostname}.err)</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">2016-09-22 16:21:41 28084 [Note] InnoDB: Using atomics to ref count buffer pool pages</div><div class="line">2016-09-22 16:21:41 28084 [Note] InnoDB: The InnoDB memory heap is disabled</div><div class="line">2016-09-22 16:21:41 28084 [Note] InnoDB: Mutexes and rw_locks use GCC atomic builtins</div><div class="line">2016-09-22 16:21:41 28084 [Note] InnoDB: Memory barrier is not used</div><div class="line">2016-09-22 16:21:41 28084 [Note] InnoDB: Compressed tables use zlib 1.2.3</div><div class="line">2016-09-22 16:21:41 28084 [Note] InnoDB: Using CPU crc32 instructions</div><div class="line">2016-09-22 16:21:41 28084 [Note] InnoDB: Initializing buffer pool, size = 1.0G</div><div class="line">InnoDB: mmap(137363456 bytes) failed; errno 12</div><div class="line">2016-09-22 16:21:41 28084 [ERROR] InnoDB: Cannot allocate memory for the buffer pool</div><div class="line">2016-09-22 16:21:41 28084 [ERROR] Plugin &apos;InnoDB&apos; init function returned error.</div><div class="line">2016-09-22 16:21:41 28084 [ERROR] Plugin &apos;InnoDB&apos; registration as a STORAGE ENGINE failed.</div><div class="line">2016-09-22 16:21:41 28084 [ERROR] Unknown/unsupported storage engine: InnoDB</div><div class="line">2016-09-22 16:21:41 28084 [ERROR] Aborting</div><div class="line">2016-09-22 16:21:41 28084 [Note] Binlog end</div></pre></td></tr></table></figure>
+<h3 id="分析"><a href="#分析" class="headerlink" title="分析"></a>分析</h3><p>根据mysql错误日志提示，mysql在初始化InnoDB引擎时，申请“Buffer Pool”内存失败，此处的mmap是用来申请内存的（allocate申请内存时，小于128KB的在栈上进行分配内存，大于128K的，从堆上分配内存）。<br>使用shell终端正常启动mysqld服务，查看mysqld占用内存大小发现需要2GB左右的虚拟内存，如下所示：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">[root@host]# ps aux | grep mysqld | grep -v grep</div><div class="line">root 31635 0.0 0.1 11300 1520 ? S Sep22 0:00 /bin/sh /cs/mysql/bin/mysqld_safe --datadir=/store --pid-file=/store/zhoubo.pid</div><div class="line">root 32165 0.0 25.5 2041620 259716 ? Sl Sep22 0:15 /cs/mysql/bin/mysqld --basedir=/cs/mysql --datadir=/store --plugin-dir=/cs/mysql/lib/plugin --user=root --log-error=/store/zhoubo.err --open-files-limit=65535 --pid-file=/store/zhoubo.pid --socket=/cs/mysql/data/mysql.sock --port=3306</div></pre></td></tr></table></figure>
+<p>由此可以看出，“nginx+uwsgi+python”这个组合在其中某个环节对内存做了内存限制导致内存不能正常分配；nginx父进程为init，uwsgi父进程也为init，二者之间使用管道进行通信，所以不可能由nginx限制uwsgi进程资源。而uwsgi以fork形式调用python，fork过程中可以限制资源，python进程的资源被限制后再启动mysqld服务，就会导致mysqld分配内存失败，从而出现上述的错误现象。</p>
+<h3 id="解决"><a href="#解决" class="headerlink" title="解决"></a>解决</h3><p>根据上诉分析，找到了问题的原因出在uwsgi对进程资源进行了限制，所以将uwsgi.ini中关于资源限制的配置去掉，即可解决。<br>在uwsgi.ini中去掉<code>limit-as 256</code>选项。</p>
+<h1 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h1><p>uwsgi.ini中资源限制项包括<code>limit-as</code>，<code>limit-nproc</code>，<code>limit-port</code>等，他们对进程资源的限制的访问获取都是通过系统接口getrlimt和setrlimit来实现的(POSIX API)。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/time.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/resource.h&gt;</span></span></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">getrlimit</span><span class="params">(<span class="keyword">int</span> resource, <span class="keyword">struct</span> rlimit *rlim)</span></span>;</div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">setrlimit</span><span class="params">(<span class="keyword">int</span> resource, <span class="keyword">const</span> <span class="keyword">struct</span> rlimit *rlim)</span></span>;</div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">prlimit</span><span class="params">(<span class="keyword">pid_t</span> pid, <span class="keyword">int</span> resource, <span class="keyword">const</span> <span class="keyword">struct</span> rlimit *new_limit,<span class="keyword">struct</span> rlimit *old_limit)</span></span>;</div></pre></td></tr></table></figure>
+<h3 id="核心结构体"><a href="#核心结构体" class="headerlink" title="核心结构体"></a>核心结构体</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> rlimit&#123;</div><div class="line">    <span class="keyword">rlim_t</span> rlim_cur;  <span class="comment">// soft limit</span></div><div class="line">    <span class="keyword">rlim_t</span> rlim_max;  <span class="comment">// hard limit</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p><strong>rlim_cur</strong></p>
+<p>为soft limit是指内核所能支持的资源上限。比如对于RLIMIT_NOFILE(一个进程能打开的最大文件数，内核默认是1024)，soft limit最大也只能达到1024。对于RLIMIT_CORE(core文件的大小，内核不做限制)，soft limit最大能是unlimited。</p>
+<p><strong>rlim_max</strong></p>
+<p>为hard limit在资源中只是作为soft limit的上限。当你设置hard limit后，你以后设置的soft limit只能小于hard limit。要说明的是，hard limit只针对非特权进程，也就是进程的有效用户ID(effective user ID)不是0的进程。具有特权级别的进程(具有属性CAP_SYS_RESOURCE)，soft limit则只有内核上限。</p>
+<h3 id="可限制资源列表"><a href="#可限制资源列表" class="headerlink" title="可限制资源列表"></a>可限制资源列表</h3><table>
+<thead>
+<tr>
+<th style="text-align:center">资源</th>
+<th style="text-align:left">描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">RLIMIT_AS</td>
+<td style="text-align:left">进程的最大虚拟内存空间，字节为单位</td>
+</tr>
+<tr>
+<td style="text-align:center">RLIMIT_CORE</td>
+<td style="text-align:left">内核转存文件的最大长度</td>
+</tr>
+<tr>
+<td style="text-align:center">RLIMIT_CPU</td>
+<td style="text-align:left">最大允许的CPU使用时间，秒为单位</td>
+</tr>
+<tr>
+<td style="text-align:center">RLIMIT_DATA</td>
+<td style="text-align:left">进程数据段的最大</td>
+</tr>
+<tr>
+<td style="text-align:center">RLIMIT_FSIZE</td>
+<td style="text-align:left">进程可建立的文件的最大长度</td>
+</tr>
+<tr>
+<td style="text-align:center">RLIMIT_LOCKS</td>
+<td style="text-align:left">进程可建立的锁和租赁的最大值</td>
+</tr>
+<tr>
+<td style="text-align:center">RLIMIT_MEMLOCK</td>
+<td style="text-align:left">进程可锁定在内存中的最大数据量，字节为单位</td>
+</tr>
+<tr>
+<td style="text-align:center">RLIMIT_MSGQUEUE</td>
+<td style="text-align:left">进程可为POSIX消息队列分配的最大字节数</td>
+</tr>
+<tr>
+<td style="text-align:center">RLIMIT_NICE</td>
+<td style="text-align:left">进程可通过setpriority() 或 nice()调用设置的最大完美值</td>
+</tr>
+<tr>
+<td style="text-align:center">RLIMIT_NOFILE</td>
+<td style="text-align:left">指定比进程可打开的最大文件描述词大一的值，超出此值，将会产生EMFILE错误</td>
+</tr>
+<tr>
+<td style="text-align:center">RLIMIT_NPROC</td>
+<td style="text-align:left">用户可拥有的最大进程数</td>
+</tr>
+<tr>
+<td style="text-align:center">RLIMIT_RTPRIO</td>
+<td style="text-align:left">进程可通过sched_setscheduler 和 sched_setparam设置的最大实时优先级</td>
+</tr>
+<tr>
+<td style="text-align:center">RLIMIT_SIGPENDING</td>
+<td style="text-align:left">用户可拥有的最大挂起信号数</td>
+</tr>
+<tr>
+<td style="text-align:center">RLIMIT_STACK</td>
+<td style="text-align:left">最大的进程堆栈，以字节为单位</td>
+</tr>
+</tbody>
+</table>
+<h1 id="参考及鸣谢"><a href="#参考及鸣谢" class="headerlink" title="参考及鸣谢"></a>参考及鸣谢</h1><ul>
+<li><a href="http://blog.csdn.net/todd911/article/details/14055745" target="_blank" rel="external">《UNIX环境高级编程》笔记–getrlimit和setrlimit函数</a></li>
+<li><a href="http://blog.csdn.net/kevin6216/article/details/15378617" target="_blank" rel="external">uWSGI参考资料</a></li>
+<li><a href="http://uwsgi-docs.readthedocs.io/en/latest/Options.html?highlight=limit-as" target="_blank" rel="external">uWSGI Options(官方)</a></li>
+<li><a href="http://blog.csdn.net/pennyliang/article/details/41678953" target="_blank" rel="external">mmap ENOMEM（errno 12） 错误 </a></li>
+<li><a href="http://www.cnblogs.com/vinozly/p/5489138.html" target="_blank" rel="external">Linux进程分配内存的两种方式–brk() 和mmap()</a></li>
+</ul>
 
           
         
@@ -1728,234 +2255,6 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/09/23/uwsgi/uwsgi-limit-process-resource/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2016/09/23/uwsgi/uwsgi-limit-process-resource/" itemprop="url">limit-as限制子进程资源，导致Mysqld服务无法启动</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-09-23T00:00:00+08:00">
-                2016-09-23
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/uwsgi/" itemprop="url" rel="index">
-                    <span itemprop="name">uwsgi</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="问题发现"><a href="#问题发现" class="headerlink" title="问题发现"></a>问题发现</h1><h3 id="现象"><a href="#现象" class="headerlink" title="现象"></a>现象</h3><p>在nginx+uwsgi+python环境中，启动mysqld服务，发生服务无法正常启动现象（闪退）。而在shell终端中可以正常启动mysqld服务。说明“nginx+uwsgi+python”这个环境限制了某些资源，导致mysqld服务启动失败。</p>
-<h3 id="uwsgi错误日志-var-log-uwsgi-log"><a href="#uwsgi错误日志-var-log-uwsgi-log" class="headerlink" title="uwsgi错误日志(/var/log/uwsgi.log)"></a>uwsgi错误日志(/var/log/uwsgi.log)</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">Starting MySQL. ERROR! The server quit without updating PID file (/store/xxx.pid)</div></pre></td></tr></table></figure>
-<h3 id="mysql错误日志-mysqldatadir-hostname-err"><a href="#mysql错误日志-mysqldatadir-hostname-err" class="headerlink" title="mysql错误日志(/{mysqldatadir}/{hostname}.err)"></a>mysql错误日志(/{mysqldatadir}/{hostname}.err)</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">2016-09-22 16:21:41 28084 [Note] InnoDB: Using atomics to ref count buffer pool pages</div><div class="line">2016-09-22 16:21:41 28084 [Note] InnoDB: The InnoDB memory heap is disabled</div><div class="line">2016-09-22 16:21:41 28084 [Note] InnoDB: Mutexes and rw_locks use GCC atomic builtins</div><div class="line">2016-09-22 16:21:41 28084 [Note] InnoDB: Memory barrier is not used</div><div class="line">2016-09-22 16:21:41 28084 [Note] InnoDB: Compressed tables use zlib 1.2.3</div><div class="line">2016-09-22 16:21:41 28084 [Note] InnoDB: Using CPU crc32 instructions</div><div class="line">2016-09-22 16:21:41 28084 [Note] InnoDB: Initializing buffer pool, size = 1.0G</div><div class="line">InnoDB: mmap(137363456 bytes) failed; errno 12</div><div class="line">2016-09-22 16:21:41 28084 [ERROR] InnoDB: Cannot allocate memory for the buffer pool</div><div class="line">2016-09-22 16:21:41 28084 [ERROR] Plugin &apos;InnoDB&apos; init function returned error.</div><div class="line">2016-09-22 16:21:41 28084 [ERROR] Plugin &apos;InnoDB&apos; registration as a STORAGE ENGINE failed.</div><div class="line">2016-09-22 16:21:41 28084 [ERROR] Unknown/unsupported storage engine: InnoDB</div><div class="line">2016-09-22 16:21:41 28084 [ERROR] Aborting</div><div class="line">2016-09-22 16:21:41 28084 [Note] Binlog end</div></pre></td></tr></table></figure>
-<h3 id="分析"><a href="#分析" class="headerlink" title="分析"></a>分析</h3><p>根据mysql错误日志提示，mysql在初始化InnoDB引擎时，申请“Buffer Pool”内存失败，此处的mmap是用来申请内存的（allocate申请内存时，小于128KB的在栈上进行分配内存，大于128K的，从堆上分配内存）。<br>使用shell终端正常启动mysqld服务，查看mysqld占用内存大小发现需要2GB左右的虚拟内存，如下所示：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">[root@host]# ps aux | grep mysqld | grep -v grep</div><div class="line">root 31635 0.0 0.1 11300 1520 ? S Sep22 0:00 /bin/sh /cs/mysql/bin/mysqld_safe --datadir=/store --pid-file=/store/zhoubo.pid</div><div class="line">root 32165 0.0 25.5 2041620 259716 ? Sl Sep22 0:15 /cs/mysql/bin/mysqld --basedir=/cs/mysql --datadir=/store --plugin-dir=/cs/mysql/lib/plugin --user=root --log-error=/store/zhoubo.err --open-files-limit=65535 --pid-file=/store/zhoubo.pid --socket=/cs/mysql/data/mysql.sock --port=3306</div></pre></td></tr></table></figure>
-<p>由此可以看出，“nginx+uwsgi+python”这个组合在其中某个环节对内存做了内存限制导致内存不能正常分配；nginx父进程为init，uwsgi父进程也为init，二者之间使用管道进行通信，所以不可能由nginx限制uwsgi进程资源。而uwsgi以fork形式调用python，fork过程中可以限制资源，python进程的资源被限制后再启动mysqld服务，就会导致mysqld分配内存失败，从而出现上述的错误现象。</p>
-<h3 id="解决"><a href="#解决" class="headerlink" title="解决"></a>解决</h3><p>根据上诉分析，找到了问题的原因出在uwsgi对进程资源进行了限制，所以将uwsgi.ini中关于资源限制的配置去掉，即可解决。<br>在uwsgi.ini中去掉<code>limit-as 256</code>选项。</p>
-<h1 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h1><p>uwsgi.ini中资源限制项包括<code>limit-as</code>，<code>limit-nproc</code>，<code>limit-port</code>等，他们对进程资源的限制的访问获取都是通过系统接口getrlimt和setrlimit来实现的(POSIX API)。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/time.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/resource.h&gt;</span></span></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">getrlimit</span><span class="params">(<span class="keyword">int</span> resource, <span class="keyword">struct</span> rlimit *rlim)</span></span>;</div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">setrlimit</span><span class="params">(<span class="keyword">int</span> resource, <span class="keyword">const</span> <span class="keyword">struct</span> rlimit *rlim)</span></span>;</div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">prlimit</span><span class="params">(<span class="keyword">pid_t</span> pid, <span class="keyword">int</span> resource, <span class="keyword">const</span> <span class="keyword">struct</span> rlimit *new_limit,<span class="keyword">struct</span> rlimit *old_limit)</span></span>;</div></pre></td></tr></table></figure>
-<h3 id="核心结构体"><a href="#核心结构体" class="headerlink" title="核心结构体"></a>核心结构体</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> rlimit&#123;</div><div class="line">    <span class="keyword">rlim_t</span> rlim_cur;  <span class="comment">// soft limit</span></div><div class="line">    <span class="keyword">rlim_t</span> rlim_max;  <span class="comment">// hard limit</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p><strong>rlim_cur</strong></p>
-<p>为soft limit是指内核所能支持的资源上限。比如对于RLIMIT_NOFILE(一个进程能打开的最大文件数，内核默认是1024)，soft limit最大也只能达到1024。对于RLIMIT_CORE(core文件的大小，内核不做限制)，soft limit最大能是unlimited。</p>
-<p><strong>rlim_max</strong></p>
-<p>为hard limit在资源中只是作为soft limit的上限。当你设置hard limit后，你以后设置的soft limit只能小于hard limit。要说明的是，hard limit只针对非特权进程，也就是进程的有效用户ID(effective user ID)不是0的进程。具有特权级别的进程(具有属性CAP_SYS_RESOURCE)，soft limit则只有内核上限。</p>
-<h3 id="可限制资源列表"><a href="#可限制资源列表" class="headerlink" title="可限制资源列表"></a>可限制资源列表</h3><table>
-<thead>
-<tr>
-<th style="text-align:center">资源</th>
-<th style="text-align:left">描述</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:center">RLIMIT_AS</td>
-<td style="text-align:left">进程的最大虚拟内存空间，字节为单位</td>
-</tr>
-<tr>
-<td style="text-align:center">RLIMIT_CORE</td>
-<td style="text-align:left">内核转存文件的最大长度</td>
-</tr>
-<tr>
-<td style="text-align:center">RLIMIT_CPU</td>
-<td style="text-align:left">最大允许的CPU使用时间，秒为单位</td>
-</tr>
-<tr>
-<td style="text-align:center">RLIMIT_DATA</td>
-<td style="text-align:left">进程数据段的最大</td>
-</tr>
-<tr>
-<td style="text-align:center">RLIMIT_FSIZE</td>
-<td style="text-align:left">进程可建立的文件的最大长度</td>
-</tr>
-<tr>
-<td style="text-align:center">RLIMIT_LOCKS</td>
-<td style="text-align:left">进程可建立的锁和租赁的最大值</td>
-</tr>
-<tr>
-<td style="text-align:center">RLIMIT_MEMLOCK</td>
-<td style="text-align:left">进程可锁定在内存中的最大数据量，字节为单位</td>
-</tr>
-<tr>
-<td style="text-align:center">RLIMIT_MSGQUEUE</td>
-<td style="text-align:left">进程可为POSIX消息队列分配的最大字节数</td>
-</tr>
-<tr>
-<td style="text-align:center">RLIMIT_NICE</td>
-<td style="text-align:left">进程可通过setpriority() 或 nice()调用设置的最大完美值</td>
-</tr>
-<tr>
-<td style="text-align:center">RLIMIT_NOFILE</td>
-<td style="text-align:left">指定比进程可打开的最大文件描述词大一的值，超出此值，将会产生EMFILE错误</td>
-</tr>
-<tr>
-<td style="text-align:center">RLIMIT_NPROC</td>
-<td style="text-align:left">用户可拥有的最大进程数</td>
-</tr>
-<tr>
-<td style="text-align:center">RLIMIT_RTPRIO</td>
-<td style="text-align:left">进程可通过sched_setscheduler 和 sched_setparam设置的最大实时优先级</td>
-</tr>
-<tr>
-<td style="text-align:center">RLIMIT_SIGPENDING</td>
-<td style="text-align:left">用户可拥有的最大挂起信号数</td>
-</tr>
-<tr>
-<td style="text-align:center">RLIMIT_STACK</td>
-<td style="text-align:left">最大的进程堆栈，以字节为单位</td>
-</tr>
-</tbody>
-</table>
-<h1 id="参考及鸣谢"><a href="#参考及鸣谢" class="headerlink" title="参考及鸣谢"></a>参考及鸣谢</h1><ul>
-<li><a href="http://blog.csdn.net/todd911/article/details/14055745" target="_blank" rel="external">《UNIX环境高级编程》笔记–getrlimit和setrlimit函数</a></li>
-<li><a href="http://blog.csdn.net/kevin6216/article/details/15378617" target="_blank" rel="external">uWSGI参考资料</a></li>
-<li><a href="http://uwsgi-docs.readthedocs.io/en/latest/Options.html?highlight=limit-as" target="_blank" rel="external">uWSGI Options(官方)</a></li>
-<li><a href="http://blog.csdn.net/pennyliang/article/details/41678953" target="_blank" rel="external">mmap ENOMEM（errno 12） 错误 </a></li>
-<li><a href="http://www.cnblogs.com/vinozly/p/5489138.html" target="_blank" rel="external">Linux进程分配内存的两种方式–brk() 和mmap()</a></li>
-</ul>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/08/10/mysql/20160810-mysql-python-install-on-rhel7-2/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -2410,326 +2709,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/07/17/storage/ceph/20160617-ceph-messenger-simple/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2016/07/17/storage/ceph/20160617-ceph-messenger-simple/" itemprop="url">SimpleMessenger分析</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-07-17T17:17:14+08:00">
-                2016-07-17
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/storage/" itemprop="url" rel="index">
-                    <span itemprop="name">storage</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h1><p>SimpleMessenger，继承了Messenger类，用于实现各个模块间传输命令及数据。</p>
-<h1 id="架构图"><a href="#架构图" class="headerlink" title="架构图"></a>架构图</h1><p><img src="/images/ceph/ceph-messenger-simple-frame.png" alt="ceph-messenger-simple-frame"></p>
-<h1 id="通讯协议"><a href="#通讯协议" class="headerlink" title="通讯协议"></a>通讯协议</h1><h1 id="子模块"><a href="#子模块" class="headerlink" title="子模块"></a>子模块</h1><ul>
-<li>Pipes模块<br>用于管理tcp网络链接，负责接受、发送数据。</li>
-<li>Accepter模块<br>仅用于接受外部请求链接，而不接收数据。将接收到的链接保存到Pipes模块中，然后由Pipes模块去收发数据。</li>
-<li>DispatchQueue模块<br>接收外部发送来的数据和命令，然后通过“dispatcher”或“fast dispatcher”模块，将数据和命令传送给各个dispatcher</li>
-<li>dispatcher模块<br>用于管理dispatchers，如OSD，MON，MDS等等各种需要通讯的client。</li>
-<li>fast dispatcher模块<br>用于管理 fast dispatchers</li>
-</ul>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/06/23/storage/ceph/persistence-calculation/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2016/06/23/storage/ceph/persistence-calculation/" itemprop="url">Ceph 持久性计算</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-06-23T14:23:33+08:00">
-                2016-06-23
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/storage/" itemprop="url" rel="index">
-                    <span itemprop="name">storage</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="持久性"><a href="#持久性" class="headerlink" title="持久性"></a>持久性</h1><p>持久性是数据丢失的概率，可以用于度量一个存储系统的可靠性，俗称 “多少个9”。数据的放置(DataPlacement)决定了数据持久性，而Ceph的CRUSH MAP又决定了数据的放置，因此CRUSH MAP的设置决定了数据持久性。</p>
-<h1 id="数学模型"><a href="#数学模型" class="headerlink" title="数学模型"></a>数学模型</h1><h2 id="公式"><a href="#公式" class="headerlink" title="公式"></a>公式</h2><p><code>P = Pr x M / C（R，N）</code></p>
-<h2 id="解释"><a href="#解释" class="headerlink" title="解释"></a>解释</h2><h3 id="P"><a href="#P" class="headerlink" title="P"></a>P</h3><p>P为丢失数据的概率，持久性，可用1-P来计算。</p>
-<h3 id="Pr"><a href="#Pr" class="headerlink" title="Pr"></a>Pr</h3><p><code>Pr = P1（any） x P2（any） x P3（any）</code></p>
-<p>Pr为一年内R（ceph副本数）个OSD发生故障的概率。</p>
-<ul>
-<li><p>P1（any）为一年内第一个OSD发生故障的概率<br>硬盘在一定时间内的失败概率符合Possion（伯松）分布 <code>Pn（入,t）</code>(<code>入</code>为lamda)，由于我们不太容易直接计算任意一个OSD顺坏的概率，但可以计算出没有OSD出现故障的概率，再用1减去无OSD节点故障的概率，就得到了<code>P1（any）</code><br><code>入=FIT x N</code> ，<code>FIT=AFR/（24×365）</code>，AFR为硬盘年故障概率;<br><code>t</code>为一年的小时数，24x365</p>
-</li>
-<li><p>P2（any）为一个OSD恢复周期内第二个OSD发生故障的概率<br><code>入</code>中的N为N-1<br><code>t</code> 为一个OSD恢复周期，<code>OSD恢复周期 = 恢复数据量 / 恢复速度</code>；<code>恢复数据量 = 硬盘容量 x 使用率</code>；<code>恢复速度 = 每个OSD写速度 x 参与恢复的OSD数量</code></p>
-</li>
-<li><p>P3（any）为一个OSD恢复周期内第三个OSD发生故障的概率<br><code>入</code>中的N为N-2<br><code>t</code> 为一个OSD恢复周期，算法同上</p>
-</li>
-</ul>
-<h3 id="M"><a href="#M" class="headerlink" title="M"></a>M</h3><p>Copy Set个数，copy set上至少有一个PG的所有副本。<br>丢失数据必须是主副本数据同时丢失，数据不可恢复才算。而一个copy set，包含一个PG的所有主副本数据，所以一个copy set损坏（或丢失）导致至少一个PG的主副本数据丢失，数据不可恢复。</p>
-<h3 id="C（R，N）"><a href="#C（R，N）" class="headerlink" title="C（R，N）"></a>C（R，N）</h3><p>N为OSD数量（一个OSD对应一个硬盘），R为副本数，C（R，N）为N个OSD中任意挑选R个OSD的组合数。</p>
-<h2 id="优化"><a href="#优化" class="headerlink" title="优化"></a>优化</h2><p>综上所述，我们能调节的参数包括：</p>
-<ul>
-<li>OSD恢复周期（recovery time）<br>  增加<code>参与恢复的OSD数量</code>可以缩短<code>OSD恢复周期</code>，从而降低丢失数据的概率</li>
-<li>copy set个数<br>  减少copy set个数，可以降低丢失数据的概率</li>
-</ul>
-<p>以上优化需要修改Crush map</p>
-<h1 id="使用prmc计算持久性"><a href="#使用prmc计算持久性" class="headerlink" title="使用prmc计算持久性"></a>使用prmc计算持久性</h1><h2 id="获取prmc"><a href="#获取prmc" class="headerlink" title="获取prmc"></a>获取prmc</h2><p>从github上下载prmc代码<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">git clone https://github.com/zhoubofsy/persistence_calculation.git</div></pre></td></tr></table></figure></p>
-<h2 id="配置输入参数"><a href="#配置输入参数" class="headerlink" title="配置输入参数"></a>配置输入参数</h2><p>修改<code>config.py</code>文件中的<code>prmc</code>字典<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div></pre></td><td class="code"><pre><div class="line"># 算法名称</div><div class="line">name = &apos;prmc&apos;</div><div class="line"></div><div class="line">prmc = &#123;</div><div class="line"># 副本数</div><div class="line">&apos;replica_num&apos; : 3, </div><div class="line"></div><div class="line"># 集群OSD总数数量</div><div class="line">&apos;osd_num&apos; : 14,</div><div class="line"></div><div class="line"># AFR(硬盘年故障率)</div><div class="line">&apos;disk_afr&apos; : 0.017,</div><div class="line"></div><div class="line"># 磁盘平均容量（MB）</div><div class="line">&apos;disk_capacity&apos; : 1000.0,</div><div class="line"></div><div class="line"># 磁盘平均写速度（MB/s）</div><div class="line">&apos;disk_writerate&apos; : 50.0,</div><div class="line"></div><div class="line"># 磁盘使用率</div><div class="line">&apos;disk_usage&apos; : 0.75,</div><div class="line"></div><div class="line"># 一个Host中OSD的数量</div><div class="line">&apos;num_osd_in_host&apos; : 4, </div><div class="line"></div><div class="line"># 一个副本域的host数量</div><div class="line">&apos;num_host_in_replic_domain&apos; : 1,</div><div class="line"></div><div class="line"># rack数量</div><div class="line">&apos;num_rack_in_root&apos; : 4, </div><div class="line"></div><div class="line"># 副本域数量</div><div class="line">&apos;num_replic_domain_in_root&apos; : 1</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>程序会根据<code>name</code>的设置，选择相关的算法，不同的算法会采用不同的配置参数，目前只支持<code>prmc</code>算法</p>
-<h2 id="执行计算"><a href="#执行计算" class="headerlink" title="执行计算"></a>执行计算</h2><p>执行<code>main.py</code>进行计算持久性<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">./main.py</div></pre></td></tr></table></figure></p>
-<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a href="https://www.ustack.com/blog/build-block-storage-service/" target="_blank" rel="external">打造高性能高可靠块存储系统</a></li>
-<li><a href="http://blog.csdn.net/xiaoquqi/article/details/43055031#0-tsina-1-70142-397232819ff9a47a7b7e80a40613cfe1" target="_blank" rel="external">CEPH可靠性的计算方法分析</a></li>
-</ul>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2782,7 +2761,7 @@
             
               <a href="/archives/ || archive">
             
-                <span class="site-state-item-count">85</span>
+                <span class="site-state-item-count">87</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -2804,7 +2783,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">92</span>
+                <span class="site-state-item-count">95</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

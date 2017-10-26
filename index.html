@@ -313,6 +313,403 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/10/19/bigdata/hadoop/Phoenix-index/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/10/19/bigdata/hadoop/Phoenix-index/" itemprop="url">Phoenix 二级索引</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-19T14:10:36+08:00">
+                2017-10-19
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Big-Data/" itemprop="url" rel="index">
+                    <span itemprop="name">Big-Data</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>在Hbase中，只有一个单一的按照字典序排序的rowKey索引，当使用rowKey来进行数据查询的时候速度较快，但是如果不使用rowKey来查询的话就会使用filter来对全表进行扫描，很大程度上降低了检索性能。而Phoenix提供了二级索引技术来应对这种使用rowKey之外的条件进行检索的场景。</p>
+<h1 id="Global-Index"><a href="#Global-Index" class="headerlink" title="Global Index"></a>Global Index</h1><p>Global indexing适用于多读少写的业务场景。使用Global indexing的话在写数据的时候会消耗大量开销，因为所有对数据表的更新操作（DELETE, UPSERT VALUES and UPSERT SELECT）,会引起索引表的更新，而索引表是分布在不同的数据节点上的，跨节点的数据传输带来了较大的性能消耗。在读数据的时候Phoenix会选择索引表来降低查询消耗的时间。<strong><em> 在默认情况下如果想查询的字段不是索引字段的话索引表不会被使用，也就是说不会带来查询速度的提升。 </em></strong></p>
+<h2 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h2><p>HBase集群的每个regionserver节点的hbase-site.xml中加入配置，并重启HBase集群</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">property</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">name</span>&gt;</span>hbase.regionserver.wal.codec<span class="tag">&lt;/<span class="name">name</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">value</span>&gt;</span>org.apache.hadoop.hbase.regionserver.wal.IndexedWALEditCodec<span class="tag">&lt;/<span class="name">value</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">property</span>&gt;</span></div></pre></td></tr></table></figure>
+<p>注: phoenix有两种链接方式JDBC和phoenix-client，phoenix-client可以正常创建索引；zeppelin使用jdbc连接不能正常创建索引，提示如下错误。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line">java.sql.SQLException: ERROR 1029 (42Y88): Mutable secondary indexes must have the hbase.regionserver.wal.codec property set to org.apache.hadoop.hbase.regionserver.wal.IndexedWALEditCodec in the hbase-sites.xml of every region server. tableName=CMP_IDX</div><div class="line">    at org.apache.phoenix.exception.SQLExceptionCode$Factory$1.newException(SQLExceptionCode.java:464)</div><div class="line">    at org.apache.phoenix.exception.SQLExceptionInfo.buildException(SQLExceptionInfo.java:150)</div><div class="line">    at org.apache.phoenix.schema.MetaDataClient.createIndex(MetaDataClient.java:1293)</div><div class="line">    at org.apache.phoenix.compile.CreateIndexCompiler$1.execute(CreateIndexCompiler.java:85)</div><div class="line">    at org.apache.phoenix.jdbc.PhoenixStatement$2.call(PhoenixStatement.java:358)</div><div class="line">    at org.apache.phoenix.jdbc.PhoenixStatement$2.call(PhoenixStatement.java:341)</div><div class="line">    at org.apache.phoenix.call.CallRunner.run(CallRunner.java:53)</div><div class="line">    at org.apache.phoenix.jdbc.PhoenixStatement.executeMutation(PhoenixStatement.java:340)</div><div class="line">    at org.apache.phoenix.jdbc.PhoenixStatement.execute(PhoenixStatement.java:1511)</div><div class="line">    at org.apache.commons.dbcp2.DelegatingStatement.execute(DelegatingStatement.java:291)</div><div class="line">    at org.apache.commons.dbcp2.DelegatingStatement.execute(DelegatingStatement.java:291)</div><div class="line">    at org.apache.zeppelin.jdbc.JDBCInterpreter.executeSql(JDBCInterpreter.java:581)</div><div class="line">    at org.apache.zeppelin.jdbc.JDBCInterpreter.interpret(JDBCInterpreter.java:692)</div><div class="line">    at org.apache.zeppelin.interpreter.LazyOpenInterpreter.interpret(LazyOpenInterpreter.java:97)</div><div class="line">    at org.apache.zeppelin.interpreter.remote.RemoteInterpreterServer$InterpretJob.jobRun(RemoteInterpreterServer.java:498)</div><div class="line">    at org.apache.zeppelin.scheduler.Job.run(Job.java:175)</div><div class="line">    at org.apache.zeppelin.scheduler.ParallelScheduler$JobRunner.run(ParallelScheduler.java:162)</div><div class="line">    at java.util.concurrent.Executors$RunnableAdapter.call(Unknown Source)</div><div class="line">    at java.util.concurrent.FutureTask.run(Unknown Source)</div><div class="line">    at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.access$201(Unknown Source)</div><div class="line">    at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(Unknown Source)</div><div class="line">    at java.util.concurrent.ThreadPoolExecutor.runWorker(Unknown Source)</div><div class="line">    at java.util.concurrent.ThreadPoolExecutor$Worker.run(Unknown Source)</div><div class="line">    at java.lang.Thread.run(Unknown Source)</div></pre></td></tr></table></figure></p>
+<h2 id="索引操作"><a href="#索引操作" class="headerlink" title="索引操作"></a>索引操作</h2><p>在开始创建索引以前先创建一个表，并向其中填充测试数据（此处填充的数据仅用于功能测试）</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">0: jdbc:phoenix:&gt; create table usertable (id varchar primary key,firstname varchar, lastname varchar);</div><div class="line">0: jdbc:phoenix:&gt; !tables</div><div class="line">+------------+--------------+-------------------------+---------------+----------+------------+----------------------------+-------------+</div><div class="line">| TABLE_CAT  | TABLE_SCHEM  |       TABLE_NAME        |  TABLE_TYPE   | REMARKS  | TYPE_NAME  | SELF_REFERENCING_COL_NAME  | REF_GENERAT |</div><div class="line">+------------+--------------+-------------------------+---------------+----------+------------+----------------------------+-------------+</div><div class="line">|            | SYSTEM       | CATALOG                 | SYSTEM TABLE  |          |            |                            |             |</div><div class="line">|            | SYSTEM       | FUNCTION                | SYSTEM TABLE  |          |            |                            |             |</div><div class="line">|            | SYSTEM       | SEQUENCE                | SYSTEM TABLE  |          |            |                            |             |</div><div class="line">|            | SYSTEM       | STATS                   | SYSTEM TABLE  |          |            |                            |             |</div><div class="line">|            |              | USERTABLE               | TABLE         |          |            |                            |             |</div><div class="line">+------------+--------------+-------------------------+---------------+----------+------------+----------------------------+-------------+</div><div class="line"></div><div class="line">0: jdbc:phoenix:&gt; upsert into usertable(id, firstname, lastname) values('1', 'Hello', 'world');</div><div class="line">...</div><div class="line">0: jdbc:phoenix:&gt; upsert into usertable(id, firstname, lastname) values('5', 'Hello', 'phoenix');</div></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">base(main):019:0&gt; scan &apos;USERTABLE&apos;</div><div class="line">ROW                                 COLUMN+CELL</div><div class="line"> 1                                  column=0:FIRSTNAME, timestamp=1508397473229, value=Hello</div><div class="line"> 1                                  column=0:LASTNAME, timestamp=1508397473229, value=world</div><div class="line"> 1                                  column=0:_0, timestamp=1508397473229, value=x</div><div class="line"> 2                                  column=0:FIRSTNAME, timestamp=1508397529852, value=Hello</div><div class="line"> 2                                  column=0:LASTNAME, timestamp=1508397529852, value=world</div><div class="line"> 2                                  column=0:_0, timestamp=1508397529852, value=x</div><div class="line"> 3                                  column=0:FIRSTNAME, timestamp=1508397535836, value=Hello</div><div class="line"> 3                                  column=0:LASTNAME, timestamp=1508397535836, value=world</div><div class="line"> 3                                  column=0:_0, timestamp=1508397535836, value=x</div><div class="line"> 4                                  column=0:FIRSTNAME, timestamp=1508397643594, value=Hello</div><div class="line"> 4                                  column=0:LASTNAME, timestamp=1508397643594, value=phoenix</div><div class="line"> 4                                  column=0:_0, timestamp=1508397643594, value=x</div><div class="line"> 5                                  column=0:FIRSTNAME, timestamp=1508397648938, value=Hello</div><div class="line"> 5                                  column=0:LASTNAME, timestamp=1508397648938, value=phoenix</div><div class="line"> 5                                  column=0:_0, timestamp=1508397648938, value=x</div><div class="line">5 row(s) in 0.3220 seconds</div></pre></td></tr></table></figure>
+<h3 id="创建索引"><a href="#创建索引" class="headerlink" title="创建索引"></a>创建索引</h3><figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line">0: jdbc:phoenix:&gt; create index idx_name on usertable (lastname) include(firstname);</div><div class="line">0: jdbc:phoenix:&gt; 0: jdbc:phoenix:&gt; !tables</div><div class="line">+------------+--------------+-------------------------+---------------+----------+------------+----------------------------+-------------+</div><div class="line">| TABLE_CAT  | TABLE_SCHEM  |       TABLE_NAME        |  TABLE_TYPE   | REMARKS  | TYPE_NAME  | SELF_REFERENCING_COL_NAME  | REF_GENERAT |</div><div class="line">+------------+--------------+-------------------------+---------------+----------+------------+----------------------------+-------------+</div><div class="line">|            |              | IDX_NAME                | INDEX         |          |            |                            |             |</div><div class="line">|            | SYSTEM       | CATALOG                 | SYSTEM TABLE  |          |            |                            |             |</div><div class="line">|            | SYSTEM       | FUNCTION                | SYSTEM TABLE  |          |            |                            |             |</div><div class="line">|            | SYSTEM       | SEQUENCE                | SYSTEM TABLE  |          |            |                            |             |</div><div class="line">|            | SYSTEM       | STATS                   | SYSTEM TABLE  |          |            |                            |             |</div><div class="line">|            |              | USERTABLE               | TABLE         |          |            |                            |             |</div><div class="line">+------------+--------------+-------------------------+---------------+----------+------------+----------------------------+-------------+</div><div class="line">0: jdbc:phoenix:&gt; !index usertable</div><div class="line">+------------+--------------+-------------+-------------+------------------+-------------+-------+-------------------+--------------+----+</div><div class="line">| TABLE_CAT  | TABLE_SCHEM  | TABLE_NAME  | NON_UNIQUE  | INDEX_QUALIFIER  | INDEX_NAME  | TYPE  | ORDINAL_POSITION  | COLUMN_NAME  | AS |</div><div class="line">+------------+--------------+-------------+-------------+------------------+-------------+-------+-------------------+--------------+----+</div><div class="line">|            |              | USERTABLE   | true        |                  | IDX_NAME    | 3     | 1                 | 0:LASTNAME   | A  |</div><div class="line">|            |              | USERTABLE   | true        |                  | IDX_NAME    | 3     | 2                 | :ID          | A  |</div><div class="line">|            |              | USERTABLE   | true        |                  | IDX_NAME    | 3     | 3                 | 0:FIRSTNAME  |    |</div><div class="line">+------------+--------------+-------------+-------------+------------------+-------------+-------+-------------------+--------------+----+</div></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">hbase(main):020:0&gt; scan &apos;IDX_NAME&apos;</div><div class="line">ROW                                 COLUMN+CELL</div><div class="line"> phoenix\x004                       column=0:0:FIRSTNAME, timestamp=1508397686228, value=Hello</div><div class="line"> phoenix\x004                       column=0:_0, timestamp=1508397686228, value=x</div><div class="line"> phoenix\x005                       column=0:0:FIRSTNAME, timestamp=1508397686228, value=Hello</div><div class="line"> phoenix\x005                       column=0:_0, timestamp=1508397686228, value=x</div><div class="line"> world\x001                         column=0:0:FIRSTNAME, timestamp=1508397686228, value=Hello</div><div class="line"> world\x001                         column=0:_0, timestamp=1508397686228, value=x</div><div class="line"> world\x002                         column=0:0:FIRSTNAME, timestamp=1508397686228, value=Hello</div><div class="line"> world\x002                         column=0:_0, timestamp=1508397686228, value=x</div><div class="line"> world\x003                         column=0:0:FIRSTNAME, timestamp=1508397686228, value=Hello</div><div class="line"> world\x003                         column=0:_0, timestamp=1508397686228, value=x</div><div class="line">5 row(s) in 0.3180 seconds</div></pre></td></tr></table></figure>
+<h3 id="使用索引"><a href="#使用索引" class="headerlink" title="使用索引"></a>使用索引</h3><p>正常的select … where … 是不会用到索引表的，要想用到索引表，必须查询出的字段也是索引字段。(此处的结论需要在后续的性能测试中进行验证)</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">0: jdbc:phoenix:&gt; select firstname from usertable where lastname = 'phoenix';</div><div class="line">+------------+</div><div class="line">| FIRSTNAME  |</div><div class="line">+------------+</div><div class="line">| Hello      |</div><div class="line">| Hello      |</div><div class="line">+------------+</div></pre></td></tr></table></figure>
+<h2 id="性能测试"><a href="#性能测试" class="headerlink" title="性能测试"></a>性能测试</h2><h3 id="读"><a href="#读" class="headerlink" title="读"></a>读</h3><p>Todo…</p>
+<h3 id="写"><a href="#写" class="headerlink" title="写"></a>写</h3><p>Todo…</p>
+<h1 id="Local-Index"><a href="#Local-Index" class="headerlink" title="Local Index"></a>Local Index</h1><p>Todo…</p>
+<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a href="http://www.cnblogs.com/mario-nb/p/6350266.html?utm_source=itdadao&amp;utm_medium=referral" target="_blank" rel="external">Phoenix的二级索引</a></li>
+<li><a href="http://www.cnblogs.com/MOBIN/p/5467284.html" target="_blank" rel="external">Phoenix二级索引(Secondary Indexing)的使用</a></li>
+<li><a href="http://blog.csdn.net/lifuxiangcaohui/article/details/55518390" target="_blank" rel="external">HBase phoenix二级索引</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/10/17/storage/fs-ext2/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/10/17/storage/fs-ext2/" itemprop="url">Ext2</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-17T11:20:22+08:00">
+                2017-10-17
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index">
+                    <span itemprop="name">storage</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>一个磁盘可以划分成多个分区，每个分区必须先用格式化工具（例如某种mkfs命令）格式化成某种格式的文件系统，然后才能存储文件，格式化的过程会在磁盘上写一些管理存储布局的信息。</p>
+<h1 id="格式"><a href="#格式" class="headerlink" title="格式"></a>格式</h1><p>文件系统中存储的最小单位是块（Block），一个块究竟多大是在格式化时确定的，例如mke2fs的-b选项可以设定块大小为1024、2048或4096字节。而上图中启动块（Boot Block）的大小是确定的，就是1KB，启动块是由PC标准规定的，用来存储磁盘分区信息和启动信息，任何文件系统都不能使用启动块。启动块之后才是ext2文件系统的开始，ext2文件系统将整个分区划成若干个同样大小的块组（Block Group）</p>
+<p><img src="/images/ext2/fs-ext2layout.png" alt="fs-ext2layout.png"></p>
+<h2 id="做一个EXT2看看"><a href="#做一个EXT2看看" class="headerlink" title="做一个EXT2看看"></a>做一个EXT2看看</h2><p>做一个EXT2的文件系统，然后将其挂载，看看其文件格式。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">$ dd if=/dev/zero of=./img.1m count=256 bs=4K</div><div class="line">...</div><div class="line">$ mke2fs fs</div><div class="line">...</div><div class="line">$ sudo mount -o loop ./img.1m /mnt</div><div class="line">$ sudo umount /mnt</div></pre></td></tr></table></figure>
+<p>使用<code>od</code>查看<code>img.1m</code>镜像文件<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">od -tx1 -Ax ./img.1m</div></pre></td></tr></table></figure></p>
+<h2 id="Super-Block"><a href="#Super-Block" class="headerlink" title="Super Block"></a>Super Block</h2><p>描述整个分区的文件系统信息，例如块大小、文件系统版本号、上次mount的时间等等。超级块在每个块组的开头都有一份拷贝。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> ext2_super_block &#123;</div><div class="line">    __le32  s_inodes_count;     <span class="comment">/* Inodes count */</span></div><div class="line">    __le32  s_blocks_count;     <span class="comment">/* Blocks count */</span></div><div class="line">    __le32  s_r_blocks_count;   <span class="comment">/* Reserved blocks count */</span></div><div class="line">    __le32  s_free_blocks_count;    <span class="comment">/* Free blocks count */</span></div><div class="line">    __le32  s_free_inodes_count;    <span class="comment">/* Free inodes count */</span></div><div class="line">    __le32  s_first_data_block; <span class="comment">/* First Data Block */</span></div><div class="line">    __le32  s_log_block_size;   <span class="comment">/* Block size */</span></div><div class="line">    __le32  s_log_frag_size;    <span class="comment">/* Fragment size */</span></div><div class="line">    __le32  s_blocks_per_group; <span class="comment">/* # Blocks per group */</span></div><div class="line">    __le32  s_frags_per_group;  <span class="comment">/* # Fragments per group */</span></div><div class="line">    __le32  s_inodes_per_group; <span class="comment">/* # Inodes per group */</span></div><div class="line">    __le32  s_mtime;        <span class="comment">/* Mount time */</span></div><div class="line">    __le32  s_wtime;        <span class="comment">/* Write time */</span></div><div class="line">    __le16  s_mnt_count;        <span class="comment">/* Mount count */</span></div><div class="line">    __le16  s_max_mnt_count;    <span class="comment">/* Maximal mount count */</span></div><div class="line">    __le16  s_magic;        <span class="comment">/* Magic signature */</span></div><div class="line">    __le16  s_state;        <span class="comment">/* File system state */</span></div><div class="line">    __le16  s_errors;       <span class="comment">/* Behaviour when detecting errors */</span></div><div class="line">    __le16  s_minor_rev_level;  <span class="comment">/* minor revision level */</span></div><div class="line">    __le32  s_lastcheck;        <span class="comment">/* time of last check */</span></div><div class="line">    __le32  s_checkinterval;    <span class="comment">/* max. time between checks */</span></div><div class="line">    __le32  s_creator_os;       <span class="comment">/* OS */</span></div><div class="line">    __le32  s_rev_level;        <span class="comment">/* Revision level */</span></div><div class="line">    __le16  s_def_resuid;       <span class="comment">/* Default uid for reserved blocks */</span></div><div class="line">    __le16  s_def_resgid;       <span class="comment">/* Default gid for reserved blocks */</span></div><div class="line">    __le32  s_first_ino;        <span class="comment">/* First non-reserved inode */</span></div><div class="line">    __le16   s_inode_size;      <span class="comment">/* size of inode structure */</span></div><div class="line">    __le16  s_block_group_nr;   <span class="comment">/* block group # of this superblock */</span></div><div class="line">    __le32  s_feature_compat;   <span class="comment">/* compatible feature set */</span></div><div class="line">    __le32  s_feature_incompat;     <span class="comment">/* incompatible feature set */</span></div><div class="line">    __le32  s_feature_ro_compat;    <span class="comment">/* readonly-compatible feature set */</span></div><div class="line">    __u8    s_uuid[<span class="number">16</span>];     <span class="comment">/* 128-bit uuid for volume */</span></div><div class="line">    <span class="keyword">char</span>    s_volume_name[<span class="number">16</span>];  <span class="comment">/* volume name */</span></div><div class="line">    <span class="keyword">char</span>    s_last_mounted[<span class="number">64</span>];     <span class="comment">/* directory where last mounted */</span></div><div class="line">    __le32  s_algorithm_usage_bitmap; <span class="comment">/* For compression */</span></div><div class="line">    __u8    s_prealloc_blocks;  <span class="comment">/* Nr of blocks to try to preallocate*/</span></div><div class="line">    __u8    s_prealloc_dir_blocks;  <span class="comment">/* Nr to preallocate for dirs */</span></div><div class="line">    __u16   s_padding1;</div><div class="line">    <span class="comment">/*</span></div><div class="line">     * Journaling support valid if EXT3_FEATURE_COMPAT_HAS_JOURNAL set.</div><div class="line">     */</div><div class="line">    __u8    s_journal_uuid[<span class="number">16</span>]; <span class="comment">/* uuid of journal superblock */</span></div><div class="line">    __u32   s_journal_inum;     <span class="comment">/* inode number of journal file */</span></div><div class="line">    __u32   s_journal_dev;      <span class="comment">/* device number of journal file */</span></div><div class="line">    __u32   s_last_orphan;      <span class="comment">/* start of list of inodes to delete */</span></div><div class="line">    __u32   s_hash_seed[<span class="number">4</span>];     <span class="comment">/* HTREE hash seed */</span></div><div class="line">    __u8    s_def_hash_version; <span class="comment">/* Default hash version to use */</span></div><div class="line">    __u8    s_reserved_char_pad;</div><div class="line">    __u16   s_reserved_word_pad;</div><div class="line">    __le32  s_default_mount_opts;</div><div class="line">    __le32  s_first_meta_bg;    <span class="comment">/* First metablock block group */</span></div><div class="line">    __u32   s_reserved[<span class="number">190</span>];    <span class="comment">/* Padding to the end of the block */</span></div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<p><img src="/images/ext2/fs.sb.png" alt="fs.sb.png"></p>
+<p>从000000开始的1KB是启动块，由于这不是一个真正的磁盘分区，启动块的内容全部为零。从000400到0007ff的1KB是超级块，可以对照着<code>dumpe2fs</code>分析。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div></pre></td><td class="code"><pre><div class="line">$ dumpe2fs ./img.1m                                                                                                                 1 </div><div class="line">dumpe2fs 1.42.9 (28-Dec-2013)</div><div class="line">Filesystem volume name:   &lt;none&gt;</div><div class="line">Last mounted on:          &lt;not available&gt;</div><div class="line">Filesystem UUID:          2b8250d9-29fa-459e-9e2d-8b9c887b860b</div><div class="line">Filesystem magic number:  0xEF53</div><div class="line">Filesystem revision #:    1 (dynamic)</div><div class="line">Filesystem features:      ext_attr resize_inode dir_index filetype sparse_super</div><div class="line">Filesystem flags:         signed_directory_hash</div><div class="line">Default mount options:    user_xattr acl</div><div class="line">Filesystem state:         not clean</div><div class="line">Errors behavior:          Continue</div><div class="line">Filesystem OS type:       Linux</div><div class="line">Inode count:              128</div><div class="line">Block count:              1024</div><div class="line">Reserved block count:     51</div><div class="line">Free blocks:              986</div><div class="line">Free inodes:              117</div><div class="line">First block:              1</div><div class="line">Block size:               1024</div><div class="line">Fragment size:            1024</div><div class="line">Reserved GDT blocks:      3</div><div class="line">Blocks per group:         8192</div><div class="line">Fragments per group:      8192</div><div class="line">Inodes per group:         128</div><div class="line">Inode blocks per group:   16</div><div class="line">Filesystem created:       Wed Oct 25 09:56:05 2017</div><div class="line">Last mount time:          Wed Oct 25 09:56:48 2017</div><div class="line">Last write time:          Wed Oct 25 09:56:48 2017</div><div class="line">Mount count:              1</div><div class="line">Maximum mount count:      -1</div><div class="line">Last checked:             Wed Oct 25 09:56:05 2017</div><div class="line">Check interval:           0 (&lt;none&gt;)</div><div class="line">Reserved blocks uid:      0 (user root)</div><div class="line">Reserved blocks gid:      0 (group root)</div><div class="line">First inode:              11</div><div class="line">Inode size:               128</div><div class="line">Default directory hash:   half_md4</div><div class="line">Directory Hash Seed:      2feeee23-e3de-4126-a60d-1d05a11b0ab3</div><div class="line">...</div></pre></td></tr></table></figure>
+<p>块大小是1024字节，1MB的分区共有1024个块，第0个块是启动块，启动块之后才算ext2文件系统的开始，因此Group 0占据第1个到第1023个块，共1023个块。块位图占一个块，共有1024×8=8192个bit，足够表示这1023个块了，因此只要一个块组就够了。默认是每8KB分配一个inode，因此1MB的分区对应128个inode，这些数据都和dumpe2fs的输出吻合。</p>
+<h2 id="GDT-Group-Descriptor-Table"><a href="#GDT-Group-Descriptor-Table" class="headerlink" title="GDT(Group Descriptor Table)"></a>GDT(Group Descriptor Table)</h2><p>由很多块组描述符组成，整个分区分成多少个块组就对应有多少个块组描述符。每个块组描述符（Group Descriptor）存储一个块组的描述信息，例如在这个块组中从哪里开始是inode表，从哪里开始是数据块，空闲的inode和数据块还有多少个等等。和超级块类似，块组描述符表在每个块组的开头也都有一份拷贝，这些信息是非常重要的，一旦超级块意外损坏就会丢失整个分区的数据，一旦块组描述符意外损坏就会丢失整个块组的数据，因此它们都有多份拷贝。通常内核只用到第0个块组中的拷贝，当执行e2fsck检查文件系统一致性时，第0个块组中的超级块和块组描述符表就会拷贝到其它块组，这样当第0个块组的开头意外损坏时就可以用其它拷贝来恢复，从而减少损失。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/*</span></div><div class="line"> * Structure of a blocks group descriptor</div><div class="line"> */</div><div class="line"><span class="keyword">struct</span> ext2_group_desc</div><div class="line">&#123;</div><div class="line">    __le32  bg_block_bitmap;        <span class="comment">/* Blocks bitmap block */</span></div><div class="line">    __le32  bg_inode_bitmap;        <span class="comment">/* Inodes bitmap block */</span></div><div class="line">    __le32  bg_inode_table;     <span class="comment">/* Inodes table block */</span></div><div class="line">    __le16  bg_free_blocks_count;   <span class="comment">/* Free blocks count */</span></div><div class="line">    __le16  bg_free_inodes_count;   <span class="comment">/* Free inodes count */</span></div><div class="line">    __le16  bg_used_dirs_count; <span class="comment">/* Directories count */</span></div><div class="line">    __le16  bg_pad;</div><div class="line">    __le32  bg_reserved[<span class="number">3</span>];</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<p><img src="/images/ext2/fs.gd.png" alt="fs.gd.png"></p>
+<p>从000800开始是块组描述符表，这个文件系统较小，只有一个块组描述符，对照着dumpe2fs的输出信息分析</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">$ dumpe2fs ./img.1m                                                                                                                 1 </div><div class="line">...</div><div class="line">Group 0: (Blocks 1-1023)</div><div class="line">  主 superblock at 1, Group descriptors at 2-2</div><div class="line">  保留的GDT块位于 3-5</div><div class="line">  Block bitmap at 6 (+5), Inode bitmap at 7 (+6)</div><div class="line">  Inode表位于 8-23 (+7)</div><div class="line">  986 free blocks, 117 free inodes, 2 directories</div><div class="line">  可用块数: 38-1023</div><div class="line">  可用inode数: 12-128k</div><div class="line">...</div></pre></td></tr></table></figure>
+<p>整个文件系统是1MB，每个块是1KB，应该有1024个块，除去启动块还有1023个块，分别编号为1-1023，它们全都属于Group 0。其中，Block 1是超级块，接下来的块组描述符指出，块位图是Block 6，因此中间的Block 2-5是块组描述符表，其中Block 3-5保留未用。块组描述符还指出，inode位图是Block 7，inode表是从Block 8开始的，那么inode表到哪个块结束呢？由于超级块中指出每个块组有128个inode，每个inode的大小是128字节，因此共占16个块，inode表的范围是Block 8-23。从Block 24开始就是数据块了。块组描述符中指出，空闲的数据块有986个，由于文件系统是新创建的，空闲块是连续的Block 38-1023，用掉了前面的Block 24-37</p>
+<h2 id="Block-Bitmap"><a href="#Block-Bitmap" class="headerlink" title="Block Bitmap"></a>Block Bitmap</h2><p>一个块组中的块是这样利用的：数据块（Data Block）存储所有文件的数据，比如某个分区的块大小是1024字节，某个文件是2049字节，那么就需要三个数据块来存，即使第三个块只存了一个字节也需要占用一个整块；超级块、块组描述符表、块位图、inode位图、inode表这几部分存储该块组的描述信息。那么如何知道哪些块已经用来存储文件数据或其它描述信息，哪些块仍然空闲可用呢？块位图就是用来描述整个块组中哪些块已用哪些块空闲的，它本身占一个块，其中的每个bit代表本块组中的一个块，这个bit为1表示该块已用，这个bit为0表示该块空闲可用。<br>为什么用df命令统计整个磁盘的已用空间非常快呢？因为只需要查看每个块组的块位图即可，而不需要搜遍整个分区。相反，用du命令查看一个较大目录的已用空间就非常慢，因为不可避免地要搜遍整个目录的所有文件。<br>与此相联系的另一个问题是：在格式化一个分区时究竟会划出多少个块组呢？主要的限制在于块位图本身必须只占一个块。用mke2fs格式化时默认块大小是1024字节，可以用-b参数指定块大小，现在设块大小指定为b字节，那么一个块可以有8b个bit，这样大小的一个块位图就可以表示8b个块的占用情况，因此一个块组最多可以有8b个块，如果整个分区有s个块，那么就可以有s/(8b)个块组。格式化时可以用-g参数指定一个块组有多少个块，但是通常不需要手动指定，mke2fs工具会计算出最优的数值。</p>
+<p><img src="/images/ext2/fs_blk_bmp.png" alt="fs_blk_bmp.png"></p>
+<p>从块位图中可以看出，前37位（前4个字节加最后一个字节的低5位）都是1，，就表示Block 1-37已用。在块位图中，Block 38-1023对应的位都是0（一直到001870那一行最后一个字节的低7位），接下来的位已经超出了文件系统的空间，不管是0还是1都没有意义。可见，块位图每个字节中的位应该按从低位到高位的顺序来看。以后随着文件系统的使用和添加删除文件，块位图中的1就变得不连续了。</p>
+<h2 id="Inode-Bitmap"><a href="#Inode-Bitmap" class="headerlink" title="Inode Bitmap"></a>Inode Bitmap</h2><p>和块位图类似，本身占一个块，其中每个bit表示一个inode是否空闲可用。</p>
+<p><img src="/images/ext2/fs_inode_bmp.png" alt="fs_inode_bmp.png"></p>
+<p>块组描述符指出，空闲的inode有117个，由于文件系统是新创建的，空闲的inode也是连续的，inode编号从1到128，空闲的inode编号从12到128。从inode位图可以看出，前11位都是1，表示前11个inode已用。以后随着文件系统的使用和添加删除文件，inode位图中的1就变得不连续了。001c00这一行的128位就表示了所有inode，因此下面的行不管是0还是1都没有意义。已用的11个inode中，前10个inode是被ext2文件系统保留的，其中第2个inode是根目录，第11个inode是lost+found目录，块组描述符也指出该组有两个目录，就是根目录和lost+found。</p>
+<h2 id="Inode-Table"><a href="#Inode-Table" class="headerlink" title="Inode Table"></a>Inode Table</h2><p>一个文件除了数据需要存储之外，一些描述信息也需要存储，例如文件类型（常规、目录、符号链接等），权限，文件大小，创建/修改/访问时间等，也就是ls -l命令看到的那些信息，这些信息存在inode中而不是数据块中。每个文件都有一个inode，一个块组中的所有inode组成了inode表。<br>inode表占多少个块在格式化时就要决定并写入块组描述符中，mke2fs格式化工具的默认策略是一个块组有多少个8KB就分配多少个inode。由于数据块占了整个块组的绝大部分，也可以近似认为数据块有多少个8KB就分配多少个inode，换句话说，如果平均每个文件的大小是8KB，当分区存满的时候inode表会得到比较充分的利用，数据块也不浪费。如果这个分区存的都是很大的文件（比如电影），则数据块用完的时候inode会有一些浪费，如果这个分区存的都是很小的文件（比如源代码），则有可能数据块还没用完inode就已经用完了，数据块可能有很大的浪费。如果用户在格式化时能够对这个分区以后要存储的文件大小做一个预测，也可以用mke2fs的-i参数手动指定每多少个字节分配一个inode。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/*</span></div><div class="line"> * Structure of an inode on the disk</div><div class="line"> */</div><div class="line"><span class="keyword">struct</span> ext2_inode &#123;</div><div class="line">    __le16  i_mode;     <span class="comment">/* File mode */</span></div><div class="line">    __le16  i_uid;      <span class="comment">/* Low 16 bits of Owner Uid */</span></div><div class="line">    __le32  i_size;     <span class="comment">/* Size in bytes */</span></div><div class="line">    __le32  i_atime;    <span class="comment">/* Access time */</span></div><div class="line">    __le32  i_ctime;    <span class="comment">/* Creation time */</span></div><div class="line">    __le32  i_mtime;    <span class="comment">/* Modification time */</span></div><div class="line">    __le32  i_dtime;    <span class="comment">/* Deletion Time */</span></div><div class="line">    __le16  i_gid;      <span class="comment">/* Low 16 bits of Group Id */</span></div><div class="line">    __le16  i_links_count;  <span class="comment">/* Links count */</span></div><div class="line">    __le32  i_blocks;   <span class="comment">/* Blocks count */</span></div><div class="line">    __le32  i_flags;    <span class="comment">/* File flags */</span></div><div class="line">    <span class="keyword">union</span> &#123;</div><div class="line">        <span class="keyword">struct</span> &#123;</div><div class="line">            __le32  l_i_reserved1;</div><div class="line">        &#125; linux1;</div><div class="line">        <span class="keyword">struct</span> &#123;</div><div class="line">            __le32  h_i_translator;</div><div class="line">        &#125; hurd1;</div><div class="line">        <span class="keyword">struct</span> &#123;</div><div class="line">            __le32  m_i_reserved1;</div><div class="line">        &#125; masix1;</div><div class="line">    &#125; osd1;             <span class="comment">/* OS dependent 1 */</span></div><div class="line">    __le32  i_block[EXT2_N_BLOCKS];<span class="comment">/* Pointers to blocks */</span></div><div class="line">    __le32  i_generation;   <span class="comment">/* File version (for NFS) */</span></div><div class="line">    __le32  i_file_acl; <span class="comment">/* File ACL */</span></div><div class="line">    __le32  i_dir_acl;  <span class="comment">/* Directory ACL */</span></div><div class="line">    __le32  i_faddr;    <span class="comment">/* Fragment address */</span></div><div class="line">    <span class="keyword">union</span> &#123;</div><div class="line">        <span class="keyword">struct</span> &#123;</div><div class="line">            __u8    l_i_frag;   <span class="comment">/* Fragment number */</span></div><div class="line">            __u8    l_i_fsize;  <span class="comment">/* Fragment size */</span></div><div class="line">            __u16   i_pad1;</div><div class="line">            __le16  l_i_uid_high;   <span class="comment">/* these 2 fields    */</span></div><div class="line">            __le16  l_i_gid_high;   <span class="comment">/* were reserved2[0] */</span></div><div class="line">            __u32   l_i_reserved2;</div><div class="line">        &#125; linux2;</div><div class="line">        <span class="keyword">struct</span> &#123;</div><div class="line">            __u8    h_i_frag;   <span class="comment">/* Fragment number */</span></div><div class="line">            __u8    h_i_fsize;  <span class="comment">/* Fragment size */</span></div><div class="line">            __le16  h_i_mode_high;</div><div class="line">            __le16  h_i_uid_high;</div><div class="line">            __le16  h_i_gid_high;</div><div class="line">            __le32  h_i_author;</div><div class="line">        &#125; hurd2;</div><div class="line">        <span class="keyword">struct</span> &#123;</div><div class="line">            __u8    m_i_frag;   <span class="comment">/* Fragment number */</span></div><div class="line">            __u8    m_i_fsize;  <span class="comment">/* Fragment size */</span></div><div class="line">            __u16   m_pad1;</div><div class="line">            __u32   m_i_reserved2[<span class="number">2</span>];</div><div class="line">        &#125; masix2;</div><div class="line">    &#125; osd2;             <span class="comment">/* OS dependent 2 */</span></div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<p>根目录inode信息：<br><img src="/images/ext2/fs.rootinode.png" alt="fs.rootinode.png"></p>
+<p>st_mode以八进制表示，包含了文件类型和文件权限，最高位的4表示文件类型为目录（各种文件类型的编码详见stat(2)），低位的755表示权限。Size是1024，说明根目录现在只有一个数据块。Links为3表示根目录有三个硬链接，分别是根目录下的.和..，以及lost+found子目录下的..。注意，虽然我们通常用/表示根目录，但是并没有名为/的硬链接，事实上，/是路径分隔符，不能在文件名中出现。这里的Blockcount是以512字节为一个块来数的，并非格式化文件系统时所指定的块大小，磁盘的最小读写单位称为扇区（Sector），通常是512字节，所以Blockcount是磁盘的物理块数量，而非分区的逻辑块数量。根目录数据块的位置由上图中的Blocks[0]指出，也就是第24个块，它在文件系统中的位置是24×0x400=0x6000</p>
+<p>探索文件系统还有一个很有用的工具debugfs，它提供一个命令行界面，可以对文件系统做各种操作，例如查看信息、恢复数据、修正文件系统中的错误。使用<code>debugfs ./img.1m</code>打开文件系统，使用<code>stat ／</code>命令查看根目录inode信息</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">Inode: 2   Type: directory    Mode:  0755   Flags: 0x0</div><div class="line">Generation: 0    Version: 0x00000000</div><div class="line">User:     0   Group:     0   Size: 1024</div><div class="line">File ACL: 0    Directory ACL: 0</div><div class="line">Links: 3   Blockcount: 2</div><div class="line">Fragment:  Address: 0    Number: 0    Size: 0</div><div class="line">ctime: 0x59efef35 -- Wed Oct 25 09:56:05 2017</div><div class="line">atime: 0x59efef63 -- Wed Oct 25 09:56:51 2017</div><div class="line">mtime: 0x59efef35 -- Wed Oct 25 09:56:05 2017</div><div class="line">BLOCKS:</div><div class="line">(0):24</div><div class="line">TOTAL: 1</div></pre></td></tr></table></figure>
+<h3 id="数据块寻址"><a href="#数据块寻址" class="headerlink" title="数据块寻址"></a>数据块寻址</h3><p>通过<code>__le32  i_block[EXT2_N_BLOCKS]</code>来完成数据块的寻址。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/*</span></div><div class="line"> * Constants relative to the data blocks</div><div class="line"> */</div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> EXT2_NDIR_BLOCKS        12</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> EXT2_IND_BLOCK          EXT2_NDIR_BLOCKS</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> EXT2_DIND_BLOCK         (EXT2_IND_BLOCK + 1)</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> EXT2_TIND_BLOCK         (EXT2_DIND_BLOCK + 1)</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> EXT2_N_BLOCKS           (EXT2_TIND_BLOCK + 1)</span></div></pre></td></tr></table></figure>
+<ul>
+<li><code>EXT2_NDIR_BLOCKS</code><br>  <code>i_block</code>前12项属于直接寻址，直接存储数据块的”block id”。所以总共可记录 12 笔记录，总额大小为12*1k＝12k</li>
+<li><code>EXT2_IND_BLOCK</code><br>  <code>i_block</code>第13项为一级间接寻址，每笔 block 号码的记录会花去 4bytes，因此 1K 的大小能够记录 256 笔记录，因此一个间接可以记录的文件大小为(1k/4)*1K=256k</li>
+<li><code>EXT2_DIND_BLOCK</code><br>  <code>i_block</code>第14项为二级间接寻址，第一层 block 会指定 256 个第二层，每个第二层可以指定 256 个号码，因此总额大小为256<em>256</em>1k</li>
+<li><code>EXT2_TIND_BLOCK</code><br>  <code>i_block</code>第15项为三级间接寻址，第一层 block 会指定 256 个第二层，每个第二层可以指定 256 个第三层，每个第三层可以指定 256 个号码，因此总额大小为256<em>256</em>256*1k</li>
+</ul>
+<p><strong><em> 总容量为直接寻址＋一级间接＋二级间接＋三级间接＝16.06GB </em></strong></p>
+<p><img src="/images/ext2/fs.datablockaddr.png" alt="fs.datablockaddr.png"></p>
+<h2 id="Blocks"><a href="#Blocks" class="headerlink" title="Blocks"></a>Blocks</h2><ul>
+<li>对于常规文件，文件的数据存储在数据块中。</li>
+<li>对于目录，该目录下的所有文件名和目录名存储在数据块中，注意文件名保存在它所在目录的数据块中，除文件名之外，ls -l命令看到的其它信息都保存在该文件的inode中。注意这个概念：目录也是一种文件，是一种特殊类型的文件。</li>
+<li>对于符号链接，如果目标路径名较短则直接保存在inode中以便更快地查找，如果目标路径名较长则分配一个数据块来保存。</li>
+<li>设备文件、FIFO和socket等特殊文件没有数据块，设备文件的主设备号和次设备号保存在inode中。</li>
+</ul>
+<p>根目录的数据结构<br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> ext2_dir_entry_2 &#123;</div><div class="line">    __le32  inode;          <span class="comment">/* Inode number */</span></div><div class="line">    __le16  rec_len;        <span class="comment">/* Directory entry length */</span></div><div class="line">    __u8    name_len;       <span class="comment">/* Name length */</span></div><div class="line">    __u8    file_type;</div><div class="line">    <span class="keyword">char</span>    name[];         <span class="comment">/* File name, up to EXT2_NAME_LEN */</span></div><div class="line">&#125;;</div></pre></td></tr></table></figure></p>
+<p>根目录的数据块<br><img src="/images/ext2/fs.datablock.png" alt="fs.datablock.png"></p>
+<p>根据上文中根目录inode信息找到根目录数据块006000地址，目录的数据块由许多不定长的记录组成，每条记录描述该目录下的一个文件，在上图中用框表示。第一条记录描述inode号为2的文件，也就是根目录本身，该记录的总长度为12字节，其中文件名的长度为1字节，文件类型为2（见下表，注意此处的文件类型编码和st_mode不一致），文件名是<code>.</code>。第二条记录也是描述inode号为2的文件（根目录），该记录总长度为12字节，其中文件名的长度为2字节，文件类型为2，文件名字符串是..。第三条记录一直延续到该数据块的末尾，描述inode号为11的文件（lost+found目录），该记录的总长度为1000字节（和前面两条记录加起来是1024字节），文件类型为2，文件名字符串是lost+found，后面全是0字节。如果要在根目录下创建新的文件，可以把第三条记录截短，在原来的0字节处创建新的记录。如果该目录下的文件名太多，一个数据块不够用，则会分配新的数据块，块编号会填充到inode的Blocks[1]字段。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">编码</th>
+<th style="text-align:left">文件类型(file type)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">0</td>
+<td style="text-align:left">Unknown</td>
+</tr>
+<tr>
+<td style="text-align:center">1</td>
+<td style="text-align:left">Regular File</td>
+</tr>
+<tr>
+<td style="text-align:center">2</td>
+<td style="text-align:left">Directory</td>
+</tr>
+<tr>
+<td style="text-align:center">3</td>
+<td style="text-align:left">Character device</td>
+</tr>
+<tr>
+<td style="text-align:center">4</td>
+<td style="text-align:left">Block device</td>
+</tr>
+<tr>
+<td style="text-align:center">5</td>
+<td style="text-align:left">Named pipe</td>
+</tr>
+<tr>
+<td style="text-align:center">6</td>
+<td style="text-align:left">Socket</td>
+</tr>
+<tr>
+<td style="text-align:center">7</td>
+<td style="text-align:left">Symbolic link</td>
+</tr>
+</tbody>
+</table>
+<h1 id="参数"><a href="#参数" class="headerlink" title="参数"></a>参数</h1><h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a href="http://docs.linuxtone.org/ebooks/C&amp;CPP/c/ch29s02.html" target="_blank" rel="external">ext2文件系统</a></li>
+<li><a href="http://www.cnblogs.com/ggjucheng/archive/2012/08/22/2651641.html#ext2_filesystem" target="_blank" rel="external">EXT2 文件系统</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/10/02/language/python/python-exception/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1676,11 +2073,21 @@
 </tbody>
 </table>
 <p>内核给每个安装的特殊文件系统分配一个虚拟的块设备，让其主设备号为0，次设备号有任意值（每个特殊的文件系统有不同的值）</p>
-<h2 id="文件系统类型注册"><a href="#文件系统类型注册" class="headerlink" title="文件系统类型注册"></a>文件系统类型注册</h2><p>文件系统的源码要么包含在内核映像中，要么作为一个模块被动态装入。每个注册的文件系统都用一个类型为<code>file_system_type</code>的对象来表示。<br>file_system_type (<code>include/linux/fs.h</code>)<br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> file_system_type &#123;</div><div class="line">    <span class="keyword">const</span> <span class="keyword">char</span> *name;       <span class="comment">/* 文件系统名称 */</span></div><div class="line">    <span class="keyword">int</span> fs_flags;           <span class="comment">/* 文件系统类型标志 */</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> FS_REQUIRES_DEV     1</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> FS_BINARY_MOUNTDATA 2</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> FS_HAS_SUBTYPE      4</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> FS_USERNS_MOUNT     8   <span class="comment">/* Can be mounted by userns root */</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> FS_USERNS_DEV_MOUNT 16 <span class="comment">/* A userns mount does not imply MNT_NODEV */</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> FS_RENAME_DOES_D_MOVE   32768   <span class="comment">/* FS will handle d_move() during rename() internally. */</span></span></div><div class="line">    <span class="keyword">struct</span> dentry *(*mount) (<span class="keyword">struct</span> file_system_type *, <span class="keyword">int</span>, <span class="keyword">const</span> <span class="keyword">char</span> *, <span class="keyword">void</span> *);</div><div class="line">    <span class="keyword">void</span> (*kill_sb) (<span class="keyword">struct</span> super_block *);     <span class="comment">/* 删除超级块的方法 */</span></div><div class="line">    <span class="keyword">struct</span> <span class="keyword">module</span> *owner;                       <span class="comment">/* 指向实现文件系统的模块指针 */</span></div><div class="line">    <span class="keyword">struct</span> file_system_type * next;             <span class="comment">/* 指向文件系统类型链表下一个元素的指针 */</span></div><div class="line">    <span class="keyword">struct</span> hlist_head fs_supers;                <span class="comment">/* 具有相同文件系统类型的超级块对象链表的头*/</span></div><div class="line"></div><div class="line">    <span class="keyword">struct</span> lock_class_key s_lock_key;</div><div class="line">    <span class="keyword">struct</span> lock_class_key s_umount_key;</div><div class="line">    <span class="keyword">struct</span> lock_class_key s_vfs_rename_key;</div><div class="line">    <span class="keyword">struct</span> lock_class_key s_writers_key[SB_FREEZE_LEVELS];</div><div class="line"></div><div class="line">    <span class="keyword">struct</span> lock_class_key i_lock_key;</div><div class="line">    <span class="keyword">struct</span> lock_class_key i_mutex_key;</div><div class="line">    <span class="keyword">struct</span> lock_class_key i_mutex_dir_key;</div><div class="line">&#125;;</div></pre></td></tr></table></figure></p>
+<h2 id="文件系统类型注册"><a href="#文件系统类型注册" class="headerlink" title="文件系统类型注册"></a>文件系统类型注册</h2><p>文件系统的源码要么包含在内核映像中，要么作为一个模块被动态装入。每个注册的文件系统都用一个类型为<code>file_system_type</code>的对象来表示。<br>file_system_type (<code>include/linux/fs.h</code>)<br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> file_system_type &#123;</div><div class="line">    <span class="keyword">const</span> <span class="keyword">char</span> *name;       <span class="comment">/* 文件系统名称 */</span></div><div class="line">    <span class="keyword">int</span> fs_flags;           <span class="comment">/* 文件系统类型标志 */</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> FS_REQUIRES_DEV     1   <span class="comment">/* 文件系统必须位于物理磁盘设备上 */</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> FS_BINARY_MOUNTDATA 2   <span class="comment">/* 文件系统使用的二进制安装数据 */</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> FS_HAS_SUBTYPE      4</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> FS_USERNS_MOUNT     8   <span class="comment">/* Can be mounted by userns root */</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> FS_USERNS_DEV_MOUNT 16 <span class="comment">/* A userns mount does not imply MNT_NODEV */</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> FS_RENAME_DOES_D_MOVE   32768   <span class="comment">/* FS will handle d_move() during rename() internally. */</span></span></div><div class="line">    <span class="keyword">struct</span> dentry *(*mount) (<span class="keyword">struct</span> file_system_type *, <span class="keyword">int</span>, <span class="keyword">const</span> <span class="keyword">char</span> *, <span class="keyword">void</span> *);</div><div class="line">    <span class="keyword">void</span> (*kill_sb) (<span class="keyword">struct</span> super_block *);     <span class="comment">/* 删除超级块的方法 */</span></div><div class="line">    <span class="keyword">struct</span> <span class="keyword">module</span> *owner;                       <span class="comment">/* 指向实现文件系统的模块指针 */</span></div><div class="line">    <span class="keyword">struct</span> file_system_type * next;             <span class="comment">/* 指向文件系统类型链表下一个元素的指针 */</span></div><div class="line">    <span class="keyword">struct</span> hlist_head fs_supers;                <span class="comment">/* 具有相同文件系统类型的超级块对象链表的头*/</span></div><div class="line"></div><div class="line">    <span class="keyword">struct</span> lock_class_key s_lock_key;</div><div class="line">    <span class="keyword">struct</span> lock_class_key s_umount_key;</div><div class="line">    <span class="keyword">struct</span> lock_class_key s_vfs_rename_key;</div><div class="line">    <span class="keyword">struct</span> lock_class_key s_writers_key[SB_FREEZE_LEVELS];</div><div class="line"></div><div class="line">    <span class="keyword">struct</span> lock_class_key i_lock_key;</div><div class="line">    <span class="keyword">struct</span> lock_class_key i_mutex_key;</div><div class="line">    <span class="keyword">struct</span> lock_class_key i_mutex_dir_key;</div><div class="line">&#125;;</div></pre></td></tr></table></figure></p>
 <p>所有文件系统类型的对象都插入道一个单向链表中，由变量<code>file_systems</code>指向链表的第一个元素，<code>file_systems-&gt;next</code>指向链表的下一个元素。</p>
 <p><code>int register_filesystem(struct file_system_type * fs)</code>[fs/filesystems.c]<br>注册一个新的文件系统，传入要注册文件系统的结构体，在<code>file_systems</code>列表中查找受否与传入<code>fs-&gt;name</code>同名的文件系统，如果存在则返回找到的fs，若不存在将传入文件系统<code>fs</code>加入<code>file_systems</code>列表</p>
 <p>对比一下<code>ramfs_fs_type</code>和<code>root_fs_type</code><br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">static</span> <span class="keyword">struct</span> file_system_type ramfs_fs_type = &#123;</div><div class="line">    .name       = <span class="string">"ramfs"</span>,</div><div class="line">    .mount      = ramfs_mount,</div><div class="line">    .kill_sb    = ramfs_kill_sb,</div><div class="line">    .fs_flags   = FS_USERNS_MOUNT,</div><div class="line">&#125;;</div><div class="line"><span class="keyword">static</span> <span class="keyword">struct</span> file_system_type rootfs_fs_type = &#123;</div><div class="line">    .name       = <span class="string">"rootfs"</span>,</div><div class="line">    .mount      = rootfs_mount,</div><div class="line">    .kill_sb    = kill_litter_super,</div><div class="line">&#125;;</div></pre></td></tr></table></figure></p>
 <p>发现<code>fs_flags = FS_USERNS_MOUNT</code>，这个flag似乎想告诉我们，ramfs是挂载到用户命名空间的，言外之意rootfs不是挂载到用户空间的，那便是内核空间喽。</p>
+<h2 id="文件系统处理"><a href="#文件系统处理" class="headerlink" title="文件系统处理"></a>文件系统处理</h2><ul>
+<li>每个文件系统都有自己的根目录</li>
+<li>已安装文件系统的根目录隐藏了父文件系统的安装点目录原来的内容</li>
+</ul>
+<h2 id="命名空间"><a href="#命名空间" class="headerlink" title="命名空间"></a>命名空间</h2><p>通常进程共享一个命名空间，位于系统的根文件系统且被init进程使用的已安装文件系统树。如果<code>clone()</code>系统调用以<code>CLONE_NEWNS</code>标志创建一个新进程，那么新进程将获取一个新的命名空间，新进程再创建的新新进程将继承新命名空间。</p>
+<ul>
+<li>fork<br>  fork创造的子进程是父进程的完整副本，复制了父亲进程的资源，包括内存的内容task_struct内容</li>
+<li>vfork<br>  vfork创建的子进程与父进程共享数据段,而且由vfork()创建的子进程将先于父进程运行</li>
+<li>clone<br>  有选择性的继承父进程的资源，可以选择像vfork一样和父进程共享一个虚存空间，可以不和父进程共享，甚至可以选择创造出来的进程和父进程不再是父子关系，而是兄弟关系。灵活性更强。</li>
+</ul>
 <h1 id="KeyPoint"><a href="#KeyPoint" class="headerlink" title="KeyPoint"></a>KeyPoint</h1><h2 id="启动流程"><a href="#启动流程" class="headerlink" title="启动流程"></a>启动流程</h2><ol>
 <li>start_kernel[init/main.c]</li>
 <li>vfs_caches_init(totalram_pages)[fs/dcache.c]</li>
@@ -1706,6 +2113,7 @@
 <li><a href="https://segmentfault.com/a/1190000009472553#articleHeader9" target="_blank" rel="external">vfs基础</a></li>
 <li><a href="http://blog.chinaunix.net/xmlrpc.php?r=blog/article&amp;uid=28541347&amp;id=4138031" target="_blank" rel="external">Linux文件系统（三）——进程与VFS的关系</a></li>
 <li><a href="http://blog.chinaunix.net/xmlrpc.php?r=blog/article&amp;uid=28541347&amp;id=4138028" target="_blank" rel="external">linux文件系统（二）——VFS四个主要对象的实现</a></li>
+<li><a href="http://blog.csdn.net/gatieme/article/details/51417488" target="_blank" rel="external">Linux中fork，vfork和clone详解（区别与联系）</a></li>
 </ul>
 
           
@@ -2290,363 +2698,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/09/04/bigdata/hadoop/hive-load-from-hbase/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/09/04/bigdata/hadoop/hive-load-from-hbase/" itemprop="url">从hbase向hive导入数据</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-09-04T09:51:00+08:00">
-                2017-09-04
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Big-Data/" itemprop="url" rel="index">
-                    <span itemprop="name">Big-Data</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p><strong> 纯转载 </strong></p>
-<p>当我们用HBase 存储实时数据的时候， 如果要做一些数据分析方面的操作， 就比较困难了， 要写MapReduce Job。 Hive 主要是用来做数据分析的数据仓库，支持标准SQL 查询， 做数据分析很是方便，于是便很自然地想到用Hive来载入HBase的数据做分析， 但是很奇怪地是， 上网查了一下， 只看到以下两种情况：</p>
-<ol>
-<li>如何用Hive 往HBase里面插入大量的数据。</li>
-<li>Hive 与HBase集成， 直接从Hive里面连HBase的数据库进行查询。参考链接： <a href="https://cwiki.apache.org/confluence/display/Hive/HBaseIntegration" target="_blank" rel="external">https://cwiki.apache.org/confluence/display/Hive/HBaseIntegration</a></li>
-</ol>
-<p>选项1是我们需求的逆操作， 直接忽略， 选项2,  虽然没有做专门的Benchmark, 但总感觉直接对HBase进行查询操作不怎么靠谱， 如果我们要频繁做很多类型的数据分析， 那HBase的压力一定会倍增。<br>难道没有把HBase里面的数据直接导入到Hive当中的工具或者方法吗？<br>找了一会， 似乎没找到， 那么只好自己想一个解决方案了。</p>
-<p>思路：<br>利用选项2,  先打通Hive对HBase指定表的全表访问， 再建立一个新的空表， 把查询出来的数据全部导入到新表当中， 以后的所有数据分析操作在新表中完成。<br>说干就干， 让我们试一个简单的例子。</p>
-<ul>
-<li><p>首先在HBase里面建一个表， 名为 student， 包含 id 和 name 两个column</p>
-  <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">hbase shell</div><div class="line">create &apos;student&apos;, &apos;id&apos;, &apos;name&apos;</div></pre></td></tr></table></figure>
-</li>
-<li><p>向表中插入两行数据</p>
-  <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">put &apos;student&apos;, &apos;row1&apos;, &apos;id:val&apos;, &apos;1&apos;</div><div class="line">put &apos;student&apos;, &apos;row1&apos;, &apos;name:val&apos;, &apos;Tony&apos;</div><div class="line">put &apos;student&apos;, &apos;row2&apos;, &apos;id:val&apos;, &apos;2&apos;</div><div class="line">put &apos;student&apos;, &apos;row2&apos;, &apos;name:val&apos;, &apos;Mike&apos;</div></pre></td></tr></table></figure>
-<p>  注意：在插入数据的时候一定要指定column (如id:val, name:val) 直接使用column family (如 id, name) 去存数据会导致后面Hive 建表的时候有问题。</p>
-</li>
-<li><p>扫描此表， 确定数据已经插入</p>
-  <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">scan &apos;student&apos;</div><div class="line">ROW                               COLUMN+CELL                                                                                     </div><div class="line"> row1                             column=id:val, timestamp=1384939342989, value=1                                                 </div><div class="line"> row1                             column=name:val, timestamp=1384939365511, value=Tony                                            </div><div class="line"> row2                             column=id:val, timestamp=1384939351444, value=2                                                 </div><div class="line"> row2                             column=name:val, timestamp=1384939379245, value=Mike</div></pre></td></tr></table></figure>
-</li>
-<li><p>从Hive建立可以访问HBase的外部表</p>
-  <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">CREATE EXTERNAL TABLE student(key string, id int, name string) </div><div class="line">STORED BY &apos;org.apache.hadoop.hive.hbase.HBaseStorageHandler&apos;</div><div class="line">WITH SERDEPROPERTIES (&quot;hbase.columns.mapping&quot; = &quot;id:val,name:val&quot;)</div><div class="line">TBLPROPERTIES(&quot;hbase.table.name&quot; = &quot;student&quot;);</div></pre></td></tr></table></figure>
-</li>
-<li><p>Hive中建立一个新的空表</p>
-  <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">hive&gt; select * from student;</div><div class="line">OK</div><div class="line">row1    1    Tony</div><div class="line">row2    2    Mike</div></pre></td></tr></table></figure>
-<p>  但是此时这个表实际上是一个虚拟表， 实际的数据还在HBase中。 下面需要在Hive中另建一个结构一样的空表， 再把数据导出来。</p>
-</li>
-<li><p>Hive中建立一个新的空表</p>
-  <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">CREATE TABLE new_student (</div><div class="line">  key string,</div><div class="line">  id INT,</div><div class="line">  name STRING)</div><div class="line">ROW FORMAT DELIMITED</div><div class="line">FIELDS TERMINATED BY &apos;\t&apos;</div><div class="line">STORED AS TEXTFILE;</div></pre></td></tr></table></figure>
-</li>
-<li><p>将数据从HBase中导入到新的Hive表中</p>
-  <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">hive&gt; INSERT OVERWRITE TABLE new_student SELECT * FROM student;</div><div class="line">hive&gt; select * from new_student;</div><div class="line">OK</div><div class="line">row1    1    Tony</div><div class="line">row2    2    Mike</div></pre></td></tr></table></figure>
-</li>
-</ul>
-<p>至此大功告成！<br>以后所有复杂的数据查询和数据分析都可以在new_student表中完成。</p>
-<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a href="http://www.cnblogs.com/npumenglei/p/how_to_use_hive_load_data_from_hbase.html" target="_blank" rel="external">Hive如何加载和导入HBase的数据</a></li>
-<li><a href="http://blog.csdn.net/lifuxiangcaohui/article/details/40588929" target="_blank" rel="external">Hive总结（七）Hive四种数据导入方式</a></li>
-</ul>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/08/31/apple/xhyve-usage/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/08/31/apple/xhyve-usage/" itemprop="url">xhyve使用</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-08-31T10:38:30+08:00">
-                2017-08-31
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/apple/" itemprop="url" rel="index">
-                    <span itemprop="name">apple</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p><img src="/images/xhyve/xhyve_logo.png" alt="xhyve_logo"></p>
-<p>FreeBSD 下的虚拟技术 bhyve (The BSD Hypervisor) 是去年1月份正式发布的，包含在了 FreeBSD 10.0 发行版中。今天要玩的这个 xhyve 是基于 bhyve 的 Mac OS X 移植版本，也就是说我们想在 Mac 上运行 Linux 的话除了 VirtualBox, VMware Fusion 外，现在有了第三种选择。</p>
-<p>xhyve is a lightweight virtualization solution for OS X that is capable of running Linux. It is a port of FreeBSD’s bhyve, a KVM+QEMU alternative written by Peter Grehan and Neel Natu.</p>
-<p>特点：</p>
-<ul>
-<li>super lightweight, only 230 KB in size</li>
-<li>completely standalone, no dependencies</li>
-<li>the only BSD-licensed virtualizer on OS X</li>
-<li>does not require a kernel extension (bhyve’s kernel code was ported to user mode code calling into Hypervisor.framework)</li>
-<li>multi-CPU support</li>
-<li>networking support</li>
-<li>can run off-the-shelf Linux distributions (and could be extended to run other operating systems)</li>
-</ul>
-<p>xhyve may make a good solution for running Docker on your Mac, for instance.</p>
-<h1 id="install"><a href="#install" class="headerlink" title="install"></a>install</h1><p>search xhyver:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">$ brew info xhyve</div><div class="line">xhyve: stable 0.2.0 (bottled), HEAD</div><div class="line">xhyve, lightweight macOS virtualization solution based on FreeBSD&apos;s bhyve</div><div class="line">https://github.com/mist64/xhyve</div><div class="line">/usr/local/Cellar/xhyve/HEAD-1f1dbe3 (11 files, 11.2MB) *</div><div class="line">  Built from source on 2017-08-24 at 12:12:21</div><div class="line">From: https://github.com/Homebrew/homebrew-core/blob/master/Formula/xhyve.rb</div><div class="line">==&gt; Requirements</div><div class="line">Required: macOS &gt;= 10.10 ✔</div></pre></td></tr></table></figure></p>
-<p>install:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ brew install xhyve</div></pre></td></tr></table></figure></p>
-<h1 id="Ubuntu-16-04-VM"><a href="#Ubuntu-16-04-VM" class="headerlink" title="Ubuntu 16.04 VM"></a>Ubuntu 16.04 VM</h1><p>下载<code>ubuntu-16.04.1-server-amd64.iso</code>，装载该iso，然后将其中的<code>vmlinuz</code>和<code>initrd.gz</code>复制出来，以供xhyve使用。</p>
-<p>在mac系统下直接装载ubuntu的iso会出错<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ hdiutil attach ./ubuntu-16.04.1-server-amd64.iso</div><div class="line">hdiutil: attach failed - 无可装载的文件系统</div></pre></td></tr></table></figure></p>
-<p>所以需要制作一个新的iso，新的iso文件前预留<code>2KB</code>的空间<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">$ dd if=/dev/zero bs=2k count=1 of=./tmp.iso</div><div class="line">$ dd if=./ubuntu-16.04.1-server-amd64.iso bs=2k skip=1 &gt;&gt; ./tmp.iso</div><div class="line">$ hdiutil attach ./tmp.iso</div><div class="line"></div><div class="line">$ cp /Volumes/Ubuntu-Server\ 16/install/vmlinuz .</div><div class="line">$ cp /Volumes/Ubuntu-Server\ 16/install/initrd.gz .</div></pre></td></tr></table></figure></p>
-<p>创建一个磁盘映像文件<code>hdd.img</code>，当作虚拟机的虚拟硬盘</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ dd if=/dev/zero of=hdd.img bs=1g count=8</div></pre></td></tr></table></figure>
-<p>编写VM创建脚本<code>mk_xhyve.sh</code><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">#!/bin/bash</div><div class="line"></div><div class="line">KERNEL=&quot;vmlinuz&quot;</div><div class="line">INITRD=&quot;initrd.gz&quot;</div><div class="line">CMDLINE=&quot;earlyprintk=serial console=ttyS0 acpi=off&quot;</div><div class="line"></div><div class="line">MEM=&quot;-m 1G&quot;</div><div class="line">#SMP=&quot;-c 2&quot;</div><div class="line">NET=&quot;-s 2:0,virtio-net&quot;</div><div class="line">IMG_CD=&quot;-s 3,ahci-cd,./ubuntu-16.04.1-server-amd64.iso&quot;</div><div class="line">IMG_HDD=&quot;-s 4,virtio-blk,./hdd.img&quot;</div><div class="line">PCI_DEV=&quot;-s 0:0,hostbridge -s 31,lpc&quot;</div><div class="line">LPC_DEV=&quot;-l com1,stdio&quot;</div><div class="line"></div><div class="line">xhyve $MEM $SMP $PCI_DEV $LPC_DEV $NET $IMG_CD $IMG_HDD -f kexec,$KERNEL,$INITRD,&quot;$CMDLINE&quot;</div></pre></td></tr></table></figure></p>
-<p>运行VM创建脚本<code>sudo sh ./mk_xhyve.sh</code>创建ubuntu虚拟机</p>
-<p><img src="/images/xhyve/xhyve_vm_run.png" alt="xhyve_vm_run"></p>
-<p>按正常系统安装方法安装。。。<br>待成功安装完成后选择<code>&lt;Go Back&gt;</code> =&gt; <code>Execute a shell</code>，进入iso的shell界面，然后需要将已经安装好的<code>hdd.img</code>也就是系统中的<code>/dev/vda</code>中的boot目录copy出来，因为要用里面的<code>vmlinuz-4.4.0-31-generic</code>和<code>initrd.img-4.4.0-31-generic</code></p>
-<p>进入shell后先查看一下ip地址<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">BusyBox v1.22.1 (Ubuntu 1:1.22.0-15ubuntu1) built-in shell (ash)</div><div class="line">Enter &apos;help&apos; for a list of built-in commands.</div><div class="line"></div><div class="line">~ # ip a</div><div class="line">1: lo: &lt;LOOPBACK&gt; mtu 65536 qdisc noop qlen 1</div><div class="line">    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00</div><div class="line">2: enp0s2: &lt;BROADCAST,MULTICAST&gt; mtu 1500 qdisc noop qlen 1000</div><div class="line">    link/ether 82:62:9e:40:cf:32 brd ff:ff:ff:ff:ff:ff</div><div class="line">~ #</div></pre></td></tr></table></figure></p>
-<p>发现没有获取到ip地址，此时shell用的是busybox，是没有<code>dhclient</code>的，不过busybox提供<code>udhcpc -i &lt;interface&gt;</code>。<br>获取到ip地址后，vm可以通过<code>tar c ./boot | nc -l -p 1234</code>将boot目录发送给宿主机，宿主机用<code>nc &lt;vm ip&gt; 1234 | tar x</code>接受boot目录。</p>
-<p>获得到boot目录后取出其中的<code>vmlinuz-4.4.0-31-generic</code>和<code>initrd.img-4.4.0-31-generic</code>，然后修改VM创建脚本<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">#!/bin/bash</div><div class="line"></div><div class="line">KERNEL=&quot;vmlinuz-4.4.0-31-generic&quot;</div><div class="line">INITRD=&quot;initrd.img-4.4.0-31-generic&quot;</div><div class="line">CMDLINE=&quot;earlyprintk=serial console=ttyS0 acpi=off root=/dev/vda1&quot;</div><div class="line"></div><div class="line">MEM=&quot;-m 1G&quot;</div><div class="line">#SMP=&quot;-c 2&quot;</div><div class="line">NET=&quot;-s 2:0,virtio-net&quot;</div><div class="line">IMG_CD=&quot;-s 3,ahci-cd,./ubuntu-16.04.1-server-amd64.iso&quot;</div><div class="line">IMG_HDD=&quot;-s 4,virtio-blk,./hdd.img&quot;</div><div class="line">PCI_DEV=&quot;-s 0:0,hostbridge -s 31,lpc&quot;</div><div class="line">LPC_DEV=&quot;-l com1,stdio&quot;</div><div class="line"></div><div class="line">xhyve $MEM $SMP $PCI_DEV $LPC_DEV $NET $IMG_CD $IMG_HDD -f kexec,$KERNEL,$INITRD,&quot;$CMDLINE&quot;</div></pre></td></tr></table></figure></p>
-<p>并执行<code>sudo sh ./mk_xhyve.sh</code></p>
-<p><img src="/images/xhyve/xhyve_vm_run2.png" alt="xhyve_vm_run2"></p>
-<p>ubuntu 16.04 正常启动了，over！</p>
-<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a href="https://github.com/mist64/xhyve" target="_blank" rel="external">xhyve.org</a></li>
-<li><a href="http://www.pagetable.com/?p=831" target="_blank" rel="external">xhyve – Lightweight Virtualization on OS X Based on bhyve</a></li>
-<li><a href="http://www.vpsee.com/2015/06/mac-os-x-hypervisor-xhyve-based-on-bhyve/" target="_blank" rel="external">Mac OS X 上基于 FreeBSD/bhyve 的虚拟技术 xhyve</a></li>
-<li><a href="https://www.v2ex.com/t/359038" target="_blank" rel="external">在 Mac OS 的 Xhyve 引擎之上启动 LinuxKit 的玩法</a></li>
-</ul>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2699,7 +2750,7 @@
             
               <a href="/archives/ || archive">
             
-                <span class="site-state-item-count">85</span>
+                <span class="site-state-item-count">87</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -2721,7 +2772,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">92</span>
+                <span class="site-state-item-count">95</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

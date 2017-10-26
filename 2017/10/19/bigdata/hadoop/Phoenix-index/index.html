@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.2" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="phoenix,index," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.2" />
+
+
+
+
+
+
+<meta name="description" content="在Hbase中，只有一个单一的按照字典序排序的rowKey索引，当使用rowKey来进行数据查询的时候速度较快，但是如果不使用rowKey来查询的话就会使用filter来对全表进行扫描，很大程度上降低了检索性能。而Phoenix提供了二级索引技术来应对这种使用rowKey之外的条件进行检索的场景。 Global IndexGlobal indexing适用于多读少写的业务场景。使用Global i">
+<meta name="keywords" content="phoenix,index">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Phoenix 二级索引">
+<meta property="og:url" content="http://yoursite.com/2017/10/19/bigdata/hadoop/Phoenix-index/index.html">
+<meta property="og:site_name" content="Bolog">
+<meta property="og:description" content="在Hbase中，只有一个单一的按照字典序排序的rowKey索引，当使用rowKey来进行数据查询的时候速度较快，但是如果不使用rowKey来查询的话就会使用filter来对全表进行扫描，很大程度上降低了检索性能。而Phoenix提供了二级索引技术来应对这种使用rowKey之外的条件进行检索的场景。 Global IndexGlobal indexing适用于多读少写的业务场景。使用Global i">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2017-10-19T15:29:28.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Phoenix 二级索引">
+<meta name="twitter:description" content="在Hbase中，只有一个单一的按照字典序排序的rowKey索引，当使用rowKey来进行数据查询的时候速度较快，但是如果不使用rowKey来查询的话就会使用filter来对全表进行扫描，很大程度上降低了检索性能。而Phoenix提供了二级索引技术来应对这种使用rowKey之外的条件进行检索的场景。 Global IndexGlobal indexing适用于多读少写的业务场景。使用Global i">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '5.1.2',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: 'QSZ2UMT8M4',
+      apiKey: 'ea19d365600df16c1e8ef4c09ccb9bea',
+      indexName: 'bolog',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2017/10/19/bigdata/hadoop/Phoenix-index/"/>
+
+
+
+
+
+  <title>Phoenix 二级索引 | Bolog</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Bolog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  
+  <div class="algolia-popup popup search-popup">
+    <div class="algolia-search">
+      <div class="algolia-search-input-icon">
+        <i class="fa fa-search"></i>
+      </div>
+      <div class="algolia-search-input" id="algolia-search-input"></div>
+    </div>
+
+    <div class="algolia-results">
+      <div id="algolia-stats"></div>
+      <div id="algolia-hits"></div>
+      <div id="algolia-pagination" class="algolia-pagination"></div>
+    </div>
+
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+  </div>
+
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/10/19/bigdata/hadoop/Phoenix-index/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Phoenix 二级索引</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-19T14:10:36+08:00">
+                2017-10-19
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Big-Data/" itemprop="url" rel="index">
+                    <span itemprop="name">Big-Data</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>在Hbase中，只有一个单一的按照字典序排序的rowKey索引，当使用rowKey来进行数据查询的时候速度较快，但是如果不使用rowKey来查询的话就会使用filter来对全表进行扫描，很大程度上降低了检索性能。而Phoenix提供了二级索引技术来应对这种使用rowKey之外的条件进行检索的场景。</p>
+<h1 id="Global-Index"><a href="#Global-Index" class="headerlink" title="Global Index"></a>Global Index</h1><p>Global indexing适用于多读少写的业务场景。使用Global indexing的话在写数据的时候会消耗大量开销，因为所有对数据表的更新操作（DELETE, UPSERT VALUES and UPSERT SELECT）,会引起索引表的更新，而索引表是分布在不同的数据节点上的，跨节点的数据传输带来了较大的性能消耗。在读数据的时候Phoenix会选择索引表来降低查询消耗的时间。<strong><em> 在默认情况下如果想查询的字段不是索引字段的话索引表不会被使用，也就是说不会带来查询速度的提升。 </em></strong></p>
+<h2 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h2><p>HBase集群的每个regionserver节点的hbase-site.xml中加入配置，并重启HBase集群</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">property</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">name</span>&gt;</span>hbase.regionserver.wal.codec<span class="tag">&lt;/<span class="name">name</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">value</span>&gt;</span>org.apache.hadoop.hbase.regionserver.wal.IndexedWALEditCodec<span class="tag">&lt;/<span class="name">value</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">property</span>&gt;</span></div></pre></td></tr></table></figure>
+<p>注: phoenix有两种链接方式JDBC和phoenix-client，phoenix-client可以正常创建索引；zeppelin使用jdbc连接不能正常创建索引，提示如下错误。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line">java.sql.SQLException: ERROR 1029 (42Y88): Mutable secondary indexes must have the hbase.regionserver.wal.codec property set to org.apache.hadoop.hbase.regionserver.wal.IndexedWALEditCodec in the hbase-sites.xml of every region server. tableName=CMP_IDX</div><div class="line">    at org.apache.phoenix.exception.SQLExceptionCode$Factory$1.newException(SQLExceptionCode.java:464)</div><div class="line">    at org.apache.phoenix.exception.SQLExceptionInfo.buildException(SQLExceptionInfo.java:150)</div><div class="line">    at org.apache.phoenix.schema.MetaDataClient.createIndex(MetaDataClient.java:1293)</div><div class="line">    at org.apache.phoenix.compile.CreateIndexCompiler$1.execute(CreateIndexCompiler.java:85)</div><div class="line">    at org.apache.phoenix.jdbc.PhoenixStatement$2.call(PhoenixStatement.java:358)</div><div class="line">    at org.apache.phoenix.jdbc.PhoenixStatement$2.call(PhoenixStatement.java:341)</div><div class="line">    at org.apache.phoenix.call.CallRunner.run(CallRunner.java:53)</div><div class="line">    at org.apache.phoenix.jdbc.PhoenixStatement.executeMutation(PhoenixStatement.java:340)</div><div class="line">    at org.apache.phoenix.jdbc.PhoenixStatement.execute(PhoenixStatement.java:1511)</div><div class="line">    at org.apache.commons.dbcp2.DelegatingStatement.execute(DelegatingStatement.java:291)</div><div class="line">    at org.apache.commons.dbcp2.DelegatingStatement.execute(DelegatingStatement.java:291)</div><div class="line">    at org.apache.zeppelin.jdbc.JDBCInterpreter.executeSql(JDBCInterpreter.java:581)</div><div class="line">    at org.apache.zeppelin.jdbc.JDBCInterpreter.interpret(JDBCInterpreter.java:692)</div><div class="line">    at org.apache.zeppelin.interpreter.LazyOpenInterpreter.interpret(LazyOpenInterpreter.java:97)</div><div class="line">    at org.apache.zeppelin.interpreter.remote.RemoteInterpreterServer$InterpretJob.jobRun(RemoteInterpreterServer.java:498)</div><div class="line">    at org.apache.zeppelin.scheduler.Job.run(Job.java:175)</div><div class="line">    at org.apache.zeppelin.scheduler.ParallelScheduler$JobRunner.run(ParallelScheduler.java:162)</div><div class="line">    at java.util.concurrent.Executors$RunnableAdapter.call(Unknown Source)</div><div class="line">    at java.util.concurrent.FutureTask.run(Unknown Source)</div><div class="line">    at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.access$201(Unknown Source)</div><div class="line">    at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(Unknown Source)</div><div class="line">    at java.util.concurrent.ThreadPoolExecutor.runWorker(Unknown Source)</div><div class="line">    at java.util.concurrent.ThreadPoolExecutor$Worker.run(Unknown Source)</div><div class="line">    at java.lang.Thread.run(Unknown Source)</div></pre></td></tr></table></figure></p>
+<h2 id="索引操作"><a href="#索引操作" class="headerlink" title="索引操作"></a>索引操作</h2><p>在开始创建索引以前先创建一个表，并向其中填充测试数据（此处填充的数据仅用于功能测试）</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">0: jdbc:phoenix:&gt; create table usertable (id varchar primary key,firstname varchar, lastname varchar);</div><div class="line">0: jdbc:phoenix:&gt; !tables</div><div class="line">+------------+--------------+-------------------------+---------------+----------+------------+----------------------------+-------------+</div><div class="line">| TABLE_CAT  | TABLE_SCHEM  |       TABLE_NAME        |  TABLE_TYPE   | REMARKS  | TYPE_NAME  | SELF_REFERENCING_COL_NAME  | REF_GENERAT |</div><div class="line">+------------+--------------+-------------------------+---------------+----------+------------+----------------------------+-------------+</div><div class="line">|            | SYSTEM       | CATALOG                 | SYSTEM TABLE  |          |            |                            |             |</div><div class="line">|            | SYSTEM       | FUNCTION                | SYSTEM TABLE  |          |            |                            |             |</div><div class="line">|            | SYSTEM       | SEQUENCE                | SYSTEM TABLE  |          |            |                            |             |</div><div class="line">|            | SYSTEM       | STATS                   | SYSTEM TABLE  |          |            |                            |             |</div><div class="line">|            |              | USERTABLE               | TABLE         |          |            |                            |             |</div><div class="line">+------------+--------------+-------------------------+---------------+----------+------------+----------------------------+-------------+</div><div class="line"></div><div class="line">0: jdbc:phoenix:&gt; upsert into usertable(id, firstname, lastname) values('1', 'Hello', 'world');</div><div class="line">...</div><div class="line">0: jdbc:phoenix:&gt; upsert into usertable(id, firstname, lastname) values('5', 'Hello', 'phoenix');</div></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">base(main):019:0&gt; scan &apos;USERTABLE&apos;</div><div class="line">ROW                                 COLUMN+CELL</div><div class="line"> 1                                  column=0:FIRSTNAME, timestamp=1508397473229, value=Hello</div><div class="line"> 1                                  column=0:LASTNAME, timestamp=1508397473229, value=world</div><div class="line"> 1                                  column=0:_0, timestamp=1508397473229, value=x</div><div class="line"> 2                                  column=0:FIRSTNAME, timestamp=1508397529852, value=Hello</div><div class="line"> 2                                  column=0:LASTNAME, timestamp=1508397529852, value=world</div><div class="line"> 2                                  column=0:_0, timestamp=1508397529852, value=x</div><div class="line"> 3                                  column=0:FIRSTNAME, timestamp=1508397535836, value=Hello</div><div class="line"> 3                                  column=0:LASTNAME, timestamp=1508397535836, value=world</div><div class="line"> 3                                  column=0:_0, timestamp=1508397535836, value=x</div><div class="line"> 4                                  column=0:FIRSTNAME, timestamp=1508397643594, value=Hello</div><div class="line"> 4                                  column=0:LASTNAME, timestamp=1508397643594, value=phoenix</div><div class="line"> 4                                  column=0:_0, timestamp=1508397643594, value=x</div><div class="line"> 5                                  column=0:FIRSTNAME, timestamp=1508397648938, value=Hello</div><div class="line"> 5                                  column=0:LASTNAME, timestamp=1508397648938, value=phoenix</div><div class="line"> 5                                  column=0:_0, timestamp=1508397648938, value=x</div><div class="line">5 row(s) in 0.3220 seconds</div></pre></td></tr></table></figure>
+<h3 id="创建索引"><a href="#创建索引" class="headerlink" title="创建索引"></a>创建索引</h3><figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line">0: jdbc:phoenix:&gt; create index idx_name on usertable (lastname) include(firstname);</div><div class="line">0: jdbc:phoenix:&gt; 0: jdbc:phoenix:&gt; !tables</div><div class="line">+------------+--------------+-------------------------+---------------+----------+------------+----------------------------+-------------+</div><div class="line">| TABLE_CAT  | TABLE_SCHEM  |       TABLE_NAME        |  TABLE_TYPE   | REMARKS  | TYPE_NAME  | SELF_REFERENCING_COL_NAME  | REF_GENERAT |</div><div class="line">+------------+--------------+-------------------------+---------------+----------+------------+----------------------------+-------------+</div><div class="line">|            |              | IDX_NAME                | INDEX         |          |            |                            |             |</div><div class="line">|            | SYSTEM       | CATALOG                 | SYSTEM TABLE  |          |            |                            |             |</div><div class="line">|            | SYSTEM       | FUNCTION                | SYSTEM TABLE  |          |            |                            |             |</div><div class="line">|            | SYSTEM       | SEQUENCE                | SYSTEM TABLE  |          |            |                            |             |</div><div class="line">|            | SYSTEM       | STATS                   | SYSTEM TABLE  |          |            |                            |             |</div><div class="line">|            |              | USERTABLE               | TABLE         |          |            |                            |             |</div><div class="line">+------------+--------------+-------------------------+---------------+----------+------------+----------------------------+-------------+</div><div class="line">0: jdbc:phoenix:&gt; !index usertable</div><div class="line">+------------+--------------+-------------+-------------+------------------+-------------+-------+-------------------+--------------+----+</div><div class="line">| TABLE_CAT  | TABLE_SCHEM  | TABLE_NAME  | NON_UNIQUE  | INDEX_QUALIFIER  | INDEX_NAME  | TYPE  | ORDINAL_POSITION  | COLUMN_NAME  | AS |</div><div class="line">+------------+--------------+-------------+-------------+------------------+-------------+-------+-------------------+--------------+----+</div><div class="line">|            |              | USERTABLE   | true        |                  | IDX_NAME    | 3     | 1                 | 0:LASTNAME   | A  |</div><div class="line">|            |              | USERTABLE   | true        |                  | IDX_NAME    | 3     | 2                 | :ID          | A  |</div><div class="line">|            |              | USERTABLE   | true        |                  | IDX_NAME    | 3     | 3                 | 0:FIRSTNAME  |    |</div><div class="line">+------------+--------------+-------------+-------------+------------------+-------------+-------+-------------------+--------------+----+</div></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">hbase(main):020:0&gt; scan &apos;IDX_NAME&apos;</div><div class="line">ROW                                 COLUMN+CELL</div><div class="line"> phoenix\x004                       column=0:0:FIRSTNAME, timestamp=1508397686228, value=Hello</div><div class="line"> phoenix\x004                       column=0:_0, timestamp=1508397686228, value=x</div><div class="line"> phoenix\x005                       column=0:0:FIRSTNAME, timestamp=1508397686228, value=Hello</div><div class="line"> phoenix\x005                       column=0:_0, timestamp=1508397686228, value=x</div><div class="line"> world\x001                         column=0:0:FIRSTNAME, timestamp=1508397686228, value=Hello</div><div class="line"> world\x001                         column=0:_0, timestamp=1508397686228, value=x</div><div class="line"> world\x002                         column=0:0:FIRSTNAME, timestamp=1508397686228, value=Hello</div><div class="line"> world\x002                         column=0:_0, timestamp=1508397686228, value=x</div><div class="line"> world\x003                         column=0:0:FIRSTNAME, timestamp=1508397686228, value=Hello</div><div class="line"> world\x003                         column=0:_0, timestamp=1508397686228, value=x</div><div class="line">5 row(s) in 0.3180 seconds</div></pre></td></tr></table></figure>
+<h3 id="使用索引"><a href="#使用索引" class="headerlink" title="使用索引"></a>使用索引</h3><p>正常的select … where … 是不会用到索引表的，要想用到索引表，必须查询出的字段也是索引字段。(此处的结论需要在后续的性能测试中进行验证)</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">0: jdbc:phoenix:&gt; select firstname from usertable where lastname = 'phoenix';</div><div class="line">+------------+</div><div class="line">| FIRSTNAME  |</div><div class="line">+------------+</div><div class="line">| Hello      |</div><div class="line">| Hello      |</div><div class="line">+------------+</div></pre></td></tr></table></figure>
+<h2 id="性能测试"><a href="#性能测试" class="headerlink" title="性能测试"></a>性能测试</h2><h3 id="读"><a href="#读" class="headerlink" title="读"></a>读</h3><p>Todo…</p>
+<h3 id="写"><a href="#写" class="headerlink" title="写"></a>写</h3><p>Todo…</p>
+<h1 id="Local-Index"><a href="#Local-Index" class="headerlink" title="Local Index"></a>Local Index</h1><p>Todo…</p>
+<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a href="http://www.cnblogs.com/mario-nb/p/6350266.html?utm_source=itdadao&amp;utm_medium=referral" target="_blank" rel="external">Phoenix的二级索引</a></li>
+<li><a href="http://www.cnblogs.com/MOBIN/p/5467284.html" target="_blank" rel="external">Phoenix二级索引(Secondary Indexing)的使用</a></li>
+<li><a href="http://blog.csdn.net/lifuxiangcaohui/article/details/55518390" target="_blank" rel="external">HBase phoenix二级索引</a></li>
+</ul>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/phoenix/" rel="tag"># phoenix</a>
+          
+            <a href="/tags/index/" rel="tag"># index</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/10/17/storage/fs-ext2/" rel="next" title="Ext2">
+                <i class="fa fa-chevron-left"></i> Ext2
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.gif"
+               alt="博" />
+          <p class="site-author-name" itemprop="name">博</p>
+           
+              <p class="site-description motion-element" itemprop="description"></p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+            
+              <a href="/archives/ || archive">
+            
+                <span class="site-state-item-count">87</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">20</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">95</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Global-Index"><span class="nav-number">1.</span> <span class="nav-text">Global Index</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#配置"><span class="nav-number">1.1.</span> <span class="nav-text">配置</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#索引操作"><span class="nav-number">1.2.</span> <span class="nav-text">索引操作</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#创建索引"><span class="nav-number">1.2.1.</span> <span class="nav-text">创建索引</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#使用索引"><span class="nav-number">1.2.2.</span> <span class="nav-text">使用索引</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#性能测试"><span class="nav-number">1.3.</span> <span class="nav-text">性能测试</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#读"><span class="nav-number">1.3.1.</span> <span class="nav-text">读</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#写"><span class="nav-number">1.3.2.</span> <span class="nav-text">写</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Local-Index"><span class="nav-number">2.</span> <span class="nav-text">Local Index</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考-amp-鸣谢"><span class="nav-number">3.</span> <span class="nav-text">参考&鸣谢</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">博</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+  <span class="post-meta-divider">|</span>
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">NexT.Gemini</a> v5.1.2</div>
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.2"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.2"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.2"></script>
+
+
+
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  
+  
+  <link rel="stylesheet" href="/lib/algolia-instant-search/instantsearch.min.css">
+
+  
+  
+  <script src="/lib/algolia-instant-search/instantsearch.min.js"></script>
+  
+
+  <script src="/js/src/algolia-search.js?v=5.1.2"></script>
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
