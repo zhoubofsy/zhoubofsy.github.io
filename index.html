@@ -1912,6 +1912,7 @@
 <li>在存储介质中，每个文件对应唯一的inode结点，但是每个文件又可以有多个文件名。</li>
 <li>Inode中不存储文件的名字，它只存储节点号；而dentry则保存有名字和与其对应的节点号，所以就可以通过不同的dentry访问同一个inode</li>
 </ul>
+<p><img src="/images/vfs/vfs_3.10.104.png" alt="vfs_3.10.104.png"></p>
 <h2 id="Super-Block"><a href="#Super-Block" class="headerlink" title="Super Block"></a>Super Block</h2><ul>
 <li>超级块用来描述特定文件系统的信息。它存放在磁盘特定的扇区中 ,它在使用的时候将信息存在于内存中</li>
 <li>当内核对一个文件系统进行初始化和注册时在内存为其分配一个超级块，这就是VFS超级块。即，VFS超级块是各种具体文件系统在安装时建立的，并在这些文件系统卸载时被自动删除</li>
