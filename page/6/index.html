@@ -313,6 +313,247 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/12/26/container/docker/docker-usage/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2016/12/26/container/docker/docker-usage/" itemprop="url">Docker使用介绍</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-12-26T19:32:46+08:00">
+                2016-12-26
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/container/" itemprop="url" rel="index">
+                    <span itemprop="name">container</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p><img src="/images/docker/docker-vs-vms.jpg" alt="docker-vs-vms"></p>
+<h1 id="Deploy"><a href="#Deploy" class="headerlink" title="Deploy"></a>Deploy</h1><h2 id="Linux部署"><a href="#Linux部署" class="headerlink" title="Linux部署"></a>Linux部署</h2><p>（由于Linux发行版众多，本文以RHEL7.2为例）</p>
+<h3 id="单机版环境docker部署"><a href="#单机版环境docker部署" class="headerlink" title="单机版环境docker部署"></a>单机版环境docker部署</h3><p>通过yum源安装docker，<code>yum install docker</code>。</p>
+<p>安装完成后，使用<code>docker version</code>查看docker客户端和服务端版本号<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line">$ docker version</div><div class="line">Client:</div><div class="line"> Version:      1.12.5</div><div class="line"> API version:  1.24</div><div class="line"> Go version:   go1.6.4</div><div class="line"> Git commit:   7392c3b</div><div class="line"> Built:        Fri Dec 16 02:23:59 2016</div><div class="line"> OS/Arch:      linux/amd64</div><div class="line"></div><div class="line">Server:</div><div class="line"> Version:      1.12.5</div><div class="line"> API version:  1.24</div><div class="line"> Go version:   go1.6.4</div><div class="line"> Git commit:   7392c3b</div><div class="line"> Built:        Fri Dec 16 02:23:59 2016</div><div class="line"> OS/Arch:      linux/amd64</div></pre></td></tr></table></figure></p>
+<h3 id="分布式环境docker部署"><a href="#分布式环境docker部署" class="headerlink" title="分布式环境docker部署"></a>分布式环境docker部署</h3><p>详细请见：<a href="https://docs.docker.com/engine/installation/linux/rhel/" target="_blank" rel="external">docker官网关于linux环境安装部分</a></p>
+<h2 id="MacOS部署"><a href="#MacOS部署" class="headerlink" title="MacOS部署"></a>MacOS部署</h2><p>从Docker官网上下载<code>Docker.dmg</code>（下载地址：<code>https://www.docker.com/products/docker#/mac</code>），并安装。</p>
+<p>安装完成后，使用<code>docker version</code>查看docker客户端和服务端版本号<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line">$ docker version</div><div class="line">Client:</div><div class="line"> Version:      1.12.5</div><div class="line"> API version:  1.24</div><div class="line"> Go version:   go1.6.4</div><div class="line"> Git commit:   7392c3b</div><div class="line"> Built:        Fri Dec 16 06:14:34 2016</div><div class="line"> OS/Arch:      darwin/amd64</div><div class="line"></div><div class="line">Server:</div><div class="line"> Version:      1.12.5</div><div class="line"> API version:  1.24</div><div class="line"> Go version:   go1.6.4</div><div class="line"> Git commit:   7392c3b</div><div class="line"> Built:        Fri Dec 16 06:14:34 2016</div><div class="line"> OS/Arch:      linux/amd64</div></pre></td></tr></table></figure></p>
+<h1 id="Container"><a href="#Container" class="headerlink" title="Container"></a>Container</h1><h2 id="容器创建-amp-删除"><a href="#容器创建-amp-删除" class="headerlink" title="容器创建&amp;删除"></a>容器创建&amp;删除</h2><h3 id="docker-create"><a href="#docker-create" class="headerlink" title="docker create"></a>docker create</h3><p>使用<code>docker create {选项} {镜像ID/镜像名称} {COMMAND}</code>创建容器，返回容器ID<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ docker create -i -t --name=ubu my_ubuntu_03 /bin/bash</div><div class="line">1af8ed9b04f8b16d264418038e1f4004b1f5512f229059646a5c9b1d20ed8404</div></pre></td></tr></table></figure></p>
+<h3 id="docker-run"><a href="#docker-run" class="headerlink" title="docker run"></a>docker run</h3><p>使用<code>docker run {选项} {镜像ID/镜像名称} {COMMMAND}</code>创建并运行容器，run ＝ create ＋ start。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">docker run -i -t ubuntu /bin/bash</div></pre></td></tr></table></figure></p>
+<h3 id="docker-rm"><a href="#docker-rm" class="headerlink" title="docker rm"></a>docker rm</h3><p>使用<code>docker rm {容器ID／容器名称}</code>删除已经停止的容器，使用<code>-f</code>参数，可删除正在运行中的容器。</p>
+<h2 id="容器查询"><a href="#容器查询" class="headerlink" title="容器查询"></a>容器查询</h2><h3 id="docker-ps"><a href="#docker-ps" class="headerlink" title="docker ps"></a>docker ps</h3><p>使用<code>docker ps</code>列出所有运行中的容器，带<code>-a</code>参数，可列出所有容器（包括非运行状态的容器）<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">$ docker ps -a</div><div class="line">CONTAINER ID        IMAGE               COMMAND                CREATED             STATUS                    PORTS                   NAMES</div><div class="line">1af8ed9b04f8        my_ubuntu_03        &quot;/bin/bash&quot;            2 minutes ago       Up 3 seconds                                      ubu</div><div class="line">ebe0ce381aaf        my_ubuntu_03        &quot;/usr/sbin/sshd -D&quot;    42 hours ago        Up 42 hours               0.0.0.0:50022-&gt;22/tcp   ubu_03_sshd</div><div class="line">e69e9d4cdfa3        my_ubuntu_01        &quot;/bin/bash&quot;            43 hours ago        Exited (0) 42 hours ago                           ubu_01</div><div class="line">0fa200a32e8e        ceph/daemon         &quot;/entrypoint.sh osd&quot;   47 hours ago        Up 47 hours                                       ceph-osd</div><div class="line">be0583fade06        ceph/daemon         &quot;/entrypoint.sh mon&quot;   4 days ago          Up 47 hours                                       ceph-mon</div></pre></td></tr></table></figure></p>
+<h3 id="docker-inspect"><a href="#docker-inspect" class="headerlink" title="docker inspect"></a>docker inspect</h3><p>使用<code>docker inspect {容器ID／容器名称}</code>查看容器详细信息(容器详细信息以JSON格式返回)<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">$ docker inspect ubu_03_sshd</div><div class="line">[</div><div class="line">    &#123;</div><div class="line">            &quot;Id&quot;: &quot;ebe0ce381aafa73ec679ec0dc38e8d54291378693146a65d3655dd574c76ec01&quot;,</div><div class="line">            &quot;Created&quot;: &quot;2016-12-26T08:00:56.73955094Z&quot;,</div><div class="line">            &quot;Path&quot;: &quot;/usr/sbin/sshd&quot;,</div><div class="line">            &quot;Args&quot;: [</div><div class="line">                &quot;-D&quot;</div><div class="line">            ],</div><div class="line">......</div><div class="line">]</div></pre></td></tr></table></figure></p>
+<h2 id="容器启停"><a href="#容器启停" class="headerlink" title="容器启停"></a>容器启停</h2><p>使用<code>docker start/stop {容器ID／容器名称}</code>启动或停止容器运行。</p>
+<h2 id="容器访问"><a href="#容器访问" class="headerlink" title="容器访问"></a>容器访问</h2><h3 id="在容器内执行命令"><a href="#在容器内执行命令" class="headerlink" title="在容器内执行命令"></a>在容器内执行命令</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">$ docker exec ubu ps -ef</div><div class="line">UID        PID  PPID  C STIME TTY          TIME CMD</div><div class="line">root         1     0  0 07:01 ?        00:00:00 /bin/bash</div><div class="line">root        10     0  0 07:02 ?        00:00:00 ps -ef</div></pre></td></tr></table></figure>
+<h3 id="Attach-Detach容器"><a href="#Attach-Detach容器" class="headerlink" title="Attach/Detach容器"></a>Attach/Detach容器</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ docker attach ubu</div><div class="line">root@1af8ed9b04f8:/#</div></pre></td></tr></table></figure>
+<p>Detach容器时，只要在command line中输入exit即可，但detach时，会导致容器停止运行。所以若不想导致容器停止运行可以使用<code>docker exec -it ubu /bin/bash</code></p>
+<h1 id="Image"><a href="#Image" class="headerlink" title="Image"></a>Image</h1><h2 id="镜像创建"><a href="#镜像创建" class="headerlink" title="镜像创建"></a>镜像创建</h2><h3 id="创建新镜像-Dockerfile"><a href="#创建新镜像-Dockerfile" class="headerlink" title="创建新镜像(Dockerfile)"></a>创建新镜像(Dockerfile)</h3><p>使用Dockerfile创建镜像，首先需要选择基础镜像，然后撰写dockerfile，最后使用<code>docker build -t {new image name}:{new image tag} [-f {dockerfile}] .</code>创建Image<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line">$ docker build -t new_image_ubu03:v1 -f ./dockerfile/tmp.docker .</div><div class="line">Sending build context to Docker daemon 317.7 MB</div><div class="line">Step 1 : FROM my_ubuntu_03</div><div class="line"> ---&gt; 28b69113a240</div><div class="line">Step 2 : MAINTAINER xxx xx &quot;x.xxx@xxxx.com&quot;</div><div class="line"> ---&gt; Running in ae3004ef2bd2</div><div class="line"> ---&gt; 68ab9a056fbf</div><div class="line">Removing intermediate container ae3004ef2bd2</div><div class="line">Successfully built 68ab9a056fbf</div><div class="line"></div><div class="line">$ docker images</div><div class="line">REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE</div><div class="line">new_image_ubu03     v1                  68ab9a056fbf        14 seconds ago      304.4 MB</div><div class="line">my_ubuntu_01        v1                  e1aace2f9532        46 hours ago        304.4 MB</div><div class="line">my_ubu              base                31184d4c3c2c        47 hours ago        317.7 MB</div><div class="line">my_ubuntu_03        latest              28b69113a240        3 days ago          304.4 MB</div><div class="line">my_ubuntu_01        latest              800c37009cde        3 days ago          270 MB</div><div class="line">ubuntu              latest              104bec311bcd        2 weeks ago         128.9 MB</div><div class="line">ceph/daemon         latest              c06ccf521c4e        6 weeks ago         1.078 GB</div></pre></td></tr></table></figure></p>
+<p>关于dockerfile的撰写请见<a href="https://zhoubofsy.github.io/2016/12/30/container/docker/dockerfile-write/" target="_blank" rel="external">《Dockerfile》</a></p>
+<h3 id="基于已有镜像创建新镜像"><a href="#基于已有镜像创建新镜像" class="headerlink" title="基于已有镜像创建新镜像"></a>基于已有镜像创建新镜像</h3><p>使用<code>docker commit {容器名称/容器ID} {RESPOSITORY}&lt;TAG&gt;</code>用已有容器创建镜像。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ docker commit ubu_01 my_ubuntu_01:v1</div><div class="line">sha256:e1aace2f953280326b96f31708ddf8f9f02289845e997736fcb1d0342777c72f</div></pre></td></tr></table></figure></p>
+<h3 id="从docker-hub上下载新镜像"><a href="#从docker-hub上下载新镜像" class="headerlink" title="从docker hub上下载新镜像"></a>从docker hub上下载新镜像</h3><p>在docker hub上有很多镜像，供使用者下载，用户可以使用<code>docker search</code>查询要下载的镜像，然后使用<code>docker pull</code>下载镜像。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">$ docker pull hello-world</div><div class="line">Using default tag: latest</div><div class="line">latest: Pulling from library/hello-world</div><div class="line">Digest: sha256:0256e8a36e2070f7bf2d0b0763dbabdd67798512411de4cdcf9431a1feb60fd9</div><div class="line">Status: Image is up to date for hello-world:latest</div></pre></td></tr></table></figure></p>
+<h2 id="镜像查询"><a href="#镜像查询" class="headerlink" title="镜像查询"></a>镜像查询</h2><h3 id="查询本地镜像"><a href="#查询本地镜像" class="headerlink" title="查询本地镜像"></a>查询本地镜像</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">$ docker images</div><div class="line">REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE</div><div class="line">my_ubu              base                31184d4c3c2c        7 seconds ago       317.7 MB</div><div class="line">my_ubuntu_03        latest              28b69113a240        47 hours ago        304.4 MB</div><div class="line">my_ubuntu_01        latest              800c37009cde        2 days ago          270 MB</div><div class="line">ubuntu              latest              104bec311bcd        12 days ago         128.9 MB</div><div class="line">ceph/daemon         latest              c06ccf521c4e        5 weeks ago         1.078 GB</div><div class="line">hello-world         latest              c54a2cc56cbb        5 months ago        1.848 kB</div></pre></td></tr></table></figure>
+<h3 id="查询镜像详细信息"><a href="#查询镜像详细信息" class="headerlink" title="查询镜像详细信息"></a>查询镜像详细信息</h3><p>使用<code>docker inspect {IMAGE ID/REPOSITORY}&lt;:{TAG}&gt;</code>查询镜像库的详细信息，TAG默认为“latest”。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">$ docker inspect my_ubu:base</div><div class="line">[</div><div class="line">    &#123;</div><div class="line">           &quot;Id&quot;: &quot;sha256:31184d4c3c2cbbc56e087dfff68cad2d2d89d628a260f6789baf108345cd6c9b&quot;,</div><div class="line">                    &quot;RepoTags&quot;: [</div><div class="line">                        &quot;my_ubu:base&quot;</div><div class="line">                    ],</div><div class="line">           &quot;RepoDigests&quot;: [],</div><div class="line">           &quot;Parent&quot;: &quot;&quot;,</div><div class="line">           &quot;Comment&quot;: &quot;Imported from -&quot;,</div><div class="line">           &quot;Created&quot;: &quot;2016-12-28T07:30:31.500350508Z&quot;,</div><div class="line">           &quot;Container&quot;: &quot;&quot;,</div><div class="line">           &quot;ContainerConfig&quot;: &#123;</div><div class="line">......</div><div class="line">]</div></pre></td></tr></table></figure></p>
+<h3 id="查询hub上的镜像"><a href="#查询hub上的镜像" class="headerlink" title="查询hub上的镜像"></a>查询hub上的镜像</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div></pre></td><td class="code"><pre><div class="line">$ docker search ceph</div><div class="line">NAME                        DESCRIPTION                                     STARS     OFFICIAL   AUTOMATED</div><div class="line">ceph/daemon                 Image containing all the Ceph daemons           29                   [OK]</div><div class="line">ceph/demo                                                                   10                   [OK]</div><div class="line">ceph/osd                    Ceph OSD (object storage daemon)                6                    [OK]</div><div class="line">ceph/base                   Ceph base image                                 5                    [OK]</div><div class="line">ceph/radosgw                Ceph RADOSGW (S3/Swift-like service for Ceph)   4                    [OK]</div><div class="line">cdxvirt/ceph-daemon         All-in-one container for cdxvirt ceph core...   2                    [OK]</div><div class="line">ceph/config                 Ceph bootstrap (configuration)                  2                    [OK]</div><div class="line">ceph/rbd                    Ceph rbd (RADOS block device) CLI tool          2                    [OK]</div><div class="line">ceph/mds                    Ceph MDS (metadata server)                      2                    [OK]</div><div class="line">ulexus/ceph-osd             DEPRECATED:  development is now at ceph/osd     2                    [OK]</div><div class="line">ceph/mon                    Ceph MON (monitor daemon)                       1                    [OK]</div><div class="line">h0tbird/ceph                Containerized Ceph distributed file system      1                    [OK]</div><div class="line">ceph/rados                  Ceph rados (reliable autonomic distributed...   1                    [OK]</div><div class="line">cdxvirt/ceph-base           Ceph base container image                       1                    [OK]</div><div class="line">qnib/ceph-base              QNIBTerminal ceph base image                    0                    [OK]</div><div class="line">qnib/ceph-mono              Monolithic approach of an CEPH cluster + r...   0                    [OK]</div><div class="line">fernandosanchez/ceph-dash   ceph-dash                                       0                    [OK]</div><div class="line">ceph/install-utils          Install wrappers for common Ceph utility p...   0                    [OK]</div><div class="line">qnib/ceph-mon               QNIBTerminal CEPH monitoring Image              0                    [OK]</div><div class="line">cephbuilder/ceph            Docker image for building custom Ceph daem...   0                    [OK]</div><div class="line">qnib/d-ceph-fuse            QNIBTerminal image (debian) mounting /ceph...   0                    [OK]</div><div class="line">ulexus/ceph-mon             DEPRECATED:  development is now at ceph/mon     0                    [OK]</div><div class="line">fmeppo/ceph-daemon          Main container for Ceph in Docker.              0                    [OK]</div><div class="line">fmeppo/ceph-base            Base container for Ceph in Docker.              0                    [OK]</div><div class="line">xenopathic/ceph-keystone    Automated full-stack Ceph environment with...   0                    [OK]</div></pre></td></tr></table></figure>
+<h2 id="镜像删除"><a href="#镜像删除" class="headerlink" title="镜像删除"></a>镜像删除</h2><p>使用<code>docker rmi {REPOSITORY/IMAGE ID}</code>删除镜像。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">$ docker rmi hello-world</div><div class="line">Untagged: hello-world:latest</div><div class="line">Untagged: hello-world@sha256:0256e8a36e2070f7bf2d0b0763dbabdd67798512411de4cdcf9431a1feb60fd9</div><div class="line">Deleted: sha256:c54a2cc56cbb2f04003c1cd4507e118af7c0d340fe7e2720f70976c4b75237dc</div><div class="line">Deleted: sha256:a02596fdd012f22b03af6ad7d11fa590c57507558357b079c3e8cebceb4262d7</div></pre></td></tr></table></figure></p>
+<h2 id="镜像导出导入"><a href="#镜像导出导入" class="headerlink" title="镜像导出导入"></a>镜像导出导入</h2><h3 id="save-amp-load"><a href="#save-amp-load" class="headerlink" title="save &amp; load"></a>save &amp; load</h3><p>只用于镜像（image）的导入导出文件</p>
+<h3 id="export-amp-import"><a href="#export-amp-import" class="headerlink" title="export &amp; import"></a>export &amp; import</h3><ul>
+<li>export用于容易导出成文件</li>
+<li>import用于文件导入成镜像（image）</li>
+</ul>
+<h3 id="关系图"><a href="#关系图" class="headerlink" title="关系图"></a>关系图</h3><p><img src="/images/docker/docker_save_load_export_import.jpg" alt="import_export"></p>
+<h1 id="Volume"><a href="#Volume" class="headerlink" title="Volume"></a>Volume</h1><h2 id="数据卷创建、删除、查询、权限"><a href="#数据卷创建、删除、查询、权限" class="headerlink" title="数据卷创建、删除、查询、权限"></a>数据卷创建、删除、查询、权限</h2><h3 id="创建-amp-权限"><a href="#创建-amp-权限" class="headerlink" title="创建&amp;权限"></a>创建&amp;权限</h3><p><strong><em> docker在创建容器时，可以创建数据卷；一旦容器运行后，就不能动态添加数据卷。若想添加需要重新创建容器。</em></strong></p>
+<h4 id="私有数据卷创建"><a href="#私有数据卷创建" class="headerlink" title="私有数据卷创建"></a>私有数据卷创建</h4><p>在<code>docker run/create</code>时，使用<code>-v {容器内路径}</code>参数在容器内创建指定的目录，并映射到其宿主机<code>/var/lib/docker/volumes/{ID}/_data</code>的路径下。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line"># 数据卷创建</div><div class="line">$ docker run -it --name=ubu2 -v=/home/zhoub/docker/data ubuntu /bin/bash</div><div class="line"># 数据卷查询</div><div class="line">$ dccker inspect ubu2</div><div class="line">...</div><div class="line">        &quot;Mounts&quot;: [</div><div class="line">            &#123;</div><div class="line">                &quot;Name&quot;: &quot;95868b7e6fd47927cfb7f54b35057545f4302d69ed92aa73425dffc289527b6b&quot;,</div><div class="line">                &quot;Source&quot;: &quot;/var/lib/docker/volumes/95868b7e6fd47927cfb7f54b35057545f4302d69ed92aa73425dffc289527b6b/_data&quot;,</div><div class="line">                &quot;Destination&quot;: &quot;/home/zhoub/docker/data&quot;,</div><div class="line">                &quot;Driver&quot;: &quot;local&quot;,</div><div class="line">                &quot;Mode&quot;: &quot;&quot;,</div><div class="line">                &quot;RW&quot;: true,</div><div class="line">                &quot;Propagation&quot;: &quot;&quot;</div><div class="line">            &#125;</div><div class="line">        ],</div><div class="line">...</div></pre></td></tr></table></figure></p>
+<h4 id="共享数据卷创建"><a href="#共享数据卷创建" class="headerlink" title="共享数据卷创建"></a>共享数据卷创建</h4><p>在<code>docker run/create</code>时，使用<code>-v {宿主机路径:容器内路径:访问权限(ro/rw,默认是RW)}</code>参数挂载数据目录或文件到容器内，宿主机与容器共享该目录，无论宿主机还是容器修改该目录后，另一方也能看到改变。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"># 数据卷创建</div><div class="line">$ docker run -it --name=ubu -v=/home/zhoub/docker/data:/data ubuntu /bin/bash</div><div class="line"># 数据卷查询</div><div class="line">$ docker inspect ubu</div><div class="line">...</div><div class="line">        &quot;Mounts&quot;: [</div><div class="line">            &#123;</div><div class="line">                &quot;Source&quot;: &quot;/home/zhoub/docker/data&quot;,</div><div class="line">                &quot;Destination&quot;: &quot;/data&quot;,</div><div class="line">                &quot;Mode&quot;: &quot;&quot;,</div><div class="line">                &quot;RW&quot;: true,</div><div class="line">                &quot;Propagation&quot;: &quot;rprivate&quot;</div><div class="line">            &#125;</div><div class="line">        ],</div><div class="line">...</div></pre></td></tr></table></figure></p>
+<h3 id="数据卷删除"><a href="#数据卷删除" class="headerlink" title="数据卷删除"></a>数据卷删除</h3><ul>
+<li>仅使用<code>docker rm</code>删除容器，会导致数据卷无法删除，仍占用硬盘空间</li>
+<li>使用<code>docker rm -v</code>删除容器和数据卷</li>
+</ul>
+<h2 id="数据卷容器"><a href="#数据卷容器" class="headerlink" title="数据卷容器"></a>数据卷容器</h2><h3 id="创建数据卷容器"><a href="#创建数据卷容器" class="headerlink" title="创建数据卷容器"></a>创建数据卷容器</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ docker run -v /vol --name voldata ubuntu echo &quot;Data Container&quot;</div></pre></td></tr></table></figure>
+<p>或<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ docker create -v /vol --name voldata ubuntu echo &quot;Data Container&quot;</div></pre></td></tr></table></figure></p>
+<p>注：</p>
+<ul>
+<li>数据卷容器不需要运行，运行会白浪费系统资源</li>
+<li>不要下载微小镜像创建数据卷容器，只使用本机所带的镜像即可，不需要咱用额外的存储空间。</li>
+</ul>
+<h3 id="使用数据卷容器"><a href="#使用数据卷容器" class="headerlink" title="使用数据卷容器"></a>使用数据卷容器</h3><p>在<code>docker run</code>中使用<code>--volumes-from</code>参数为新建的容器挂载voldata数据卷容器中的<code>/vol</code>目录<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ docker run --volumes-from voldata -it --name testContainer ubuntu /bin/bash</div></pre></td></tr></table></figure></p>
+<h2 id="数据卷备份"><a href="#数据卷备份" class="headerlink" title="数据卷备份"></a>数据卷备份</h2><p>将数据卷容器中数据卷里的数据备份到指定目录中</p>
+<p>步骤：</p>
+<ol>
+<li>创建备份目录</li>
+<li>创建容器映射备份目录到容器内，并挂载数据卷容器</li>
+<li>在容器中将数据卷容器中的数据copy到映射的备份目录内</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">$ mkdir /tmp/backup</div><div class="line"></div><div class="line">$ docker run --rm --volumes-from voldata -v /tmp/backup:/backup ubuntu tar cvf /backup/voldata.tar /vol</div></pre></td></tr></table></figure>
+<p>看到此处估计你已经要骂娘了，什么破Docker，连个卷管理接口都没有！以上是老版本中docker对卷的管理方法。接下来说一下新版本中docker对卷的管理。<br><strong> 一条华丽的分割线… </strong></p>
+<h2 id="新的数据卷管理"><a href="#新的数据卷管理" class="headerlink" title="新的数据卷管理"></a>新的数据卷管理</h2><ul>
+<li>卷创建<br>  <code>docker volume create {options}</code>，创建卷，可指定卷名称和访问卷所使用的驱动。目前docker volume plugin支持的驱动包括：blockbridge、convoy、flocker、glusterfs、horcrux、ipfs、netshare、openstorage、quobyte</li>
+<li>卷查询<br>  <code>docker volume ls</code>，显示卷列表<br>  <code>docker volume inspect {volume name}</code>，显示指定卷的详细信息</li>
+<li>卷删除<br>  <code>docker rm {volume name}</code>，删除指定卷，若卷已经被容器所加载，无论容器是否出于运行状态，删除都会失败。</li>
+</ul>
+<p><strong><em> 很可惜docker新版本中还是不支持动态加载卸载数据卷 </em></strong></p>
+<h1 id="Network"><a href="#Network" class="headerlink" title="Network"></a>Network</h1><p>docker 有三种网络bridge、host、none。</p>
+<ul>
+<li>bridge 桥接网络</li>
+<li>host 复制宿主机网络</li>
+<li>none 无网络，容器只有一个回环地址</li>
+</ul>
+<h2 id="网络管理"><a href="#网络管理" class="headerlink" title="网络管理"></a>网络管理</h2><h3 id="网络创建"><a href="#网络创建" class="headerlink" title="网络创建"></a>网络创建</h3><h4 id="bridge"><a href="#bridge" class="headerlink" title="bridge"></a>bridge</h4><p>可通过<code>docker network create --subnet {CIDR} {network name}</code>创建bridge网络 </p>
+<h4 id="host"><a href="#host" class="headerlink" title="host"></a>host</h4><p>默认docker会提供一个host网络，用户不能再手动创建该网络<code>Error response from daemon: only one instance of &quot;host&quot; network is allowed</code></p>
+<h4 id="none"><a href="#none" class="headerlink" title="none"></a>none</h4><p>该网络不可自创建</p>
+<h3 id="网络删除"><a href="#网络删除" class="headerlink" title="网络删除"></a>网络删除</h3><p>可使用<code>docker network rm {network name}</code>删除指定网络</p>
+<h3 id="网络查询"><a href="#网络查询" class="headerlink" title="网络查询"></a>网络查询</h3><p>使用<code>docker network ls</code>查看网络列表<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">$ docker network ls</div><div class="line">ETWORK ID          NAME                DRIVER              SCOPE</div><div class="line">852c90cb4a48        bridge              bridge              local</div><div class="line">bebda2efe6dc        host                host                local</div><div class="line">6a69c0cd935e        my_net              bridge              local</div><div class="line">09cf35b0a2fe        none                null                local</div></pre></td></tr></table></figure></p>
+<p>使用<code>docker network inspect {network name}</code>查看指定网络信息<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div></pre></td><td class="code"><pre><div class="line">$ docker network inspect my_net</div><div class="line">[</div><div class="line">    &#123;</div><div class="line">        &quot;Name&quot;: &quot;my_net&quot;,</div><div class="line">        &quot;Id&quot;: &quot;6a69c0cd935ef315d143f1253634b8cce2b20e8e330ce791d53d26a6a08c387f&quot;,</div><div class="line">        &quot;Scope&quot;: &quot;local&quot;,</div><div class="line">        &quot;Driver&quot;: &quot;bridge&quot;,</div><div class="line">        &quot;EnableIPv6&quot;: false,</div><div class="line">        &quot;IPAM&quot;: &#123;</div><div class="line">            &quot;Driver&quot;: &quot;default&quot;,</div><div class="line">            &quot;Options&quot;: &#123;&#125;,</div><div class="line">            &quot;Config&quot;: [</div><div class="line">                &#123;</div><div class="line">                    &quot;Subnet&quot;: &quot;192.168.100.0/24&quot;,</div><div class="line">                    &quot;Gateway&quot;: &quot;192.168.100.1&quot;</div><div class="line">                &#125;</div><div class="line">            ]</div><div class="line">        &#125;,</div><div class="line">        &quot;Internal&quot;: false,</div><div class="line">        &quot;Containers&quot;: &#123;&#125;,</div><div class="line">        &quot;Options&quot;: &#123;</div><div class="line">            &quot;com.docker.network.bridge.name&quot;: &quot;my_net&quot;</div><div class="line">        &#125;,</div><div class="line">        &quot;Labels&quot;: &#123;&#125;</div><div class="line">    &#125;</div><div class="line">]</div></pre></td></tr></table></figure></p>
+<h2 id="网络使用"><a href="#网络使用" class="headerlink" title="网络使用"></a>网络使用</h2><h3 id="with-‘–network’"><a href="#with-‘–network’" class="headerlink" title="with ‘–network’"></a>with ‘–network’</h3><p>在<code>docker create/run</code>时，指定<code>--network {network name}</code>参数，默认网络使用<code>bridge</code>。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ docker run -it --name net_1 --network my_net my_ubuntu_03 /bin/bash</div></pre></td></tr></table></figure></p>
+<h3 id="container复制"><a href="#container复制" class="headerlink" title="container复制"></a>container复制</h3><p>使用<code>--network container:{容器名称／容器ID}</code>将指定容器的网络及主机名复制到新容器内。</p>
+<p>创建‘net_4’容器，并复制‘net_1’的network<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line">$ docker run -it --name net_4 --network container:net_1 my_ubuntu_03 /bin/bash</div><div class="line">root@5eb98cff1ec6:/# ifconfig</div><div class="line">eth0      Link encap:Ethernet  HWaddr 02:42:c0:a8:64:02</div><div class="line">          inet addr:192.168.100.2  Bcast:0.0.0.0  Mask:255.255.255.0</div><div class="line">          inet6 addr: fe80::42:c0ff:fea8:6402/64 Scope:Link</div><div class="line">          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1</div><div class="line">          RX packets:8 errors:0 dropped:0 overruns:0 frame:0</div><div class="line">          TX packets:8 errors:0 dropped:0 overruns:0 carrier:0</div><div class="line">          collisions:0 txqueuelen:0</div><div class="line">          RX bytes:648 (648.0 B)  TX bytes:648 (648.0 B)</div><div class="line"></div><div class="line">lo        Link encap:Local Loopback</div><div class="line">          inet addr:127.0.0.1  Mask:255.0.0.0</div><div class="line">          inet6 addr: ::1/128 Scope:Host</div><div class="line">          UP LOOPBACK RUNNING  MTU:65536  Metric:1</div><div class="line">          RX packets:0 errors:0 dropped:0 overruns:0 frame:0</div><div class="line">          TX packets:0 errors:0 dropped:0 overruns:0 carrier:0</div><div class="line">          collisions:0 txqueuelen:0</div><div class="line">          RX bytes:0 (0.0 B)  TX bytes:0 (0.0 B)</div></pre></td></tr></table></figure></p>
+<p>容器‘net_1’的网卡信息<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line">$ docker exec -it net_1 /bin/bash</div><div class="line">root@5eb98cff1ec6:/# ifconfig</div><div class="line">eth0      Link encap:Ethernet  HWaddr 02:42:c0:a8:64:02</div><div class="line">          inet addr:192.168.100.2  Bcast:0.0.0.0  Mask:255.255.255.0</div><div class="line">          inet6 addr: fe80::42:c0ff:fea8:6402/64 Scope:Link</div><div class="line">          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1</div><div class="line">          RX packets:16 errors:0 dropped:0 overruns:0 frame:0</div><div class="line">          TX packets:16 errors:0 dropped:0 overruns:0 carrier:0</div><div class="line">          collisions:0 txqueuelen:0</div><div class="line">          RX bytes:1395 (1.3 KB)  TX bytes:1284 (1.2 KB)</div><div class="line"></div><div class="line">lo        Link encap:Local Loopback</div><div class="line">          inet addr:127.0.0.1  Mask:255.0.0.0</div><div class="line">          inet6 addr: ::1/128 Scope:Host</div><div class="line">          UP LOOPBACK RUNNING  MTU:65536  Metric:1</div><div class="line">          RX packets:4 errors:0 dropped:0 overruns:0 frame:0</div><div class="line">          TX packets:4 errors:0 dropped:0 overruns:0 carrier:0</div><div class="line">          collisions:0 txqueuelen:0</div><div class="line">          RX bytes:375 (375.0 B)  TX bytes:375 (375.0 B)</div></pre></td></tr></table></figure></p>
+<ul>
+<li>复制主机名</li>
+<li>复制MAC地址</li>
+<li>复制IP地址</li>
+</ul>
+<h1 id="Docker-Remote-API"><a href="#Docker-Remote-API" class="headerlink" title="Docker Remote API"></a>Docker Remote API</h1><h2 id="开启Remote-API"><a href="#开启Remote-API" class="headerlink" title="开启Remote API"></a>开启Remote API</h2><p>以RHEL7.2为例，开启Docker Remote API服务</p>
+<ol>
+<li>修改systemd中的docker.server<br> 找到<code>ExecStart</code>项，增加<code>-H tcp://0.0.0.0:2375</code>允许任意客户端访问；增加<code>-H unix:///var/run/docker.sock</code>保证<code>docker</code>命令能正常使用。<br> 若需要使用HTTPS证书，可以增加<code>--tls=true --tlscert=cert.pem --tlskey=key.pem</code>。<a href="https://docs.docker.com/engine/admin/" target="_blank" rel="external">详细请见</a></li>
+<li>增加防火墙规则／关闭防火墙<br> RHEL7.2中防火墙服务为<code>firewalld</code>。<br> eg: <code>sudo systemctl stop firewalld</code></li>
+<li>重启docker服务<br> 重载配置<code>sudo systemctl daemon-reload</code><br> 重启服务<code>sudo systemctl restart docker</code></li>
+</ol>
+<h2 id="API使用说明"><a href="#API使用说明" class="headerlink" title="API使用说明"></a>API使用说明</h2><p>详细请见：<a href="https://docs.docker.com/engine/reference/api/docker_remote_api_v1.24/" target="_blank" rel="external">《Docker Remote API v1.24》</a></p>
+<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a href="https://www.docker.com" target="_blank" rel="external">docker官网</a></li>
+<li><a href="https://hub.docker.com" target="_blank" rel="external">docker hub</a></li>
+<li><a href="http://wwwbuild.net/dockerone/263124.html" target="_blank" rel="external">Docker开源组件：HyperKit、VPNKit和DataKit介绍</a></li>
+<li><a href="http://www.tuicool.com/articles/uAvQRz6" target="_blank" rel="external">docker save/load, export/import测试对比</a></li>
+<li><a href="http://www.cnblogs.com/liuyansheng/p/6097710.html" target="_blank" rel="external">Docker 数据卷管理</a></li>
+<li><a href="http://www.tuicool.com/articles/uYzeAnz" target="_blank" rel="external">深入理解 Docker Volume（一）</a></li>
+<li><a href="http://www.cnblogs.com/sammyliu/p/5932996.html" target="_blank" rel="external">理解Docker（8）：Docker 存储之卷（Volume）</a></li>
+<li><a href="http://blog.csdn.net/halcyonbaby/article/details/42112141" target="_blank" rel="external">docker的四种网络方式</a></li>
+<li><a href="https://docs.docker.com/engine/reference/api/docker_remote_api/" target="_blank" rel="external">Docker Remote API</a></li>
+<li><a href="https://www.zhihu.com/question/24852884" target="_blank" rel="external">Docker Remote API 如何使用？</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/12/08/language/python/python-class-underline/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1605,7 +1846,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/09/23/uwsgi/uwsgi-config-problem-1/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/09/23/mysql/mysql-priv-mng-md/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="博">
@@ -1624,7 +1865,7 @@
         
           <h1 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2016/09/23/uwsgi/uwsgi-config-problem-1/" itemprop="url">uWSGI中设置“cap = setuid,setpid”导致python脚本权限降低</a></h1>
+                <a class="post-title-link" href="/2016/09/23/mysql/mysql-priv-mng-md/" itemprop="url">MySQL 权限管理</a></h1>
         
 
         <div class="post-meta">
@@ -1659,8 +1900,8 @@
               
               
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/uwsgi/" itemprop="url" rel="index">
-                    <span itemprop="name">uwsgi</span>
+                  <a href="/categories/mysql/" itemprop="url" rel="index">
+                    <span itemprop="name">mysql</span>
                   </a>
                 </span>
 
@@ -1698,243 +1939,823 @@
       
         
           
-            <h1 id="问题发现"><a href="#问题发现" class="headerlink" title="问题发现"></a>问题发现</h1><h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><ul>
-<li>uwsgi version： 2.0.13.1</li>
-<li>python version: 2.6.6</li>
-<li>采用 Nginx + uWSGI + Python 架构，均拥有ROOT权限</li>
+            <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><ul>
+<li>OS Version : rhel 6.4</li>
+<li>MySQL Version : 5.6.31</li>
 </ul>
-<h3 id="现象"><a href="#现象" class="headerlink" title="现象"></a>现象</h3><p>Python执行os.mkdir操作，提示“Permission Denied”</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">Traceback (most recent call last):</div><div class="line">File &quot;/cs/nginx/uwsgi/main.py&quot;, line 24, in application</div><div class="line">result = process().entry(environ, start_response)</div><div class="line">File &quot;/cs/nginx/uwsgi/rds/base_mng.py&quot;, line 90, in entry</div><div class="line">self.process_put_request(env)</div><div class="line">File &quot;/cs/nginx/uwsgi/rds/init_rds.py&quot;, line 149, in process_put_request</div><div class="line">result = self.do_put_request(env)</div><div class="line">File &quot;/cs/nginx/uwsgi/rds/init_rds.py&quot;, line 140, in do_put_request</div><div class="line">err_code = op.do()</div><div class="line">File &quot;/cs/nginx/uwsgi/rds/init_rds.py&quot;, line 70, in do</div><div class="line">if 0 == init_create_mp(mp):</div><div class="line">File &quot;/cs/nginx/uwsgi/rds/init/main.py&quot;, line 44, in init_create_mp</div><div class="line">os.mkdir(mp,0755)</div><div class="line">OSError: [Errno 13] Permission denied: &apos;/aaab&apos;</div></pre></td></tr></table></figure>
-<h1 id="解决"><a href="#解决" class="headerlink" title="解决"></a>解决</h1><p>Python脚本的权限，有uWSGI来决定，所以该错误肯定跟uWSGI有关，通过调整uwsgi.ini文件中的用户和权限相关配置发现，将<code>cap = setuid,setgid</code>去掉，可以正常创建目录。</p>
-<p>但：<strong><em>具体原因不明，可能跟setuid和setgid的使用有关，有可能是个Bug</em></strong></p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/09/23/uwsgi/uwsgi-limit-process-resource/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2016/09/23/uwsgi/uwsgi-limit-process-resource/" itemprop="url">limit-as限制子进程资源，导致Mysqld服务无法启动</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-09-23T00:00:00+08:00">
-                2016-09-23
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/uwsgi/" itemprop="url" rel="index">
-                    <span itemprop="name">uwsgi</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="问题发现"><a href="#问题发现" class="headerlink" title="问题发现"></a>问题发现</h1><h3 id="现象"><a href="#现象" class="headerlink" title="现象"></a>现象</h3><p>在nginx+uwsgi+python环境中，启动mysqld服务，发生服务无法正常启动现象（闪退）。而在shell终端中可以正常启动mysqld服务。说明“nginx+uwsgi+python”这个环境限制了某些资源，导致mysqld服务启动失败。</p>
-<h3 id="uwsgi错误日志-var-log-uwsgi-log"><a href="#uwsgi错误日志-var-log-uwsgi-log" class="headerlink" title="uwsgi错误日志(/var/log/uwsgi.log)"></a>uwsgi错误日志(/var/log/uwsgi.log)</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">Starting MySQL. ERROR! The server quit without updating PID file (/store/xxx.pid)</div></pre></td></tr></table></figure>
-<h3 id="mysql错误日志-mysqldatadir-hostname-err"><a href="#mysql错误日志-mysqldatadir-hostname-err" class="headerlink" title="mysql错误日志(/{mysqldatadir}/{hostname}.err)"></a>mysql错误日志(/{mysqldatadir}/{hostname}.err)</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">2016-09-22 16:21:41 28084 [Note] InnoDB: Using atomics to ref count buffer pool pages</div><div class="line">2016-09-22 16:21:41 28084 [Note] InnoDB: The InnoDB memory heap is disabled</div><div class="line">2016-09-22 16:21:41 28084 [Note] InnoDB: Mutexes and rw_locks use GCC atomic builtins</div><div class="line">2016-09-22 16:21:41 28084 [Note] InnoDB: Memory barrier is not used</div><div class="line">2016-09-22 16:21:41 28084 [Note] InnoDB: Compressed tables use zlib 1.2.3</div><div class="line">2016-09-22 16:21:41 28084 [Note] InnoDB: Using CPU crc32 instructions</div><div class="line">2016-09-22 16:21:41 28084 [Note] InnoDB: Initializing buffer pool, size = 1.0G</div><div class="line">InnoDB: mmap(137363456 bytes) failed; errno 12</div><div class="line">2016-09-22 16:21:41 28084 [ERROR] InnoDB: Cannot allocate memory for the buffer pool</div><div class="line">2016-09-22 16:21:41 28084 [ERROR] Plugin &apos;InnoDB&apos; init function returned error.</div><div class="line">2016-09-22 16:21:41 28084 [ERROR] Plugin &apos;InnoDB&apos; registration as a STORAGE ENGINE failed.</div><div class="line">2016-09-22 16:21:41 28084 [ERROR] Unknown/unsupported storage engine: InnoDB</div><div class="line">2016-09-22 16:21:41 28084 [ERROR] Aborting</div><div class="line">2016-09-22 16:21:41 28084 [Note] Binlog end</div></pre></td></tr></table></figure>
-<h3 id="分析"><a href="#分析" class="headerlink" title="分析"></a>分析</h3><p>根据mysql错误日志提示，mysql在初始化InnoDB引擎时，申请“Buffer Pool”内存失败，此处的mmap是用来申请内存的（allocate申请内存时，小于128KB的在栈上进行分配内存，大于128K的，从堆上分配内存）。<br>使用shell终端正常启动mysqld服务，查看mysqld占用内存大小发现需要2GB左右的虚拟内存，如下所示：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">[root@host]# ps aux | grep mysqld | grep -v grep</div><div class="line">root 31635 0.0 0.1 11300 1520 ? S Sep22 0:00 /bin/sh /cs/mysql/bin/mysqld_safe --datadir=/store --pid-file=/store/zhoubo.pid</div><div class="line">root 32165 0.0 25.5 2041620 259716 ? Sl Sep22 0:15 /cs/mysql/bin/mysqld --basedir=/cs/mysql --datadir=/store --plugin-dir=/cs/mysql/lib/plugin --user=root --log-error=/store/zhoubo.err --open-files-limit=65535 --pid-file=/store/zhoubo.pid --socket=/cs/mysql/data/mysql.sock --port=3306</div></pre></td></tr></table></figure>
-<p>由此可以看出，“nginx+uwsgi+python”这个组合在其中某个环节对内存做了内存限制导致内存不能正常分配；nginx父进程为init，uwsgi父进程也为init，二者之间使用管道进行通信，所以不可能由nginx限制uwsgi进程资源。而uwsgi以fork形式调用python，fork过程中可以限制资源，python进程的资源被限制后再启动mysqld服务，就会导致mysqld分配内存失败，从而出现上述的错误现象。</p>
-<h3 id="解决"><a href="#解决" class="headerlink" title="解决"></a>解决</h3><p>根据上诉分析，找到了问题的原因出在uwsgi对进程资源进行了限制，所以将uwsgi.ini中关于资源限制的配置去掉，即可解决。<br>在uwsgi.ini中去掉<code>limit-as 256</code>选项。</p>
-<h1 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h1><p>uwsgi.ini中资源限制项包括<code>limit-as</code>，<code>limit-nproc</code>，<code>limit-port</code>等，他们对进程资源的限制的访问获取都是通过系统接口getrlimt和setrlimit来实现的(POSIX API)。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/time.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/resource.h&gt;</span></span></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">getrlimit</span><span class="params">(<span class="keyword">int</span> resource, <span class="keyword">struct</span> rlimit *rlim)</span></span>;</div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">setrlimit</span><span class="params">(<span class="keyword">int</span> resource, <span class="keyword">const</span> <span class="keyword">struct</span> rlimit *rlim)</span></span>;</div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">prlimit</span><span class="params">(<span class="keyword">pid_t</span> pid, <span class="keyword">int</span> resource, <span class="keyword">const</span> <span class="keyword">struct</span> rlimit *new_limit,<span class="keyword">struct</span> rlimit *old_limit)</span></span>;</div></pre></td></tr></table></figure>
-<h3 id="核心结构体"><a href="#核心结构体" class="headerlink" title="核心结构体"></a>核心结构体</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> rlimit&#123;</div><div class="line">    <span class="keyword">rlim_t</span> rlim_cur;  <span class="comment">// soft limit</span></div><div class="line">    <span class="keyword">rlim_t</span> rlim_max;  <span class="comment">// hard limit</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p><strong>rlim_cur</strong></p>
-<p>为soft limit是指内核所能支持的资源上限。比如对于RLIMIT_NOFILE(一个进程能打开的最大文件数，内核默认是1024)，soft limit最大也只能达到1024。对于RLIMIT_CORE(core文件的大小，内核不做限制)，soft limit最大能是unlimited。</p>
-<p><strong>rlim_max</strong></p>
-<p>为hard limit在资源中只是作为soft limit的上限。当你设置hard limit后，你以后设置的soft limit只能小于hard limit。要说明的是，hard limit只针对非特权进程，也就是进程的有效用户ID(effective user ID)不是0的进程。具有特权级别的进程(具有属性CAP_SYS_RESOURCE)，soft limit则只有内核上限。</p>
-<h3 id="可限制资源列表"><a href="#可限制资源列表" class="headerlink" title="可限制资源列表"></a>可限制资源列表</h3><table>
+<h1 id="权限"><a href="#权限" class="headerlink" title="权限"></a>权限</h1><h2 id="权限列表"><a href="#权限列表" class="headerlink" title="权限列表"></a>权限列表</h2><table>
 <thead>
 <tr>
-<th style="text-align:center">资源</th>
-<th style="text-align:left">描述</th>
+<th style="text-align:left">Privilege</th>
+<th style="text-align:left">Column</th>
+<th style="text-align:left">Context</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align:center">RLIMIT_AS</td>
-<td style="text-align:left">进程的最大虚拟内存空间，字节为单位</td>
+<td style="text-align:left">CREATE</td>
+<td style="text-align:left">Create_priv</td>
+<td style="text-align:left">databases, tables, or indexes</td>
 </tr>
 <tr>
-<td style="text-align:center">RLIMIT_CORE</td>
-<td style="text-align:left">内核转存文件的最大长度</td>
+<td style="text-align:left">DROP</td>
+<td style="text-align:left">Drop_priv</td>
+<td style="text-align:left">database, tables, or views</td>
 </tr>
 <tr>
-<td style="text-align:center">RLIMIT_CPU</td>
-<td style="text-align:left">最大允许的CPU使用时间，秒为单位</td>
+<td style="text-align:left">GRANT OPTION</td>
+<td style="text-align:left">Grant_priv</td>
+<td style="text-align:left">database, tables, or stored routines</td>
 </tr>
 <tr>
-<td style="text-align:center">RLIMIT_DATA</td>
-<td style="text-align:left">进程数据段的最大</td>
+<td style="text-align:left">LOCK TABLES</td>
+<td style="text-align:left">lock_tables_priv</td>
+<td style="text-align:left">databases</td>
 </tr>
 <tr>
-<td style="text-align:center">RLIMIT_FSIZE</td>
-<td style="text-align:left">进程可建立的文件的最大长度</td>
+<td style="text-align:left">REFERENCES</td>
+<td style="text-align:left">References_priv</td>
+<td style="text-align:left">databases or tables, columns</td>
 </tr>
 <tr>
-<td style="text-align:center">RLIMIT_LOCKS</td>
-<td style="text-align:left">进程可建立的锁和租赁的最大值</td>
+<td style="text-align:left">EVENT</td>
+<td style="text-align:left">Event_priv</td>
+<td style="text-align:left">databases</td>
 </tr>
 <tr>
-<td style="text-align:center">RLIMIT_MEMLOCK</td>
-<td style="text-align:left">进程可锁定在内存中的最大数据量，字节为单位</td>
+<td style="text-align:left">ALTER</td>
+<td style="text-align:left">Alter_priv</td>
+<td style="text-align:left">tables</td>
 </tr>
 <tr>
-<td style="text-align:center">RLIMIT_MSGQUEUE</td>
-<td style="text-align:left">进程可为POSIX消息队列分配的最大字节数</td>
+<td style="text-align:left">DELETE</td>
+<td style="text-align:left">Delete_priv</td>
+<td style="text-align:left">tables</td>
 </tr>
 <tr>
-<td style="text-align:center">RLIMIT_NICE</td>
-<td style="text-align:left">进程可通过setpriority() 或 nice()调用设置的最大完美值</td>
+<td style="text-align:left">INDEX</td>
+<td style="text-align:left">Index_priv</td>
+<td style="text-align:left">tables</td>
 </tr>
 <tr>
-<td style="text-align:center">RLIMIT_NOFILE</td>
-<td style="text-align:left">指定比进程可打开的最大文件描述词大一的值，超出此值，将会产生EMFILE错误</td>
+<td style="text-align:left">INSERT</td>
+<td style="text-align:left">Insert_priv</td>
+<td style="text-align:left">tables or columns</td>
 </tr>
 <tr>
-<td style="text-align:center">RLIMIT_NPROC</td>
-<td style="text-align:left">用户可拥有的最大进程数</td>
+<td style="text-align:left">SELECT</td>
+<td style="text-align:left">Select_priv</td>
+<td style="text-align:left">tables or columns</td>
 </tr>
 <tr>
-<td style="text-align:center">RLIMIT_RTPRIO</td>
-<td style="text-align:left">进程可通过sched_setscheduler 和 sched_setparam设置的最大实时优先级</td>
+<td style="text-align:left">UPDATE</td>
+<td style="text-align:left">Update_priv</td>
+<td style="text-align:left">tables or columns</td>
 </tr>
 <tr>
-<td style="text-align:center">RLIMIT_SIGPENDING</td>
-<td style="text-align:left">用户可拥有的最大挂起信号数</td>
+<td style="text-align:left">CREATE TEMPORARY TABLES</td>
+<td style="text-align:left">Create_tmp_table_priv</td>
+<td style="text-align:left">tables</td>
 </tr>
 <tr>
-<td style="text-align:center">RLIMIT_STACK</td>
-<td style="text-align:left">最大的进程堆栈，以字节为单位</td>
+<td style="text-align:left">TRIGGER</td>
+<td style="text-align:left">trigger_priv</td>
+<td style="text-align:left">tables</td>
+</tr>
+<tr>
+<td style="text-align:left">CREATE VIEW</td>
+<td style="text-align:left">Create_view_priv</td>
+<td style="text-align:left">views</td>
+</tr>
+<tr>
+<td style="text-align:left">SHOW VIEW</td>
+<td style="text-align:left">Show_view_priv</td>
+<td style="text-align:left">views</td>
+</tr>
+<tr>
+<td style="text-align:left">ALTER ROUTINE</td>
+<td style="text-align:left">alter_routine_priv</td>
+<td style="text-align:left">stored routines</td>
+</tr>
+<tr>
+<td style="text-align:left">CREATE ROUTINE</td>
+<td style="text-align:left">create_routine_priv</td>
+<td style="text-align:left">stored routines</td>
+</tr>
+<tr>
+<td style="text-align:left">EXECUTE</td>
+<td style="text-align:left">execute_priv</td>
+<td style="text-align:left">stored routines</td>
+</tr>
+<tr>
+<td style="text-align:left">FILE</td>
+<td style="text-align:left">file_priv</td>
+<td style="text-align:left">file access on server host (Global)</td>
+</tr>
+<tr>
+<td style="text-align:left">CREATE TABLESPACE</td>
+<td style="text-align:left">create_tablespace_priv</td>
+<td style="text-align:left">server administration (Global)</td>
+</tr>
+<tr>
+<td style="text-align:left">CREATE USER</td>
+<td style="text-align:left">create_user_priv</td>
+<td style="text-align:left">server administration (Global)</td>
+</tr>
+<tr>
+<td style="text-align:left">PROCESS</td>
+<td style="text-align:left">process_priv</td>
+<td style="text-align:left">server administration (Global)</td>
+</tr>
+<tr>
+<td style="text-align:left">PROXY</td>
+<td style="text-align:left">proxy_priv</td>
+<td style="text-align:left">server administration (user to user)</td>
+</tr>
+<tr>
+<td style="text-align:left">RELOAD</td>
+<td style="text-align:left">reload_priv</td>
+<td style="text-align:left">server administration (Global)</td>
+</tr>
+<tr>
+<td style="text-align:left">REPLICATION CLIENT</td>
+<td style="text-align:left">repl_client_priv</td>
+<td style="text-align:left">server administration (Global)</td>
+</tr>
+<tr>
+<td style="text-align:left">REPLICATION SLAVE</td>
+<td style="text-align:left">repl_slave_priv</td>
+<td style="text-align:left">server administration (Global)</td>
+</tr>
+<tr>
+<td style="text-align:left">SHOW DATABASES</td>
+<td style="text-align:left">show_db_priv</td>
+<td style="text-align:left">server administration (Global)</td>
+</tr>
+<tr>
+<td style="text-align:left">SHUTDOWN</td>
+<td style="text-align:left">shutdown_priv</td>
+<td style="text-align:left">server administration (Global)</td>
+</tr>
+<tr>
+<td style="text-align:left">SUPER</td>
+<td style="text-align:left">super_priv</td>
+<td style="text-align:left">server administration (Global)</td>
+</tr>
+<tr>
+<td style="text-align:left">ALL [PRIVILEGES]</td>
+<td style="text-align:left"></td>
+<td style="text-align:left">server administration</td>
+</tr>
+<tr>
+<td style="text-align:left">USAGE</td>
+<td style="text-align:left"></td>
+<td style="text-align:left">server administration</td>
 </tr>
 </tbody>
 </table>
-<h1 id="参考及鸣谢"><a href="#参考及鸣谢" class="headerlink" title="参考及鸣谢"></a>参考及鸣谢</h1><ul>
-<li><a href="http://blog.csdn.net/todd911/article/details/14055745" target="_blank" rel="external">《UNIX环境高级编程》笔记–getrlimit和setrlimit函数</a></li>
-<li><a href="http://blog.csdn.net/kevin6216/article/details/15378617" target="_blank" rel="external">uWSGI参考资料</a></li>
-<li><a href="http://uwsgi-docs.readthedocs.io/en/latest/Options.html?highlight=limit-as" target="_blank" rel="external">uWSGI Options(官方)</a></li>
-<li><a href="http://blog.csdn.net/pennyliang/article/details/41678953" target="_blank" rel="external">mmap ENOMEM（errno 12） 错误 </a></li>
-<li><a href="http://www.cnblogs.com/vinozly/p/5489138.html" target="_blank" rel="external">Linux进程分配内存的两种方式–brk() 和mmap()</a></li>
+<h2 id="按权限的种类分类"><a href="#按权限的种类分类" class="headerlink" title="按权限的种类分类"></a>按权限的种类分类</h2><ul>
+<li>数据访问相关权限</li>
+<li>库表结构相关权限</li>
+<li>服务相关权限</li>
 </ul>
+<h1 id="权限相关表单"><a href="#权限相关表单" class="headerlink" title="权限相关表单"></a>权限相关表单</h1><p>MySQL权限信息存储在“mysql”数据中<br>其中:</p>
+<ul>
+<li>“user”表负责存储用户信息，及用户本身所拥有的权限；</li>
+<li>“db”表负责存储用户与db的权限关系;</li>
+<li>“tables_priv”负责存在用户与table的权限关系;</li>
+<li>“columns_priv”负责存储用户与column的权限关系;</li>
+</ul>
+<h2 id="user表结构"><a href="#user表结构" class="headerlink" title="user表结构"></a>user表结构</h2><table>
+<thead>
+<tr>
+<th style="text-align:left">Field</th>
+<th style="text-align:left">Type</th>
+<th style="text-align:center">Null</th>
+<th style="text-align:center">Key</th>
+<th style="text-align:left">Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">Host</td>
+<td style="text-align:left">char(60)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">User</td>
+<td style="text-align:left">char(16)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">Password</td>
+<td style="text-align:left">char(41)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">Select_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Insert_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Update_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Delete_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Create_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Drop_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Reload_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Shutdown_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Process_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">File_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Grant_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">References_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Index_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Alter_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Show_db_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Super_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Create_tmp_table_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Lock_tables_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Execute_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Repl_slave_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Repl_client_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Create_view_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Show_view_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Create_routine_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Alter_routine_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Create_user_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Event_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Trigger_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Create_tablespace_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">ssl_type</td>
+<td style="text-align:left">enum(‘’,’ANY’,’X509’,’SPECIFIED’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">ssl_cipher</td>
+<td style="text-align:left">blob</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">NULL</td>
+</tr>
+<tr>
+<td style="text-align:left">x509_issuer</td>
+<td style="text-align:left">blob</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">NULL</td>
+</tr>
+<tr>
+<td style="text-align:left">x509_subject</td>
+<td style="text-align:left">blob</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">NULL</td>
+</tr>
+<tr>
+<td style="text-align:left">max_questions</td>
+<td style="text-align:left">int(11) unsigned</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">0</td>
+</tr>
+<tr>
+<td style="text-align:left">max_updates</td>
+<td style="text-align:left">int(11) unsigned</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">0</td>
+</tr>
+<tr>
+<td style="text-align:left">max_connections</td>
+<td style="text-align:left">int(11) unsigned</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">0</td>
+</tr>
+<tr>
+<td style="text-align:left">max_user_connections</td>
+<td style="text-align:left">int(11) unsigned</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">0</td>
+</tr>
+<tr>
+<td style="text-align:left">plugin</td>
+<td style="text-align:left">char(64)</td>
+<td style="text-align:center">YES</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">mysql_native_password</td>
+</tr>
+<tr>
+<td style="text-align:left">authentication_string</td>
+<td style="text-align:left">text</td>
+<td style="text-align:center">YES</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">NULL</td>
+</tr>
+<tr>
+<td style="text-align:left">password_expired</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+</tbody>
+</table>
+<h2 id="db表结构"><a href="#db表结构" class="headerlink" title="db表结构"></a>db表结构</h2><table>
+<thead>
+<tr>
+<th style="text-align:left">Field</th>
+<th style="text-align:left">Type</th>
+<th style="text-align:center">Null</th>
+<th style="text-align:center">Key</th>
+<th style="text-align:left">Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">Host</td>
+<td style="text-align:left">char(60)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">Db</td>
+<td style="text-align:left">char(64)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">User</td>
+<td style="text-align:left">char(16)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">Select_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Insert_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Update_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Delete_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Create_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Drop_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Grant_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">References_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Index_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Alter_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Create_tmp_table_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Lock_tables_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Create_view_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Show_view_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Create_routine_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Alter_routine_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Execute_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Event_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+<tr>
+<td style="text-align:left">Trigger_priv</td>
+<td style="text-align:left">enum(‘N’,’Y’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">N</td>
+</tr>
+</tbody>
+</table>
+<h2 id="tables-priv表结构"><a href="#tables-priv表结构" class="headerlink" title="tables_priv表结构"></a>tables_priv表结构</h2><table>
+<thead>
+<tr>
+<th style="text-align:left">Field</th>
+<th style="text-align:left">Type</th>
+<th style="text-align:center">Null</th>
+<th style="text-align:center">Key</th>
+<th style="text-align:left">Default</th>
+<th style="text-align:left">Extra</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">Host</td>
+<td style="text-align:left">char(60)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">Db</td>
+<td style="text-align:left">char(64)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">User</td>
+<td style="text-align:left">char(16)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">Table_name</td>
+<td style="text-align:left">char(64)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">Grantor</td>
+<td style="text-align:left">char(77)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">MUL</td>
+<td style="text-align:left"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">Timestamp</td>
+<td style="text-align:left">timestamp</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">CURRENT_TIMESTAMP</td>
+<td style="text-align:left">on update CURRENT_TIMESTAMP</td>
+</tr>
+<tr>
+<td style="text-align:left">Table_priv</td>
+<td style="text-align:left">set(‘Select’,’Insert’,<br>‘Update’,’Delete’,<br>‘Create’,’Drop’,<br>‘Grant’,’References’,<br>‘Index’,’Alter’,<br>‘Create View’,<br>‘Show view’,’Trigger’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">Column_priv</td>
+<td style="text-align:left">set(‘Select’,’Insert’,<br>‘Update’,’References’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left"></td>
+<td style="text-align:left"><br></td>
+</tr>
+</tbody>
+</table>
+<h2 id="columns-priv表结构"><a href="#columns-priv表结构" class="headerlink" title="columns_priv表结构"></a>columns_priv表结构</h2><table>
+<thead>
+<tr>
+<th style="text-align:left">Field</th>
+<th style="text-align:left">Type</th>
+<th style="text-align:center">Null</th>
+<th style="text-align:center">Key</th>
+<th style="text-align:left">Default</th>
+<th style="text-align:left">Extra</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">Host</td>
+<td style="text-align:left">char(60)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">Db</td>
+<td style="text-align:left">char(64)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">User</td>
+<td style="text-align:left">char(16)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">Table_name</td>
+<td style="text-align:left">char(64)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">Column_name</td>
+<td style="text-align:left">char(64)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center">PRI</td>
+<td style="text-align:left"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">Timestamp</td>
+<td style="text-align:left">timestamp</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">CURRENT_TIMESTAMP</td>
+<td style="text-align:left">on update <br>CURRENT_TIMESTAMP</td>
+</tr>
+<tr>
+<td style="text-align:left">Column_priv</td>
+<td style="text-align:left">set(‘Select’,<br>‘Insert’,<br>‘Update’,<br>‘References’)</td>
+<td style="text-align:center">NO</td>
+<td style="text-align:center"></td>
+<td style="text-align:left"></td>
+<td style="text-align:left"><br></td>
+</tr>
+</tbody>
+</table>
+<h1 id="验证流程"><a href="#验证流程" class="headerlink" title="验证流程"></a>验证流程</h1><p><img src="/images/mysql/mysql_privilege_flow.png" alt="mysql_privilege_flow"></p>
 
           
         
@@ -2022,7 +2843,7 @@
             
               <a href="/archives/ || archive">
             
-                <span class="site-state-item-count">91</span>
+                <span class="site-state-item-count">92</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -2044,7 +2865,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">99</span>
+                <span class="site-state-item-count">100</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
