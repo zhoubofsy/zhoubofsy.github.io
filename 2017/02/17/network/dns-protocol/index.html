@@ -106,7 +106,7 @@
 <meta property="og:image" content="http://yoursite.com/images/dns/dns_protocol.png">
 <meta property="og:image" content="http://yoursite.com/images/dns/dns-protocol-format.png">
 <meta property="og:image" content="http://yoursite.com/images/dns/dns-work-flow.gif">
-<meta property="og:updated_time" content="2017-02-20T02:35:12.000Z">
+<meta property="og:updated_time" content="2017-11-27T02:14:46.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="DNS协议">
 <meta name="twitter:description" content="介绍IP地址对于人来说很难记忆区分，但域名却很方便记忆，所以要将域名与IP地址对应起来，就催生了DNS。DNS不仅提供域名到IP的映射服务，还能提供主机别名、邮件服务器识别、负载均衡服务。 协议DNS属于应用层协议，通常由HTTP、SMTP、FTP等协议使用，占用53端口。 交互流程  客户端发送一个包含域名的请求给DNS服务器（DNS查询报文） DNS服务器查询到域名对应的IP地址后，给客户端一">
@@ -455,40 +455,49 @@
 <h4 id="资源类型列表"><a href="#资源类型列表" class="headerlink" title="资源类型列表"></a>资源类型列表</h4><table>
 <thead>
 <tr>
-<th style="text-align:center">类型</th>
 <th style="text-align:center">助记符</th>
 <th style="text-align:left">说明</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align:center">1</td>
 <td style="text-align:center">A</td>
-<td style="text-align:left">IPv4地址</td>
+<td style="text-align:left">指定主机名（或域名）对应的IPv4地址记录</td>
 </tr>
 <tr>
-<td style="text-align:center">2</td>
-<td style="text-align:center">NS</td>
-<td style="text-align:left">名字服务器</td>
+<td style="text-align:center">AAAA</td>
+<td style="text-align:left">指定主机名（或域名）对应的IPv6地址记录</td>
 </tr>
 <tr>
-<td style="text-align:center">5</td>
 <td style="text-align:center">CNAME</td>
-<td style="text-align:left">别名</td>
+<td style="text-align:left">别名 如：dig www.baidu.com, www.baidu.com.的cname就是www.a.shifen.com.</td>
 </tr>
 <tr>
-<td style="text-align:center">12</td>
 <td style="text-align:center">PTR</td>
-<td style="text-align:left">指针把IP地址转化为域名</td>
+<td style="text-align:left">指针记录，用于将一个IP地址映射到对应的主机名,也可以看成是A记录的反向,通过IP访问域名</td>
 </tr>
 <tr>
-<td style="text-align:center">15</td>
 <td style="text-align:center">MX</td>
-<td style="text-align:left">邮件交换把邮件改变路由送到邮件服务器</td>
+<td style="text-align:left">邮件路由记录，用户可以将该域名下的邮件服务器指向到自己的mail server上，然后即可自行操控所有的邮箱设置</td>
+</tr>
+<tr>
+<td style="text-align:center">TXT</td>
+<td style="text-align:left">一般指为某个主机名或域名设置的说明，没啥用，可忽略</td>
+</tr>
+<tr>
+<td style="text-align:center">SRV</td>
+<td style="text-align:left">记录了哪台计算机提供了哪个服务</td>
+</tr>
+<tr>
+<td style="text-align:center">NS</td>
+<td style="text-align:left">域名解析服务器记录，如果要将子域名指定某个域名服务器来解析，需要设置NS记录</td>
 </tr>
 </tbody>
 </table>
-<p><strong> 不全，有待补充 </strong></p>
+<ul>
+<li>SRV<br>  格式：优先级 权重 端口 服务的名字.协议的类型.域名<br>  eg:  <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">_http._tcp.example.com. SRV 10 5 80. www.example.com</div><div class="line">_http - 服务名</div><div class="line">_tcp  - 协议</div><div class="line">10    - 优先级</div><div class="line">5     - 权重</div><div class="line">80    - 端口</div></pre></td></tr></table></figure>
+</li>
+</ul>
 <h2 id="内部流程"><a href="#内部流程" class="headerlink" title="内部流程"></a>内部流程</h2><p><img src="/images/dns/dns-work-flow.gif" alt="dns-work-flow"></p>
 <h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
 <li>RFC1035</li>
