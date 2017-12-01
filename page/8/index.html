@@ -313,6 +313,209 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/06/02/storage/ceph/20160602-osd-node-optimize/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2016/06/02/storage/ceph/20160602-osd-node-optimize/" itemprop="url">OSD 节点优化</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-06-02T17:07:48+08:00">
+                2016-06-02
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index">
+                    <span itemprop="name">storage</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="目标"><a href="#目标" class="headerlink" title="目标"></a>目标</h1><ul>
+<li>优化OSD节点性能</li>
+<li>关闭OSD节点瓶颈项</li>
+</ul>
+<h1 id="优化项"><a href="#优化项" class="headerlink" title="优化项"></a>优化项</h1><h2 id="CPU-Status"><a href="#CPU-Status" class="headerlink" title="CPU Status"></a>CPU Status</h2><p>将cpu status 设置为 performance，可通过BIOS设置，或在系统中进行如下配置，修改后需要重启生效<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">for CPUFREQ in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do [ -f $CPUFREQ ] || continue; echo -n performance &gt; $CPUFREQ; done</div></pre></td></tr></table></figure></p>
+<h2 id="Hyper-Threading（HT）"><a href="#Hyper-Threading（HT）" class="headerlink" title="Hyper-Threading（HT）"></a>Hyper-Threading（HT）</h2><p>开启VT和HT，在BIOS中配置</p>
+<h2 id="NUMA"><a href="#NUMA" class="headerlink" title="NUMA"></a>NUMA</h2><p>关闭NUMA，可通过BIOS关闭，也可在加载Kernel是设置<br>打开<code>/etc/grub2-efi.cfg</code>，修改kernel加载部分，修改后需要重启生效</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">linuxefi /vmlinuz-3.10.0-327.el7.x86_64 root=/dev/mapper/rhel-root ro crashkernel=auto rd.lvm.lv=rhel/root rd.lvm.lv=rhel/swap rhgb quiet LANG=en_US.UTF-8 numa=off</div></pre></td></tr></table></figure>
+<p>关闭前<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">$ lscpu | grep -i numa</div><div class="line">NUMA node(s):          2</div><div class="line">NUMA node0 CPU(s):     0-5,12-17</div><div class="line">NUMA node1 CPU(s):     6-11,18-23</div></pre></td></tr></table></figure></p>
+<p>关闭后<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">$ lscpu | grep -i numa</div><div class="line">NUMA node(s):          1</div><div class="line">NUMA node0 CPU(s):     0-23</div></pre></td></tr></table></figure></p>
+<h2 id="Jumbo-Frames"><a href="#Jumbo-Frames" class="headerlink" title="Jumbo Frames"></a>Jumbo Frames</h2><p>将cluster network 的网卡MTU设置为9000，修改后需要重启生效<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">echo &quot;MTU=9000&quot; | tee -a /etc/sysconfig/network-script/ifcfg-&#123;网卡&#125;</div></pre></td></tr></table></figure></p>
+<p>通过ifconfig查看mtu修改情况<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">$ ifconfig</div><div class="line">ens5f0: flags=4163&lt;UP,BROADCAST,RUNNING,MULTICAST&gt;  mtu 9000</div><div class="line">        inet 192.168.43.5  netmask 255.255.255.0  broadcast 192.168.43.255</div><div class="line">        inet6 fe80::92e2:baff:febf:3800  prefixlen 64  scopeid 0x20&lt;link&gt;</div><div class="line">        ether 90:e2:ba:bf:38:00  txqueuelen 1000  (Ethernet)</div><div class="line">        RX packets 5218040  bytes 661253942 (630.6 MiB)</div><div class="line">        RX errors 0  dropped 0  overruns 0  frame 0</div><div class="line">        TX packets 5170015  bytes 605082933 (577.0 MiB)</div><div class="line">        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0</div></pre></td></tr></table></figure></p>
+<h2 id="SSD-Trim"><a href="#SSD-Trim" class="headerlink" title="SSD Trim"></a>SSD Trim</h2><p>为减少SSD写放大，需要开启Trim。<br>判断SSD是否支持Trim<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ hdparm -I /dev/&#123;SSD硬盘&#125; | grep -i trim</div><div class="line">          *    Data Set Management TRIM supported (limit 8 blocks)</div></pre></td></tr></table></figure></p>
+<p>出现 “TRIM supported” 表示支持Trim，否则表示不支持Trim指令.</p>
+<p>在xfs文件系统中开启trim指令，需要挂载xfs文件系统时，option中增加<code>discard</code></p>
+<h2 id="Scheduler"><a href="#Scheduler" class="headerlink" title="Scheduler"></a>Scheduler</h2><p>硬盘I/O调度机制配置，SSD 推荐采用“noop”，机械硬盘推荐采用“deadline”<br>修改<code>/etc/udev/rules.d/60-schedulers.rules</code>，增加如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"># system default: set cfq scheduler for rotating disks</div><div class="line">ACTION==&quot;add|change&quot;,KERNEL==&quot;sd[a-z]&quot;,ATTR&#123;queue/rotational&#125;==&quot;1&quot;,ATTR&#123;queue/scheduler&#125;=&quot;deadline&quot;</div><div class="line">ACTION==&quot;add|change&quot;,KERNEL==&quot;sd[a-z]&quot;,ATTR&#123;queue/rotational&#125;==&quot;0&quot;,ATTR&#123;queue/scheduler&#125;=&quot;noop&quot;</div></pre></td></tr></table></figure></p>
+<p>rotational 为 “1” 表示机械硬盘，为“0”表示SSD</p>
+<p>查看修改是否生效<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">cat /sys/block/&#123;硬盘&#125;/queue/scheduler</div></pre></td></tr></table></figure></p>
+<h2 id="read-ahead-kb"><a href="#read-ahead-kb" class="headerlink" title="read_ahead_kb"></a>read_ahead_kb</h2><p>设置硬盘预读大小为8k<br>修改<code>/etc/udev/rules.d/60-schedulers.rules</code>，增加如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ACTION==&quot;add|change&quot;,KERNEL==&quot;sd[b-z]&quot;,ATTR&#123;queue/read_ahead_kb&#125;=&quot;8192&quot;</div></pre></td></tr></table></figure></p>
+<p>查看是否生效<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">cat /sys/block/&#123;硬盘&#125;/queue/read_ahead_kb</div></pre></td></tr></table></figure></p>
+<h2 id="xfs-option"><a href="#xfs-option" class="headerlink" title="xfs option"></a>xfs option</h2><p>xfs 挂载增加如下option：</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th style="text-align:center"></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>rw</td>
+<td style="text-align:center">允许读写操作</td>
+</tr>
+<tr>
+<td>noexec</td>
+<td style="text-align:center">不允许运行操作</td>
+</tr>
+<tr>
+<td>nodev</td>
+<td style="text-align:center">不支持设备文件</td>
+</tr>
+<tr>
+<td>noatime</td>
+<td style="text-align:center">不更新inode访问时间</td>
+</tr>
+<tr>
+<td>nobarrier</td>
+<td style="text-align:center">关闭cache 回写机制</td>
+</tr>
+</tbody>
+</table>
+<h2 id="FD-core-amp-PID"><a href="#FD-core-amp-PID" class="headerlink" title="FD,core &amp; PID"></a>FD,core &amp; PID</h2><h3 id="FD-amp-core"><a href="#FD-amp-core" class="headerlink" title="FD &amp; core"></a>FD &amp; core</h3><p>修改 max open files 最大值，系统默认是1024，将其修改为131072<br>修改 core 值，当程序崩溃时，会输出core文件，便于分析错误原因<br>修改<code>/etc/security/limits.conf</code>文件，增加：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">*   soft    core    10240</div><div class="line">*   soft    nofile  131072</div><div class="line">*   hard    nofile  131072</div></pre></td></tr></table></figure></p>
+<p>修改后，可通过<code>ulimit -a</code>查看。</p>
+<h3 id="PID"><a href="#PID" class="headerlink" title="PID"></a>PID</h3><p>修改pid max值，打破系统运行进程数量瓶颈，将其设置为4194303（系统默认是 32768）<br>修改<code>/etc/sysctl.conf</code>文件,增加<code>kernel.pid_max=4194303</code></p>
+<h2 id="cgroup"><a href="#cgroup" class="headerlink" title="cgroup"></a>cgroup</h2><p>若集群搭建采用超融合方案（计算节点与存储节点混搭），使用cgroup将cpu与OSD进程绑定，减少cpu时间片切换次数，提高OSD相应速度</p>
+<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a href="https://www.mylesgray.com/hardware/test-jumbo-frames-working/" target="_blank" rel="external">How to test if 9000 MTU/Jumbo Frames are working</a></li>
+<li><a href="http://puremonkey2010.blogspot.tw/2014/10/linux-jumbo-frame.html" target="_blank" rel="external">设置Jumbo frame</a></li>
+<li><a href="http://ycnian.org/blog/archives/832" target="_blank" rel="external">linux存储架构图</a></li>
+<li><a href="http://my.oschina.net/manmao/blog/593851" target="_blank" rel="external">linuxI/O子系统框架图</a></li>
+<li><a href="http://xiaoquqi.github.io/blog/2015/06/28/ceph-performance-optimization-summary/" target="_blank" rel="external">Ceph性能优化总结（v.94）</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/05/25/20160525-xunlei-download-parse/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1756,149 +1959,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/04/14/network/linux-http-proxy-md/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2016/04/14/network/linux-http-proxy-md/" itemprop="url">linux 配置 http 全局代理</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-04-14T11:21:25+08:00">
-                2016-04-14
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/network/" itemprop="url" rel="index">
-                    <span itemprop="name">network</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>使用”XX-Net-2.9.2“做代理服务端（XX-Net-2.9.2在github上可以找到）</p>
-<h2 id="Linux系统配置"><a href="#Linux系统配置" class="headerlink" title="Linux系统配置"></a>Linux系统配置</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">export http_proxy=http://127.0.0.1:8087</div><div class="line">export https_proxy=$http_proxy</div><div class="line">export ftp_proxy=$http_proxy</div><div class="line">export rsync_proxy=$http_proxy</div></pre></td></tr></table></figure>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -1951,7 +2011,7 @@
             
               <a href="/archives/ || archive">
             
-                <span class="site-state-item-count">92</span>
+                <span class="site-state-item-count">93</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
