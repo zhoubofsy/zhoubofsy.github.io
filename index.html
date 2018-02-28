@@ -313,6 +313,137 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/02/28/cs-ha-design/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2018/02/28/cs-ha-design/" itemprop="url">CloudStack VM HA</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-02-28T14:54:23+08:00">
+                2018-02-28
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h1><p>CloudStack HA服务为CloudStack管理的虚拟机（VM）提供高可用性。 它与CloudStack Orchestration协同工作来检测虚拟机和管理程序主机故障，并重新启动虚拟机以确保虚拟机的高可用性。 CloudStack HA旨在在一个区域内运行，仅限于主机和VM故障。 它不提供网络，存储或完整区域故障的可用性。</p>
+<h1 id="设计原则"><a href="#设计原则" class="headerlink" title="设计原则"></a>设计原则</h1><p> CloudStack HA旨在确保HA不会破坏虚拟机。 需要高可用性的工作负载不在虚拟机上运行，因此这些虚拟机上的数据不能被高可用性进程损坏。 CloudStack HA优先考虑VM可用性的VM完整性。 在CloudStack HA无法安全地重新启动VM的情况下，它会要求管理员担任重新启动VM是否安全的仲裁员。<br> CloudStack HA旨在使用多种技术。 它将这些功能抽象为检测，调查和防护步骤，并为要编写新模块的插件接口提供不同的技术。 CloudStack HA中VM的平均恢复时间取决于技术的选择。</p>
+<h1 id="HA阶段"><a href="#HA阶段" class="headerlink" title="HA阶段"></a>HA阶段</h1><p>CloudStack HA包含三个不同阶段：检测，重启和手动干预。 检测处理不同的方式来检测VM故障的可能性。 重启是重新启动发生故障的虚拟机的实际过程。 当无法安全地重新启动VM时，系统管理员可以手动进行干预。</p>
+<h2 id="检测"><a href="#检测" class="headerlink" title="检测"></a>检测</h2><p>CloudStack HA持续检测hypervisor主机上的VM状态更改，以检测hypervisor主机上发生故障的VM。此更改检测以可配置的时间间隔（sync.interval）默认为1分钟执行。收到变更检测后，CloudStack HA立即着手重启虚拟机。<br>在CloudStack的虚拟机编排期间，VM操作可能会卡在虚拟机管理程序的控制台。原因可能不同，如控制台链接丢失，控制台繁忙，控制台损坏，需要重新启动。发生这种情况时，CloudStack并不确定虚拟机是否已启动或停止，因为它无法通过虚拟机管理程序的控制台确认操作的成功/失败。同时，它不能简单地重置虚拟机的状态以允许进一步的操作。例如，在启动VM时，该命令已发送到hypervisor A，但长时间未收到响应。如果虚拟机的状态重置为已停止，则可以在hypervisor B上启动它，但如果hypervisor A实际已经启动虚拟机，则两个虚拟机实例可能正在写入同一磁盘并导致虚拟机损坏。在这种情况下，CloudStack会让虚拟机处于转换状态（启动/停止/迁移），并通知CloudStack HA在确保虚拟机无法损坏后重新启动虚拟机。</p>
+<h2 id="重启处理"><a href="#重启处理" class="headerlink" title="重启处理"></a>重启处理</h2><p>CloudStack HighAvailabilityManager来完成重启处理过程，其进程定义了三个步骤。</p>
+<ol>
+<li>调查 - 确定虚拟机是在启动，关闭还是无法确定</li>
+<li>防护 - 屏蔽使用网络或存储的虚拟机</li>
+<li>启动 - 以正常方式启动虚拟机。</li>
+</ol>
+<h2 id="手动干预"><a href="#手动干预" class="headerlink" title="手动干预"></a>手动干预</h2><p>作为CloudStack HA设计的一部分，如果CloudStack HA无法确定它是否可以安全地完成，则不得重新启动VM。 在这些情况下，虚拟机处于过渡状态。 在这种情况下，系统管理员可以通过检查以确保虚拟机或虚拟机宿主机进行手动干预，然后调用CloudStack以强制停止标志设置为true来停止虚拟机。 以这种方式调用时，CloudStack会尝试停止VM，但即使无法完成对虚拟机监控程序主机的任何操作，也会继续释放资源。 这样做后，CloudStack HA将停止任何尝试重新启动虚拟机，并可以由管理员重新启动。</p>
+<h1 id="HA时序"><a href="#HA时序" class="headerlink" title="HA时序"></a>HA时序</h1><p><img src="/images/CloudStack_HA_Diagram.png" alt="CloudStack_HA_Diagram"></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/01/31/works/create-xs-builder-env/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -2246,167 +2377,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/10/19/bigdata/hadoop/Phoenix-index/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/10/19/bigdata/hadoop/Phoenix-index/" itemprop="url">Phoenix 二级索引</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-19T14:10:36+08:00">
-                2017-10-19
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Big-Data/" itemprop="url" rel="index">
-                    <span itemprop="name">Big-Data</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>在Hbase中，只有一个单一的按照字典序排序的rowKey索引，当使用rowKey来进行数据查询的时候速度较快，但是如果不使用rowKey来查询的话就会使用filter来对全表进行扫描，很大程度上降低了检索性能。而Phoenix提供了二级索引技术来应对这种使用rowKey之外的条件进行检索的场景。</p>
-<h1 id="Global-Index"><a href="#Global-Index" class="headerlink" title="Global Index"></a>Global Index</h1><p>Global indexing适用于多读少写的业务场景。使用Global indexing的话在写数据的时候会消耗大量开销，因为所有对数据表的更新操作（DELETE, UPSERT VALUES and UPSERT SELECT）,会引起索引表的更新，而索引表是分布在不同的数据节点上的，跨节点的数据传输带来了较大的性能消耗。在读数据的时候Phoenix会选择索引表来降低查询消耗的时间。<strong><em> 在默认情况下如果想查询的字段不是索引字段的话索引表不会被使用，也就是说不会带来查询速度的提升。 </em></strong></p>
-<h2 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h2><p>HBase集群的每个regionserver节点的hbase-site.xml中加入配置，并重启HBase集群</p>
-<figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">property</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">name</span>&gt;</span>hbase.regionserver.wal.codec<span class="tag">&lt;/<span class="name">name</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">value</span>&gt;</span>org.apache.hadoop.hbase.regionserver.wal.IndexedWALEditCodec<span class="tag">&lt;/<span class="name">value</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">property</span>&gt;</span></div></pre></td></tr></table></figure>
-<p>注: phoenix有两种链接方式JDBC和phoenix-client，phoenix-client可以正常创建索引；zeppelin使用jdbc连接不能正常创建索引，提示如下错误。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line">java.sql.SQLException: ERROR 1029 (42Y88): Mutable secondary indexes must have the hbase.regionserver.wal.codec property set to org.apache.hadoop.hbase.regionserver.wal.IndexedWALEditCodec in the hbase-sites.xml of every region server. tableName=CMP_IDX</div><div class="line">    at org.apache.phoenix.exception.SQLExceptionCode$Factory$1.newException(SQLExceptionCode.java:464)</div><div class="line">    at org.apache.phoenix.exception.SQLExceptionInfo.buildException(SQLExceptionInfo.java:150)</div><div class="line">    at org.apache.phoenix.schema.MetaDataClient.createIndex(MetaDataClient.java:1293)</div><div class="line">    at org.apache.phoenix.compile.CreateIndexCompiler$1.execute(CreateIndexCompiler.java:85)</div><div class="line">    at org.apache.phoenix.jdbc.PhoenixStatement$2.call(PhoenixStatement.java:358)</div><div class="line">    at org.apache.phoenix.jdbc.PhoenixStatement$2.call(PhoenixStatement.java:341)</div><div class="line">    at org.apache.phoenix.call.CallRunner.run(CallRunner.java:53)</div><div class="line">    at org.apache.phoenix.jdbc.PhoenixStatement.executeMutation(PhoenixStatement.java:340)</div><div class="line">    at org.apache.phoenix.jdbc.PhoenixStatement.execute(PhoenixStatement.java:1511)</div><div class="line">    at org.apache.commons.dbcp2.DelegatingStatement.execute(DelegatingStatement.java:291)</div><div class="line">    at org.apache.commons.dbcp2.DelegatingStatement.execute(DelegatingStatement.java:291)</div><div class="line">    at org.apache.zeppelin.jdbc.JDBCInterpreter.executeSql(JDBCInterpreter.java:581)</div><div class="line">    at org.apache.zeppelin.jdbc.JDBCInterpreter.interpret(JDBCInterpreter.java:692)</div><div class="line">    at org.apache.zeppelin.interpreter.LazyOpenInterpreter.interpret(LazyOpenInterpreter.java:97)</div><div class="line">    at org.apache.zeppelin.interpreter.remote.RemoteInterpreterServer$InterpretJob.jobRun(RemoteInterpreterServer.java:498)</div><div class="line">    at org.apache.zeppelin.scheduler.Job.run(Job.java:175)</div><div class="line">    at org.apache.zeppelin.scheduler.ParallelScheduler$JobRunner.run(ParallelScheduler.java:162)</div><div class="line">    at java.util.concurrent.Executors$RunnableAdapter.call(Unknown Source)</div><div class="line">    at java.util.concurrent.FutureTask.run(Unknown Source)</div><div class="line">    at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.access$201(Unknown Source)</div><div class="line">    at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(Unknown Source)</div><div class="line">    at java.util.concurrent.ThreadPoolExecutor.runWorker(Unknown Source)</div><div class="line">    at java.util.concurrent.ThreadPoolExecutor$Worker.run(Unknown Source)</div><div class="line">    at java.lang.Thread.run(Unknown Source)</div></pre></td></tr></table></figure></p>
-<h2 id="索引操作"><a href="#索引操作" class="headerlink" title="索引操作"></a>索引操作</h2><p>在开始创建索引以前先创建一个表，并向其中填充测试数据（此处填充的数据仅用于功能测试）</p>
-<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">0: jdbc:phoenix:&gt; create table usertable (id varchar primary key,firstname varchar, lastname varchar);</div><div class="line">0: jdbc:phoenix:&gt; !tables</div><div class="line">+------------+--------------+-------------------------+---------------+----------+------------+----------------------------+-------------+</div><div class="line">| TABLE_CAT  | TABLE_SCHEM  |       TABLE_NAME        |  TABLE_TYPE   | REMARKS  | TYPE_NAME  | SELF_REFERENCING_COL_NAME  | REF_GENERAT |</div><div class="line">+------------+--------------+-------------------------+---------------+----------+------------+----------------------------+-------------+</div><div class="line">|            | SYSTEM       | CATALOG                 | SYSTEM TABLE  |          |            |                            |             |</div><div class="line">|            | SYSTEM       | FUNCTION                | SYSTEM TABLE  |          |            |                            |             |</div><div class="line">|            | SYSTEM       | SEQUENCE                | SYSTEM TABLE  |          |            |                            |             |</div><div class="line">|            | SYSTEM       | STATS                   | SYSTEM TABLE  |          |            |                            |             |</div><div class="line">|            |              | USERTABLE               | TABLE         |          |            |                            |             |</div><div class="line">+------------+--------------+-------------------------+---------------+----------+------------+----------------------------+-------------+</div><div class="line"></div><div class="line">0: jdbc:phoenix:&gt; upsert into usertable(id, firstname, lastname) values('1', 'Hello', 'world');</div><div class="line">...</div><div class="line">0: jdbc:phoenix:&gt; upsert into usertable(id, firstname, lastname) values('5', 'Hello', 'phoenix');</div></pre></td></tr></table></figure>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">base(main):019:0&gt; scan &apos;USERTABLE&apos;</div><div class="line">ROW                                 COLUMN+CELL</div><div class="line"> 1                                  column=0:FIRSTNAME, timestamp=1508397473229, value=Hello</div><div class="line"> 1                                  column=0:LASTNAME, timestamp=1508397473229, value=world</div><div class="line"> 1                                  column=0:_0, timestamp=1508397473229, value=x</div><div class="line"> 2                                  column=0:FIRSTNAME, timestamp=1508397529852, value=Hello</div><div class="line"> 2                                  column=0:LASTNAME, timestamp=1508397529852, value=world</div><div class="line"> 2                                  column=0:_0, timestamp=1508397529852, value=x</div><div class="line"> 3                                  column=0:FIRSTNAME, timestamp=1508397535836, value=Hello</div><div class="line"> 3                                  column=0:LASTNAME, timestamp=1508397535836, value=world</div><div class="line"> 3                                  column=0:_0, timestamp=1508397535836, value=x</div><div class="line"> 4                                  column=0:FIRSTNAME, timestamp=1508397643594, value=Hello</div><div class="line"> 4                                  column=0:LASTNAME, timestamp=1508397643594, value=phoenix</div><div class="line"> 4                                  column=0:_0, timestamp=1508397643594, value=x</div><div class="line"> 5                                  column=0:FIRSTNAME, timestamp=1508397648938, value=Hello</div><div class="line"> 5                                  column=0:LASTNAME, timestamp=1508397648938, value=phoenix</div><div class="line"> 5                                  column=0:_0, timestamp=1508397648938, value=x</div><div class="line">5 row(s) in 0.3220 seconds</div></pre></td></tr></table></figure>
-<h3 id="创建索引"><a href="#创建索引" class="headerlink" title="创建索引"></a>创建索引</h3><figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line">0: jdbc:phoenix:&gt; create index idx_name on usertable (lastname) include(firstname);</div><div class="line">0: jdbc:phoenix:&gt; 0: jdbc:phoenix:&gt; !tables</div><div class="line">+------------+--------------+-------------------------+---------------+----------+------------+----------------------------+-------------+</div><div class="line">| TABLE_CAT  | TABLE_SCHEM  |       TABLE_NAME        |  TABLE_TYPE   | REMARKS  | TYPE_NAME  | SELF_REFERENCING_COL_NAME  | REF_GENERAT |</div><div class="line">+------------+--------------+-------------------------+---------------+----------+------------+----------------------------+-------------+</div><div class="line">|            |              | IDX_NAME                | INDEX         |          |            |                            |             |</div><div class="line">|            | SYSTEM       | CATALOG                 | SYSTEM TABLE  |          |            |                            |             |</div><div class="line">|            | SYSTEM       | FUNCTION                | SYSTEM TABLE  |          |            |                            |             |</div><div class="line">|            | SYSTEM       | SEQUENCE                | SYSTEM TABLE  |          |            |                            |             |</div><div class="line">|            | SYSTEM       | STATS                   | SYSTEM TABLE  |          |            |                            |             |</div><div class="line">|            |              | USERTABLE               | TABLE         |          |            |                            |             |</div><div class="line">+------------+--------------+-------------------------+---------------+----------+------------+----------------------------+-------------+</div><div class="line">0: jdbc:phoenix:&gt; !index usertable</div><div class="line">+------------+--------------+-------------+-------------+------------------+-------------+-------+-------------------+--------------+----+</div><div class="line">| TABLE_CAT  | TABLE_SCHEM  | TABLE_NAME  | NON_UNIQUE  | INDEX_QUALIFIER  | INDEX_NAME  | TYPE  | ORDINAL_POSITION  | COLUMN_NAME  | AS |</div><div class="line">+------------+--------------+-------------+-------------+------------------+-------------+-------+-------------------+--------------+----+</div><div class="line">|            |              | USERTABLE   | true        |                  | IDX_NAME    | 3     | 1                 | 0:LASTNAME   | A  |</div><div class="line">|            |              | USERTABLE   | true        |                  | IDX_NAME    | 3     | 2                 | :ID          | A  |</div><div class="line">|            |              | USERTABLE   | true        |                  | IDX_NAME    | 3     | 3                 | 0:FIRSTNAME  |    |</div><div class="line">+------------+--------------+-------------+-------------+------------------+-------------+-------+-------------------+--------------+----+</div></pre></td></tr></table></figure>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">hbase(main):020:0&gt; scan &apos;IDX_NAME&apos;</div><div class="line">ROW                                 COLUMN+CELL</div><div class="line"> phoenix\x004                       column=0:0:FIRSTNAME, timestamp=1508397686228, value=Hello</div><div class="line"> phoenix\x004                       column=0:_0, timestamp=1508397686228, value=x</div><div class="line"> phoenix\x005                       column=0:0:FIRSTNAME, timestamp=1508397686228, value=Hello</div><div class="line"> phoenix\x005                       column=0:_0, timestamp=1508397686228, value=x</div><div class="line"> world\x001                         column=0:0:FIRSTNAME, timestamp=1508397686228, value=Hello</div><div class="line"> world\x001                         column=0:_0, timestamp=1508397686228, value=x</div><div class="line"> world\x002                         column=0:0:FIRSTNAME, timestamp=1508397686228, value=Hello</div><div class="line"> world\x002                         column=0:_0, timestamp=1508397686228, value=x</div><div class="line"> world\x003                         column=0:0:FIRSTNAME, timestamp=1508397686228, value=Hello</div><div class="line"> world\x003                         column=0:_0, timestamp=1508397686228, value=x</div><div class="line">5 row(s) in 0.3180 seconds</div></pre></td></tr></table></figure>
-<h3 id="使用索引"><a href="#使用索引" class="headerlink" title="使用索引"></a>使用索引</h3><p>正常的select … where … 是不会用到索引表的，要想用到索引表，必须查询出的字段也是索引字段。(此处的结论需要在后续的性能测试中进行验证)</p>
-<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">0: jdbc:phoenix:&gt; select firstname from usertable where lastname = 'phoenix';</div><div class="line">+------------+</div><div class="line">| FIRSTNAME  |</div><div class="line">+------------+</div><div class="line">| Hello      |</div><div class="line">| Hello      |</div><div class="line">+------------+</div></pre></td></tr></table></figure>
-<h2 id="性能测试"><a href="#性能测试" class="headerlink" title="性能测试"></a>性能测试</h2><h3 id="读"><a href="#读" class="headerlink" title="读"></a>读</h3><p>Todo…</p>
-<h3 id="写"><a href="#写" class="headerlink" title="写"></a>写</h3><p>Todo…</p>
-<h1 id="Local-Index"><a href="#Local-Index" class="headerlink" title="Local Index"></a>Local Index</h1><p>Todo…</p>
-<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a href="http://www.cnblogs.com/mario-nb/p/6350266.html?utm_source=itdadao&amp;utm_medium=referral" target="_blank" rel="external">Phoenix的二级索引</a></li>
-<li><a href="http://www.cnblogs.com/MOBIN/p/5467284.html" target="_blank" rel="external">Phoenix二级索引(Secondary Indexing)的使用</a></li>
-<li><a href="http://blog.csdn.net/lifuxiangcaohui/article/details/55518390" target="_blank" rel="external">HBase phoenix二级索引</a></li>
-</ul>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2459,7 +2429,7 @@
             
               <a href="/archives/ || archive">
             
-                <span class="site-state-item-count">96</span>
+                <span class="site-state-item-count">97</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -2481,7 +2451,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">101</span>
+                <span class="site-state-item-count">102</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
