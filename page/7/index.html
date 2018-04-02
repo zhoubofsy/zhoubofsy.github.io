@@ -313,6 +313,163 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/11/17/search-engine-command/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2016/11/17/search-engine-command/" itemprop="url">搜索引擎命令用法</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-11-17T09:57:58+08:00">
+                2016-11-17
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/other/" itemprop="url" rel="index">
+                    <span itemprop="name">other</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="搜索引擎"><a href="#搜索引擎" class="headerlink" title="搜索引擎"></a>搜索引擎</h1><p>搜索引擎对于每一个码农来说都是一个互联网数据库，在这个数据库中有很多信息，我们在这个数据库中检索数据不需要指定数据库，也不需要数据表，只需要指定你需要检索的关键字即可。但这种搜索方式虽然搜索范围大，无漏网之鱼，可也搜到了很多于我们需要无关的内容。为了精确查找，筛选掉不需要的信息。搜索引擎还有如下用法，接下来，就让我们一探究竟吧。</p>
+<h1 id="特殊用法"><a href="#特殊用法" class="headerlink" title="特殊用法"></a>特殊用法</h1><p>由于天朝屏蔽Google，所以以下可在baidu搜索输入框中操作实现。</p>
+<h2 id="指定标题搜索"><a href="#指定标题搜索" class="headerlink" title="指定标题搜索"></a>指定标题搜索</h2><h3 id="语法"><a href="#语法" class="headerlink" title="语法"></a>语法</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">intitle:&quot;&lt;网页title内容(标签上显示的内容)&gt;&quot;</div></pre></td></tr></table></figure>
+<h3 id="举例"><a href="#举例" class="headerlink" title="举例"></a>举例</h3><p>搜索title中含有“Bolog”的网页<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">intitle:&quot;Bolog&quot;</div></pre></td></tr></table></figure></p>
+<h2 id="指定URL搜索"><a href="#指定URL搜索" class="headerlink" title="指定URL搜索"></a>指定URL搜索</h2><h3 id="语法-1"><a href="#语法-1" class="headerlink" title="语法"></a>语法</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">inurl:&lt;全部或部分URL信息&gt;</div></pre></td></tr></table></figure>
+<h3 id="举例-1"><a href="#举例-1" class="headerlink" title="举例"></a>举例</h3><p>搜索url中包含<code>nginx-1-11-6</code>的网页<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">inurl:nginx-1-11-6</div></pre></td></tr></table></figure></p>
+<h2 id="指定正文内容搜索"><a href="#指定正文内容搜索" class="headerlink" title="指定正文内容搜索"></a>指定正文内容搜索</h2><h3 id="语法-2"><a href="#语法-2" class="headerlink" title="语法"></a>语法</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">intext:&quot;&lt;搜索关键字&gt;&quot;</div></pre></td></tr></table></figure>
+<p>此方法也是搜索引擎默认使用方法（猜的）</p>
+<h3 id="举例-2"><a href="#举例-2" class="headerlink" title="举例"></a>举例</h3><p>搜索正文内容含有“python” 和“golang”关键字的网页<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">intext:&quot;&lt;python golang&gt;&quot;</div></pre></td></tr></table></figure></p>
+<h2 id="指定网站（站点）搜索"><a href="#指定网站（站点）搜索" class="headerlink" title="指定网站（站点）搜索"></a>指定网站（站点）搜索</h2><h3 id="语法-3"><a href="#语法-3" class="headerlink" title="语法"></a>语法</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">site:&lt;网站域名&gt; &lt;搜索关键字&gt;</div></pre></td></tr></table></figure>
+<h3 id="举例-3"><a href="#举例-3" class="headerlink" title="举例"></a>举例</h3><p>在oschina上搜索python关键字<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">site:oschina.net python</div></pre></td></tr></table></figure></p>
+<h2 id="指定文件类型搜索"><a href="#指定文件类型搜索" class="headerlink" title="指定文件类型搜索"></a>指定文件类型搜索</h2><h3 id="语法-4"><a href="#语法-4" class="headerlink" title="语法"></a>语法</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">filetype:&lt;文件类型&gt; &lt;搜索关键字&gt;</div></pre></td></tr></table></figure>
+<h3 id="举例-4"><a href="#举例-4" class="headerlink" title="举例"></a>举例</h3><p>搜索所有带有python关键字的PDF文档<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">filetype:pdf python</div></pre></td></tr></table></figure></p>
+<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a href="http://www.360doc.com/content/13/1014/11/1956846_321333210.shtml" target="_blank" rel="external">intile,inurl,filetype,site作用及在google中的用法</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/11/15/language/python/python-argparse-use/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -407,6 +564,159 @@
         
           
             <figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># -*- coding: utf-8 -*-</span></div><div class="line"><span class="keyword">import</span> argparse</div><div class="line">args = <span class="string">"-f hello.txt -n 1 2 3 -x 100 -y b -z a -q hello @args.txt i_am_bar -h"</span>.split()</div><div class="line"></div><div class="line"><span class="comment"># 使用@args.txt要求fromfile_prefix_chars="@"</span></div><div class="line"><span class="comment"># args.txt文件中应该一行一个参数，想改变行为参考convert_arg_line_to_args()</span></div><div class="line"><span class="comment"># ArgumentParser参数的简单说明</span></div><div class="line"><span class="comment">## description - 命令行帮助的开始文字，大部分情况下，我们只会用到这个参数</span></div><div class="line"><span class="comment"># epilog - 命令行帮助的结尾文字</span></div><div class="line"><span class="comment"># prog - (default: sys.argv[0])程序的名字，一般不需要修改，另外，如果你需要在help中使用到程序的名字，可以使用%(prog)s</span></div><div class="line"><span class="comment"># prefix_chars - 命令的前缀，默认是-，例如-f/--file。有些程序可能希望支持/f这样的选项，可以使用prefix_chars="/"</span></div><div class="line"><span class="comment"># fromfile_prefix_chars - (default: None)如果你希望命令行参数可以从文件中读取，就可能用到。例如，如果fromfile_prefix_chars='@',命令行参数中有一个为"@args.txt"，args.txt的内容会作为命令行参数</span></div><div class="line"><span class="comment"># add_help - 是否增加-h/-help选项 (default: True)，一般help信息都是必须的，所以不用设置啦。</span></div><div class="line"><span class="comment">## parents - 类型是list，如果这个parser的一些选项跟其他某些parser的选项一样，可以用parents来实现继承，例如parents=[parent_parser]</span></div><div class="line"><span class="comment">## formatter_class - 自定义帮助信息的格式（description和epilog）。默认情况下会将长的帮助信息进行&lt;自动换行和消除多个连续空白&gt;。</span></div><div class="line"><span class="comment">#三个允许的值：</span></div><div class="line"><span class="comment"># class argparse.RawDescriptionHelpFormatter 直接输出description和epilog的原始形式（不进行自动换行和消除空白的操作）</span></div><div class="line"><span class="comment"># class argparse.RawTextHelpFormatter 直接输出description和epilog以及add_argument中的help字符串的原始形式（不进行自动换行和消除空白的操作）</span></div><div class="line"><span class="comment">## class argparse.ArgumentDefaultsHelpFormatter 在每个选项的帮助信息后面输出他们对应的缺省值，如果有设置的话。这个最常用吧！</span></div><div class="line"><span class="comment"># argument_default - (default: None)设置一个全局的选项的缺省值，一般每个选项单独设置，所以这个参数用得少，不细说</span></div><div class="line"><span class="comment"># usage - (default: generated)如果你需要修改usage的信息（usage: PROG [-h] [--foo [FOO]] bar [bar ...]），那么可以修改这个，一般不要修改。</span></div><div class="line"><span class="comment"># conflict_handler - 不建议使用。这个在极端情况下才会用到，主要是定义两个add_argument中添加的选项的名字发生冲突时怎么处理，默认处理是抛出异常。</span></div><div class="line"><span class="comment">#注释一行有##表示这几个参数比较常用</span></div><div class="line">parser = argparse.ArgumentParser(description=<span class="string">"This is a description of %(prog)s"</span>, epilog=<span class="string">"This is a epilog of %(prog)s"</span>, prefix_chars=<span class="string">"-+"</span>, fromfile_prefix_chars=<span class="string">"@"</span>, formatter_class=argparse.ArgumentDefaultsHelpFormatter)</div><div class="line"></div><div class="line"><span class="comment"># ArgumentParser.add_argument(name or flags...[, action][, nargs][, const][, default][, type][, choices][, required][, help][, metavar][, dest])</span></div><div class="line"><span class="comment"># add_argument的参数是比较复杂的。。。</span></div><div class="line"><span class="comment"># name or flags - 指定参数的形式，想写几个写几个，不过我们一般就写两个，一个短参数，一个长参数，看下面的例子"-f", "--file"</span></div><div class="line"><span class="comment"># 可选的选项，位置不固定，想怎么写就怎么写，默认是可选的</span></div><div class="line">parser.add_argument(<span class="string">"-f"</span>, <span class="string">"--file"</span>, help=<span class="string">"test test test"</span>)</div><div class="line"></div><div class="line"><span class="comment"># 位置固定的选项，例如"prog i_am_bar"，这样子的话，i_am_bar就是bar选项的值啦，默认是必须有的</span></div><div class="line">parser.add_argument(<span class="string">"bar"</span>, help=<span class="string">"test test test"</span>)</div><div class="line"></div><div class="line"><span class="comment"># nargs - 指定这个参数后面的value有多少个，例如，我们希望使用-n 1 2 3 4，来设置n的值为[1, 2, 3, 4]</span></div><div class="line">parser.add_argument(<span class="string">"-n"</span>, <span class="string">"--num"</span>, nargs=<span class="string">"+"</span>, type=int)</div><div class="line"></div><div class="line"><span class="comment"># 这里nargs="+"表示，如果你指定了-n选项，那么-n后面至少要跟一个参数，+表示至少一个,?表示一个或0个,*0个或多个，</span></div><div class="line"><span class="comment"># default - 如果命令行没有出现这个选项，那么使用default指定的默认值</span></div><div class="line">parser.add_argument(<span class="string">"+g"</span>, <span class="string">"++gold"</span>, help=<span class="string">"test test test"</span>, default=<span class="string">"test_gold"</span>)<span class="comment">#需要prefix_chars包含"+"</span></div><div class="line"></div><div class="line"><span class="comment"># type - 如果希望传进来的参数是指定的类型（例如 float, int or file等可以从字符串转化过来的类型），可以使用</span></div><div class="line">parser.add_argument(<span class="string">"-x"</span>, type=int)</div><div class="line"></div><div class="line"><span class="comment"># choices - 设置参数值的范围，如果choices中的类型不是字符串，记得指定type哦</span></div><div class="line">parser.add_argument(<span class="string">"-y"</span>, choices=[<span class="string">'a'</span>, <span class="string">'b'</span>, <span class="string">'d'</span>])</div><div class="line"></div><div class="line"><span class="comment"># required - 通常-f这样的选项是可选的，但是如果required=True那么就是必须的了</span></div><div class="line">parser.add_argument(<span class="string">"-z"</span>, choices=[<span class="string">'a'</span>, <span class="string">'b'</span>, <span class="string">'d'</span>], required=<span class="keyword">True</span>)</div><div class="line"></div><div class="line"><span class="comment"># metavar - 参数的名字，在显示 帮助信息时才用到.</span></div><div class="line">parser.add_argument(<span class="string">"-o"</span>, metavar=<span class="string">"OOOOOO"</span>)</div><div class="line"></div><div class="line"><span class="comment"># help - 设置这个选项的帮助信息</span></div><div class="line"><span class="comment"># dest - 设置这个选项的值就是解析出来后放到哪个属性中</span></div><div class="line">parser.add_argument(<span class="string">"-q"</span>, dest=<span class="string">"world"</span>)</div><div class="line"></div><div class="line">args = parser.parse_args(args) <span class="comment"># 如果你没有args参数，那么就使用sys.argv，也就是命令行参数啦。有这个参数，就方便我们调试啊</span></div><div class="line"><span class="comment"># args.world就是-q的值啦</span></div><div class="line"><span class="comment"># action - The basic type of action to be taken when this argument is encountered at the command line.</span></div><div class="line"><span class="comment"># const - A constant value required by some action and nargs selections.</span></div><div class="line"><span class="comment"># 这两个自己看帮助文档啦，比较复杂</span></div><div class="line"><span class="comment"># http://docs.python.org/library/argparse.html</span></div><div class="line"><span class="keyword">print</span> args</div></pre></td></tr></table></figure>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/11/15/vim/vi-bin-text-change/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2016/11/15/vim/vi-bin-text-change/" itemprop="url">vi(m)进制转换</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-11-15T00:00:00+08:00">
+                2016-11-15
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/vim/" itemprop="url" rel="index">
+                    <span itemprop="name">vim</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="vi命令"><a href="#vi命令" class="headerlink" title="vi命令"></a>vi命令</h1><p>使用“xxd”或“od”工具转换十六进制<br>方法如下：</p>
+<ul>
+<li><code>:%!xxd</code>将当前文本转换为16进制格式</li>
+<li><code>:%!xxd -c 12</code>将当前文本转换为16进制格式,并每行显示12个字节</li>
+<li><p><code>:%!xxd -r</code>将当前文件转换回文本格式</p>
+</li>
+<li><h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1></li>
+<li><ol>
+<li><a href="http://lwg2001s.iteye.com/blog/2035826" target="_blank" rel="external">vi下以16进制查看二进制文件</a></li>
+</ol>
+</li>
+</ul>
 
           
         
@@ -561,159 +871,6 @@
 <h1 id="改密三种方法"><a href="#改密三种方法" class="headerlink" title="改密三种方法"></a>改密三种方法</h1><h2 id="Set-Password"><a href="#Set-Password" class="headerlink" title="Set Password"></a>Set Password</h2><p><code>set password for &lt;用户名&gt;@{localhost|%|...} =password(&#39;&lt;密码&gt;&#39;);</code></p>
 <h2 id="grant-…-identified-by"><a href="#grant-…-identified-by" class="headerlink" title="grant … identified by"></a>grant … identified by</h2><p><code>grant &lt;权限&gt; on &lt;数据库&gt;.&lt;数据表&gt; to &lt;user&gt;@{localhost|%|...} identified by &#39;&lt;密码&gt;&#39;;</code></p>
 <h2 id="update"><a href="#update" class="headerlink" title="update"></a>update</h2><p><code>update &lt;库名&gt;.&lt;表名&gt; set password=password(&#39;&lt;密码&gt;&#39;) where user=&#39;&lt;用户名&gt;&#39; and host=&#39;{localhost | % | ...}&#39;;</code></p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/11/15/vim/vi-bin-text-change/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2016/11/15/vim/vi-bin-text-change/" itemprop="url">vi(m)进制转换</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-11-15T00:00:00+08:00">
-                2016-11-15
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/vim/" itemprop="url" rel="index">
-                    <span itemprop="name">vim</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="vi命令"><a href="#vi命令" class="headerlink" title="vi命令"></a>vi命令</h1><p>使用“xxd”或“od”工具转换十六进制<br>方法如下：</p>
-<ul>
-<li><code>:%!xxd</code>将当前文本转换为16进制格式</li>
-<li><code>:%!xxd -c 12</code>将当前文本转换为16进制格式,并每行显示12个字节</li>
-<li><p><code>:%!xxd -r</code>将当前文件转换回文本格式</p>
-</li>
-<li><h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1></li>
-<li><ol>
-<li><a href="http://lwg2001s.iteye.com/blog/2035826" target="_blank" rel="external">vi下以16进制查看二进制文件</a></li>
-</ol>
-</li>
-</ul>
 
           
         
@@ -2552,156 +2709,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/07/17/storage/ceph/20160617-ceph-messenger-simple/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2016/07/17/storage/ceph/20160617-ceph-messenger-simple/" itemprop="url">SimpleMessenger分析</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-07-17T17:17:14+08:00">
-                2016-07-17
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/storage/" itemprop="url" rel="index">
-                    <span itemprop="name">storage</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h1><p>SimpleMessenger，继承了Messenger类，用于实现各个模块间传输命令及数据。</p>
-<h1 id="架构图"><a href="#架构图" class="headerlink" title="架构图"></a>架构图</h1><p><img src="/images/ceph/ceph-messenger-simple-frame.png" alt="ceph-messenger-simple-frame"></p>
-<h1 id="通讯协议"><a href="#通讯协议" class="headerlink" title="通讯协议"></a>通讯协议</h1><h1 id="子模块"><a href="#子模块" class="headerlink" title="子模块"></a>子模块</h1><ul>
-<li>Pipes模块<br>用于管理tcp网络链接，负责接受、发送数据。</li>
-<li>Accepter模块<br>仅用于接受外部请求链接，而不接收数据。将接收到的链接保存到Pipes模块中，然后由Pipes模块去收发数据。</li>
-<li>DispatchQueue模块<br>接收外部发送来的数据和命令，然后通过“dispatcher”或“fast dispatcher”模块，将数据和命令传送给各个dispatcher</li>
-<li>dispatcher模块<br>用于管理dispatchers，如OSD，MON，MDS等等各种需要通讯的client。</li>
-<li>fast dispatcher模块<br>用于管理 fast dispatchers</li>
-</ul>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2754,7 +2761,7 @@
             
               <a href="/archives/ || archive">
             
-                <span class="site-state-item-count">96</span>
+                <span class="site-state-item-count">97</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
