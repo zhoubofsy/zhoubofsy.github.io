@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.2" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="kernel,block," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.2" />
+
+
+
+
+
+
+<meta name="description" content="块设备驱动程序，linux内核中的一类驱动程序。通过传输固定大小的随机数据来访问设备。 初始化注册块设备驱动向内核注册设备驱动程序使用函数int register_blkdev(unsigned int major, const char *name);(linux/fs.h)，参数是该设备使用的主设备号和名称(名字在/proc/devices中显示)。若传入的主设备号为0，内核将分配一个新的主设">
+<meta name="keywords" content="kernel,block">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux块设备驱动——sbull">
+<meta property="og:url" content="http://yoursite.com/2018/12/25/linux/kernel-module-sbull/index.html">
+<meta property="og:site_name" content="Bolog">
+<meta property="og:description" content="块设备驱动程序，linux内核中的一类驱动程序。通过传输固定大小的随机数据来访问设备。 初始化注册块设备驱动向内核注册设备驱动程序使用函数int register_blkdev(unsigned int major, const char *name);(linux/fs.h)，参数是该设备使用的主设备号和名称(名字在/proc/devices中显示)。若传入的主设备号为0，内核将分配一个新的主设">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://yoursite.com/images/linux/block.png">
+<meta property="og:updated_time" content="2018-12-26T09:36:57.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Linux块设备驱动——sbull">
+<meta name="twitter:description" content="块设备驱动程序，linux内核中的一类驱动程序。通过传输固定大小的随机数据来访问设备。 初始化注册块设备驱动向内核注册设备驱动程序使用函数int register_blkdev(unsigned int major, const char *name);(linux/fs.h)，参数是该设备使用的主设备号和名称(名字在/proc/devices中显示)。若传入的主设备号为0，内核将分配一个新的主设">
+<meta name="twitter:image" content="http://yoursite.com/images/linux/block.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '5.1.2',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: 'QSZ2UMT8M4',
+      apiKey: 'ea19d365600df16c1e8ef4c09ccb9bea',
+      indexName: 'bolog',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2018/12/25/linux/kernel-module-sbull/"/>
+
+
+
+
+
+  <title>Linux块设备驱动——sbull | Bolog</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Bolog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  
+  <div class="algolia-popup popup search-popup">
+    <div class="algolia-search">
+      <div class="algolia-search-input-icon">
+        <i class="fa fa-search"></i>
+      </div>
+      <div class="algolia-search-input" id="algolia-search-input"></div>
+    </div>
+
+    <div class="algolia-results">
+      <div id="algolia-stats"></div>
+      <div id="algolia-hits"></div>
+      <div id="algolia-pagination" class="algolia-pagination"></div>
+    </div>
+
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+  </div>
+
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/12/25/linux/kernel-module-sbull/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Linux块设备驱动——sbull</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-25T00:04:12+08:00">
+                2018-12-25
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/linux/" itemprop="url" rel="index">
+                    <span itemprop="name">linux</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>块设备驱动程序，linux内核中的一类驱动程序。通过传输固定大小的随机数据来访问设备。</p>
+<h1 id="初始化"><a href="#初始化" class="headerlink" title="初始化"></a>初始化</h1><h2 id="注册块设备驱动"><a href="#注册块设备驱动" class="headerlink" title="注册块设备驱动"></a>注册块设备驱动</h2><p>向内核注册设备驱动程序使用函数<code>int register_blkdev(unsigned int major, const char *name);</code>(linux/fs.h)，参数是该设备使用的主设备号和名称(名字在<code>/proc/devices</code>中显示)。若传入的主设备号为0，内核将分配一个新的主设备号，并将该设备号返回给调用者；失败则返回负值。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">static</span> <span class="keyword">int</span> __<span class="function">init <span class="title">sbull_init</span><span class="params">(<span class="keyword">void</span>)</span></span></div><div class="line">&#123;</div><div class="line">    <span class="keyword">int</span> i;</div><div class="line">    sbull_major = register_blkdev(sbull_major,<span class="string">"sbull"</span>); <span class="comment">// 注册块设备，第一个是设备号，0为动态</span></div><div class="line">    <span class="keyword">if</span>(sbull_major &lt;= <span class="number">0</span>)&#123;                               <span class="comment">//分配，第二个是设备名</span></div><div class="line">        printk(KERN_WARNING <span class="string">"sbull:unable to get major number\n"</span>);</div><div class="line">        <span class="keyword">return</span> -EBUSY;</div><div class="line">    &#125;</div><div class="line">    <span class="comment">/* 为块核心数据结构 sbull_dev 分配空间*/</span></div><div class="line">    Devices = kmalloc(ndevices *<span class="keyword">sizeof</span>(<span class="keyword">struct</span> sbull_dev),GFP_KERNEL);</div><div class="line">    <span class="keyword">if</span>(Devices == <span class="literal">NULL</span>)</div><div class="line">        <span class="keyword">goto</span> out_unregister;</div><div class="line">    <span class="keyword">for</span>(i = <span class="number">0</span>;i &lt; ndevices;i++)       <span class="comment">/* 初始化 sbull_dev 核心数据结构 */</span></div><div class="line">        setup_device(Devices + i,i);</div><div class="line">    <span class="keyword">return</span> <span class="number">0</span>; </div><div class="line">out_unregister:</div><div class="line">    unregister_blkdev(sbull_major,<span class="string">"sbd"</span>);</div><div class="line">    <span class="keyword">return</span> -ENOMEM;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>对于<code>register_blkdev</code>的调用是可选的，该接口所做的事情是：如果需要的话分配一个动态的主设备号；在<code>/proc/devices</code>中创建一个入口项。</p>
+<h2 id="注册磁盘"><a href="#注册磁盘" class="headerlink" title="注册磁盘"></a>注册磁盘</h2><p>内核使用<code>gendisk</code>结构(<code>linux/genhd.h</code>)来表示一个独立的磁盘设备。内核还使用该结构体表示分区。该结构中的许多成员必须由驱动程序进行初始化。</p>
+<ul>
+<li>major<br>  <code>int major;</code>主设备号</li>
+<li>first_minor<br>  <code>int first_minor;</code>一个驱动器至少使用一个次设备号，如果驱动器是可被分区的用户将要为每个可能的分区都分配一个次设备号。</li>
+<li>minors<br>  <code>int minors;</code>常取16，一个完整的磁盘可以包含15个分区。</li>
+<li>disk_name<br>  <code>char disk_name[32];</code>磁盘设备名字，该名字显示在<code>/proc/partitions</code>和<code>sysfs</code>中。</li>
+<li>fops<br>  <code>struct block_device_operations *fops;</code>块设备操作</li>
+<li>queue<br>  <code>struct request_queue *queue;</code>设备I/O请求队列</li>
+<li>flags<br>  <code>int flags;</code>驱动器状态标志。可移动介质将被设置为<code>GENHD_FL_REMOVABLE</code>；CD-ROM设备被设置为<code>GENHD_FL_CD</code>；若不希望在<code>/proc/partitions</code>中显示分区信息可设置为<code>GENHD_FL_SUPPRESS_PARTITION_INFO</code></li>
+<li>capacity<br>  <code>sector_t capacity;</code>以512字节为一个扇区，该驱动器可以包含的扇区数。驱动程序不能直接设置该成员，而要将扇区数传给<code>set_capacity</code></li>
+<li>private_data<br>  <code>void *private_data;</code>块设备驱动可以使用该成员保存指向其内部数据的指针</li>
+</ul>
+<p><code>gendisk</code>是一个动态分配的结构，驱动程序不能自己动态分配该结构，必须使用<code>alloc_disk</code>分配，使用<code>del_gendisk</code>回收。</p>
+<ul>
+<li>alloc_disk<br>  <code>struct gendisk *alloc_disk(int minors);</code>参数<code>minors</code>是该磁盘使用的次设备号的数目。为了能正常工作，<code>minors</code>传入后就不能更改了。</li>
+<li>add_disk<br>  <code>void add_disk(struct gendisk *gd);</code>使用<code>alloc_disk</code>分配的<code>gendisk</code>不能使磁盘对系统可用，还需要<code>add_disk</code>将磁盘设备激活，并随时准备调用它提供的方法。在驱动程序完全被初始化并且能够响应对磁盘的请求前，请不要调用<code>add_disk</code></li>
+<li>get_disk and put_disk<br>  <code>gendisk</code>是一个引用技术结构，<code>get_disk</code>和<code>put_disk</code>函数负责处理引用计数。</li>
+<li>del_gendisk<br>  <code>void del_gendisk(struct gendisk *gd);</code>调用<code>del_gendisk</code>会删除<code>gendisk</code>中的最终计数。当没有用户继续使用时，将真正删除该结构。此后，在系统中不会找到该设备信息。</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">setup_device</span><span class="params">(<span class="keyword">struct</span> sbull_dev *dev,<span class="keyword">int</span> which)</span></span></div><div class="line">&#123;</div><div class="line">    <span class="built_in">memset</span>(dev,<span class="number">0</span>,<span class="keyword">sizeof</span>(<span class="keyword">struct</span> sbull_dev));    <span class="comment">/* 初始化 dev 所指内容为0*/</span></div><div class="line">    dev-&gt;size = nsectors * hardsect_size;</div><div class="line">    dev-&gt;data = vmalloc(dev-&gt;size);</div><div class="line">    <span class="keyword">if</span>(dev-&gt;data == <span class="literal">NULL</span>)</div><div class="line">    &#123;</div><div class="line">        printk(KERN_NOTICE <span class="string">"vmalloc failure.\n"</span>);</div><div class="line">        <span class="keyword">return</span> ;</div><div class="line">    &#125;</div><div class="line">    spin_lock_init(&amp;dev-&gt;lock);               <span class="comment">/* 初始化自旋锁*/</span></div><div class="line">    <span class="comment">/* 在分配请求队列前要先初始化自旋锁*/</span></div><div class="line">    <span class="comment">/* The timer which "invalidates the device给内核定时器初始化 "*/</span></div><div class="line">    init_timer(&amp;dev-&gt;timer); <span class="comment">/*初始化定时器，实际将结构中的list成员初始化为空*/</span>            </div><div class="line">    dev-&gt;timer.data = (<span class="keyword">unsigned</span> <span class="keyword">long</span>)dev;   <span class="comment">/*被用作function函数的调用参数*/</span></div><div class="line">    dev-&gt;timer.function = sbull_invalidate; <span class="comment">/* 当定时器到期时，就执行function指定的函数*/</span></div><div class="line">                                                                 </div><div class="line">    <span class="comment">/*</span></div><div class="line">     * The I/O queue, depending on whether we are using our own</div><div class="line">     * make_request function or not.</div><div class="line">     */</div><div class="line">    <span class="keyword">switch</span>(request_mode)</div><div class="line">    &#123;</div><div class="line">        <span class="keyword">case</span> RM_NOQUEUE:</div><div class="line">            dev-&gt;<span class="built_in">queue</span> = blk_alloc_queue(GFP_KERNEL);  <span class="comment">/* 分配“请求队列” */</span></div><div class="line">            <span class="keyword">if</span>(dev-&gt;<span class="built_in">queue</span> == <span class="literal">NULL</span>)</div><div class="line">                <span class="keyword">goto</span> out_vfree;</div><div class="line">            blk_queue_make_request(dev-&gt;<span class="built_in">queue</span>,sbull_make_request); <span class="comment">/*绑定"制造请求"函数 */</span></div><div class="line">            <span class="keyword">break</span>;</div><div class="line">        <span class="keyword">case</span> RM_FULL:</div><div class="line">            dev-&gt;<span class="built_in">queue</span> = blk_init_queue(sbull_full_request,&amp;dev-&gt;lock); <span class="comment">/*请求队列初始化*/</span></div><div class="line">            <span class="keyword">if</span>(dev-&gt;<span class="built_in">queue</span> == <span class="literal">NULL</span>)</div><div class="line">                <span class="keyword">goto</span> out_vfree;</div><div class="line">            <span class="keyword">break</span>;</div><div class="line">        <span class="keyword">case</span> RM_SIMPLE:</div><div class="line">            dev-&gt;<span class="built_in">queue</span> = blk_init_queue(sbull_request,&amp;dev-&gt;lock); <span class="comment">/*请求队列初始化*/</span></div><div class="line">            <span class="keyword">if</span>(dev-&gt;<span class="built_in">queue</span> == <span class="literal">NULL</span>)</div><div class="line">                <span class="keyword">goto</span> out_vfree;</div><div class="line">            <span class="keyword">break</span>;</div><div class="line">        <span class="keyword">default</span>:</div><div class="line">            printk(KERN_NOTICE <span class="string">"Bad request mode %d,using simple\n"</span>,request_mode);     </div><div class="line">    &#125;</div><div class="line">    blk_queue_hardsect_size(dev-&gt;<span class="built_in">queue</span>,hardsect_size);  <span class="comment">/* 硬件扇区尺寸设置 */</span></div><div class="line">    dev-&gt;<span class="built_in">queue</span>-&gt;queuedata = dev;</div><div class="line">    dev-&gt;gd = alloc_disk(SBULL_MINORS);             <span class="comment">/* 动态分配 gendisk 结构体*/</span></div><div class="line">    <span class="keyword">if</span>(!dev-&gt;gd)</div><div class="line">    &#123;</div><div class="line">        printk(KERN_NOTICE <span class="string">"alloc_disk failure\n"</span>);</div><div class="line">        <span class="keyword">goto</span> out_vfree;</div><div class="line">    &#125;</div><div class="line">    <span class="comment">/* 初始化 gendisk */</span></div><div class="line">    dev-&gt;gd-&gt;major = sbull_major;                 <span class="comment">/* 主设备号 */</span></div><div class="line">    dev-&gt;gd-&gt;first_minor = which * SBULL_MINORS;  <span class="comment">/* 第一个次设备号 */</span></div><div class="line">    dev-&gt;gd-&gt;fops = &amp;sbull_ops;                   <span class="comment">/* 块设备操作结构体 */</span></div><div class="line">    dev-&gt;gd-&gt;<span class="built_in">queue</span> = dev-&gt;<span class="built_in">queue</span>;                  <span class="comment">/* 请求队列 */</span></div><div class="line">    dev-&gt;gd-&gt;private_data = dev;                  <span class="comment">/* 私有数据 */</span></div><div class="line">    <span class="built_in">snprintf</span>(dev-&gt;gd-&gt;disk_name,<span class="number">32</span>,<span class="string">"sbull%c"</span>,which + <span class="string">'a'</span>);</div><div class="line">    <span class="comment">/* 每个请求的大小都是扇区大小的整数倍，内核总是认为扇区大小是512字节，因此必须进行转换*/</span></div><div class="line">    set_capacity(dev-&gt;gd,nsectors*(hardsect_size/KERNEL_SECTOR_SIZE));</div><div class="line">    add_disk(dev-&gt;gd);  <span class="comment">/* 完成以上初始化后，调用 add_disk 函数来注册这个磁盘设备 */</span></div><div class="line">    <span class="keyword">return</span> ;</div><div class="line">             </div><div class="line">out_vfree:</div><div class="line">    <span class="keyword">if</span>(dev-&gt;data)</div><div class="line">        vfree(dev-&gt;data);       <span class="comment">/* 释放用 vmalloc 申请的不连续空间*/</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h1 id="逆初始化"><a href="#逆初始化" class="headerlink" title="逆初始化"></a>逆初始化</h1><h2 id="注销块设备驱动"><a href="#注销块设备驱动" class="headerlink" title="注销块设备驱动"></a>注销块设备驱动</h2><p>与<code>register_blkdev</code>对应的注销函数为<code>int unregister_blkdev(unsigned int major, const char *name);</code>，传入的参数与传递给<code>register_blkdev</code>的参数必须匹配。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">sbull_exit</span><span class="params">(<span class="keyword">void</span>)</span></span></div><div class="line">&#123;</div><div class="line">    <span class="keyword">int</span> i;</div><div class="line">    <span class="keyword">for</span>(i = <span class="number">0</span>; i &lt; ndevices;i++)</div><div class="line">    &#123;</div><div class="line">        <span class="keyword">struct</span> sbull_dev *dev = Devices + i;</div><div class="line">        del_timer_sync(&amp;dev-&gt;timer);            <span class="comment">/* 去掉 "介质移除" 定时器*/</span></div><div class="line">        <span class="keyword">if</span>(dev-&gt;gd)</div><div class="line">        &#123;</div><div class="line">            del_gendisk(dev-&gt;gd);             <span class="comment">/* 释放 gendisk 结构体*/</span></div><div class="line">            put_disk(dev-&gt;gd);                <span class="comment">/* 释放对 gendisk 的引用 */</span></div><div class="line">        &#125;</div><div class="line">        <span class="keyword">if</span>(dev-&gt;<span class="built_in">queue</span>)</div><div class="line">        &#123;</div><div class="line">            <span class="keyword">if</span>(request_mode == RM_NOQUEUE)</div><div class="line">                blk_put_queue(dev-&gt;<span class="built_in">queue</span>);</div><div class="line">            <span class="keyword">else</span></div><div class="line">                blk_cleanup_queue(dev-&gt;<span class="built_in">queue</span>);   <span class="comment">// 清除请求队列</span></div><div class="line">        &#125;</div><div class="line">        <span class="keyword">if</span>(dev-&gt;data)</div><div class="line">            vfree(dev-&gt;data);</div><div class="line">    &#125;</div><div class="line">    unregister_blkdev(sbull_major,<span class="string">"sbull"</span>);</div><div class="line">    kfree(Devices);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h1 id="块设备操作"><a href="#块设备操作" class="headerlink" title="块设备操作"></a>块设备操作</h1><p>字符设备使用<code>file_operations</code>结构，块设备使用类似的结构<code>block_device_operations</code>(linux2.6在<code>linux/fs.h</code>中，linux4.4在<code>linux/blkdev.h</code>中)</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> block_device_operations &#123;</div><div class="line">        <span class="keyword">int</span> (*open) (<span class="keyword">struct</span> block_device *, <span class="keyword">fmode_t</span>);</div><div class="line">        <span class="keyword">void</span> (*release) (<span class="keyword">struct</span> gendisk *, <span class="keyword">fmode_t</span>);</div><div class="line">        <span class="keyword">int</span> (*rw_page)(<span class="keyword">struct</span> block_device *, <span class="keyword">sector_t</span>, <span class="keyword">struct</span> page *, <span class="keyword">int</span> rw);</div><div class="line">        <span class="keyword">int</span> (*ioctl) (<span class="keyword">struct</span> block_device *, <span class="keyword">fmode_t</span>, <span class="keyword">unsigned</span>, <span class="keyword">unsigned</span> <span class="keyword">long</span>);</div><div class="line">        <span class="keyword">int</span> (*compat_ioctl) (<span class="keyword">struct</span> block_device *, <span class="keyword">fmode_t</span>, <span class="keyword">unsigned</span>, <span class="keyword">unsigned</span> <span class="keyword">long</span>);</div><div class="line">        <span class="keyword">long</span> (*direct_access)(<span class="keyword">struct</span> block_device *, <span class="keyword">sector_t</span>, <span class="keyword">void</span> __pmem **, <span class="keyword">unsigned</span> <span class="keyword">long</span> *pfn);</div><div class="line">        <span class="function"><span class="keyword">unsigned</span> <span class="title">int</span> <span class="params">(*check_events)</span> <span class="params">(<span class="keyword">struct</span> gendisk *disk, <span class="keyword">unsigned</span> <span class="keyword">int</span> clearing)</span></span>;</div><div class="line">        <span class="comment">/* -&gt;media_changed() is DEPRECATED, use -&gt;check_events() instead */</span></div><div class="line">        <span class="keyword">int</span> (*media_changed) (<span class="keyword">struct</span> gendisk *);</div><div class="line">        <span class="keyword">void</span> (*unlock_native_capacity) (<span class="keyword">struct</span> gendisk *);</div><div class="line">        <span class="keyword">int</span> (*revalidate_disk) (<span class="keyword">struct</span> gendisk *);</div><div class="line">        <span class="keyword">int</span> (*getgeo)(<span class="keyword">struct</span> block_device *, <span class="keyword">struct</span> hd_geometry *);</div><div class="line">        <span class="comment">/* this callback is with swap_lock and sometimes page table lock held */</span></div><div class="line">        <span class="keyword">void</span> (*swap_slot_free_notify) (<span class="keyword">struct</span> block_device *, <span class="keyword">unsigned</span> <span class="keyword">long</span>);</div><div class="line">        <span class="keyword">struct</span> <span class="keyword">module</span> *owner;</div><div class="line">        <span class="keyword">const</span> <span class="keyword">struct</span> pr_ops *pr_ops;</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<ul>
+<li>open<br>  <code>int (*open) (struct inode *inode, struct file *filp);</code>当设备被打开时调用它。</li>
+<li>release<br>  <code>int (*release) (struct inode *inode, struct file *filp);</code>当设备被关闭时调用它。</li>
+<li>ioctl<br>  <code>int (*ioctl) (struct inode *inode, struct file *filp, unsigned int cmd, unsigned long arg);</code>实现ioctl系统调用的函数，块设备层会先截取大量的标准请求，因此大多数块设备的ioctl函数都十分短小。</li>
+<li>media_changed<br>  <code>int (*media_changed) (struct gendisk *gd);</code>内核调用该函数检查用户是否更换了驱动器内的介质，如果更换返回一个非零值。该函数只适用于那些支持可移动介质。</li>
+<li>revalidate_disk<br>  <code>int (*revalidate_disk) (struct gendisk *gd);</code>当介质被更换时被调用。</li>
+<li>owner<br>  <code>struct module *owner;</code>指向拥有该结构的模块指针，通常被初始化为<code>THIS_MODULE</code></li>
+</ul>
+<h2 id="open"><a href="#open" class="headerlink" title="open"></a>open</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> <span class="title">sbull_open</span><span class="params">(<span class="keyword">struct</span> inode *inode,<span class="keyword">struct</span> file *filp)</span></span></div><div class="line">&#123;</div><div class="line">    <span class="keyword">struct</span> sbull_dev *dev = inode-&gt;i_bdev-&gt;bd_disk-&gt;private_data;</div><div class="line">    del_timer_sync(&amp;dev-&gt;timer); <span class="comment">//去掉"介质移除"定时器</span></div><div class="line">    filp-&gt;private_data = dev;</div><div class="line">    spin_lock(&amp;dev-&gt;lock);</div><div class="line">    <span class="keyword">if</span>(!dev-&gt;users)</div><div class="line">        check_disk_change(inode-&gt;i_bdev);</div><div class="line">    dev-&gt;users++;                <span class="comment">// 使用计数加 1</span></div><div class="line">    spin_unlock(&amp;dev-&gt;lock);</div><div class="line">    <span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h2 id="release"><a href="#release" class="headerlink" title="release"></a>release</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> <span class="title">sbull_release</span><span class="params">(<span class="keyword">struct</span> inode *inode,<span class="keyword">struct</span> file *filp)</span></span></div><div class="line">&#123;</div><div class="line">    <span class="keyword">struct</span> sbull_dev *dev = inode-&gt;i_bdev-&gt;bd_disk-&gt;private_data;</div><div class="line">    spin_lock(&amp;dev-&gt;lock);</div><div class="line">    dev-&gt;users--;               <span class="comment">// 使用计数减 1</span></div><div class="line">    <span class="keyword">if</span>(!dev-&gt;users)</div><div class="line">    &#123;</div><div class="line">        <span class="comment">//30秒的定时器，如果这个时段内设备没有被打开则移除设备</span></div><div class="line">        dev-&gt;timer.expires = jiffies + INVALIDATE_DELAY;</div><div class="line">        add_timer(&amp;dev-&gt;timer);                      <span class="comment">//将定时器添加到定时器队列中</span></div><div class="line">    &#125;</div><div class="line">    spin_unlock(&amp;dev-&gt;lock);</div><div class="line">    <span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h2 id="media-changed"><a href="#media-changed" class="headerlink" title="media_changed"></a>media_changed</h2><p><code>open</code>中调用<code>check_disk_change</code>函数触发<code>media_changed</code>检查介质是否被改变。如果介质改变则返回非零值。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">sbull_media_changed</span><span class="params">(<span class="keyword">struct</span> gendisk *gd)</span></span></div><div class="line">&#123;</div><div class="line">    <span class="keyword">struct</span> sbull_dev *dev = gd-&gt;private_data;</div><div class="line">    <span class="keyword">return</span> dev-&gt;media_change;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h2 id="revalidate-disk"><a href="#revalidate-disk" class="headerlink" title="revalidate_disk"></a>revalidate_disk</h2><p>介质改变后，内核会调用<code>revalidate_disk</code>，调用完成后，内核将重新读取设备的分区表。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">sbull_revalidate</span><span class="params">(<span class="keyword">struct</span> gendisk *gd)</span></span></div><div class="line">&#123;</div><div class="line">    <span class="keyword">struct</span> sbull_dev *dev = gd-&gt;private_data;</div><div class="line">    <span class="keyword">if</span>(dev-&gt;media_change)</div><div class="line">    &#123;</div><div class="line">        dev-&gt;media_change = <span class="number">0</span>;</div><div class="line">        <span class="built_in">memset</span>(dev-&gt;data,<span class="number">0</span>,dev-&gt;size);</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h2 id="ioctl"><a href="#ioctl" class="headerlink" title="ioctl"></a>ioctl</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">sbull_ioctl</span><span class="params">(<span class="keyword">struct</span> inode *inode,<span class="keyword">struct</span> file *filp,<span class="keyword">unsigned</span> <span class="keyword">int</span> cmd,<span class="keyword">unsigned</span> <span class="keyword">long</span> arg)</span></span></div><div class="line">&#123;</div><div class="line">    <span class="keyword">long</span> size;</div><div class="line">    <span class="keyword">struct</span> hd_geometry geo;</div><div class="line">    <span class="keyword">struct</span> sbull_dev *dev = filp-&gt;private_data; <span class="comment">// 通过 file-&gt;private 获得设备结构体</span></div><div class="line">    <span class="keyword">switch</span>(cmd)</div><div class="line">    &#123;</div><div class="line">        <span class="keyword">case</span> HDIO_GETGEO:</div><div class="line">            <span class="comment">/*</span></div><div class="line">             * Get geometry: since we are a virtual device, we have to make</div><div class="line">             * up something plausible. So we claim 16 sectors, four heads,</div><div class="line">             * and calculate the corresponding number of cylinders. We set the</div><div class="line">             * start of data at sector four.</div><div class="line">             */ </div><div class="line">            size = dev-&gt;size *(hardsect_size/KERNEL_SECTOR_SIZE);</div><div class="line">            <span class="comment">/* 获得几何信息 */</span></div><div class="line">            geo.cylinders = (size &amp; ~<span class="number">0x3f</span>) &gt;&gt; <span class="number">6</span>;</div><div class="line">            geo.heads = <span class="number">4</span>;</div><div class="line">            geo.sectors = <span class="number">16</span>;</div><div class="line">            geo.start = <span class="number">4</span>;</div><div class="line">            <span class="keyword">if</span>(copy_to_user((<span class="keyword">void</span> __user *)arg,&amp;geo,<span class="keyword">sizeof</span>(geo)))</div><div class="line">                <span class="keyword">return</span> -EFAULT;</div><div class="line">            <span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">return</span> -ENOTTY;   <span class="comment">// 不知道的命令</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>内核对块设备的物理信息并不感兴趣，它只把设备看成是线性的扇区数组。但一些用户空间的应用程序依然需要查询磁盘的物理信息。特别是<code>fdisk</code>工具。</p>
+<h2 id="请求处理"><a href="#请求处理" class="headerlink" title="请求处理"></a>请求处理</h2><p>块设备中没有字符设备中的read、write函数，那么块设备是如何处理I/O请求的呢？早在<code>sbull_init</code>中初始化queue时需要传入一个queue处理函数，待内核接收到磁盘I/O时，会调用queue处理函数来处理。</p>
+<h3 id="request-queue"><a href="#request-queue" class="headerlink" title="request queue"></a>request queue</h3><p>一个请求队列就是一个动态的数据结构，该结构必须由块设备的I/O子系统创建。</p>
+<h4 id="创建删除"><a href="#创建删除" class="headerlink" title="创建删除"></a>创建删除</h4><ul>
+<li>创建初始化<br>  <code>request_queue_t *blk_init_queue(request_fn_proc *request, spinlock_t *lock);</code>参数<code>request</code>是处理这个队列的函数指针，lock是控制访问队列权限的自旋锁。由于创建过程会分配内存，因此会有失败的可能，所以在使用队列前一定要检查返回值。</li>
+<li>删除<br>  <code>void blk_cleanup_queue(request_queue_t *);</code>调用该函数后，驱动程序将不会再得到这个队列中的请求，也不能再引用这个队列了。</li>
+</ul>
+<h4 id="队列元素"><a href="#队列元素" class="headerlink" title="队列元素"></a>队列元素</h4><ul>
+<li>从队列中获取请求<br>  <code>struct request *elv_next_request(request_queue_t *queue);</code>返回一个需要处理的请求指针，该指针由I/O调度器决定，如果没有请求需要处理返回NULL。该函数被调用后，请求依然保存在队列中，但是为其做了活动标记，该标记保证了当开始执行该请求时I/O调度器不再将该请求与其他请求合并。</li>
+<li>从队列中删除请求<br>  <code>void blkdev_dequeue_request(struct request *req);</code>将请求从队列中删除。</li>
+<li>请求返回队列<br>  <code>void elv_requeue_request(request_queue_t *queue, struct request *req);</code>将拿出队列的请求再返回给队列。当驱动需要同时处理同一队列中的多个请求时，一般多用<code>blkdev_dequeue_request</code>和<code>elv_requeue_request</code></li>
+</ul>
+<h3 id="request"><a href="#request" class="headerlink" title="request"></a>request</h3><p>一个块请求队列可以包含那些实际并不向磁盘读写数据的请求，生产商信息、底层诊断操作、与特殊设备模式相关指令、介质写模式设定等。每个request结构都代表一个块设备的I/O请求，这个I/O请求可以通过对多个独立请求的合并而来。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">sbull_request</span><span class="params">(<span class="keyword">request_queue_t</span> *q)</span></span></div><div class="line">&#123;</div><div class="line">    <span class="keyword">struct</span> request *req;          <span class="comment">//定义请求结构体</span></div><div class="line">    <span class="keyword">while</span>((req = elv_next_request(q)) != <span class="literal">NULL</span>)<span class="comment">//elv_next_request()获得队列中第一个未完成请求</span></div><div class="line">    &#123;</div><div class="line">        <span class="keyword">struct</span> sbull_dev *dev = req-&gt;rq_disk-&gt;private_data;</div><div class="line">        <span class="keyword">if</span>(!blk_fs_request(req))     <span class="comment">//判断是否为文件系统请求</span></div><div class="line">        &#123;</div><div class="line">            printk(KERN_NOTICE <span class="string">"Skip non-fs request\n"</span>);</div><div class="line">            end_request(req,<span class="number">0</span>);   <span class="comment">//通知请求处理失败，0为失败，1为成功</span></div><div class="line">            <span class="keyword">continue</span>; </div><div class="line">        &#125;</div><div class="line">        sbull_transfer(dev,req-&gt;sector,req-&gt;current_nr_sectors,req-&gt;buffer,rq_data_dir(req));</div><div class="line">        end_request(req,<span class="number">1</span>);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<ul>
+<li><code>elv_next_request</code><br>  用来获取队列中第一个未完成的请求，当没有请求需要处理时，返回NULL。请求被获取后并不从队列中删除。</li>
+<li><code>blk_fs_request</code><br>  用来判断该请求是否是一个文件系统请求。</li>
+<li><code>end_request</code><br>  <code>void end_request(struct request *req, int succeeded);</code>传递当前请求的指针和完成结果（0表示不成功，非0表示成功）。</li>
+<li><code>req-&gt;sector</code><br>  在设备上开始扇区的索引号</li>
+<li><code>req-&gt;buffer</code><br>  传输或者接收数据的缓冲区指针</li>
+<li><code>rq_data_dir</code><br>  传输方向，返回0表示从设备读数据，非0表示向设备写入数据</li>
+</ul>
+<p>如果多个请求都是对磁盘中相邻扇区进行操作，则内核将合并它们，内核不会合并在单独request结构中的读写操作，如果合并的结果会打破对请求队列的限制，则内核也不会对请求进行合并。</p>
+<h3 id="bio"><a href="#bio" class="headerlink" title="bio"></a>bio</h3><p>一个request结构是作为一个bio结构的链表实现的，保证在执行请求的时候驱动程序能知道执行的位置。当内核以文件系统、虚拟内存子系统或者系统调用的形式决定从块I/O设备输入、输出块数据时，它将再结合一个bio结构，用来描述这个操作。该结构被传递给I/O代码，代码会把它合并到一个已存在的request结构中，或者根据需要再创建一个新的request结构。bio结构包含了驱动程序执行请求的全部信息，而不必与初始化这个请求的用户空间的进程相关联。</p>
+<p><img src="/images/linux/block.png" alt="block"></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> bio &#123;</div><div class="line">        <span class="keyword">struct</span> bio              *bi_next;       <span class="comment">/* request queue link */</span></div><div class="line">        <span class="keyword">struct</span> block_device     *bi_bdev;</div><div class="line">        <span class="keyword">unsigned</span> <span class="keyword">int</span>            bi_flags;       <span class="comment">/* status, command, etc */</span></div><div class="line">        <span class="keyword">int</span>                     bi_error;</div><div class="line">        <span class="keyword">unsigned</span> <span class="keyword">long</span>           bi_rw;          <span class="comment">/* bottom bits READ/WRITE, top bits priority */</span></div><div class="line">        <span class="keyword">struct</span> bvec_iter        bi_iter;</div><div class="line">        <span class="comment">/* Number of segments in this BIO after</span></div><div class="line">         * physical address coalescing is performed.</div><div class="line">         */</div><div class="line">        <span class="keyword">unsigned</span> <span class="keyword">int</span>            bi_phys_segments;</div><div class="line">        <span class="comment">/*</span></div><div class="line">         * To keep track of the max segment size, we account for the</div><div class="line">         * sizes of the first and last mergeable segments in this bio.</div><div class="line">         */</div><div class="line">        <span class="keyword">unsigned</span> <span class="keyword">int</span>            bi_seg_front_size;</div><div class="line">        <span class="keyword">unsigned</span> <span class="keyword">int</span>            bi_seg_back_size;</div><div class="line">        <span class="keyword">atomic_t</span>                __bi_remaining;</div><div class="line">        <span class="keyword">bio_end_io_t</span>            *bi_end_io;</div><div class="line">        <span class="keyword">void</span>                    *bi_private;</div><div class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> CONFIG_BLK_CGROUP</span></div><div class="line">        <span class="comment">/*</span></div><div class="line">         * Optional ioc and css associated with this bio.  Put on bio</div><div class="line">         * release.  Read comment on top of bio_associate_current().</div><div class="line">         */</div><div class="line">        <span class="keyword">struct</span> io_context       *bi_ioc;</div><div class="line">        <span class="keyword">struct</span> cgroup_subsys_state *bi_css;</div><div class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></div><div class="line">        <span class="keyword">union</span> &#123;</div><div class="line"><span class="meta">#<span class="meta-keyword">if</span> defined(CONFIG_BLK_DEV_INTEGRITY)</span></div><div class="line">                <span class="keyword">struct</span> bio_integrity_payload *bi_integrity; <span class="comment">/* data integrity */</span></div><div class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></div><div class="line">        &#125;;</div><div class="line">        <span class="keyword">unsigned</span> <span class="keyword">short</span>          bi_vcnt;        <span class="comment">/* how many bio_vec's */</span></div><div class="line">        <span class="comment">/*</span></div><div class="line">         * Everything starting with bi_max_vecs will be preserved by bio_reset()</div><div class="line">         */</div><div class="line">        <span class="keyword">unsigned</span> <span class="keyword">short</span>          bi_max_vecs;    <span class="comment">/* max bvl_vecs we can hold */</span></div><div class="line">        <span class="keyword">atomic_t</span>                __bi_cnt;       <span class="comment">/* pin count */</span></div><div class="line">        <span class="keyword">struct</span> bio_vec          *bi_io_vec;     <span class="comment">/* the actual vec list */</span></div><div class="line">        <span class="keyword">struct</span> bio_set          *bi_pool;</div><div class="line">        <span class="comment">/*</span></div><div class="line">         * We can inline a number of vecs at the end of the bio, to avoid</div><div class="line">         * double allocations for a small number of bio_vecs. This member</div><div class="line">         * MUST obviously be kept at the very end of the bio.</div><div class="line">         */</div><div class="line">        <span class="keyword">struct</span> bio_vec          bi_inline_vecs[<span class="number">0</span>];</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<p>bio的核心是一个名为<code>bi_io_vec</code>的数组</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> bio_vec &#123;</div><div class="line">        <span class="keyword">struct</span> page     *bv_page;</div><div class="line">        <span class="keyword">unsigned</span> <span class="keyword">int</span>    bv_len;</div><div class="line">        <span class="keyword">unsigned</span> <span class="keyword">int</span>    bv_offset;</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<h4 id="遍历request中的bio"><a href="#遍历request中的bio" class="headerlink" title="遍历request中的bio"></a>遍历request中的bio</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> <span class="title">sbull_xfer_request</span><span class="params">(<span class="keyword">struct</span> sbull_dev *dev,<span class="keyword">struct</span> request *req)</span></span></div><div class="line">&#123;</div><div class="line">    <span class="keyword">struct</span> bio *bio;</div><div class="line">    <span class="keyword">int</span> nsect = <span class="number">0</span>;</div><div class="line">    rq_for_each_bio(bio,req)<span class="comment">//此宏遍历请求中的每个bio,传递用于sbull_xfer_bio()传输的指针</span></div><div class="line">    &#123;</div><div class="line">        sbull_xfer_bio(dev,bio);  <span class="comment">//调用 bio 处理函数</span></div><div class="line">        nsect += bio-&gt;bi_size/KERNEL_SECTOR_SIZE; <span class="comment">//传递的字节数/扇区大小等于扇区数</span></div><div class="line">    &#125;</div><div class="line">    <span class="keyword">return</span> nsect;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="遍历bio中的segment"><a href="#遍历bio中的segment" class="headerlink" title="遍历bio中的segment"></a>遍历bio中的segment</h4><p>遍历bio中的segment，也就是遍历bio结构中的<code>bi_io_vec</code>。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> <span class="title">sbull_xfer_bio</span><span class="params">(<span class="keyword">struct</span> sbull_dev *dev,<span class="keyword">struct</span> bio *bio)</span></span></div><div class="line">&#123;</div><div class="line">    <span class="keyword">int</span> i;</div><div class="line">    <span class="keyword">struct</span> bio_vec *bvec;              <span class="comment">//定义实际的 vec 列表</span></div><div class="line">    <span class="keyword">sector_t</span> sector = bio-&gt;bi_sector;  <span class="comment">//定义要传输的第一个扇区</span></div><div class="line">    <span class="comment">//下面的宏遍历bio的每一段，获得一个内核虚拟地址来存取缓冲</span></div><div class="line">    bio_for_each_segment(bvec,bio,i)</div><div class="line">    &#123;</div><div class="line">        <span class="keyword">char</span> *buffer = __bio_kmap_atomic(bio,i,KM_USER0);<span class="comment">//通过kmap_atomic()函数获得返</span></div><div class="line">        <span class="comment">//回bio的第i个缓冲区的虚拟地址</span></div><div class="line">        sbull_transfer(dev,</div><div class="line">                       sector,                        <span class="comment">// 开始扇区的索引号</span></div><div class="line">                       bio_cur_sectors(bio),          <span class="comment">// 需要传输的扇区数  </span></div><div class="line">                       buffer,                        <span class="comment">// 传输数据的缓冲区指针</span></div><div class="line">                       bio_data_dir(bio)== WRITE);    <span class="comment">// 传输方向，0表述从设备读，非0从设备写</span></div><div class="line">        sector += bio_cur_sectors(bio);     <span class="comment">//返回扇区数</span></div><div class="line">        __bio_kunmap_atomic(bio,KM_USER0); <span class="comment">//返回由 __bio_kmap_atomic()获得的内核虚拟地址</span></div><div class="line">    &#125;</div><div class="line">    <span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li>《设备驱动程序》</li>
+</ul>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/kernel/" rel="tag"># kernel</a>
+          
+            <a href="/tags/block/" rel="tag"># block</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/12/14/linux/perf-tools/" rel="next" title="perf-tools">
+                <i class="fa fa-chevron-left"></i> perf-tools
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.gif"
+               alt="博" />
+          <p class="site-author-name" itemprop="name">博</p>
+           
+              <p class="site-description motion-element" itemprop="description"></p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+            
+              <a href="/archives/ || archive">
+            
+                <span class="site-state-item-count">100</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">19</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">105</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#初始化"><span class="nav-number">1.</span> <span class="nav-text">初始化</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#注册块设备驱动"><span class="nav-number">1.1.</span> <span class="nav-text">注册块设备驱动</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#注册磁盘"><span class="nav-number">1.2.</span> <span class="nav-text">注册磁盘</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#逆初始化"><span class="nav-number">2.</span> <span class="nav-text">逆初始化</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#注销块设备驱动"><span class="nav-number">2.1.</span> <span class="nav-text">注销块设备驱动</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#块设备操作"><span class="nav-number">3.</span> <span class="nav-text">块设备操作</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#open"><span class="nav-number">3.1.</span> <span class="nav-text">open</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#release"><span class="nav-number">3.2.</span> <span class="nav-text">release</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#media-changed"><span class="nav-number">3.3.</span> <span class="nav-text">media_changed</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#revalidate-disk"><span class="nav-number">3.4.</span> <span class="nav-text">revalidate_disk</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ioctl"><span class="nav-number">3.5.</span> <span class="nav-text">ioctl</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#请求处理"><span class="nav-number">3.6.</span> <span class="nav-text">请求处理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#request-queue"><span class="nav-number">3.6.1.</span> <span class="nav-text">request queue</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#创建删除"><span class="nav-number">3.6.1.1.</span> <span class="nav-text">创建删除</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#队列元素"><span class="nav-number">3.6.1.2.</span> <span class="nav-text">队列元素</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#request"><span class="nav-number">3.6.2.</span> <span class="nav-text">request</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#bio"><span class="nav-number">3.6.3.</span> <span class="nav-text">bio</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#遍历request中的bio"><span class="nav-number">3.6.3.1.</span> <span class="nav-text">遍历request中的bio</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#遍历bio中的segment"><span class="nav-number">3.6.3.2.</span> <span class="nav-text">遍历bio中的segment</span></a></li></ol></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考-amp-鸣谢"><span class="nav-number">4.</span> <span class="nav-text">参考&鸣谢</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">博</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+  <span class="post-meta-divider">|</span>
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">NexT.Gemini</a> v5.1.2</div>
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.2"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.2"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.2"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.2"></script>
+
+
+
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.2"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.2"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  
+  
+  <link rel="stylesheet" href="/lib/algolia-instant-search/instantsearch.min.css">
+
+  
+  
+  <script src="/lib/algolia-instant-search/instantsearch.min.js"></script>
+  
+
+  <script src="/js/src/algolia-search.js?v=5.1.2"></script>
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
