@@ -309,6 +309,480 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/09/18/storage/virtual-filesystem-switch/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/09/18/storage/virtual-filesystem-switch/" itemprop="url">virtual-filesystem-switch</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-09-18T23:28:47+08:00">
+                2017-09-18
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index">
+                    <span itemprop="name">storage</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p><img src="/images/vfs/vfs-arch.png" alt="vfs-arch"></p>
+<h1 id="版本"><a href="#版本" class="headerlink" title="版本"></a>版本</h1><p>引用代码版本：linux-3.10.104</p>
+<h1 id="功能"><a href="#功能" class="headerlink" title="功能"></a>功能</h1><ul>
+<li>提供一个通用接口</li>
+<li>提供各种cache以提高文件系统性能</li>
+</ul>
+<p><img src="/images/vfs/vfs.png" alt="vfs"></p>
+<h1 id="VFS所处理的系统调用"><a href="#VFS所处理的系统调用" class="headerlink" title="VFS所处理的系统调用"></a>VFS所处理的系统调用</h1><table>
+<thead>
+<tr>
+<th style="text-align:left">系统调用名</th>
+<th style="text-align:left">说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">mount umount umount2</td>
+<td style="text-align:left">安装／卸载文件系统</td>
+</tr>
+<tr>
+<td style="text-align:left">sysfs</td>
+<td style="text-align:left">获取文件系统信息</td>
+</tr>
+<tr>
+<td style="text-align:left">ustat statfs fstatfs statfs64 fstatfs64</td>
+<td style="text-align:left">获取文件系统统计信息</td>
+</tr>
+<tr>
+<td style="text-align:left">chroot pivot_root</td>
+<td style="text-align:left">更改根目录</td>
+</tr>
+<tr>
+<td style="text-align:left">chdir fchdir getcwd</td>
+<td style="text-align:left">对当前目录进行操作</td>
+</tr>
+<tr>
+<td style="text-align:left">mkdir rmdir</td>
+<td style="text-align:left">创建、删除目录</td>
+</tr>
+<tr>
+<td style="text-align:left">getdents getdents64 readdir link unlink rename lookup_dcookie</td>
+<td style="text-align:left">对目录项进行操作</td>
+</tr>
+<tr>
+<td style="text-align:left">readlink symlink</td>
+<td style="text-align:left">对软连接进行操作</td>
+</tr>
+<tr>
+<td style="text-align:left">chown fchown lchown chown16 fchown16 lchown16</td>
+<td style="text-align:left">更改文件所有者</td>
+</tr>
+<tr>
+<td style="text-align:left">chmod fchmod utime</td>
+<td style="text-align:left">更改文件属性</td>
+</tr>
+<tr>
+<td style="text-align:left">stat fstat lstat access oldstat oldfstat oldlstat</td>
+<td style="text-align:left">读取文件状态</td>
+</tr>
+<tr>
+<td style="text-align:left">stat64 lstat64 fstat64</td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">open close creat umask</td>
+<td style="text-align:left">打开、关闭、创建文件</td>
+</tr>
+<tr>
+<td style="text-align:left">dup dup2 fcntl fcntl64</td>
+<td style="text-align:left">对文件描述符进行操作</td>
+</tr>
+<tr>
+<td style="text-align:left">select poll</td>
+<td style="text-align:left">等待一组文件描述符上发生的事件</td>
+</tr>
+<tr>
+<td style="text-align:left">truncate ftruncate truncate64 ftruncate64</td>
+<td style="text-align:left">更改文件长度</td>
+</tr>
+<tr>
+<td style="text-align:left">lseek</td>
+<td style="text-align:left">更改文件指针</td>
+</tr>
+<tr>
+<td style="text-align:left">read write readv writev sendfile sendfile64 readahead</td>
+<td style="text-align:left">进行文件I/O操作</td>
+</tr>
+<tr>
+<td style="text-align:left">io_setup io_submit io_getevents io_cancel io_destroy</td>
+<td style="text-align:left">异步I/O</td>
+</tr>
+<tr>
+<td style="text-align:left">pread64 pwrite64</td>
+<td style="text-align:left">搜索并访问文件</td>
+</tr>
+<tr>
+<td style="text-align:left">mmap mmap2 munmap madvise mincore remap_file_pages</td>
+<td style="text-align:left">处理文件内存映射</td>
+</tr>
+<tr>
+<td style="text-align:left">fdatasync fsync sync msync</td>
+<td style="text-align:left">同步文件数据</td>
+</tr>
+<tr>
+<td style="text-align:left">flock</td>
+<td style="text-align:left">处理文件锁</td>
+</tr>
+<tr>
+<td style="text-align:left">setxattr lsetxattr fsetxattr getxattr lgetxattr</td>
+<td style="text-align:left">处理文件扩展属性</td>
+</tr>
+<tr>
+<td style="text-align:left">fgetxattr listxattr llistxattr flistxattr removexattr</td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:left">lremovexattr fremovexattr</td>
+</tr>
+</tbody>
+</table>
+<h1 id="VFS数据结构"><a href="#VFS数据结构" class="headerlink" title="VFS数据结构"></a>VFS数据结构</h1><ul>
+<li>超级块对象和inode对象分别对应有物理数据，在磁盘上有静态信息。</li>
+<li>目录项对象和文件对象描述的是一种关系，前者描述的文件与文件名的关系，后者描述的是进程与文件的关系，所以没有对应物理数据</li>
+<li>进程每打开一个文件，就会有一个file结构与之对应。同一个进程可以多次打开同一个文件而得到多个不同的file结构，file结构描述被打开文件的属性，如文件的当前偏移量等信息</li>
+<li>两个不同的file结构可以对应同一个dentry结构。进程多次打开同一个文件时，对应的只有一个dentry结构</li>
+<li>在存储介质中，每个文件对应唯一的inode结点，但是每个文件又可以有多个文件名。</li>
+<li>Inode中不存储文件的名字，它只存储节点号；而dentry则保存有名字和与其对应的节点号，所以就可以通过不同的dentry访问同一个inode</li>
+</ul>
+<p><img src="/images/vfs/vfs_3.10.104.png" alt="vfs_3.10.104.png"></p>
+<h2 id="Super-Block"><a href="#Super-Block" class="headerlink" title="Super Block"></a>Super Block</h2><ul>
+<li>超级块用来描述特定文件系统的信息。它存放在磁盘特定的扇区中 ,它在使用的时候将信息存在于内存中</li>
+<li>当内核对一个文件系统进行初始化和注册时在内存为其分配一个超级块，这就是VFS超级块。即，VFS超级块是各种具体文件系统在安装时建立的，并在这些文件系统卸载时被自动删除</li>
+</ul>
+<p><img src="/images/vfs/super_block_1.jpg" alt="super_block_1.jpg"></p>
+<p> 关键成员：</p>
+<ul>
+<li>s_list<br>  所有的超级块形成一个双联表，s_list.prev和s_list.next分别指向与当前超级块相邻的前一个元素和后一个元素</li>
+<li>s_fs_info<br>  字段指向具体文件系统的超级块。<br>  例如：超级块对象指的是Ext2文件系统，该字段就指向ext2_sb_info数据结构</li>
+<li>alloc_super()<br>  超级块对象是通过函数alloc_super()创建并初始化的(由<code>sget()</code>调用，在<code>fs/super.c</code>文件中)。在文件系统安装时，内核会调用该函数以便从磁盘读取文件系统超级块，并且将其信息填充到内存中的超级块对象中</li>
+</ul>
+<p><code>include/linux/fs.h</code></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> super_block &#123;</div><div class="line">    <span class="keyword">struct</span> list_head    s_list;                 <span class="comment">/* 指向超级块链表的指针 */</span></div><div class="line">    <span class="keyword">dev_t</span>               s_dev;                  <span class="comment">/* 设备标示符 */</span></div><div class="line">    <span class="keyword">unsigned</span> <span class="keyword">char</span>       s_blocksize_bits;       <span class="comment">/* 以位为单位的块大小 */</span></div><div class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span>       s_blocksize;            <span class="comment">/* 以字节为单位的块大小 */</span></div><div class="line">    <span class="keyword">loff_t</span>              s_maxbytes;             <span class="comment">/* 文件的最长长度 */</span></div><div class="line">    <span class="keyword">struct</span> file_system_type     *s_type;        <span class="comment">/* 文件系统类型 */</span></div><div class="line">    <span class="keyword">const</span> <span class="keyword">struct</span> super_operations   *s_op;      <span class="comment">/* 超级块方法 */</span></div><div class="line">    <span class="keyword">const</span> <span class="keyword">struct</span> dquot_operations   *dq_op;     <span class="comment">/* 磁盘限额处理方法*/</span></div><div class="line">    <span class="keyword">const</span> <span class="keyword">struct</span> quotactl_ops   *s_qcop;        <span class="comment">/* 磁盘限额管理方法 */</span></div><div class="line">    <span class="keyword">const</span> <span class="keyword">struct</span> export_operations *s_export_op;<span class="comment">/* 网络文件系统使用的输出操作 */</span></div><div class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span>       s_flags;                <span class="comment">/* 安装标志 */</span></div><div class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span>       s_magic;</div><div class="line">    <span class="keyword">struct</span> dentry       *s_root;                <span class="comment">/* 文件系统根目录和目录项对象 */</span></div><div class="line">    <span class="keyword">struct</span> rw_semaphore s_umount;               <span class="comment">/* 卸载文件系统所用的信号量 */</span></div><div class="line">    <span class="keyword">int</span>         s_count;                        <span class="comment">/* 引用计数 */</span></div><div class="line">    <span class="keyword">atomic_t</span>        s_active;                   <span class="comment">/* 次级引用计数 */</span></div><div class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> CONFIG_SECURITY</span></div><div class="line">    <span class="keyword">void</span>                    *s_security;        <span class="comment">/* 指向超级块安全数据结构的指针 */</span></div><div class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></div><div class="line">    <span class="keyword">const</span> <span class="keyword">struct</span> xattr_handler **s_xattr;       <span class="comment">/* 指向超级块扩展属性结构的指针*/</span></div><div class="line">    <span class="keyword">struct</span> list_head    s_inodes;               <span class="comment">/* all inodes */</span></div><div class="line">    <span class="keyword">struct</span> hlist_bl_head    s_anon;             <span class="comment">/* 用于处理远程网络文件系统的匿名目录项的链表 */</span></div><div class="line">    <span class="keyword">struct</span> list_head    s_mounts;               <span class="comment">/* list of mounts; _not_ for fs use */</span></div><div class="line">    <span class="comment">/* s_dentry_lru, s_nr_dentry_unused protected by dcache.c lru locks */</span></div><div class="line">    <span class="keyword">struct</span> list_head    s_dentry_lru;           <span class="comment">/* unused dentry lru */</span></div><div class="line">    <span class="keyword">int</span>         s_nr_dentry_unused;             <span class="comment">/* # of dentry on lru */</span></div><div class="line">    <span class="comment">/* s_inode_lru_lock protects s_inode_lru and s_nr_inodes_unused */</span></div><div class="line">    <span class="keyword">spinlock_t</span>      s_inode_lru_lock ____cacheline_aligned_in_smp;</div><div class="line">    <span class="keyword">struct</span> list_head    s_inode_lru;            <span class="comment">/* unused inode lru */</span></div><div class="line">    <span class="keyword">int</span>         s_nr_inodes_unused;             <span class="comment">/* # of inodes on lru */</span></div><div class="line">    <span class="keyword">struct</span> block_device *s_bdev;                <span class="comment">/* 指向块设备驱动程序描述符的指针 */</span></div><div class="line">    <span class="keyword">struct</span> backing_dev_info *s_bdi;</div><div class="line">    <span class="keyword">struct</span> mtd_info     *s_mtd;</div><div class="line">    <span class="keyword">struct</span> hlist_node   s_instances;            <span class="comment">/* 用于给定文件系统类型的超级块对象链表的指针 */</span></div><div class="line">    <span class="keyword">struct</span> quota_info   s_dquot;                <span class="comment">/* 磁盘限额的描述符 */</span></div><div class="line">    <span class="keyword">struct</span> sb_writers   s_writers;</div><div class="line">    <span class="keyword">char</span> s_id[<span class="number">32</span>];                              <span class="comment">/* Informational name */</span></div><div class="line">    u8 s_uuid[<span class="number">16</span>];                              <span class="comment">/* UUID */</span></div><div class="line">    <span class="keyword">void</span>            *s_fs_info;                 <span class="comment">/* 指向特定文件系统的超级块信息的指针 */</span></div><div class="line">    <span class="keyword">unsigned</span> <span class="keyword">int</span>        s_max_links;</div><div class="line">    <span class="keyword">fmode_t</span>         s_mode;</div><div class="line"></div><div class="line">    <span class="comment">/* Granularity of c/m/atime in ns. Cannot be worse than a second */</span></div><div class="line">    u32        s_time_gran;</div><div class="line"></div><div class="line">    <span class="comment">/* The next field is for VFS *only*. No filesystems have any business</span></div><div class="line">     * even looking at it. You had been warned. */</div><div class="line">    <span class="keyword">struct</span> mutex s_vfs_rename_mutex;            <span class="comment">/* Kludge */</span></div><div class="line"></div><div class="line">    <span class="comment">/* Filesystem subtype.  If non-empty the filesystem type field</span></div><div class="line">     * in /proc/mounts will be "type.subtype" */</div><div class="line">    <span class="keyword">char</span> *s_subtype;</div><div class="line"></div><div class="line">    <span class="comment">/* Saved mount options for lazy filesystems using</span></div><div class="line">     * generic_show_options() */</div><div class="line">    <span class="keyword">char</span> __rcu *s_options;</div><div class="line">    <span class="keyword">const</span> <span class="keyword">struct</span> dentry_operations *s_d_op; <span class="comment">/* default d_op for dentries */</span></div><div class="line"></div><div class="line">    <span class="comment">/* Saved pool identifier for cleancache (-1 means none) */</span></div><div class="line">    <span class="keyword">int</span> cleancache_poolid;</div><div class="line">    <span class="keyword">struct</span> shrinker s_shrink;   <span class="comment">/* per-sb shrinker handle */</span></div><div class="line"></div><div class="line">    <span class="comment">/* Number of inodes with nlink == 0 but still referenced */</span></div><div class="line">    <span class="keyword">atomic_long_t</span> s_remove_count;</div><div class="line"></div><div class="line">    <span class="comment">/* Being remounted read-only */</span></div><div class="line">    <span class="keyword">int</span> s_readonly_remount;</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<h3 id="super-operation"><a href="#super-operation" class="headerlink" title="super_operation"></a>super_operation</h3><p><code>include/linux/fs.h</code></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> super_operations &#123;</div><div class="line">    <span class="keyword">struct</span> inode *(*alloc_inode)(<span class="keyword">struct</span> super_block *sb);</div><div class="line">    <span class="comment">/* 创建和初始化一个索引节点对象 */</span></div><div class="line">    <span class="keyword">void</span> (*destroy_inode)(<span class="keyword">struct</span> inode *);</div><div class="line">    <span class="comment">/* 释放给定的索引节点 */</span></div><div class="line">    <span class="keyword">void</span> (*dirty_inode) (<span class="keyword">struct</span> inode *, <span class="keyword">int</span> flags);</div><div class="line">    <span class="comment">/* VFS在索引节点被修改时会调用这个函数 */</span></div><div class="line">    <span class="keyword">int</span> (*write_inode) (<span class="keyword">struct</span> inode *, <span class="keyword">struct</span> writeback_control *wbc);</div><div class="line">    <span class="comment">/* 将指定的inode写回磁盘 */</span></div><div class="line">    <span class="keyword">int</span> (*drop_inode) (<span class="keyword">struct</span> inode *);</div><div class="line">    <span class="comment">/* 最后一个指向索引节点的引用被删除后，VFS会调用这个函数 */</span></div><div class="line">    <span class="keyword">void</span> (*evict_inode) (<span class="keyword">struct</span> inode *);</div><div class="line">    <span class="keyword">void</span> (*put_super) (<span class="keyword">struct</span> super_block *);</div><div class="line">    <span class="comment">/* 卸载文件系统时由VFS调用，用来释放超级块 */</span></div><div class="line">    <span class="keyword">int</span> (*sync_fs)(<span class="keyword">struct</span> super_block *sb, <span class="keyword">int</span> wait);</div><div class="line">    <span class="comment">/* 使文件系统中的数据与磁盘上的数据同步 */</span></div><div class="line">    <span class="keyword">int</span> (*freeze_fs) (<span class="keyword">struct</span> super_block *);</div><div class="line">    <span class="keyword">int</span> (*unfreeze_fs) (<span class="keyword">struct</span> super_block *);</div><div class="line">    <span class="keyword">int</span> (*statfs) (<span class="keyword">struct</span> dentry *, <span class="keyword">struct</span> kstatfs *);</div><div class="line">    <span class="comment">/* VFS调用该函数获取文件系统状态 */</span></div><div class="line">    <span class="keyword">int</span> (*remount_fs) (<span class="keyword">struct</span> super_block *, <span class="keyword">int</span> *, <span class="keyword">char</span> *);</div><div class="line">    <span class="comment">/* 定新的安装选项重新安装文件系统时，VFS会调用该函数 */</span></div><div class="line">    <span class="keyword">void</span> (*umount_begin) (<span class="keyword">struct</span> super_block *);</div><div class="line">    <span class="comment">/* VFS调用该函数中断安装操作 */</span></div><div class="line"></div><div class="line">    <span class="keyword">int</span> (*show_options)(<span class="keyword">struct</span> seq_file *, <span class="keyword">struct</span> dentry *);</div><div class="line">    <span class="comment">/* 用来显示特定文件系统的选项 */</span></div><div class="line">    <span class="keyword">int</span> (*show_devname)(<span class="keyword">struct</span> seq_file *, <span class="keyword">struct</span> dentry *);</div><div class="line">    <span class="keyword">int</span> (*show_path)(<span class="keyword">struct</span> seq_file *, <span class="keyword">struct</span> dentry *);</div><div class="line">    <span class="keyword">int</span> (*show_stats)(<span class="keyword">struct</span> seq_file *, <span class="keyword">struct</span> dentry *);</div><div class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> CONFIG_QUOTA</span></div><div class="line">    <span class="keyword">ssize_t</span> (*quota_read)(<span class="keyword">struct</span> super_block *, <span class="keyword">int</span>, <span class="keyword">char</span> *, <span class="keyword">size_t</span>, <span class="keyword">loff_t</span>);</div><div class="line">    <span class="comment">/* 限额系统使用该方法从文件中读取数据，该文件详细说明了所在文件系统的限制 */</span></div><div class="line">    <span class="keyword">ssize_t</span> (*quota_write)(<span class="keyword">struct</span> super_block *, <span class="keyword">int</span>, <span class="keyword">const</span> <span class="keyword">char</span> *, <span class="keyword">size_t</span>, <span class="keyword">loff_t</span>);</div><div class="line">    <span class="comment">/* 限额系统使用该方法将数据写入文件中，该文件详细说明了所在文件系统的限制 */</span></div><div class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></div><div class="line">    <span class="keyword">int</span> (*bdev_try_to_free_page)(<span class="keyword">struct</span> super_block*, <span class="keyword">struct</span> page*, <span class="keyword">gfp_t</span>);</div><div class="line">    <span class="keyword">int</span> (*nr_cached_objects)(<span class="keyword">struct</span> super_block *);</div><div class="line">    <span class="keyword">void</span> (*free_cached_objects)(<span class="keyword">struct</span> super_block *, <span class="keyword">int</span>);</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<h2 id="Inode"><a href="#Inode" class="headerlink" title="Inode"></a>Inode</h2><p><img src="/images/vfs/inode_1.jpg" alt="inode_1.jpg"></p>
+<p>索引节点，索引节点与文件一一对应，并且随文件存在而存在。内存中索引节点由一个inode结构表示。</p>
+<p><code>include/linux/fs.h</code></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> inode &#123;</div><div class="line">    <span class="keyword">umode_t</span>         i_mode;             <span class="comment">/* 文件类型与访问权限 */</span></div><div class="line">    <span class="keyword">unsigned</span> <span class="keyword">short</span>      i_opflags;</div><div class="line">    <span class="keyword">kuid_t</span>          i_uid;              <span class="comment">/* inode所属文件的拥有者的id，通过ls -n可查看拥有者id */</span></div><div class="line">    <span class="keyword">kgid_t</span>          i_gid;              <span class="comment">/* inode所属文件所在组的id，通过ls -n可查看组id */</span></div><div class="line">    <span class="keyword">unsigned</span> <span class="keyword">int</span>        i_flags;            <span class="comment">/* 文件系统的安装标志 */</span></div><div class="line"></div><div class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> CONFIG_FS_POSIX_ACL</span></div><div class="line">    <span class="keyword">struct</span> posix_acl    *i_acl;</div><div class="line">    <span class="keyword">struct</span> posix_acl    *i_default_acl;</div><div class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></div><div class="line"></div><div class="line">    <span class="keyword">const</span> <span class="keyword">struct</span> inode_operations   *i_op;  <span class="comment">/* 索引节点的操作 */</span></div><div class="line">    <span class="keyword">struct</span> super_block  *i_sb;              <span class="comment">/* 指向超级块对象的指针 */</span></div><div class="line">    <span class="keyword">struct</span> address_space    *i_mapping;     <span class="comment">/* address space */</span></div><div class="line"></div><div class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> CONFIG_SECURITY</span></div><div class="line">    <span class="keyword">void</span>            *i_security;            <span class="comment">/* 指向索引节点安全结构的指针 */</span></div><div class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></div><div class="line"></div><div class="line">    <span class="comment">/* Stat data, not accessed from path walking */</span></div><div class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span>       i_ino;          <span class="comment">/* 索引节点号 */</span></div><div class="line">    <span class="comment">/* Filesystems may only read i_nlink directly.  They shall use the</span></div><div class="line">     * following functions for modification:</div><div class="line">     *    (set|clear|inc|drop)_nlink</div><div class="line">     *    inode_(inc|dec)_link_count */</div><div class="line">    <span class="keyword">union</span> &#123;</div><div class="line">        <span class="keyword">const</span> <span class="keyword">unsigned</span> <span class="keyword">int</span> i_nlink;     <span class="comment">/* 硬链接数目，当该inode描述一个目录时，这个值至少为2，代表.和..的数目 */</span></div><div class="line">        <span class="keyword">unsigned</span> <span class="keyword">int</span> __i_nlink;</div><div class="line">    &#125;;</div><div class="line">    <span class="keyword">dev_t</span>           i_rdev;             <span class="comment">/* 如果该inode描述的是一个设备文件，此值为设备号 */</span></div><div class="line">    <span class="keyword">loff_t</span>          i_size;             <span class="comment">/* 文件的字节数 */</span></div><div class="line">    <span class="keyword">struct</span> timespec     i_atime;        <span class="comment">/* 上次访问文件的时间 */</span></div><div class="line">    <span class="keyword">struct</span> timespec     i_mtime;        <span class="comment">/* 上次写文件的时间，这里的修改只文件内容被修改 */</span></div><div class="line">    <span class="keyword">struct</span> timespec     i_ctime;        <span class="comment">/* 上次修改索引节点的时间，这里的修改除了指文件内容被修改外，更强调的是文件的属性被修改 */</span></div><div class="line">    <span class="keyword">spinlock_t</span>          i_lock;         <span class="comment">/* i_blocks, i_bytes, maybe i_size */</span></div><div class="line">    <span class="keyword">unsigned</span> <span class="keyword">short</span>      i_bytes;        <span class="comment">/* 文件中最后一个块的字节数 */</span></div><div class="line">    <span class="keyword">unsigned</span> <span class="keyword">int</span>        i_blkbits;      <span class="comment">/* 块的位数 */</span></div><div class="line">    <span class="keyword">blkcnt_t</span>            i_blocks;       <span class="comment">/* 文件使用块的个数，通过ls -s可以查看该某个文件的块使用数目 */</span></div><div class="line"></div><div class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> __NEED_I_SIZE_ORDERED</span></div><div class="line">    <span class="keyword">seqcount_t</span>      i_size_seqcount;    <span class="comment">/* SMP系统为i_size字段获取一致值时使用的顺序计数器 */</span></div><div class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></div><div class="line"></div><div class="line">    <span class="comment">/* Misc */</span></div><div class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span>       i_state;        <span class="comment">/* 索引节点的状态标志 */</span></div><div class="line">    <span class="keyword">struct</span> mutex        i_mutex;</div><div class="line"></div><div class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span>       dirtied_when;   <span class="comment">/* jiffies of first dirtying */</span></div><div class="line"></div><div class="line">    <span class="keyword">struct</span> hlist_node   i_hash;         <span class="comment">/* 用于散列链表的指针 */</span></div><div class="line">    <span class="comment">/* 为了提高查找inode的效率，每一个inode都会有一个hash值。该字段指向hash值相同的inode所形成的双链表该字段包含prev和next两个指针，分别指向上述链表的前一个元素和后一个元素 */</span></div><div class="line">    <span class="keyword">struct</span> list_head    i_wb_list;      <span class="comment">/* backing dev IO list */</span></div><div class="line">    <span class="keyword">struct</span> list_head    i_lru;          <span class="comment">/* inode LRU list 所有使用的索引结点形成的双联表 */</span></div><div class="line">    <span class="keyword">struct</span> list_head    i_sb_list;      <span class="comment">/* 用于超级块的索引节点链表的指针 */</span></div><div class="line">    <span class="keyword">union</span> &#123;</div><div class="line">        <span class="keyword">struct</span> hlist_head   i_dentry;   <span class="comment">/* 所有引用索引节点的目录项对象链表的头 */</span></div><div class="line">        <span class="keyword">struct</span> rcu_head     i_rcu;</div><div class="line">    &#125;;</div><div class="line">    u64         i_version;              <span class="comment">/* 版本号（每次使用后自动递增） */</span></div><div class="line">    <span class="keyword">atomic_t</span>        i_count;            <span class="comment">/* 引用计数器 */</span></div><div class="line">    <span class="keyword">atomic_t</span>        i_dio_count;</div><div class="line">    <span class="keyword">atomic_t</span>        i_writecount;       <span class="comment">/* 用于写进程的引用计数器 */</span></div><div class="line">    <span class="keyword">const</span> <span class="keyword">struct</span> file_operations    *i_fop; <span class="comment">/* 缺省文件操作 former -&gt;i_op-&gt;default_file_ops */</span></div><div class="line">    <span class="keyword">struct</span> file_lock    *i_flock;           <span class="comment">/* 指向文件锁链表的指针 */</span></div><div class="line">    <span class="keyword">struct</span> address_space    i_data;         <span class="comment">/* address space */</span></div><div class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> CONFIG_QUOTA</span></div><div class="line">    <span class="keyword">struct</span> dquot    *i_dquot[MAXQUOTAS];    <span class="comment">/* 索引节点磁盘限额 */</span></div><div class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></div><div class="line">    <span class="keyword">struct</span> list_head    i_devices;          <span class="comment">/* 用于具体的字符或块设备索引节点链表的指针 */</span></div><div class="line">    <span class="keyword">union</span> &#123;</div><div class="line">        <span class="keyword">struct</span> pipe_inode_info  *i_pipe;    <span class="comment">/* 如果文件是一个管道则使用它 */</span></div><div class="line">        <span class="keyword">struct</span> block_device *i_bdev;        <span class="comment">/* 指向块设备驱动程序的指针 */</span></div><div class="line">        <span class="keyword">struct</span> cdev     *i_cdev;            <span class="comment">/* 指向字符设备驱动程序的指针 */</span></div><div class="line">    &#125;;</div><div class="line"></div><div class="line">    __u32           i_generation;           <span class="comment">/* 索引节点版本号（由某些文件系统使用） */</span></div><div class="line"></div><div class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> CONFIG_FSNOTIFY</span></div><div class="line">    __u32           i_fsnotify_mask;        <span class="comment">/* all events this inode cares about */</span></div><div class="line">    <span class="keyword">struct</span> hlist_head   i_fsnotify_marks;</div><div class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></div><div class="line"></div><div class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> CONFIG_IMA</span></div><div class="line">    <span class="keyword">atomic_t</span>        i_readcount; <span class="comment">/* struct files open RO */</span></div><div class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></div><div class="line">    <span class="keyword">void</span>            *i_private; <span class="comment">/* fs or device private pointer */</span></div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<h3 id="i-state-成员"><a href="#i-state-成员" class="headerlink" title="i_state 成员"></a>i_state 成员</h3><ul>
+<li>I_DIRTY_SYNC<br>  已被改变但不需要同步</li>
+<li>I_DIRTY_DATASYNC<br>  数据部分已被改变</li>
+<li>I_DIRTY_PAGES<br>  有脏的数据页</li>
+<li>I_NEW<br>  索引节点对象已经分配，但还没有用从磁盘索引节点读取来的数据填充</li>
+<li>I_WILL_FREE<br>  即将被释放</li>
+<li>I_FREEING<br>  索引节点对象正在被释放</li>
+<li>I_CLEAR<br>  索引节点对象的内容不再有意义</li>
+<li>I_SYNC<br>  正在同步过程中</li>
+<li>I_REFERENCED<br>  在LRU list中标记inode为最近被引用过</li>
+<li>I_DIO_WAKEUP<br>  Never Set</li>
+<li>I_DIRTY<br>  I_DIRTY_SYNC | I_DIRTY_DATASYNC | I_DIRTY_PAGES</li>
+</ul>
+<h3 id="inode-operations"><a href="#inode-operations" class="headerlink" title="inode_operations"></a>inode_operations</h3><p><code>include/linux/fs.h</code></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> inode_operations &#123;</div><div class="line">    <span class="keyword">struct</span> dentry * (*lookup) (<span class="keyword">struct</span> inode *,<span class="keyword">struct</span> dentry *, <span class="keyword">unsigned</span> <span class="keyword">int</span>);</div><div class="line">    <span class="keyword">void</span> * (*follow_link) (<span class="keyword">struct</span> dentry *, <span class="keyword">struct</span> nameidata *);</div><div class="line">    <span class="keyword">int</span> (*permission) (<span class="keyword">struct</span> inode *, <span class="keyword">int</span>);</div><div class="line">    <span class="keyword">struct</span> posix_acl * (*get_acl)(<span class="keyword">struct</span> inode *, <span class="keyword">int</span>);</div><div class="line"></div><div class="line">    <span class="keyword">int</span> (*readlink) (<span class="keyword">struct</span> dentry *, <span class="keyword">char</span> __user *,<span class="keyword">int</span>);</div><div class="line">    <span class="keyword">void</span> (*put_link) (<span class="keyword">struct</span> dentry *, <span class="keyword">struct</span> nameidata *, <span class="keyword">void</span> *);</div><div class="line"></div><div class="line">    <span class="keyword">int</span> (*create) (<span class="keyword">struct</span> inode *,<span class="keyword">struct</span> dentry *, <span class="keyword">umode_t</span>, <span class="keyword">bool</span>);</div><div class="line">    <span class="comment">/* 如果该inode描述一个目录文件，那么当在该目录下创建或打开一个文件时，内核必须为这个文件创建一个inode。VFS通过调用该inode的i_op-&gt;create()函数来完成上述新inode的创建。</span></div><div class="line">    该函数的第一个参数为该目录的 inode，第二个参数为要打开新文件的dentry，第三个参数是对该文件的访问权限。如果该inode描述的是一个普通文件，那么该inode永远都不会调用这个create函数 */</div><div class="line"></div><div class="line">    <span class="keyword">int</span> (*link) (<span class="keyword">struct</span> dentry *,<span class="keyword">struct</span> inode *,<span class="keyword">struct</span> dentry *);</div><div class="line">    <span class="comment">/* 用于在指定目录下创建一个硬链接。这个link函数最终会被系统调用link()调用。</span></div><div class="line">    该函数的第一个参数是原始文件的dentry，第二个参数即为上述指定目录的inode，第三个参数是链接文件的dentry。 */</div><div class="line"></div><div class="line">    <span class="keyword">int</span> (*unlink) (<span class="keyword">struct</span> inode *,<span class="keyword">struct</span> dentry *);</div><div class="line">    <span class="comment">/* 在某个目录下删除dentry指定的索引节点对象。这个unlink函数最终会被系统调用unlink()调用。 第一个参数即为上述硬链接所在目录的inode，第二个参数为要删除文件的dentry */</span></div><div class="line"></div><div class="line">    <span class="keyword">int</span> (*symlink) (<span class="keyword">struct</span> inode *,<span class="keyword">struct</span> dentry *,<span class="keyword">const</span> <span class="keyword">char</span> *);</div><div class="line">    <span class="comment">/* 在某个目录下新建软连接（符号链接），第一个参数是原始文件所在目录的inode，第二个参数是原始文件的dentry，第三个参数是符号链接的名字（const char *） */</span></div><div class="line">    </div><div class="line">    <span class="keyword">int</span> (*mkdir) (<span class="keyword">struct</span> inode *,<span class="keyword">struct</span> dentry *,<span class="keyword">umode_t</span>);</div><div class="line">    <span class="comment">/* 在指定的目录下创建一个子目录，当前目录的inode会调用i_op-&gt;mkdir()。该函数会被系统调用mkdir()调用。</span></div><div class="line">    第一个参数即为指定目录的inode，第二个参数为子目录的dentry，第三个参数为子目录权限；</div><div class="line">    （目录与子目录是通过目录inode中的dentry链相连的，而子目录的dentry又指向子目录自身的inode） */</div><div class="line"></div><div class="line">    <span class="keyword">int</span> (*rmdir) (<span class="keyword">struct</span> inode *,<span class="keyword">struct</span> dentry *);</div><div class="line">    <span class="keyword">int</span> (*mknod) (<span class="keyword">struct</span> inode *,<span class="keyword">struct</span> dentry *,<span class="keyword">umode_t</span>,<span class="keyword">dev_t</span>);</div><div class="line">    <span class="comment">/* 在指定的目录下创建一个特殊文件，比如管道、设备文件或套接字等 */</span></div><div class="line"></div><div class="line">    <span class="keyword">int</span> (*rename) (<span class="keyword">struct</span> inode *, <span class="keyword">struct</span> dentry *, <span class="keyword">struct</span> inode *, <span class="keyword">struct</span> dentry *);</div><div class="line">    <span class="keyword">int</span> (*setattr) (<span class="keyword">struct</span> dentry *, <span class="keyword">struct</span> iattr *);</div><div class="line">    <span class="keyword">int</span> (*getattr) (<span class="keyword">struct</span> vfsmount *mnt, <span class="keyword">struct</span> dentry *, <span class="keyword">struct</span> kstat *);</div><div class="line">    <span class="keyword">int</span> (*setxattr) (<span class="keyword">struct</span> dentry *, <span class="keyword">const</span> <span class="keyword">char</span> *,<span class="keyword">const</span> <span class="keyword">void</span> *,<span class="keyword">size_t</span>,<span class="keyword">int</span>);</div><div class="line">    <span class="keyword">ssize_t</span> (*getxattr) (<span class="keyword">struct</span> dentry *, <span class="keyword">const</span> <span class="keyword">char</span> *, <span class="keyword">void</span> *, <span class="keyword">size_t</span>);</div><div class="line">    <span class="keyword">ssize_t</span> (*listxattr) (<span class="keyword">struct</span> dentry *, <span class="keyword">char</span> *, <span class="keyword">size_t</span>);</div><div class="line">    <span class="keyword">int</span> (*removexattr) (<span class="keyword">struct</span> dentry *, <span class="keyword">const</span> <span class="keyword">char</span> *);</div><div class="line">    <span class="keyword">int</span> (*fiemap)(<span class="keyword">struct</span> inode *, <span class="keyword">struct</span> fiemap_extent_info *, u64 start,</div><div class="line">              u64 len);</div><div class="line">    <span class="keyword">int</span> (*update_time)(<span class="keyword">struct</span> inode *, <span class="keyword">struct</span> timespec *, <span class="keyword">int</span>);</div><div class="line">    <span class="keyword">int</span> (*atomic_open)(<span class="keyword">struct</span> inode *, <span class="keyword">struct</span> dentry *,</div><div class="line">               <span class="keyword">struct</span> file *, <span class="keyword">unsigned</span> open_flag,</div><div class="line">               <span class="keyword">umode_t</span> create_mode, <span class="keyword">int</span> *opened);</div><div class="line">&#125; ____cacheline_aligned;</div></pre></td></tr></table></figure>
+<h2 id="File"><a href="#File" class="headerlink" title="File"></a>File</h2><ul>
+<li>文件对象描述进程怎样与一个打开文件进行交互。</li>
+<li>几个进程可以同时访问一个文件，因此文件指针必须放在文件对象而不是索引节点对象中</li>
+</ul>
+<p><code>include/linux/fs.h</code></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> file &#123;</div><div class="line">    <span class="keyword">union</span> &#123;</div><div class="line">        <span class="keyword">struct</span> llist_node   fu_llist;</div><div class="line">        <span class="keyword">struct</span> rcu_head     fu_rcuhead;</div><div class="line">    &#125; f_u;</div><div class="line">    <span class="keyword">struct</span> path     f_path;         <span class="comment">/* 文件对象通过f_path.dentry指针指向相关的目录项对象 */</span></div><div class="line">    <span class="comment">/* 目录项会指向相关的索引节点，索引节点会记录文件是否是脏的 */</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> f_dentry    f_path.dentry</span></div><div class="line">    <span class="keyword">struct</span> inode        *f_inode;   <span class="comment">/* cached value */</span></div><div class="line">    <span class="keyword">const</span> <span class="keyword">struct</span> file_operations    *f_op;</div><div class="line"></div><div class="line">    <span class="comment">/*</span></div><div class="line">     * Protects f_ep_links, f_flags, f_pos vs i_size in lseek SEEK_CUR.</div><div class="line">     * Must not be taken from IRQ context.</div><div class="line">     */</div><div class="line">    <span class="keyword">spinlock_t</span>      f_lock;</div><div class="line">    <span class="keyword">atomic_long_t</span>       f_count;    <span class="comment">/* 记录使用文件对象的进程数 */</span></div><div class="line">    <span class="keyword">unsigned</span> <span class="keyword">int</span>        f_flags;</div><div class="line">    <span class="keyword">fmode_t</span>         f_mode;</div><div class="line">    <span class="keyword">loff_t</span>          f_pos;</div><div class="line">    <span class="keyword">struct</span> fown_struct  f_owner;</div><div class="line">    <span class="keyword">const</span> <span class="keyword">struct</span> cred   *f_cred;</div><div class="line">    <span class="keyword">struct</span> file_ra_state    f_ra;</div><div class="line"></div><div class="line">    u64         f_version;</div><div class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> CONFIG_SECURITY</span></div><div class="line">    <span class="keyword">void</span>            *f_security;</div><div class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></div><div class="line">    <span class="comment">/* needed for tty driver, and maybe others */</span></div><div class="line">    <span class="keyword">void</span>            *private_data;</div><div class="line"></div><div class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> CONFIG_EPOLL</span></div><div class="line">    <span class="comment">/* Used by fs/eventpoll.c to link all the hooks to this file */</span></div><div class="line">    <span class="keyword">struct</span> list_head    f_ep_links;</div><div class="line">    <span class="keyword">struct</span> list_head    f_tfile_llink;</div><div class="line"><span class="meta">#<span class="meta-keyword">endif</span> <span class="comment">/* #ifdef CONFIG_EPOLL */</span></span></div><div class="line">    <span class="keyword">struct</span> address_space    *f_mapping;</div><div class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> CONFIG_DEBUG_WRITECOUNT</span></div><div class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> f_mnt_write_state;</div><div class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<h3 id="file-operations"><a href="#file-operations" class="headerlink" title="file_operations"></a>file_operations</h3><p><code>include/linux/fs.h</code></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> file_operations &#123;</div><div class="line">    <span class="keyword">struct</span> <span class="keyword">module</span> *owner; <span class="comment">/* 用于指定拥有这个文件操作结构体的模块，通常取THIS_MODULE */</span></div><div class="line">    <span class="keyword">loff_t</span> (*llseek) (<span class="keyword">struct</span> file *, <span class="keyword">loff_t</span>, <span class="keyword">int</span>);</div><div class="line">    <span class="comment">/* 用于设置文件的偏移量。第一个参数指明要操作的文件，第二个参数为偏移量，第三个参数为开始偏移的位置（可取SEEK_SET,SEEK_CUR和SEEK_END之一）*/</span></div><div class="line"></div><div class="line">    <span class="keyword">ssize_t</span> (*read) (<span class="keyword">struct</span> file *, <span class="keyword">char</span> __user *, <span class="keyword">size_t</span>, <span class="keyword">loff_t</span> *);</div><div class="line">    <span class="comment">/* 从文件中读数据。第一个参数为源文件，第二个参数为目的字符串，第三个参数指明欲读数据的总字节数，第四个参数指明从源文件的某个偏移量处开始读数据。由系统调用read()调用 */</span></div><div class="line"></div><div class="line">    <span class="keyword">ssize_t</span> (*write) (<span class="keyword">struct</span> file *, <span class="keyword">const</span> <span class="keyword">char</span> __user *, <span class="keyword">size_t</span>, <span class="keyword">loff_t</span> *);</div><div class="line">    <span class="comment">/* 往文件里写数据。第一个参数为目的文件，第二个参数源字符串，第三个参数指明欲写数据的总字节数，第四个参数指明从目的文件的某个偏移量出开始写数据。由系统调用write()调用 */</span></div><div class="line">    </div><div class="line">    <span class="keyword">ssize_t</span> (*aio_read) (<span class="keyword">struct</span> kiocb *, <span class="keyword">const</span> <span class="keyword">struct</span> iovec *, <span class="keyword">unsigned</span> <span class="keyword">long</span>, <span class="keyword">loff_t</span>);</div><div class="line">    <span class="keyword">ssize_t</span> (*aio_write) (<span class="keyword">struct</span> kiocb *, <span class="keyword">const</span> <span class="keyword">struct</span> iovec *, <span class="keyword">unsigned</span> <span class="keyword">long</span>, <span class="keyword">loff_t</span>);</div><div class="line">    <span class="comment">/* 启动一个异步I/O操作，引入它是为了支持io_submit()系统调用 */</span></div><div class="line">    </div><div class="line">    <span class="keyword">int</span> (*readdir) (<span class="keyword">struct</span> file *, <span class="keyword">void</span> *, <span class="keyword">filldir_t</span>);</div><div class="line">    <span class="function"><span class="keyword">unsigned</span> <span class="title">int</span> <span class="params">(*poll)</span> <span class="params">(<span class="keyword">struct</span> file *, <span class="keyword">struct</span> poll_table_struct *)</span></span>;</div><div class="line">    <span class="comment">/* 检查是否在一个文件上有操作发生，如果没有则睡眠，知道该文件上有操作发生 */</span></div><div class="line"></div><div class="line">    <span class="keyword">long</span> (*unlocked_ioctl) (<span class="keyword">struct</span> file *, <span class="keyword">unsigned</span> <span class="keyword">int</span>, <span class="keyword">unsigned</span> <span class="keyword">long</span>);</div><div class="line">    <span class="keyword">long</span> (*compat_ioctl) (<span class="keyword">struct</span> file *, <span class="keyword">unsigned</span> <span class="keyword">int</span>, <span class="keyword">unsigned</span> <span class="keyword">long</span>);</div><div class="line">    <span class="keyword">int</span> (*mmap) (<span class="keyword">struct</span> file *, <span class="keyword">struct</span> vm_area_struct *);</div><div class="line">    <span class="comment">/* 将指定文件映射到指定的地址空间上。由系统调用mmap()调用 */</span></div><div class="line"></div><div class="line">    <span class="keyword">int</span> (*open) (<span class="keyword">struct</span> inode *, <span class="keyword">struct</span> file *);</div><div class="line">    <span class="comment">/* 打开指定文件，并且将这个文件和指定的索引结点关联起来。由系统调用open()调用 */</span></div><div class="line"></div><div class="line">    <span class="keyword">int</span> (*flush) (<span class="keyword">struct</span> file *, <span class="keyword">fl_owner_t</span> id);</div><div class="line">    <span class="keyword">int</span> (*release) (<span class="keyword">struct</span> inode *, <span class="keyword">struct</span> file *);</div><div class="line">    <span class="comment">/* 释放以打开的文件，当打开文件的引用计数（f_count）为0时，该函数被调用 */</span></div><div class="line"></div><div class="line">    <span class="keyword">int</span> (*fsync) (<span class="keyword">struct</span> file *, <span class="keyword">loff_t</span>, <span class="keyword">loff_t</span>, <span class="keyword">int</span> datasync);</div><div class="line">    <span class="comment">/* 文件在缓冲的数据写回磁盘 */</span></div><div class="line"></div><div class="line">    <span class="keyword">int</span> (*aio_fsync) (<span class="keyword">struct</span> kiocb *, <span class="keyword">int</span> datasync);</div><div class="line">    <span class="keyword">int</span> (*fasync) (<span class="keyword">int</span>, <span class="keyword">struct</span> file *, <span class="keyword">int</span>);</div><div class="line">    <span class="keyword">int</span> (*lock) (<span class="keyword">struct</span> file *, <span class="keyword">int</span>, <span class="keyword">struct</span> file_lock *);</div><div class="line">    <span class="keyword">ssize_t</span> (*sendpage) (<span class="keyword">struct</span> file *, <span class="keyword">struct</span> page *, <span class="keyword">int</span>, <span class="keyword">size_t</span>, <span class="keyword">loff_t</span> *, <span class="keyword">int</span>);</div><div class="line">    <span class="function"><span class="keyword">unsigned</span> <span class="title">long</span> <span class="params">(*get_unmapped_area)</span><span class="params">(<span class="keyword">struct</span> file *, <span class="keyword">unsigned</span> <span class="keyword">long</span>, <span class="keyword">unsigned</span> <span class="keyword">long</span>, <span class="keyword">unsigned</span> <span class="keyword">long</span>, <span class="keyword">unsigned</span> <span class="keyword">long</span>)</span></span>;</div><div class="line">    <span class="keyword">int</span> (*check_flags)(<span class="keyword">int</span>);</div><div class="line">    <span class="keyword">int</span> (*flock) (<span class="keyword">struct</span> file *, <span class="keyword">int</span>, <span class="keyword">struct</span> file_lock *);</div><div class="line">    <span class="keyword">ssize_t</span> (*splice_write)(<span class="keyword">struct</span> pipe_inode_info *, <span class="keyword">struct</span> file *, <span class="keyword">loff_t</span> *, <span class="keyword">size_t</span>, <span class="keyword">unsigned</span> <span class="keyword">int</span>);</div><div class="line">    <span class="keyword">ssize_t</span> (*splice_read)(<span class="keyword">struct</span> file *, <span class="keyword">loff_t</span> *, <span class="keyword">struct</span> pipe_inode_info *, <span class="keyword">size_t</span>, <span class="keyword">unsigned</span> <span class="keyword">int</span>);</div><div class="line">    <span class="keyword">int</span> (*setlease)(<span class="keyword">struct</span> file *, <span class="keyword">long</span>, <span class="keyword">struct</span> file_lock **);</div><div class="line">    <span class="keyword">long</span> (*fallocate)(<span class="keyword">struct</span> file *file, <span class="keyword">int</span> mode, <span class="keyword">loff_t</span> offset, <span class="keyword">loff_t</span> len);</div><div class="line">    <span class="keyword">int</span> (*show_fdinfo)(<span class="keyword">struct</span> seq_file *m, <span class="keyword">struct</span> file *f);</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<h2 id="Dentry"><a href="#Dentry" class="headerlink" title="Dentry"></a>Dentry</h2><p>VFS把每一个目录看作由若干个目录和文件组成的一个普通文件。</p>
+<p><strong><em> 本来inode中应该包括“目录节点”的名称，但由于硬链接的存在，导致一个物理文件可能有多个文件名，因此把和“目录节点”名称相关的部分从 inode 中分开，放在一个专门的 dentry 结构（目录项）中 </em></strong><br>描述一个文件和一个名字的对应关系，或者说dentry就是一个“文件名”</p>
+<p><img src="/images/vfs/dentry_1.jpg" alt="dentry_1.jpg"></p>
+<ul>
+<li>在内存中, 每个文件都至少有一个dentry(目录项)和inode(索引节点)结构</li>
+<li>dentry记录着文件名，上级目录等信息，正是它形成了我们所看到的树状结构</li>
+<li>有关该文件的组织和管理的信息主要存放inode里面，它记录着文件在存储介质上的位置与分布</li>
+</ul>
+<p><img src="/images/vfs/dentry_2.png" alt="dentry_2.png"></p>
+<p><code>include/linux/fs.h</code></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> dentry &#123;</div><div class="line">    <span class="comment">/* RCU lookup touched fields */</span></div><div class="line">    <span class="keyword">unsigned</span> <span class="keyword">int</span> d_flags;       <span class="comment">/* protected by d_lock */</span></div><div class="line">    <span class="keyword">seqcount_t</span> d_seq;       <span class="comment">/* per dentry seqlock */</span></div><div class="line">    <span class="keyword">struct</span> hlist_bl_node d_hash;    <span class="comment">/* lookup hash list */</span></div><div class="line">    <span class="keyword">struct</span> dentry *d_parent;    <span class="comment">/* parent directory */</span></div><div class="line">    <span class="keyword">struct</span> qstr d_name;</div><div class="line">    <span class="keyword">struct</span> inode *d_inode;      <span class="comment">/* Where the name belongs to - NULL is</span></div><div class="line">                     * negative */</div><div class="line">    <span class="keyword">unsigned</span> <span class="keyword">char</span> d_iname[DNAME_INLINE_LEN];    <span class="comment">/* small names */</span></div><div class="line">                  </div><div class="line">    <span class="comment">/* Ref lookup also touches following */</span></div><div class="line">    <span class="keyword">unsigned</span> <span class="keyword">int</span> d_count;       <span class="comment">/* protected by d_lock */</span></div><div class="line">                  </div><div class="line">    <span class="keyword">spinlock_t</span> d_lock;      <span class="comment">/* per dentry lock */</span></div><div class="line">    <span class="keyword">const</span> <span class="keyword">struct</span> dentry_operations *d_op;</div><div class="line">    <span class="keyword">struct</span> super_block *d_sb;   <span class="comment">/* The root of the dentry tree */</span></div><div class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> d_time;       <span class="comment">/* used by d_revalidate */</span></div><div class="line">    <span class="keyword">void</span> *d_fsdata;         <span class="comment">/* fs-specific data */</span></div><div class="line"></div><div class="line">    <span class="keyword">struct</span> list_head d_lru;     <span class="comment">/* LRU list */</span></div><div class="line">    <span class="keyword">struct</span> list_head d_child;   <span class="comment">/* child of parent list */</span></div><div class="line">    <span class="comment">/* 如果当前目录项是一个目录，那么该目录项通过这个字段加入到父目录的d_subdirs链表当中。这个字段中的next和prev指针分别指向父目录中的另外两个子目录 */</span></div><div class="line">    <span class="keyword">struct</span> list_head d_subdirs; <span class="comment">/* our children */</span></div><div class="line">    <span class="comment">/* 如果当前目录项是一个目录，那么该目录下所有的子目录（一级子目录）形成一个链表。该字段是这个链表的表头 */</span></div><div class="line">    <span class="comment">/*</span></div><div class="line">     * d_alias and d_rcu can share memory</div><div class="line">     */</div><div class="line">    <span class="keyword">union</span> &#123;</div><div class="line">        <span class="keyword">struct</span> hlist_node d_alias;  <span class="comment">/* inode alias list */</span></div><div class="line">        <span class="comment">/* 索引节点中的i_dentry指向了它目录项，目录项中的d_alias，d_inode又指会了索引节点对象</span></div><div class="line">        一个inode可能对应多个目录项，所有的目录项形成一个链表。inode结构中的i_dentry即为这个链表的头结点。当前目录项以这个字段处于i_dentry链表中。该字段中的prev和next指针分别指向与该目录项同inode的其他两个（如果有的话）目录项 */</div><div class="line">        <span class="keyword">struct</span> rcu_head d_rcu;</div><div class="line">    &#125; d_u;</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<h3 id="dentry的四种状态"><a href="#dentry的四种状态" class="headerlink" title="dentry的四种状态"></a>dentry的四种状态</h3><ul>
+<li>空闲状态（Free）<br>  该状态的目录对象不包括有效的信息，没有被vfs使用。</li>
+<li>未使用状态（unused）<br>  该状态的目录对象还没有被内核使用。引用计数器<code>d_count</code>为0，<code>d_inode</code>字段仍然指向关联的索引节点，目录对象包含有效的信息。为了在必要时回收内存，它的内容可能被丢弃。</li>
+<li>正在使用状态（in use）<br>  该状态的目录对象正在被内核使用。引用计数器<code>d_count</code>大于0，<code>d_inode</code>字段指向关联的索引节点，目录对象包含有效的信息，不能被丢弃。</li>
+<li>负状态（negative）<br>  与目录对象关联的索引节点不存在，相应的磁盘索引节点已被删除。<code>d_inode</code>被置为NULL，该对象仍被保存在目录项高速缓存中，以便同一文件目录名的查找能够快速完成。</li>
+</ul>
+<h3 id="dentry-oprations"><a href="#dentry-oprations" class="headerlink" title="dentry_oprations"></a>dentry_oprations</h3><p><code>include/linux/dcache.h</code></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> dentry_operations &#123;</div><div class="line">    <span class="keyword">int</span> (*d_revalidate)(<span class="keyword">struct</span> dentry *, <span class="keyword">unsigned</span> <span class="keyword">int</span>);</div><div class="line">    <span class="comment">/* 该函数判断目录对象是否有效。VFS准备从dcache中使用一个目录项时，会调用该函数 */</span></div><div class="line"></div><div class="line">    <span class="keyword">int</span> (*d_weak_revalidate)(<span class="keyword">struct</span> dentry *, <span class="keyword">unsigned</span> <span class="keyword">int</span>);</div><div class="line">    <span class="keyword">int</span> (*d_hash)(<span class="keyword">const</span> <span class="keyword">struct</span> dentry *, <span class="keyword">const</span> <span class="keyword">struct</span> inode *, <span class="keyword">struct</span> qstr *);</div><div class="line">    <span class="comment">/* 该目录生成散列值，当目录项要加入到散列表时，VFS要调用此函数 */</span></div><div class="line"></div><div class="line">    <span class="keyword">int</span> (*d_compare)(<span class="keyword">const</span> <span class="keyword">struct</span> dentry *, <span class="keyword">const</span> <span class="keyword">struct</span> inode *, <span class="keyword">const</span> <span class="keyword">struct</span> dentry *, <span class="keyword">const</span> <span class="keyword">struct</span> inode *, <span class="keyword">unsigned</span> <span class="keyword">int</span>, <span class="keyword">const</span> <span class="keyword">char</span> *, <span class="keyword">const</span> <span class="keyword">struct</span> qstr *);</div><div class="line">    <span class="keyword">int</span> (*d_delete)(<span class="keyword">const</span> <span class="keyword">struct</span> dentry *);</div><div class="line">    <span class="comment">/* 当d_count=0时，VFS调用次函数。使用该函数要加dcache_lock锁 */</span></div><div class="line"></div><div class="line">    <span class="keyword">void</span> (*d_release)(<span class="keyword">struct</span> dentry *);</div><div class="line">    <span class="comment">/* 当该目录对象将要被释放时，VFS调用该函数 */</span></div><div class="line"></div><div class="line">    <span class="keyword">void</span> (*d_prune)(<span class="keyword">struct</span> dentry *);</div><div class="line"></div><div class="line">    <span class="keyword">void</span> (*d_iput)(<span class="keyword">struct</span> dentry *, <span class="keyword">struct</span> inode *);</div><div class="line">    <span class="comment">/* 当一个目录项丢失了其索引节点时，VFS就掉用该函数 */</span></div><div class="line"></div><div class="line">    <span class="keyword">char</span> *(*d_dname)(<span class="keyword">struct</span> dentry *, <span class="keyword">char</span> *, <span class="keyword">int</span>);</div><div class="line">    <span class="keyword">struct</span> vfsmount *(*d_automount)(<span class="keyword">struct</span> path *);</div><div class="line">    <span class="keyword">int</span> (*d_manage)(<span class="keyword">struct</span> dentry *, <span class="keyword">bool</span>);</div><div class="line">&#125; ____cacheline_aligned;</div></pre></td></tr></table></figure>
+<h3 id="Dentry定位文件"><a href="#Dentry定位文件" class="headerlink" title="Dentry定位文件"></a>Dentry定位文件</h3><p>首先，通过dir对应的dentry0找到inode0节点，有了inode节点就可以读取目录中的信息。其中包含了该目录包含的下一级目录与文件文件列表，包括name与inode号。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$  ls -i</div><div class="line">975248 subdir0  975247 subdir1   975251 file0</div></pre></td></tr></table></figure>
+<p>然后，根据通过根据subdir0对应的inode号重建inode2，并通过文件数据（目录也是文件）与inode2重建subdir0的dentry节点：dentry1。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$  ls -i</div><div class="line">975311 file1 975312 file2</div></pre></td></tr></table></figure>
+<p>接着，根据file1对应的inode号重建inode4，并通过文件数据与inode4重建file1的dentry节点。最后，就可以通过inode4节点访问文件了。</p>
+<p><img src="/images/vfs/dentry_3.png" alt="dentry_3.png"></p>
+<h3 id="Dentry-Cache"><a href="#Dentry-Cache" class="headerlink" title="Dentry Cache"></a>Dentry Cache</h3><p>由于从硬盘读入一个目录项并构造相应的目录项对象需要花费大量的时间，也为了最大限度提高目处理这些录项对象的效率，VFS采用了dentry cache的设计。当有用户用ls命令查看某一个目录或用open命令打开一个文件时，VFS会为这里用的每个目录项与文件建立dentry项与inode，即“按需创建”。然后维护一个LRU（Least Recently Used）列表，当Linux认为VFS占用太多资源时，VFS会释放掉长时间没有被使用的dentry项与inode项。</p>
+<p>这里的建立于释放是从内存占用的角度看。从Linux角度看，dentry与inode是VFS中固有的东西。所不同的只是VFS是否把dentry与inode读到了内存中。对于Ext2/3文件系统，构建dentry与inode的过程非常简单，但对于其他文件系统，则会慢得多。</p>
+<h2 id="Process-amp-File"><a href="#Process-amp-File" class="headerlink" title="Process &amp; File"></a>Process &amp; File</h2><p><img src="/images/vfs/file_1.png" alt="file_1.png"></p>
+<p>task_struct (<code>include/linux/sched.h</code>)<br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> task_struct &#123;</div><div class="line">    ...</div><div class="line"><span class="comment">/* CPU-specific state of this task */</span></div><div class="line">    <span class="keyword">struct</span> thread_struct thread;</div><div class="line"><span class="comment">/* filesystem information */</span></div><div class="line">    <span class="keyword">struct</span> fs_struct *fs;</div><div class="line"><span class="comment">/* open file information */</span></div><div class="line">    <span class="keyword">struct</span> files_struct *files;</div><div class="line"><span class="comment">/* namespaces */</span></div><div class="line">    <span class="keyword">struct</span> nsproxy *nsproxy;</div><div class="line">    ...</div><div class="line">&#125;;</div></pre></td></tr></table></figure></p>
+<p>进程控制块<code>task_struct</code>(<code>include/linux/sched.h</code>)中有两个变量与文件有关：<code>fs</code>(<code>struct fs_struct</code>)与<code>files</code>(<code>struct files_struct</code>)。</p>
+<p>fs_struct (<code>include/linux/fs_struct.h</code>)<br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> fs_struct &#123;</div><div class="line">    <span class="keyword">int</span> users;</div><div class="line">    <span class="keyword">spinlock_t</span> lock;</div><div class="line">    <span class="keyword">seqcount_t</span> seq;</div><div class="line">    <span class="keyword">int</span> umask;</div><div class="line">    <span class="keyword">int</span> in_exec;</div><div class="line">    <span class="keyword">struct</span> path root, pwd;</div><div class="line">&#125;;</div></pre></td></tr></table></figure></p>
+<p>path (<code>include/liinux/path.h</code>)<br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> path &#123;</div><div class="line">     <span class="keyword">struct</span> vfsmount *mnt;</div><div class="line">     <span class="keyword">struct</span> dentry *dentry;</div><div class="line">&#125;;</div></pre></td></tr></table></figure></p>
+<p><code>fs</code>中存储着<code>root</code>与<code>pwd</code>两个指向<code>dentry</code>项的指针。用户定路径时，绝对路径会通过<code>root</code>进行定位；相对路径会通过<code>pwd</code>进行定位。进程的<code>root</code>不一定是文件系统的根目录。如ftp进程的根目录不是文件系统的根目录，这样才能保证用户只能访问ftp目录下的内容。<br><code>files</code>是一个file object列表，其中每一个节点对应着一个被打开了的文件。</p>
+<p>files_struct (<code>include/linux/fdtable.h</code>)<br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> files_struct &#123;</div><div class="line">  <span class="comment">/*</span></div><div class="line">   * read mostly part</div><div class="line">   */</div><div class="line">    <span class="keyword">atomic_t</span> count;</div><div class="line">    <span class="keyword">struct</span> fdtable __rcu *fdt;</div><div class="line">    <span class="keyword">struct</span> fdtable fdtab;</div><div class="line">  <span class="comment">/*</span></div><div class="line">   * written part on a separate cache line in SMP</div><div class="line">   */</div><div class="line">    <span class="keyword">spinlock_t</span> file_lock ____cacheline_aligned_in_smp;</div><div class="line">    <span class="keyword">int</span> next_fd;</div><div class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> close_on_exec_init[<span class="number">1</span>];</div><div class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> open_fds_init[<span class="number">1</span>];</div><div class="line">    <span class="keyword">struct</span> file __rcu * fd_array[NR_OPEN_DEFAULT];</div><div class="line">&#125;;</div></pre></td></tr></table></figure></p>
+<p>当进程定位到文件时，会构造一个file object，并通过<code>f_inode</code>关联到<code>inode</code>节点。文件关闭时（close），进程会释放对应对应file object。</p>
+<p>fdtable (<code>include/linux/fdtable.h</code>)<br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> fdtable &#123;</div><div class="line">    <span class="keyword">unsigned</span> <span class="keyword">int</span> max_fds;</div><div class="line">    <span class="keyword">struct</span> file __rcu **fd;      <span class="comment">/* current fd array */</span></div><div class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> *close_on_exec;</div><div class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> *open_fds;</div><div class="line">    <span class="keyword">struct</span> rcu_head rcu;</div><div class="line">&#125;;</div></pre></td></tr></table></figure></p>
+<p><img src="/images/vfs/file_2.jpg" alt="file_2.jpg"></p>
+<p>fd数组第一个元素[0]是进程的标准输入文件；第二个元素[1]是进程的标准输出文件；第三个元素[2]是进程的标准错误文件。</p>
+<h1 id="文件系统类型"><a href="#文件系统类型" class="headerlink" title="文件系统类型"></a>文件系统类型</h1><h2 id="特殊文件系统"><a href="#特殊文件系统" class="headerlink" title="特殊文件系统"></a>特殊文件系统</h2><table>
+<thead>
+<tr>
+<th style="text-align:left">文件系统</th>
+<th style="text-align:left">安装点</th>
+<th style="text-align:left">说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">bdev</td>
+<td style="text-align:left">无</td>
+<td style="text-align:left">块设备</td>
+</tr>
+<tr>
+<td style="text-align:left">binfmt_misc</td>
+<td style="text-align:left">任意</td>
+<td style="text-align:left">其他可执行格式</td>
+</tr>
+<tr>
+<td style="text-align:left">devpts</td>
+<td style="text-align:left">/dev/pts</td>
+<td style="text-align:left">伪终端支持</td>
+</tr>
+<tr>
+<td style="text-align:left">eventpollfs</td>
+<td style="text-align:left">无</td>
+<td style="text-align:left">由事件轮询机制使用</td>
+</tr>
+<tr>
+<td style="text-align:left">futexfs</td>
+<td style="text-align:left">无</td>
+<td style="text-align:left">由futex（快速用户空间加锁）机制使用</td>
+</tr>
+<tr>
+<td style="text-align:left">pipefs</td>
+<td style="text-align:left">无</td>
+<td style="text-align:left">管道</td>
+</tr>
+<tr>
+<td style="text-align:left">proc</td>
+<td style="text-align:left">/proc</td>
+<td style="text-align:left">对内核数据结构的常规访问点</td>
+</tr>
+<tr>
+<td style="text-align:left">rootfs</td>
+<td style="text-align:left">无</td>
+<td style="text-align:left">为启动阶段提供一个空的根目录</td>
+</tr>
+<tr>
+<td style="text-align:left">shm</td>
+<td style="text-align:left">无</td>
+<td style="text-align:left">IPC共享线性区</td>
+</tr>
+<tr>
+<td style="text-align:left">mqueue</td>
+<td style="text-align:left">任意</td>
+<td style="text-align:left">实现POSIX消息队列时使用</td>
+</tr>
+<tr>
+<td style="text-align:left">sockfs</td>
+<td style="text-align:left">无</td>
+<td style="text-align:left">套接字</td>
+</tr>
+<tr>
+<td style="text-align:left">sysfs</td>
+<td style="text-align:left">/sys</td>
+<td style="text-align:left">对系统数据的常规访问点</td>
+</tr>
+<tr>
+<td style="text-align:left">tmpfs</td>
+<td style="text-align:left">任意</td>
+<td style="text-align:left">临时文件（若不被交换出去，则常驻内存中）</td>
+</tr>
+<tr>
+<td style="text-align:left">usbfs</td>
+<td style="text-align:left">/proc/bus/usb</td>
+<td style="text-align:left">USB设备</td>
+</tr>
+</tbody>
+</table>
+<p>内核给每个安装的特殊文件系统分配一个虚拟的块设备，让其主设备号为0，次设备号有任意值（每个特殊的文件系统有不同的值）</p>
+<h2 id="文件系统类型注册"><a href="#文件系统类型注册" class="headerlink" title="文件系统类型注册"></a>文件系统类型注册</h2><p>文件系统的源码要么包含在内核映像中，要么作为一个模块被动态装入。每个注册的文件系统都用一个类型为<code>file_system_type</code>的对象来表示。<br>file_system_type (<code>include/linux/fs.h</code>)<br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> file_system_type &#123;</div><div class="line">    <span class="keyword">const</span> <span class="keyword">char</span> *name;       <span class="comment">/* 文件系统名称 */</span></div><div class="line">    <span class="keyword">int</span> fs_flags;           <span class="comment">/* 文件系统类型标志 */</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> FS_REQUIRES_DEV     1   <span class="comment">/* 文件系统必须位于物理磁盘设备上 */</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> FS_BINARY_MOUNTDATA 2   <span class="comment">/* 文件系统使用的二进制安装数据 */</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> FS_HAS_SUBTYPE      4</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> FS_USERNS_MOUNT     8   <span class="comment">/* Can be mounted by userns root */</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> FS_USERNS_DEV_MOUNT 16 <span class="comment">/* A userns mount does not imply MNT_NODEV */</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> FS_RENAME_DOES_D_MOVE   32768   <span class="comment">/* FS will handle d_move() during rename() internally. */</span></span></div><div class="line">    <span class="keyword">struct</span> dentry *(*mount) (<span class="keyword">struct</span> file_system_type *, <span class="keyword">int</span>, <span class="keyword">const</span> <span class="keyword">char</span> *, <span class="keyword">void</span> *);</div><div class="line">    <span class="keyword">void</span> (*kill_sb) (<span class="keyword">struct</span> super_block *);     <span class="comment">/* 删除超级块的方法 */</span></div><div class="line">    <span class="keyword">struct</span> <span class="keyword">module</span> *owner;                       <span class="comment">/* 指向实现文件系统的模块指针 */</span></div><div class="line">    <span class="keyword">struct</span> file_system_type * next;             <span class="comment">/* 指向文件系统类型链表下一个元素的指针 */</span></div><div class="line">    <span class="keyword">struct</span> hlist_head fs_supers;                <span class="comment">/* 具有相同文件系统类型的超级块对象链表的头*/</span></div><div class="line"></div><div class="line">    <span class="keyword">struct</span> lock_class_key s_lock_key;</div><div class="line">    <span class="keyword">struct</span> lock_class_key s_umount_key;</div><div class="line">    <span class="keyword">struct</span> lock_class_key s_vfs_rename_key;</div><div class="line">    <span class="keyword">struct</span> lock_class_key s_writers_key[SB_FREEZE_LEVELS];</div><div class="line"></div><div class="line">    <span class="keyword">struct</span> lock_class_key i_lock_key;</div><div class="line">    <span class="keyword">struct</span> lock_class_key i_mutex_key;</div><div class="line">    <span class="keyword">struct</span> lock_class_key i_mutex_dir_key;</div><div class="line">&#125;;</div></pre></td></tr></table></figure></p>
+<p>所有文件系统类型的对象都插入道一个单向链表中，由变量<code>file_systems</code>指向链表的第一个元素，<code>file_systems-&gt;next</code>指向链表的下一个元素。</p>
+<p><code>int register_filesystem(struct file_system_type * fs)</code>[fs/filesystems.c]<br>注册一个新的文件系统，传入要注册文件系统的结构体，在<code>file_systems</code>列表中查找受否与传入<code>fs-&gt;name</code>同名的文件系统，如果存在则返回找到的fs，若不存在将传入文件系统<code>fs</code>加入<code>file_systems</code>列表</p>
+<p>对比一下<code>ramfs_fs_type</code>和<code>root_fs_type</code><br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">static</span> <span class="keyword">struct</span> file_system_type ramfs_fs_type = &#123;</div><div class="line">    .name       = <span class="string">"ramfs"</span>,</div><div class="line">    .mount      = ramfs_mount,</div><div class="line">    .kill_sb    = ramfs_kill_sb,</div><div class="line">    .fs_flags   = FS_USERNS_MOUNT,</div><div class="line">&#125;;</div><div class="line"><span class="keyword">static</span> <span class="keyword">struct</span> file_system_type rootfs_fs_type = &#123;</div><div class="line">    .name       = <span class="string">"rootfs"</span>,</div><div class="line">    .mount      = rootfs_mount,</div><div class="line">    .kill_sb    = kill_litter_super,</div><div class="line">&#125;;</div></pre></td></tr></table></figure></p>
+<p>发现<code>fs_flags = FS_USERNS_MOUNT</code>，这个flag似乎想告诉我们，ramfs是挂载到用户命名空间的，言外之意rootfs不是挂载到用户空间的，那便是内核空间喽。</p>
+<h2 id="文件系统处理"><a href="#文件系统处理" class="headerlink" title="文件系统处理"></a>文件系统处理</h2><ul>
+<li>每个文件系统都有自己的根目录</li>
+<li>已安装文件系统的根目录隐藏了父文件系统的安装点目录原来的内容</li>
+</ul>
+<h2 id="命名空间"><a href="#命名空间" class="headerlink" title="命名空间"></a>命名空间</h2><p>通常进程共享一个命名空间，位于系统的根文件系统且被init进程使用的已安装文件系统树。如果<code>clone()</code>系统调用以<code>CLONE_NEWNS</code>标志创建一个新进程，那么新进程将获取一个新的命名空间，新进程再创建的新新进程将继承新命名空间。</p>
+<ul>
+<li>fork<br>  fork创造的子进程是父进程的完整副本，复制了父亲进程的资源，包括内存的内容task_struct内容</li>
+<li>vfork<br>  vfork创建的子进程与父进程共享数据段,而且由vfork()创建的子进程将先于父进程运行</li>
+<li>clone<br>  有选择性的继承父进程的资源，可以选择像vfork一样和父进程共享一个虚存空间，可以不和父进程共享，甚至可以选择创造出来的进程和父进程不再是父子关系，而是兄弟关系。灵活性更强。</li>
+</ul>
+<h1 id="KeyPoint"><a href="#KeyPoint" class="headerlink" title="KeyPoint"></a>KeyPoint</h1><h2 id="启动流程"><a href="#启动流程" class="headerlink" title="启动流程"></a>启动流程</h2><ol>
+<li>start_kernel[init/main.c]</li>
+<li>vfs_caches_init(totalram_pages)[fs/dcache.c]</li>
+<li>dcache_init()[fs/dcache.c]<br> 初始化<code>dentry_cache</code>和<code>dentry_hashtable</code></li>
+<li>inode_init()[fs/inode.c]<br> 初始化<code>inode_cachep</code>和<code>inode_hashtable</code></li>
+<li>files_init()[fs/file_table.c]<br> 初始化<code>file_cachep</code>、<code>files_stat.max_files</code></li>
+<li>mnt_init()[fs/namespace.c]<br> 初始化<code>mnt_cache</code>,<code>mount_hashtable</code>,<code>mountpoint_hashtable</code><ol>
+<li>sysfs_init()[fs/sysfs/mount.c]<br> 初始化<code>sysfs_dir_cachep</code><br> sysfs_inode_init()[s/sysfs/inode.c] -&gt; <code>bdi_init(&amp;sysfs_backing_dev_info)</code><br> <code>register_filesystem(&amp;sysfs_fs_type)</code><br> <code>sysfs_mnt = kern_mount(&amp;sysfs_fs_type)</code></li>
+<li>init_root()[fs/ramfs/inode.c]<br> <code>bdi_init(&amp;ramfs_backing_dev_info)</code><br> <code>register_filesystem(&amp;rootfs_fs_type)</code></li>
+<li>init_mount_tree()[fs/namespace.c]<br> 挂载rootfs到<code>/</code> <code>mnt = vfs_kern_mount(type, 0, &quot;rootfs&quot;, NULL)</code><br> 创建namespace <code>ns = create_mnt_ns(mnt)</code><br> 设置<code>init_task</code>(PID=0)命名空间 <code>init_task.nsproxy-&gt;mnt_ns = ns</code><br> 设置当前进程的<code>pwd</code>和<code>root</code> <code>set_fs_pwd(current-&gt;fs, &amp;root); set_fs_root(current-&gt;fs, &amp;root);</code></li>
+</ol>
+</li>
+<li>bdev_cache_init()[fs/block_dev.c]<br> 初始化<code>bdev_cachep</code><ol>
+<li>mount bdev</li>
+</ol>
+</li>
+<li>chrdev_init()[fs/char_dev.c]<br> 初始化<code>cdev_map</code></li>
+</ol>
+<h2 id="Mount文件系统"><a href="#Mount文件系统" class="headerlink" title="Mount文件系统"></a>Mount文件系统</h2><p><img src="/images/vfs/mount_1.png" alt="mount_1.png"></p>
+<p>mount时，linux先找到磁盘分区的super block，然后通过解析磁盘的inode table与file data，构建出自己的dentry列表与inode列表。需要注意的是，VFS实际上是按照Ext的方式进行构建的，所以两者非常相似（毕竟Ext是Linux的原生文件系统）。比如inode节点，Ext与VFS中都把文件管理结构称为inode，但实际上它们是不一样的。Ext的inode节点在磁盘上；VFS的inode节点在内存里。Ext-inode中的一些成员变量其实是没有用的，如引用计数等。保留它们的目的是为了与vfs-node保持一致。这样在用ext-inode节点构造vfs-inode节点时，就不需要一个一个赋值，只需一次内存拷贝即可。</p>
+<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a href="http://blog.csdn.net/gatieme/article/details/51484562" target="_blank" rel="external">Linux下0号进程的前世(init_task进程)今生(idle进程)—-Linux进程的管理与调度（五）</a></li>
+<li><a href="https://segmentfault.com/a/1190000009472553#articleHeader9" target="_blank" rel="external">vfs基础</a></li>
+<li><a href="http://blog.chinaunix.net/xmlrpc.php?r=blog/article&amp;uid=28541347&amp;id=4138031" target="_blank" rel="external">Linux文件系统（三）——进程与VFS的关系</a></li>
+<li><a href="http://blog.chinaunix.net/xmlrpc.php?r=blog/article&amp;uid=28541347&amp;id=4138028" target="_blank" rel="external">linux文件系统（二）——VFS四个主要对象的实现</a></li>
+<li><a href="http://blog.csdn.net/gatieme/article/details/51417488" target="_blank" rel="external">Linux中fork，vfork和clone详解（区别与联系）</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/09/13/network/ssl-tls-layer/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1311,7 +1785,7 @@
 <p>Apache Zeppelin是一个让交互式数据分析变得可行的基于网页的开源框架。Zeppelin提供了数据分析、数据可视化等功能。Zeppelin 是一个提供交互数据分析且基于Web的笔记本。方便你做出可数据驱动的、可交互且可协作的精美文档，并且支持多种语言，包括 Scala(使用 Apache Spark)、Python(Apache Spark)、SparkSQL、 Hive、 Markdown、Shell等等。</p>
 <h1 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h1><p>采用docker环境部署zeppelin</p>
 <p>OS：CentOS 7.3.1611<br>JAVA：OpenJDK 1.8<br>zeppelin: 0.7.2</p>
-<p>dockerfile:<br><figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">FROM</span> centos:<span class="number">7.3</span>.<span class="number">1611</span></div><div class="line"></div><div class="line"><span class="keyword">MAINTAINER</span> zhoub</div><div class="line"></div><div class="line"><span class="keyword">RUN</span> yum update -y</div><div class="line"><span class="keyword">RUN</span> yum install -y java-1.8.0-openjdk.x86_64</div><div class="line"><span class="keyword">RUN</span> echo "JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.141-1.b16.el7_3.x86_64/jre" | tee -a /etc/bashrc</div><div class="line"><span class="keyword">RUN</span> echo "export JAVA_HOME" | tee -a /etc/bashrc</div></pre></td></tr></table></figure></p>
+<p>dockerfile:<br><figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">FROM</span> centos:<span class="number">7.3</span>.<span class="number">1611</span></div><div class="line"></div><div class="line"><span class="keyword">MAINTAINER</span> zhoub</div><div class="line"></div><div class="line"><span class="keyword">RUN</span><span class="bash"> yum update -y</span></div><div class="line"><span class="keyword">RUN</span><span class="bash"> yum install -y java-1.8.0-openjdk.x86_64</span></div><div class="line"><span class="keyword">RUN</span><span class="bash"> <span class="built_in">echo</span> <span class="string">"JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.141-1.b16.el7_3.x86_64/jre"</span> | tee <span class="_">-a</span> /etc/bashrc</span></div><div class="line"><span class="keyword">RUN</span><span class="bash"> <span class="built_in">echo</span> <span class="string">"export JAVA_HOME"</span> | tee <span class="_">-a</span> /etc/bashrc</span></div></pre></td></tr></table></figure></p>
 <h1 id="下载安装"><a href="#下载安装" class="headerlink" title="下载安装"></a>下载安装</h1><p>从<a href="http://zeppelin.apache.org/download.html" target="_blank" rel="external">zeppelin官网</a>或github上下载，推荐下载最新版。解压tar包，然后在准备好的环境中运行<code>zeppelin/bin/zeppelin-daemon.sh start</code></p>
 <p>docker:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">#!/bin/sh</div><div class="line"></div><div class="line">cmd=&quot;/root/run/entry.sh&quot;</div><div class="line">image=&quot;centos7.3:java1.8&quot;</div><div class="line">net=&quot;hadoop_net&quot;</div><div class="line"></div><div class="line">docker run -d --rm -w /root/ -v $&#123;PWD&#125;/run:/root/run -v $&#123;PWD&#125;/zeppelin:/root/zeppelin -v $&#123;PWD&#125;/hbase:/root/hbase -p 8080 --network $&#123;net&#125; -h zeppelin --name zeppelin $&#123;image&#125; $&#123;cmd&#125;</div></pre></td></tr></table></figure></p>
 <p>entry.sh:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">#!/bin/sh</div><div class="line"></div><div class="line">/root/zeppelin/bin/zeppelin-daemon.sh start</div><div class="line"></div><div class="line">while true</div><div class="line">do</div><div class="line">    sleep 10s</div><div class="line">done</div></pre></td></tr></table></figure></p>
@@ -1885,175 +2359,11 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/07/12/storage/cosbench-usage/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/07/12/storage/cosbench-usage/" itemprop="url">COSBench搭建及使用</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-07-12T10:31:31+08:00">
-                2017-07-12
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/storage/" itemprop="url" rel="index">
-                    <span itemprop="name">storage</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p><img src="/images/cosbench/cosbench-usage.png" alt="cosbench-usage.png"></p>
-<p>COSBench是Intel团队基于java开发，对云存储的测试工具，全称是Cloud object Storage Bench。COSBench也分控制台和发起请求的driver，且driver可以分布式部署。可以支持swift、s3、Openstack等接口</p>
-<h1 id="获取"><a href="#获取" class="headerlink" title="获取"></a>获取</h1><p>从github上下载release版本（<code>https://github.com/intel-cloud/cosbench</code>）。解压后可以获取<code>COSBenchUserGuide.pdf</code>（只有英文版）和<code>workload</code>配置文件（<code>./conf/*.xml</code>）。</p>
-<h1 id="部署-amp-启动"><a href="#部署-amp-启动" class="headerlink" title="部署&amp;启动"></a>部署&amp;启动</h1><p>COSBench的运行依赖于java和curl这两个包，并且调用linux的nc来做数据分析，如果没有安装nc，请手动安装。<br>本人将COSBench部署到docker中，为的是方便以后运行，不要将有限的生命耗费到无限的折腾当中。</p>
-<p>docker镜像使用的是<code>centos:7.3.1611</code>，具体dockerfile如下：</p>
-<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">FROM</span> centos:<span class="number">7.3</span>.<span class="number">1611</span></div><div class="line"></div><div class="line"><span class="keyword">RUN</span><span class="bash"> yum update -y</span></div><div class="line"><span class="keyword">RUN</span><span class="bash"> yum install -y java-1.8.0-openjdk</span></div><div class="line"></div><div class="line"><span class="keyword">RUN</span><span class="bash"> yum clean all</span></div><div class="line"></div><div class="line"><span class="keyword">EXPOSE</span> <span class="number">19088</span> <span class="number">18088</span></div><div class="line"></div><div class="line"><span class="keyword">ADD</span><span class="bash"> ./cosbench.tar.gz /root/</span></div><div class="line"><span class="keyword">ADD</span><span class="bash"> ./entry.sh /root/</span></div><div class="line"></div><div class="line"><span class="keyword">ENTRYPOINT</span><span class="bash"> [<span class="string">"/root/entry.sh"</span>]</span></div></pre></td></tr></table></figure>
-<p><code>entry.sh</code>是容器的启动脚本，脚本中主要用于启动COSBench服务，具体实现如下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">#!/bin/sh</div><div class="line"></div><div class="line">./start-all.sh</div><div class="line"></div><div class="line">while true; do</div><div class="line">    sleep 10s</div><div class="line">done</div></pre></td></tr></table></figure>
-<p>完成docker镜像的生成后，使用<code>docker run -d -w /root/cosbench/ --rm -P s3test:performance</code>命令运行容器。然后通过<code>docker ps</code>查看可访问的端口。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">$ docker ps</div><div class="line">CONTAINER ID        IMAGE                COMMAND             CREATED             STATUS              PORTS                                                NAMES</div><div class="line">ed37db78178a        s3test:performance   &quot;/root/entry.sh&quot;    19 hours ago        Up 19 hours         0.0.0.0:32771-&gt;18088/tcp, 0.0.0.0:32770-&gt;19088/tcp   unruffled_mahavira</div></pre></td></tr></table></figure>
-<p>在浏览器中输入<code>http://x.x.x.x:32770/controller/index.html</code>访问COSBench首页。COSBench是以”master-slave”模式运行的，19088端口对应的是master端口，18088对应的是driver端口，任务的运行是有master下发给driver，然后由driver执行的（driver可配置多个）。</p>
-<p>关于<code>workload</code>配置文件的撰写请见<code>COSBenchUserGuide.pdf</code>，此处给出一个测试S3接口的例子<br><figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div></pre></td><td class="code"><pre><div class="line">&lt;?xml version="1.0" encoding="UTF-8" ?&gt;</div><div class="line"><span class="tag">&lt;<span class="name">workload</span> <span class="attr">name</span>=<span class="string">"S3Test"</span> <span class="attr">description</span>=<span class="string">"Performance"</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">storage</span> <span class="attr">type</span>=<span class="string">"s3"</span> <span class="attr">config</span>=<span class="string">"accesskey=Ltiakby8pAAbHMjpUr3L;secretkey=qMTe5ibLW49iFDEHNKqspdnJ8pwaawA9GYrBXUYc;endpoint=http://los-cn-north-2.lecloudapis.com"</span> /&gt;</span> </div><div class="line">    <span class="tag">&lt;<span class="name">workflow</span>&gt;</span></div><div class="line">    </div><div class="line">        <span class="tag">&lt;<span class="name">workstage</span> <span class="attr">name</span>=<span class="string">"init"</span>&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="name">work</span> <span class="attr">type</span>=<span class="string">"init"</span> <span class="attr">workers</span>=<span class="string">"1"</span> <span class="attr">config</span>=<span class="string">"cprefix=testp;containers=r(1,4)"</span> /&gt;</span> </div><div class="line">        <span class="tag">&lt;/<span class="name">workstage</span>&gt;</span></div><div class="line">        </div><div class="line">        <span class="tag">&lt;<span class="name">workstage</span> <span class="attr">name</span>=<span class="string">"prepare"</span>&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="name">work</span> <span class="attr">type</span>=<span class="string">"prepare"</span> <span class="attr">workers</span>=<span class="string">"1"</span> <span class="attr">config</span>=<span class="string">"cprefix=testp;containers=r(1,2);objects=r(1,800);sizes=c(4)MB"</span> /&gt;</span></div><div class="line">        <span class="tag">&lt;/<span class="name">workstage</span>&gt;</span></div><div class="line">        </div><div class="line">        <span class="tag">&lt;<span class="name">workstage</span> <span class="attr">name</span>=<span class="string">"sequential_RO_8W_4MB"</span>&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="name">work</span> <span class="attr">name</span>=<span class="string">"sequential_RO_8W_4MB"</span> <span class="attr">workers</span>=<span class="string">"8"</span> <span class="attr">totalOps</span>=<span class="string">"1600"</span>&gt;</span></div><div class="line">                <span class="tag">&lt;<span class="name">operation</span> <span class="attr">type</span>=<span class="string">"read"</span> <span class="attr">ratio</span>=<span class="string">"100"</span> <span class="attr">config</span>=<span class="string">"cprefix=testp;containers=c(1);objects=s(1,800);size=c(4)MB"</span> /&gt;</span> </div><div class="line">            <span class="tag">&lt;/<span class="name">work</span>&gt;</span></div><div class="line">        <span class="tag">&lt;/<span class="name">workstage</span>&gt;</span></div><div class="line">        </div><div class="line">        <span class="tag">&lt;<span class="name">workstage</span> <span class="attr">name</span>=<span class="string">"random_RO_8W_4MB"</span>&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="name">work</span> <span class="attr">name</span>=<span class="string">"random_RO_8W_4MB"</span> <span class="attr">workers</span>=<span class="string">"8"</span> <span class="attr">totalOps</span>=<span class="string">"1600"</span>&gt;</span></div><div class="line">                <span class="tag">&lt;<span class="name">operation</span> <span class="attr">type</span>=<span class="string">"read"</span> <span class="attr">ratio</span>=<span class="string">"100"</span> <span class="attr">config</span>=<span class="string">"cprefix=testp;containers=c(2);objects=u(1,800);size=c(4)MB"</span> /&gt;</span> </div><div class="line">            <span class="tag">&lt;/<span class="name">work</span>&gt;</span></div><div class="line">        <span class="tag">&lt;/<span class="name">workstage</span>&gt;</span></div><div class="line">        </div><div class="line">        <span class="tag">&lt;<span class="name">workstage</span> <span class="attr">name</span>=<span class="string">"sequential_WO_8W_4MB"</span>&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="name">work</span> <span class="attr">name</span>=<span class="string">"sequential_WO_8W_4MB"</span> <span class="attr">workers</span>=<span class="string">"8"</span> <span class="attr">totalOps</span>=<span class="string">"1600"</span>&gt;</span></div><div class="line">                <span class="tag">&lt;<span class="name">operation</span> <span class="attr">type</span>=<span class="string">"write"</span> <span class="attr">ratio</span>=<span class="string">"100"</span> <span class="attr">config</span>=<span class="string">"cprefix=testp;containers=c(3);objects=s(1,800);sizes=c(4)MB"</span> /&gt;</span> </div><div class="line">            <span class="tag">&lt;/<span class="name">work</span>&gt;</span></div><div class="line">        <span class="tag">&lt;/<span class="name">workstage</span>&gt;</span></div><div class="line">        </div><div class="line">        <span class="tag">&lt;<span class="name">workstage</span> <span class="attr">name</span>=<span class="string">"random_WO_8W_4MB"</span>&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="name">work</span> <span class="attr">name</span>=<span class="string">"random_WO_8W_4MB"</span> <span class="attr">workers</span>=<span class="string">"8"</span> <span class="attr">totalOps</span>=<span class="string">"1600"</span>&gt;</span></div><div class="line">                <span class="tag">&lt;<span class="name">operation</span> <span class="attr">type</span>=<span class="string">"write"</span> <span class="attr">ratio</span>=<span class="string">"100"</span> <span class="attr">config</span>=<span class="string">"cprefix=testp;containers=c(4);objects=u(1,800);sizes=c(4)MB"</span> /&gt;</span> </div><div class="line">            <span class="tag">&lt;/<span class="name">work</span>&gt;</span></div><div class="line">        <span class="tag">&lt;/<span class="name">workstage</span>&gt;</span></div><div class="line">        </div><div class="line">        <span class="tag">&lt;<span class="name">workstage</span> <span class="attr">name</span>=<span class="string">"cleanup"</span>&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="name">work</span> <span class="attr">type</span>=<span class="string">"cleanup"</span> <span class="attr">workers</span>=<span class="string">"1"</span> <span class="attr">config</span>=<span class="string">"cprefix=testp;containers=r(1,4);objects=r(1,800)"</span> /&gt;</span></div><div class="line">        <span class="tag">&lt;/<span class="name">workstage</span>&gt;</span></div><div class="line">        </div><div class="line">        <span class="tag">&lt;<span class="name">workstage</span> <span class="attr">name</span>=<span class="string">"dispose"</span>&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="name">work</span> <span class="attr">type</span>=<span class="string">"dispose"</span> <span class="attr">workers</span>=<span class="string">"1"</span> <span class="attr">config</span>=<span class="string">"cprefix=testp;containers=r(1,4)"</span> /&gt;</span></div><div class="line">        <span class="tag">&lt;/<span class="name">workstage</span>&gt;</span></div><div class="line">        </div><div class="line">        <span class="tag">&lt;<span class="name">workstage</span> <span class="attr">name</span>=<span class="string">"init"</span>&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="name">work</span> <span class="attr">type</span>=<span class="string">"init"</span> <span class="attr">workers</span>=<span class="string">"1"</span> <span class="attr">config</span>=<span class="string">"cprefix=testp;containers=r(1,4)"</span> /&gt;</span> </div><div class="line">        <span class="tag">&lt;/<span class="name">workstage</span>&gt;</span></div><div class="line">        </div><div class="line">        <span class="tag">&lt;<span class="name">workstage</span> <span class="attr">name</span>=<span class="string">"prepare"</span>&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="name">work</span> <span class="attr">type</span>=<span class="string">"prepare"</span> <span class="attr">workers</span>=<span class="string">"1"</span> <span class="attr">config</span>=<span class="string">"cprefix=testp;containers=r(1,2);objects=r(1,800);sizes=c(64)KB"</span> /&gt;</span></div><div class="line">        <span class="tag">&lt;/<span class="name">workstage</span>&gt;</span></div><div class="line">        </div><div class="line">        <span class="tag">&lt;<span class="name">workstage</span> <span class="attr">name</span>=<span class="string">"sequential_RO_32W_64KB"</span>&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="name">work</span> <span class="attr">name</span>=<span class="string">"sequential_RO_32W_64KB"</span> <span class="attr">workers</span>=<span class="string">"32"</span> <span class="attr">totalOps</span>=<span class="string">"1600"</span>&gt;</span></div><div class="line">                <span class="tag">&lt;<span class="name">operation</span> <span class="attr">type</span>=<span class="string">"read"</span> <span class="attr">ratio</span>=<span class="string">"100"</span> <span class="attr">config</span>=<span class="string">"cprefix=testp;containers=c(1);objects=s(1,800);size=c(64)KB"</span> /&gt;</span> </div><div class="line">            <span class="tag">&lt;/<span class="name">work</span>&gt;</span></div><div class="line">        <span class="tag">&lt;/<span class="name">workstage</span>&gt;</span></div><div class="line">        </div><div class="line">        <span class="tag">&lt;<span class="name">workstage</span> <span class="attr">name</span>=<span class="string">"random_RO_32W_64KB"</span>&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="name">work</span> <span class="attr">name</span>=<span class="string">"random_RO_32W_64KB"</span> <span class="attr">workers</span>=<span class="string">"32"</span> <span class="attr">totalOps</span>=<span class="string">"1600"</span>&gt;</span></div><div class="line">                <span class="tag">&lt;<span class="name">operation</span> <span class="attr">type</span>=<span class="string">"read"</span> <span class="attr">ratio</span>=<span class="string">"100"</span> <span class="attr">config</span>=<span class="string">"cprefix=testp;containers=c(2);objects=u(1,800);size=c(64)KB"</span> /&gt;</span> </div><div class="line">            <span class="tag">&lt;/<span class="name">work</span>&gt;</span></div><div class="line">        <span class="tag">&lt;/<span class="name">workstage</span>&gt;</span></div><div class="line">        </div><div class="line">        <span class="tag">&lt;<span class="name">workstage</span> <span class="attr">name</span>=<span class="string">"sequential_WO_32w_64KB"</span>&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="name">work</span> <span class="attr">name</span>=<span class="string">"sequential_WO_32w_64KB"</span> <span class="attr">workers</span>=<span class="string">"32"</span> <span class="attr">totalOps</span>=<span class="string">"1600"</span>&gt;</span></div><div class="line">                <span class="tag">&lt;<span class="name">operation</span> <span class="attr">type</span>=<span class="string">"write"</span> <span class="attr">ratio</span>=<span class="string">"100"</span> <span class="attr">config</span>=<span class="string">"cprefix=testp;containers=c(3);objects=s(1,800);sizes=c(64)KB"</span> /&gt;</span> </div><div class="line">            <span class="tag">&lt;/<span class="name">work</span>&gt;</span></div><div class="line">        <span class="tag">&lt;/<span class="name">workstage</span>&gt;</span></div><div class="line">        </div><div class="line">        <span class="tag">&lt;<span class="name">workstage</span> <span class="attr">name</span>=<span class="string">"random_WO_32W_64KB"</span>&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="name">work</span> <span class="attr">name</span>=<span class="string">"random_WO_32W_64KB"</span> <span class="attr">workers</span>=<span class="string">"32"</span> <span class="attr">totalOps</span>=<span class="string">"1600"</span>&gt;</span></div><div class="line">                <span class="tag">&lt;<span class="name">operation</span> <span class="attr">type</span>=<span class="string">"write"</span> <span class="attr">ratio</span>=<span class="string">"100"</span> <span class="attr">config</span>=<span class="string">"cprefix=testp;containers=c(4);objects=u(1,800);sizes=c(64)KB"</span> /&gt;</span> </div><div class="line">            <span class="tag">&lt;/<span class="name">work</span>&gt;</span></div><div class="line">        <span class="tag">&lt;/<span class="name">workstage</span>&gt;</span></div><div class="line">        </div><div class="line">        <span class="tag">&lt;<span class="name">workstage</span> <span class="attr">name</span>=<span class="string">"cleanup"</span>&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="name">work</span> <span class="attr">type</span>=<span class="string">"cleanup"</span> <span class="attr">workers</span>=<span class="string">"1"</span> <span class="attr">config</span>=<span class="string">"cprefix=testp;containers=r(1,4);objects=r(1,800)"</span> /&gt;</span></div><div class="line">        <span class="tag">&lt;/<span class="name">workstage</span>&gt;</span></div><div class="line">        </div><div class="line">        <span class="tag">&lt;<span class="name">workstage</span> <span class="attr">name</span>=<span class="string">"dispose"</span>&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="name">work</span> <span class="attr">type</span>=<span class="string">"dispose"</span> <span class="attr">workers</span>=<span class="string">"1"</span> <span class="attr">config</span>=<span class="string">"cprefix=testp;containers=r(1,4)"</span> /&gt;</span></div><div class="line">        <span class="tag">&lt;/<span class="name">workstage</span>&gt;</span></div><div class="line">    </div><div class="line">    <span class="tag">&lt;/<span class="name">workflow</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">workload</span>&gt;</span></div></pre></td></tr></table></figure></p>
-<h1 id="问题及解决"><a href="#问题及解决" class="headerlink" title="问题及解决"></a>问题及解决</h1><ol>
-<li>COSBench首页时间显示没有按东八区显示<br>  在<code>cosbench-start.sh</code>中找到<code>/usr/bin/nohup java</code>这一行，增加<code>-Duser.timezone=Asia/Shanghai</code>参数</li>
-<li><p>COSBench在测试过程中MD5校验失败问题<br>  在测试过程中GET操作失败，而且错误日志如下：</p>
-  <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div></pre></td><td class="code"><pre><div class="line">2017-07-11 07:26:42,297 [INFO] [Log4jLogManager] - will append log to file /root/cosbench/log/mission/MA308B012AE.log</div><div class="line">2017-07-11 07:26:42,574 [INFO] [NoneStorage] - performing GET at /testp2/myobjects38</div><div class="line">2017-07-11 07:26:42,575 [INFO] [NoneStorage] - performing GET at /testp2/myobjects43</div><div class="line">2017-07-11 07:26:42,575 [INFO] [NoneStorage] - performing GET at /testp1/myobjects43</div><div class="line">2017-07-11 07:26:42,575 [INFO] [NoneStorage] - performing GET at /testp2/myobjects31</div><div class="line">2017-07-11 07:26:42,575 [INFO] [NoneStorage] - performing GET at /testp1/myobjects7</div><div class="line">2017-07-11 07:26:42,575 [INFO] [NoneStorage] - performing GET at /testp2/myobjects26</div><div class="line">2017-07-11 07:26:42,574 [INFO] [NoneStorage] - performing GET at /testp1/myobjects34</div><div class="line">2017-07-11 07:26:42,574 [INFO] [NoneStorage] - performing GET at /testp2/myobjects25</div><div class="line">2017-07-11 07:26:42,574 [INFO] [NoneStorage] - performing GET at /testp2/myobjects45</div><div class="line">2017-07-11 07:26:42,574 [INFO] [NoneStorage] - performing GET at /testp1/myobjects7</div><div class="line">2017-07-11 07:26:42,574 [INFO] [NoneStorage] - performing GET at /testp2/myobjects43</div><div class="line">2017-07-11 07:26:42,576 [INFO] [NoneStorage] - performing GET at /testp2/myobjects16</div><div class="line">2017-07-11 07:26:42,576 [INFO] [NoneStorage] - performing GET at /testp2/myobjects23</div><div class="line">2017-07-11 07:26:42,576 [INFO] [NoneStorage] - performing GET at /testp1/myobjects15</div><div class="line">2017-07-11 07:26:42,576 [INFO] [NoneStorage] - performing GET at /testp1/myobjects36</div><div class="line">2017-07-11 07:26:42,576 [INFO] [NoneStorage] - performing GET at /testp2/myobjects34</div><div class="line">2017-07-11 07:26:42,576 [INFO] [NoneStorage] - performing GET at /testp1/myobjects34</div><div class="line">2017-07-11 07:26:42,576 [INFO] [NoneStorage] - performing GET at /testp2/myobjects27</div><div class="line">2017-07-11 07:26:42,575 [INFO] [NoneStorage] - performing GET at /testp2/myobjects49</div><div class="line">2017-07-11 07:26:42,575 [INFO] [NoneStorage] - performing GET at /testp1/myobjects27</div><div class="line">2017-07-11 07:26:42,575 [INFO] [NoneStorage] - performing GET at /testp2/myobjects24</div><div class="line">2017-07-11 07:26:42,575 [INFO] [NoneStorage] - performing GET at /testp1/myobjects35</div><div class="line">2017-07-11 07:26:42,575 [INFO] [NoneStorage] - performing GET at /testp2/myobjects2</div><div class="line">2017-07-11 07:26:42,575 [INFO] [NoneStorage] - performing GET at /testp2/myobjects47</div><div class="line">2017-07-11 07:26:42,575 [INFO] [NoneStorage] - performing GET at /testp1/myobjects39</div><div class="line">2017-07-11 07:26:42,575 [INFO] [NoneStorage] - performing GET at /testp1/myobjects50</div><div class="line">2017-07-11 07:26:42,575 [INFO] [NoneStorage] - performing GET at /testp1/myobjects8</div><div class="line">2017-07-11 07:26:42,575 [INFO] [NoneStorage] - performing GET at /testp2/myobjects21</div><div class="line">2017-07-11 07:26:42,575 [INFO] [NoneStorage] - performing GET at /testp2/myobjects24</div><div class="line">2017-07-11 07:26:42,575 [INFO] [NoneStorage] - performing GET at /testp2/myobjects15</div><div class="line">2017-07-11 07:26:42,575 [INFO] [NoneStorage] - performing GET at /testp1/myobjects4</div><div class="line">2017-07-11 07:26:42,575 [INFO] [NoneStorage] - performing GET at /testp2/myobjects1</div><div class="line">2017-07-11 07:26:45,476 [ERROR] [AbstractOperator] - worker 8 fail to perform operation testp1/myobjects7</div><div class="line">com.amazonaws.AmazonClientException: Unable to verify integrity of data download.  Client calculated content hash didn&apos;t match hash calculated by Amazon S3.  The data may be corrupt.</div><div class="line">   at com.amazonaws.services.s3.internal.DigestValidationInputStream.validateMD5Digest(DigestValidationInputStream.java:79)</div><div class="line">   at com.amazonaws.services.s3.internal.DigestValidationInputStream.read(DigestValidationInputStream.java:61)</div><div class="line">   at com.amazonaws.internal.SdkFilterInputStream.read(SdkFilterInputStream.java:72)</div><div class="line">   at com.amazonaws.services.s3.model.S3ObjectInputStream.read(S3ObjectInputStream.java:155)</div><div class="line">   at com.amazonaws.services.s3.model.S3ObjectInputStream.read(S3ObjectInputStream.java:147)</div><div class="line">   at com.intel.cosbench.driver.operator.Reader.copyLarge(Reader.java:120)</div><div class="line">   at com.intel.cosbench.driver.operator.Reader.doRead(Reader.java:92)</div><div class="line">   at com.intel.cosbench.driver.operator.Reader.operate(Reader.java:69)</div><div class="line">   at com.intel.cosbench.driver.operator.AbstractOperator.operate(AbstractOperator.java:76)</div><div class="line">   at com.intel.cosbench.driver.agent.WorkAgent.performOperation(WorkAgent.java:197)</div><div class="line">   at com.intel.cosbench.driver.agent.WorkAgent.doWork(WorkAgent.java:177)</div><div class="line">   at com.intel.cosbench.driver.agent.WorkAgent.execute(WorkAgent.java:134)</div><div class="line">   at com.intel.cosbench.driver.agent.AbstractAgent.call(AbstractAgent.java:44)</div><div class="line">   at com.intel.cosbench.driver.agent.AbstractAgent.call(AbstractAgent.java:1)</div><div class="line">   at java.util.concurrent.FutureTask.run(FutureTask.java:266)</div><div class="line">   at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142)</div><div class="line">   at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617)</div><div class="line">   at java.lang.Thread.run(Thread.java:748)</div><div class="line">2017-07-11 07:26:45,476 [INFO] [NoneStorage] - performing GET at /testp1/myobjects14</div><div class="line">2017-07-11 07:26:46,880 [INFO] [NoneStorage] - performing GET at /testp2/myobjects14</div><div class="line">2017-07-11 07:26:49,806 [INFO] [NoneStorage] - performing GET at /testp1/myobjects43</div><div class="line">2017-07-11 07:26:51,514 [INFO] [NoneStorage] - performing GET at /testp2/myobjects31</div><div class="line">2017-07-11 07:26:54,021 [INFO] [NoneStorage] - performing GET at /testp1/myobjects5</div></pre></td></tr></table></figure>
-<p>  你可以通过增加<code>-Dcom.amazonaws.services.s3.disableGetObjectMD5Validation=true</code>参数来关闭MD5校验，<a href="https://github.com/intel-cloud/cosbench/issues/346" target="_blank" rel="external">据说</a>此bug只在<code>0.4.3.c4</code>版本出现，我没验证过其它版本。</p>
-</li>
-</ol>
-<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a href="http://www.cnblogs.com/landhu/p/5843282.html" target="_blank" rel="external">使用COSBench工具对ceph s3接口进行压力测试</a></li>
-<li><a href="https://github.com/zhoubofsy/s3test" target="_blank" rel="external">s3test</a></li>
-</ul>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/page/2/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><a class="page-number" href="/page/2/">2</a><span class="page-number current">3</span><a class="page-number" href="/page/4/">4</a><span class="space">&hellip;</span><a class="page-number" href="/page/10/">10</a><a class="extend next" rel="next" href="/page/4/"><i class="fa fa-angle-right"></i></a>
+    <a class="extend prev" rel="prev" href="/page/2/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><a class="page-number" href="/page/2/">2</a><span class="page-number current">3</span><a class="page-number" href="/page/4/">4</a><span class="space">&hellip;</span><a class="page-number" href="/page/11/">11</a><a class="extend next" rel="next" href="/page/4/"><i class="fa fa-angle-right"></i></a>
   </nav>
 
 
@@ -2101,7 +2411,7 @@
             
               <a href="/archives/ || archive">
             
-                <span class="site-state-item-count">100</span>
+                <span class="site-state-item-count">101</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
