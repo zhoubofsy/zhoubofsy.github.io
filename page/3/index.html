@@ -309,6 +309,336 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/09/19/language/python/python-basic-grammar/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/09/19/language/python/python-basic-grammar/" itemprop="url">Python基础语法</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-09-19T09:44:32+08:00">
+                2017-09-19
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/language/" itemprop="url" rel="index">
+                    <span itemprop="name">language</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="Python语法概况"><a href="#Python语法概况" class="headerlink" title="Python语法概况"></a>Python语法概况</h1><p><img src="/images/python/grammar.png" alt="grammar"></p>
+<h2 id="关键字"><a href="#关键字" class="headerlink" title="关键字"></a>关键字</h2><p>and , exec , not , assert , finally , or , break , for , pass , class , from , print , countinue , global , raise , def , if , return , del , import , try , elif , in , while , else , is , with , except , lambda , yield</p>
+<ul>
+<li><p>exec<br>  用来执行储存在字符串或文件中的Python语句。eg：</p>
+  <figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&gt;&gt;&gt; </span><span class="keyword">exec</span> <span class="string">'print "Hello World"'</span></div><div class="line">Hello World</div></pre></td></tr></table></figure>
+<p>  注意例子中exec语句的用法和eval_r(), execfile()是不一样的. exec是一个语句(就象print或while), 而eval_r()和execfile()则是内建函数。</p>
+</li>
+<li><p>lambda<br>  在python中使用lambda来创建匿名函数，lambda会创建一个函数对象，但不会把这个函数对象赋给一个标识符，而def则会把函数对象赋值给一个变量。lambda它只是一个表达式，而def则是一个语句。eg:</p>
+  <figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">m = <span class="keyword">lambda</span> x,y,z: (x-y)*z</div><div class="line"><span class="keyword">print</span> m(<span class="number">3</span>,<span class="number">1</span>,<span class="number">2</span>)</div></pre></td></tr></table></figure>
+<p>  lambda一般只用来定义简单的函数。</p>
+</li>
+<li>yield<br>  它和return差不多的用法，只是最后是返回了一个生成器，当你调用yield所在的那个函数的时候，那个函数并没有运行，只会返回一个生成器的对象，第一次在for中调用生成器的的对象，它将会运行你函数中的代码从最开始一直到到碰到了yield的关键字，然后它会返回循环中的第一个值。然后每一次其他的调用将会运行你在这个函数中所写的循环多一次，并且返回下一个值，知道没有值可以返回了。eg:  <figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&gt;&gt;&gt; </span><span class="function"><span class="keyword">def</span> <span class="title">createGenerator</span><span class="params">()</span>:</span></div><div class="line"><span class="meta">... </span>   mylist = range(<span class="number">3</span>)</div><div class="line"><span class="meta">... </span>   <span class="keyword">for</span> i <span class="keyword">in</span> mylist:</div><div class="line"><span class="meta">... </span>       <span class="keyword">yield</span> i*i</div><div class="line">...</div><div class="line"><span class="meta">&gt;&gt;&gt; </span>mygenerator = createGenerator() <span class="comment"># create a generator</span></div><div class="line"><span class="meta">&gt;&gt;&gt; </span>print(mygenerator) <span class="comment"># mygenerator is an object!</span></div><div class="line">&lt;generator object createGenerator at <span class="number">0xb7555c34</span>&gt;</div><div class="line"><span class="meta">&gt;&gt;&gt; </span><span class="keyword">for</span> i <span class="keyword">in</span> mygenerator:</div><div class="line"><span class="meta">... </span>    print(i)</div><div class="line"><span class="number">0</span></div><div class="line"><span class="number">1</span></div><div class="line"><span class="number">4</span></div></pre></td></tr></table></figure>
+</li>
+</ul>
+<h1 id="Python-VS-C"><a href="#Python-VS-C" class="headerlink" title="Python VS C"></a>Python VS C</h1><table>
+<thead>
+<tr>
+<th style="text-align:center">Pytho</th>
+<th style="text-align:center">C</th>
+<th style="text-align:left">说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">字母、数字、下划线组成，不能以数字开头，区分大小写</td>
+<td style="text-align:center">字母、数字、下划线组成，不能以数字开头，区分大小写</td>
+<td style="text-align:left">标识符</td>
+</tr>
+<tr>
+<td style="text-align:center">单下划线开头的代表不能直接访问的类属性，通过类提供的接口访问</td>
+<td style="text-align:center"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:center">双下划线开头的代表类的私有成员</td>
+<td style="text-align:center"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:center">双下划线开头和结尾的代表特殊方法专用的标识(eg:<strong>init</strong>())</td>
+<td style="text-align:center"></td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:center">“\”</td>
+<td style="text-align:center">不需要，以”;”结尾</td>
+<td style="text-align:left">行继符</td>
+</tr>
+<tr>
+<td style="text-align:center">单引号(‘),双引号(“),三引号(‘’’)</td>
+<td style="text-align:center">双引号(“)</td>
+<td style="text-align:left">字符串</td>
+</tr>
+<tr>
+<td style="text-align:center">#</td>
+<td style="text-align:center">//</td>
+<td style="text-align:left">注释</td>
+</tr>
+<tr>
+<td style="text-align:center">:</td>
+<td style="text-align:center">{}</td>
+<td style="text-align:left">代码块</td>
+</tr>
+<tr>
+<td style="text-align:center">if</td>
+<td style="text-align:center">if</td>
+<td style="text-align:left">条件</td>
+</tr>
+<tr>
+<td style="text-align:center">elif</td>
+<td style="text-align:center">else if</td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:center">else</td>
+<td style="text-align:center">else</td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:center">a = b = 1 or a,b=1,”Hi”</td>
+<td style="text-align:center">int a=1 , b=2</td>
+<td style="text-align:left">多变量赋值</td>
+</tr>
+<tr>
+<td style="text-align:center">Numbers, String, List, Tuple, Dictionary</td>
+<td style="text-align:center">char, int , float, double, void, point*</td>
+<td style="text-align:left">基础数据类型</td>
+</tr>
+<tr>
+<td style="text-align:center">list[item1, item2, …  itemN]</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">列表，允许更新</td>
+</tr>
+<tr>
+<td style="text-align:center">tuple(item1, item2, …, itemN)</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">元组，不允许更新操作</td>
+</tr>
+<tr>
+<td style="text-align:center">dict{key1:value1, key2:value2, …, keyN:valueN}</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">字典，允许更新</td>
+</tr>
+<tr>
+<td style="text-align:center">**</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">幂，a**b a的b次幂</td>
+</tr>
+<tr>
+<td style="text-align:center">//</td>
+<td style="text-align:center">mod</td>
+<td style="text-align:left">整除</td>
+</tr>
+<tr>
+<td style="text-align:center">“!=” , “&lt;&gt;”</td>
+<td style="text-align:center">“!=”</td>
+<td style="text-align:left">不等</td>
+</tr>
+<tr>
+<td style="text-align:center">“and”</td>
+<td style="text-align:center">“&amp;&amp;”</td>
+<td style="text-align:left">逻辑运算</td>
+</tr>
+<tr>
+<td style="text-align:center">“or”</td>
+<td style="text-align:center">双竖线</td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:center">“not”</td>
+<td style="text-align:center">“!”</td>
+<td style="text-align:left"></td>
+</tr>
+<tr>
+<td style="text-align:center">“in” , “not in”</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">判断元素在不在元组或列表中</td>
+</tr>
+<tr>
+<td style="text-align:center">“is” , “not is”</td>
+<td style="text-align:center"></td>
+<td style="text-align:left">判断两个标识符是不是引用自一个对象</td>
+</tr>
+<tr>
+<td style="text-align:center">“while”, “for”</td>
+<td style="text-align:center">“while”, “for”, “do..while”</td>
+<td style="text-align:left">循环, python中可与”else”一起执行条件为false的情况</td>
+</tr>
+<tr>
+<td style="text-align:center">“break”, “continue”, “pass”</td>
+<td style="text-align:center">“break”, “continue”, “goto”</td>
+<td style="text-align:left">循环控制</td>
+</tr>
+</tbody>
+</table>
+<h1 id="Python编译"><a href="#Python编译" class="headerlink" title="Python编译"></a>Python编译</h1><table>
+<thead>
+<tr>
+<th style="text-align:left">选项</th>
+<th style="text-align:left">描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">-d</td>
+<td style="text-align:left">在解析时显示调试信息</td>
+</tr>
+<tr>
+<td style="text-align:left">-O</td>
+<td style="text-align:left">生成优化代码 ( .pyo 文件 )</td>
+</tr>
+<tr>
+<td style="text-align:left">-S</td>
+<td style="text-align:left">启动时不引入查找Python路径的位置</td>
+</tr>
+<tr>
+<td style="text-align:left">-c cmd</td>
+<td style="text-align:left">执行 Python 脚本，并将运行结果作为 cmd 字符串</td>
+</tr>
+<tr>
+<td style="text-align:left">file</td>
+<td style="text-align:left">在给定的python文件执行python脚本</td>
+</tr>
+</tbody>
+</table>
+<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a href="https://www.w3cschool.cn/python/python-basic-syntax.html" target="_blank" rel="external">Python 基础语法</a></li>
+<li><a href="http://www.cnblogs.com/edenpans/p/6524966.html" target="_blank" rel="external">PYTHON YIELD 关键字</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/09/18/storage/virtual-filesystem-switch/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -2172,193 +2502,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/07/21/devstack-deploy/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/07/21/devstack-deploy/" itemprop="url">devstack部署</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-07-21T15:56:02+08:00">
-                2017-07-21
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/other/" itemprop="url" rel="index">
-                    <span itemprop="name">other</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>OpenStack（以下简称OPS）是一个很庞大的系统，想要部署一个OPS需要部署很多组件。想必部署之路也是坑坑奇多。所以为了方便使用OPS，需要部署一个“all-in-one”环境的OPS</p>
-<h1 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h1><ul>
-<li>CPU<br>  2U X86_64</li>
-<li>Memory<br>  4G及以上，如果内存过小，会出现各种问题。（整个devstack-Openstack-Ocata + CentOS7.3 1611需要占用3.4G内存）</li>
-<li>OS<br>  CentOS 7.3 1611</li>
-<li>NET<br>  建议创建两个网络，一个用于连接外网用于做管理性工作；一个供neutron使用</li>
-<li>OpenStack版本<br>  Ocata</li>
-</ul>
-<h1 id="部署"><a href="#部署" class="headerlink" title="部署"></a>部署</h1><h2 id="准备"><a href="#准备" class="headerlink" title="准备"></a>准备</h2><h3 id="关闭防火墙"><a href="#关闭防火墙" class="headerlink" title="关闭防火墙"></a>关闭防火墙</h3><h4 id="关闭selinux"><a href="#关闭selinux" class="headerlink" title="关闭selinux"></a>关闭selinux</h4><p>编辑<code>/etc/selinux/config</code>将<code>SELINUX=enforcing</code>改为<code>SELINUX=disabled</code></p>
-<h4 id="关闭iptables"><a href="#关闭iptables" class="headerlink" title="关闭iptables"></a>关闭iptables</h4><p>执行命令<code>sudo systemctl disable iptables</code>，关闭iptables服务</p>
-<p>上诉两处修改若想生效需要重启系统。</p>
-<h3 id="安装依赖软件"><a href="#安装依赖软件" class="headerlink" title="安装依赖软件"></a>安装依赖软件</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo yum install -y epel-release git net-tools</div></pre></td></tr></table></figure>
-<h3 id="下载Devstack"><a href="#下载Devstack" class="headerlink" title="下载Devstack"></a>下载Devstack</h3><p>从github上下载devstack<code>git clone https://github.com/openstack-dev/devstack.git</code>，然后切换版本到Ocata <code>git checkout stable/ocata</code>，可使用<code>git branch -av</code>查看devstack所处分支</p>
-<h2 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h2><h3 id="创建stack用户"><a href="#创建stack用户" class="headerlink" title="创建stack用户"></a>创建stack用户</h3><ol>
-<li><p>进入devstack目录</p>
- <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">cd devstack</div></pre></td></tr></table></figure>
-</li>
-<li><p>创建stack用户</p>
- <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo ./tools/create-stack-user.sh</div></pre></td></tr></table></figure>
-</li>
-</ol>
-<h3 id="切换用户"><a href="#切换用户" class="headerlink" title="切换用户"></a>切换用户</h3><ol>
-<li><p>修改目录owner</p>
- <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo chown -R stack:stack ./devstack</div></pre></td></tr></table></figure>
-</li>
-<li><p>修改<code>/opt/stack</code>目录访问权限</p>
- <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">sudo chmod 777 /opt/stack -R</div><div class="line">sudo mv ./devstack /opt/stack/</div></pre></td></tr></table></figure>
-</li>
-<li><p>切换用户</p>
- <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo su - stack</div></pre></td></tr></table></figure>
-</li>
-</ol>
-<h3 id="撰写local-conf"><a href="#撰写local-conf" class="headerlink" title="撰写local.conf"></a>撰写local.conf</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div></pre></td><td class="code"><pre><div class="line">[[local|localrc]]</div><div class="line"></div><div class="line">DEST=/opt/stack/ocata</div><div class="line"># use TryStack git mirror</div><div class="line">GIT_BASE=http://git.trystack.cn</div><div class="line">NOVNC_REPO=http://git.trystack.cn/kanaka/noVNC.git</div><div class="line">SPICE_REPO=http://git.trystack.cn/git/spice/spice-html5.git</div><div class="line"></div><div class="line">#OFFLINE=True</div><div class="line">RECLONE=False</div><div class="line"></div><div class="line"># Define images to be automatically downloaded during the DevStack built process.</div><div class="line">DOWNLOAD_DEFAULT_IMAGES=False</div><div class="line">IMAGE_URLS=&quot;,https://launchpad.net/cirros/trunk/0.3.0/+download/cirros-0.3.0-x86_64-disk.img&quot;</div><div class="line"></div><div class="line">HOST_IP=127.0.0.1</div><div class="line"></div><div class="line"></div><div class="line"># Credentials</div><div class="line">DATABASE_PASSWORD=pass</div><div class="line">ADMIN_PASSWORD=pass</div><div class="line">SERVICE_PASSWORD=pass</div><div class="line">SERVICE_TOKEN=pass</div><div class="line">RABBIT_PASSWORD=pass</div><div class="line"></div><div class="line">HORIZON_BRANCH=stable/ocata</div><div class="line">KEYSTONE_BRANCH=stable/ocata</div><div class="line">NOVA_BRANCH=stable/ocata</div><div class="line">NEUTRON_BRANCH=stable/ocata</div><div class="line">GLANCE_BRANCH=stable/ocata</div><div class="line">CINDER_BRANCH=stable/ocata</div><div class="line"></div><div class="line"></div><div class="line">#keystone</div><div class="line">KEYSTONE_TOKEN_FORMAT=UUID</div><div class="line"></div><div class="line">##Heat</div><div class="line">HEAT_BRANCH=stable/ocata</div><div class="line">enable_service h-eng h-api h-api-cfn h-api-cw</div><div class="line"></div><div class="line"></div><div class="line">## Swift</div><div class="line">SWIFT_BRANCH=stable/ocata</div><div class="line">ENABLED_SERVICES+=,s-proxy,s-object,s-container,s-account</div><div class="line">SWIFT_REPLICAS=1</div><div class="line">SWIFT_HASH=011688b44136573e209e</div><div class="line"></div><div class="line"></div><div class="line"># Enabling Neutron (network) Service</div><div class="line">disable_service n-net</div><div class="line">enable_service q-svc</div><div class="line">enable_service q-agt</div><div class="line">enable_service q-dhcp</div><div class="line">enable_service q-l3</div><div class="line">enable_service q-meta</div><div class="line">enable_service q-metering</div><div class="line">enable_service neutron</div><div class="line"></div><div class="line">## Neutron options</div><div class="line">Q_USE_SECGROUP=True</div><div class="line">FLOATING_RANGE=&quot;192.168.36.0/24&quot;</div><div class="line">FIXED_RANGE=&quot;10.0.0.0/24&quot;</div><div class="line">Q_FLOATING_ALLOCATION_POOL=start=192.168.36.55,end=192.168.36.100</div><div class="line">PUBLIC_NETWORK_GATEWAY=&quot;192.168.36.1&quot;</div><div class="line">Q_L3_ENABLED=True</div><div class="line">PUBLIC_INTERFACE=eth1</div><div class="line">Q_USE_PROVIDERNET_FOR_PUBLIC=True</div><div class="line">OVS_PHYSICAL_BRIDGE=br-ex</div><div class="line">PUBLIC_BRIDGE=br-ex</div><div class="line">OVS_BRIDGE_MAPPINGS=public:br-ex</div><div class="line"></div><div class="line"># #VLAN configuration.</div><div class="line">Q_PLUGIN=ml2</div><div class="line">ENABLE_TENANT_VLANS=True</div><div class="line"></div><div class="line"># Logging</div><div class="line">LOGFILE=/opt/stack/logs/stack.sh.log</div><div class="line">VERBOSE=True</div><div class="line">LOG_COLOR=True</div><div class="line">SCREEN_LOGDIR=/opt/stack/logs</div></pre></td></tr></table></figure>
-<h3 id="安装OPS（all-in-one）"><a href="#安装OPS（all-in-one）" class="headerlink" title="安装OPS（all-in-one）"></a>安装OPS（all-in-one）</h3><p>安装使用<code>stack.sh</code>脚本，卸载使用<code>unstack.sh</code>脚本</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line">$ ./stack.sh</div><div class="line">...</div><div class="line"></div><div class="line">=========================</div><div class="line">DevStack Component Timing</div><div class="line">=========================</div><div class="line">Total runtime         1254</div><div class="line"></div><div class="line">run_process            83</div><div class="line">test_with_retry         4</div><div class="line">pip_install           127</div><div class="line">restart_apache_server  29</div><div class="line">wait_for_service       19</div><div class="line">yum_install            50</div><div class="line">=========================</div><div class="line"></div><div class="line"></div><div class="line"></div><div class="line">This is your host IP address: 127.0.0.1</div><div class="line">This is your host IPv6 address: ::1</div><div class="line">Horizon is now available at http://127.0.0.1/dashboard</div><div class="line">Keystone is serving at http://127.0.0.1/identity/</div><div class="line">The default users are: admin and demo</div><div class="line">The password: pass</div></pre></td></tr></table></figure>
-<p>安装时遇到问题可从两个角度考虑，一个网络不通，一个内存不足。这里再次重申，内存一定要&gt;=4G，如果网络不通或延时太大，建议使用国内镜像。</p>
-<p>例如<code>/opt/stack/.pip/pip.conf</code>:</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">[global]</div><div class="line"></div><div class="line">timeout = 6000</div><div class="line">index-url = http://pypi.douban.com/simple</div><div class="line">trusted-host = pypi.douban.com</div></pre></td></tr></table></figure>
-<h2 id="horizon"><a href="#horizon" class="headerlink" title="horizon"></a>horizon</h2><p>安装成功后，访问<code>http://x.x.x.x/dashboard</code>, 用户民密码见<code>local.conf</code></p>
-<p><img src="/images/devstack/horizon_login.png" alt="horizon_login"></p>
-<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a href="http://blog.csdn.net/lyjshen/article/details/69467444" target="_blank" rel="external">Virtuabox中Centos 7.3安装devstack后记</a></li>
-<li><a href="http://www.fx114.net/qa-7-155510.aspx" target="_blank" rel="external">Centos7下搭建带有Ceilometer的devstack（mitaka版本）</a></li>
-<li><a href="http://blog.csdn.net/scucscheng/article/details/51884613" target="_blank" rel="external">centos 7 devstack 安装 openstack Mitaka</a></li>
-<li><a href="http://www.chenshake.com/devstack-installation-and-testing/" target="_blank" rel="external">devstack安装和测试</a></li>
-</ul>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2411,7 +2554,7 @@
             
               <a href="/archives/ || archive">
             
-                <span class="site-state-item-count">101</span>
+                <span class="site-state-item-count">102</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>

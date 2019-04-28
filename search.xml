@@ -1,6 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title><![CDATA[RBD备份及恢复方法]]></title>
+    <url>%2F2019%2F04%2F28%2Fstorage%2Fceph%2Frbd-export-import%2F</url>
+    <content type="text"><![CDATA[Ceph中的RBD备份分为全量备份和增量备份，恢复也有增全量之分。 备份和恢复的操作都是基于快照来操作的。 RBD的format必须为2 （–image-format 2） 备份备份操作流程，先做一个全量备份，然后每隔一段时间做一个快照，并将快照导出。 准备创建一个RBD image 1$ rbd create --image-format 2 --size 1G crbd_cls17_1 全量创建一个快照，然后备份从image创建一直到创建快照之前的全量数据 12$ rbd snap create crbd_cls17_1@s1$ rbd export-diff crbd_cls17_1@s1 ./crbd_base 增量继续写入一段数据后，再次做快照，并导出增量数据 12$ rbd snap create crbd_cls17_1@s2$ rbd export-diff crbd_cls17_1@s2 --from-snap s1 ./crbd_s1_s2 至此，全量和增量备份数据都以导出到文件crbd_base和crbd_s1_s2两个文件中。 恢复准备将之前导出的增全量备份数据crbd_base、crbd_s1_s2拷贝到需要导入的ceph集群上。创建一个rbd image用于导入备份数据。 1$ rbd create --image-format 2 --size 1G crbd_cls26_1 全量恢复全量数据 1$ rbd import-diff ./crbd_base crbd_cls26_1 增量恢复增量数据 1$ rbd import-diff ./crbd_s1_s2 crbd_cls26_1 Over!]]></content>
+      <categories>
+        <category>storage</category>
+      </categories>
+      <tags>
+        <tag>ceph</tag>
+        <tag>rbd</tag>
+      </tags>
+  </entry>
+  <entry>
     <title><![CDATA[Journal Format]]></title>
     <url>%2F2019%2F03%2F11%2Fstorage%2Fceph%2Fjournal-format%2F</url>
     <content type="text"><![CDATA[Todo… Journal存储格式 header Ring buffer header格式 Ring buffer中entry header格式]]></content>
@@ -88,8 +100,8 @@
         <category>container</category>
       </categories>
       <tags>
-        <tag>docker</tag>
         <tag>ceph</tag>
+        <tag>docker</tag>
       </tags>
   </entry>
   <entry>
@@ -287,8 +299,8 @@
         <category>Big-Data</category>
       </categories>
       <tags>
-        <tag>hive</tag>
         <tag>hbase</tag>
+        <tag>hive</tag>
         <tag>hadoop</tag>
       </tags>
   </entry>
@@ -300,9 +312,9 @@
         <category>apple</category>
       </categories>
       <tags>
+        <tag>mac</tag>
         <tag>vm</tag>
         <tag>xhyve</tag>
-        <tag>mac</tag>
         <tag>docker</tag>
       </tags>
   </entry>
@@ -796,8 +808,8 @@
         <category>vim</category>
       </categories>
       <tags>
-        <tag>xxd</tag>
         <tag>vim</tag>
+        <tag>xxd</tag>
       </tags>
   </entry>
   <entry>
@@ -917,8 +929,8 @@
         <category>storage</category>
       </categories>
       <tags>
-        <tag>ceph</tag>
         <tag>config</tag>
+        <tag>ceph</tag>
         <tag>osd</tag>
       </tags>
   </entry>
@@ -930,8 +942,8 @@
         <category>storage</category>
       </categories>
       <tags>
-        <tag>ceph</tag>
         <tag>config</tag>
+        <tag>ceph</tag>
         <tag>osd</tag>
       </tags>
   </entry>
