@@ -403,6 +403,12 @@
         
           
             <h1 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h1><p>Todo…</p>
+<h3 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h3><ul>
+<li>增加了RBD Journal的写入操作，是否会产生写放大现象。</li>
+<li>Ceph-RBD-Mirror回放日志的的时间间隔</li>
+<li>RBD Journal的容量大小如何配置</li>
+<li>RBD Journal存储介质是否可以优化</li>
+</ul>
 <h1 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h1><h2 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h2><h4 id="要求"><a href="#要求" class="headerlink" title="要求"></a>要求</h4><ul>
 <li>Ceph版本必须为Jewel及之后版本<br>  RBD-Mirror功能从Jewel版本引入，之前版本不支持该feature。本文以jewel版本为例进行演示。</li>
 <li>RBD feature必须包含<code>journaling</code><br>  RBD-Mirror依赖journal完成工作，类似Mysql的主从同步机制。使用日志回放方法备份数据。</li>
