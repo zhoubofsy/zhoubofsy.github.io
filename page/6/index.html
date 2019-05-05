@@ -309,6 +309,270 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/01/25/container/docker/docker-resource-separation/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/01/25/container/docker/docker-resource-separation/" itemprop="url">docker 资源隔离</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-01-25T14:44:23+08:00">
+                2017-01-25
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/container/" itemprop="url" rel="index">
+                    <span itemprop="name">container</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h1><p>docker不是一项新技术，docker是老旧技术的组合，为了更方便使用容器技术，docker提供了简单方便的UI。docker隔离资源主要用到了两种技术namespace、cgroup。</p>
+<h1 id="Namespace"><a href="#Namespace" class="headerlink" title="Namespace"></a>Namespace</h1><p>namespace是linux内核提供的隔离技术，它包括六种资源隔离，UTS（主机名与域名）、IPC（信号量、消息队列和共享内存）、PID（进程编号）、NET（网络设备、网络栈、端口…）、Mount（文件系统、挂载点）、User（用户和用户组）。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">Type</th>
+<th style="text-align:center">Sys Params</th>
+<th style="text-align:center">ker ver</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">UTS</td>
+<td style="text-align:center">CLONE_NEWUTS</td>
+<td style="text-align:center">2.6.19</td>
+</tr>
+<tr>
+<td style="text-align:center">IPC</td>
+<td style="text-align:center">CLONE_NEWIPC</td>
+<td style="text-align:center">2.6.19</td>
+</tr>
+<tr>
+<td style="text-align:center">PID</td>
+<td style="text-align:center">CLONE_NEWPID</td>
+<td style="text-align:center">2.6.24</td>
+</tr>
+<tr>
+<td style="text-align:center">NET</td>
+<td style="text-align:center">CLONE_NEWNET</td>
+<td style="text-align:center">2.6.29</td>
+</tr>
+<tr>
+<td style="text-align:center">Mount</td>
+<td style="text-align:center">CLONE_NEWNS</td>
+<td style="text-align:center">2.4.19</td>
+</tr>
+<tr>
+<td style="text-align:center">User</td>
+<td style="text-align:center">CLONE_NEWUSER</td>
+<td style="text-align:center">3.8</td>
+</tr>
+</tbody>
+</table>
+<p>操作系统调用接口：</p>
+<ul>
+<li>clone()<br>  创建一个独立的进程独立的namespace</li>
+<li>setns()<br>  使用已有的一个namespace</li>
+<li>unshare()<br>  不启动新进程，在原进程上进行namespace隔离</li>
+</ul>
+<p>docker run中提供了使用namespace的接口:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"># docker run --help | grep -i namespace</div><div class="line">--ipc string                  IPC namespace to use</div><div class="line">--pid string                  PID namespace to use</div><div class="line">--userns string               User namespace to use</div><div class="line">--uts string                  UTS namespace to use</div></pre></td></tr></table></figure></p>
+<h2 id="UTS"><a href="#UTS" class="headerlink" title="UTS"></a>UTS</h2><p>提供了主机名和域名的隔离，这样每个容器就可以拥有了独立的主机名和域名，在网络上可以被视作一个独立的节点而非宿主机上的一个进程。<br>docker在run或create时，使用<code>-h</code>或<code>--hostname</code>指定hostname</p>
+<h2 id="IPC"><a href="#IPC" class="headerlink" title="IPC"></a>IPC</h2><p>IPC是Unix／linux下进程间通讯的一种方式，包括信号量、消息队列、共享内存。容器内部进程间通信对宿主机来说，实际上是具有相同PID namespace中的进程间通信，因此需要一个唯一的标识符来进行区别。申请IPC资源就申请了这样一个全局唯一的32位ID，所以IPC namespace中实际上包含了系统IPC标识符以及实现POSIX消息队列的文件系统。在同一个IPC namespace下的进程彼此可见，而与其他的IPC namespace下的进程则互相不可见。</p>
+<p>在宿主机上创建IPC（以消息队列为例）：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"># ipcmk -Q</div><div class="line">消息队列 id：32768</div></pre></td></tr></table></figure></p>
+<p>在宿主机上查询IPC：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"># ipcs</div><div class="line"></div><div class="line">--------- 消息队列 -----------</div><div class="line">键        msqid      拥有者  权限     已用字节数 消息</div><div class="line">0xabba8164 32768      root       644        0            0</div></pre></td></tr></table></figure></p>
+<p>在容器中查询IPC：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"># docker exec -it net_5 ipcs</div><div class="line"></div><div class="line">------ Message Queues --------</div><div class="line">key        msqid      owner      perms      used-bytes   messages</div><div class="line"></div><div class="line">------ Shared Memory Segments --------</div><div class="line">key        shmid      owner      perms      bytes      nattch     status</div><div class="line"></div><div class="line">------ Semaphore Arrays --------</div><div class="line">key        semid      owner      perms      nsems</div></pre></td></tr></table></figure></p>
+<h2 id="PID"><a href="#PID" class="headerlink" title="PID"></a>PID</h2><p>它对进程PID重新标号，即两个不同namespace下的进程可以有同一个PID。每个PID namespace都有自己的计数程序。内核为所有的PID namespace维护了一个树状结构，最顶层的是系统初始时创建的，我们称之为root namespace。他创建的新PID namespace就称之为child namespace（树的子节点），而原先的PID namespace就是新创建的PID namespace的parent namespace（树的父节点）。通过这种方式，不同的PID namespaces会形成一个等级体系。所属的父节点可以看到子节点中的进程，并可以通过信号等方式对子节点中的进程产生影响。反过来，子节点不能看到父节点PID namespace中的任何内容。</p>
+<pre><code>* 每个PID namespace中的第一个进程“PID 1“，都会像传统Linux中的init进程一样拥有特权，起特殊作用。
+* 一个namespace中的进程，不可能通过kill或ptrace影响父节点或者兄弟节点中的进程，因为其他节点的PID在这个namespace中没有任何意义。
+* 如果你在新的PID namespace中重新挂载/proc文件系统，会发现其下只显示同属一个PID namespace中的其他进程。（挂载/proc 文件系统尤为重要）
+* 在root namespace中可以看到所有的进程，并且递归包含所有子节点中的进程。
+</code></pre><p><img src="/images/docker/docker-resource-separation-pid.png" alt="docker-resource-separation-pid"></p>
+<p>以容器的ceph-mon节点为例：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"># 宿主机上查看 ceph-mon 进程</div><div class="line"># ps -ef| grep 9184</div><div class="line">root      9184  3122  0 1月20 ?       00:00:04 docker-containerd-shim be0583fade06df3f6510dd629bde4a636e68c755aa8b0733db6702493b1d0c38 /var/run/docker/libcontainerd/be0583fade06df3f6510dd629bde4a636e68c755aa8b0733db6702493b1d0c38 docker-runc</div><div class="line">64045     9200  9184  0 1月20 ?       00:01:03 /usr/bin/ceph-mon --cluster ceph -d -i rhel82 --public-addr 192.168.1.82:6789 --setuser ceph --setgroup ceph</div><div class="line">root     21893  9855  0 16:15 pts/5    00:00:00 grep --color=auto 9184</div><div class="line"></div><div class="line"># 容器中查看 ceph-mon 进程</div><div class="line"># docker exec -it ceph-mon ps -ef</div><div class="line">UID        PID  PPID  C STIME TTY          TIME CMD</div><div class="line">ceph         1     0  0 Jan20 ?        00:01:03 /usr/bin/ceph-mon --cluster ceph</div><div class="line">root        26     0  0 08:15 ?        00:00:00 ps -ef</div></pre></td></tr></table></figure></p>
+<h2 id="NET"><a href="#NET" class="headerlink" title="NET"></a>NET</h2><p>Pv4和IPv6协议栈、IP路由表、防火墙、/proc/net目录、/sys/class/net目录、端口（socket）等等。一个物理的网络设备最多存在在一个network namespace中，你可以通过创建veth pair（虚拟网络设备对：有两端，类似管道，如果数据从一端传入另一端也能接收到，反之亦然）在不同的network namespace间创建通道，以此达到通信的目的。</p>
+<p>一般情况下，物理网络设备都分配在最初的root namespace（表示系统默认的namespace，在PID namespace中已经提及）中。但是如果你有多块物理网卡，也可以把其中一块或多块分配给新创建的network namespace。需要注意的是，当新创建的network namespace被释放时（所有内部的进程都终止并且namespace文件没有被挂载或打开），在这个namespace中的物理网卡会返回到root namespace而非创建该进程的父进程所在的network namespace。</p>
+<p>当我们说到network namespace时，其实我们指的未必是真正的网络隔离，而是把网络独立出来，给外部用户一种透明的感觉，仿佛跟另外一个网络实体在进行通信。为了达到这个目的，容器的经典做法就是创建一个veth pair，一端放置在新的namespace中，通常命名为eth0，一端放在原先的namespace中连接物理网络设备，再通过网桥把别的设备连接进来或者进行路由转发，以此网络实现通信的目的。</p>
+<p><img src="/images/docker/docker-resource-separation-network.png" alt="docker-resource-separation-network"></p>
+<p>可通过<code>ip netns</code>、<code>brctl</code>管理Network Namespace，docker创建的netns路径为<code>/proc/{进程ID}/ns/net</code>，<code>ip netns</code>访问的默认路径为<code>/var/run/netns/</code>。<br>若需要访问其Network Namespace内部，先创建软连接链至<code>ip netns</code>访问路径，然后使用<code>ip netns exec</code>访问该网络内部。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line"># 在ip netns访问路径下创建network namespace的软链接</div><div class="line"># ln -s /proc/7013/ns/net /var/run/netns/net_5</div><div class="line"></div><div class="line"># 使用 ip netns exec 访问指定network namespace的网络</div><div class="line"># ip netns exec net_5 ip addr</div><div class="line">1: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu 65536 qdisc noqueue state UNKNOWN group default</div><div class="line">  link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00</div><div class="line">  inet 127.0.0.1/8 scope host lo</div><div class="line">  valid_lft forever preferred_lft forever</div><div class="line">  inet6 ::1/128 scope host</div><div class="line">  valid_lft forever preferred_lft forever</div><div class="line">15: eth0: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc noqueue state UP group default</div><div class="line">  link/ether 02:42:ac:11:00:03 brd ff:ff:ff:ff:ff:ff</div><div class="line">  inet 172.17.0.3/16 scope global eth0</div><div class="line">  valid_lft forever preferred_lft forever</div><div class="line">  inet6 fe80::42:acff:fe11:3/64 scope link</div><div class="line">  valid_lft forever preferred_lft forever</div></pre></td></tr></table></figure>
+<h2 id="Mount"><a href="#Mount" class="headerlink" title="Mount"></a>Mount</h2><p>隔离后，不同mount namespace中的文件结构发生变化也互不影响。你可以通过<code>/proc/[pid]/mounts</code>查看到所有挂载在当前namespace中的文件系统，还可以通过<code>/proc/[pid]/mountstats</code>看到mount namespace中文件设备的统计信息，包括挂载文件的名字、文件系统类型、挂载位置等等。（此处用到了<a href="https://zhoubofsy.github.io/2017/01/24/linux/mount-usage/" target="_blank" rel="external">mount propagation </a> 技术）</p>
+<p><img src="/images/docker/docker-resource-separation-mount.png" alt="docker-resource-separation-mount.png"><br>上图mount挂载方式有待确认。</p>
+<h2 id="USER"><a href="#USER" class="headerlink" title="USER"></a>USER</h2><p>主要隔离了安全相关的标识符（identifiers）和属性（attributes），包括用户ID、用户组ID、root目录、key（指密钥）以及特殊权限。说得通俗一点，一个普通用户的进程通过clone()创建的新进程在新user namespace中可以拥有不同的用户和用户组。这意味着一个进程在容器外属于一个没有特权的普通用户，但是他创建的容器进程却属于拥有所有权限的超级用户，这个技术为容器提供了极大的自由。</p>
+<p>docker通过<code>/proc/{进程ID}/uid_map</code>和<code>/proc/{进程ID}/gid_map</code>把容器中的uid、gid和真实系统的uid、gid给映射在一起，格式为：<code>ID-inside-ns   ID-outside-ns   length</code>。</p>
+<ul>
+<li>ID-inside-ns 表示在容器内显示的uid或gid</li>
+<li>ID-outside-ns 表示在容器外映射的真实的uid或gid</li>
+<li>length 表示映射范围，一般为1，表示一一对应(把ID-outside-ns ~（ID-outside-ns+length） 映射到 ID-inside-ns ～（ID-inside-ns+length）上)</li>
+</ul>
+<h1 id="cgroups"><a href="#cgroups" class="headerlink" title="cgroups"></a>cgroups</h1><p>Control Groups(cgroups)，是Linux 内核提供的一种可以限制、记录、隔离进程组所使用的物理资源(如 cpu、memory、磁盘IO等等) 的机制，被LXC、docker等很多项目用于实现进程资源控制。</p>
+<p>cgroups子系统：</p>
+<ul>
+<li>cpu<br>  使用调度程序提供对 CPU 的 cgroup 任务访问</li>
+<li>cpuset<br>  为cgroup中的任务分配独立CPU（在多核系统）和内存节点</li>
+<li>devices<br>  可允许或者拒绝 cgroup 中的任务访问设备</li>
+<li>blkio<br>  为块设备设定输入/输出限制，比如物理设备（磁盘，固态硬盘，USB 等等）</li>
+<li>freezer<br>  挂起或者恢复 cgroup 中的任务</li>
+<li>memory<br>  设定 cgroup 中任务使用的内存限制，并自动生成由那些任务使用的内存资源报告</li>
+<li>net_cls<br>  使用等级识别符（classid）标记网络数据包，可允许 Linux 流量控制程序（tc）识别从具体 cgroup 中生成的数据包</li>
+</ul>
+<h2 id="CPU"><a href="#CPU" class="headerlink" title="CPU"></a>CPU</h2><h3 id="cpu-shares"><a href="#cpu-shares" class="headerlink" title="cpu-shares"></a>cpu-shares</h3><p>在<code>docker create/run</code>容器时可以通过<code>--cpu-shares</code>参数来指定容器所使用的CPU加权值。默认情况下，每个docker容器的cpu-shares值都是1024。单独一个容器的cpu-shares是没有意义的，只在多个容器分配的资源紧缺时，也就是说在需要对容器使用的资源进行限制时，才会生效。配之后，可通过<code>./cgroup/cpu/docker/&lt;容器ID&gt;/cpu.shares</code>查看。</p>
+<h3 id="cpu-period-amp-cpu-quota"><a href="#cpu-period-amp-cpu-quota" class="headerlink" title="cpu-period &amp; cpu-quota"></a>cpu-period &amp; cpu-quota</h3><ul>
+<li>cpu-period 用来指定容器对CPU的使用要在多长时间内做一次重新分配</li>
+<li>cpu-quota 用来指定在这个周期内，最多可以有多少时间用来跑这个容器<br>在<code>docker create/run</code>时使用，参数为<code>--cpu-period</code>和<code>--cpu-quota</code>单位为微秒，cpu-period的默认值为0.1秒（100000 微秒），cpu-quota的默认值为-1(表示不控制)。配置后，可通过<code>./cgroup/cpu/docker/&lt;容器ID&gt;/cpu.cfs_period_us</code>和<code>./cgroup/cpu/docker/&lt;容器ID&gt;/cpu.cfs_quota_us</code>查看。</li>
+</ul>
+<h3 id="cpuset"><a href="#cpuset" class="headerlink" title="cpuset"></a>cpuset</h3><p>docker可使用<code>--cpuset-cpus</code>和<code>--cpuset-mems</code>参数控制容器运行限定使用哪些cpu和内存节点。配之后，可通过<code>./cgroup/cpuset/docker/&lt;容器ID&gt;/cpuset.cpus</code>和<code>./cgroup/cpuset/docker/&lt;容器ID&gt;/cpuset.mems</code>查看。</p>
+<p><strong><em> 注：对于具有NUMA的服务器很重要 </em></strong></p>
+<h2 id="Memory"><a href="#Memory" class="headerlink" title="Memory"></a>Memory</h2><p>在<code>docker create/run</code>时，可以对内存资源加以限制。</p>
+<ul>
+<li>kernel-memory<br>  使用参数<code>--kernel-memory</code>，限制内核内存，该内存不会被交换到swap上。</li>
+<li>memory<br>  使用参数<code>--memory</code>，设置容器使用的最大内存上限。默认单位为byte，可以使用K、G、M等带单位的字符串。</li>
+<li>memory-reservation<br>  使用参数<code>--memory-reservation</code>，启用弹性的内存共享，当宿主机资源充足时，允许容器尽量多地使用内存，当检测到内存竞争或者低内存时，强制将容器的内存降低到memory-reservation所指定的内存大小。不设置此选项时，有可能出现某些容器长时间占用大量内存，导致性能上的损失。</li>
+<li>memory-swap<br>  使用参数<code>--memory-swap</code>，设置总内存大小，相当于内存和swap大小的总和，设置-1时，表示swap分区大小是无限的。默认单位为byte，可以使用K、G、M等带单位的字符串。</li>
+<li>memory-swappiness<br>  使用参数<code>--memory-swappiness</code>，设置控制进程将物理内存交换到swap分区的倾向，系数越小，就越倾向于使用物理内存。值范围为0-100。当值为100时，表示尽量使用swap分区；当值为0时，表示禁用容器 swap 功能(这点不同于宿主机，宿主机 swappiness 设置为 0 也不保证 swap 不会被使用)</li>
+</ul>
+<h2 id="Block-Device"><a href="#Block-Device" class="headerlink" title="Block Device"></a>Block Device</h2><h3 id="I-O"><a href="#I-O" class="headerlink" title="I/O"></a>I/O</h3><ul>
+<li>device-read-bps<br>  限制此设备上的读速度（bytes per second），单位可以是kb、mb或者gb</li>
+<li>device-read-iops<br>  通过每秒读IO次数来限制指定设备的读速度</li>
+<li>device-write-bps<br>  限制此设备上的写速度（bytes per second），单位可以是kb、mb或者gb</li>
+<li>device-write-iops<br>  通过每秒写IO次数来限制指定设备的写速度</li>
+<li>blkio-weight<br>  容器默认磁盘IO的加权值，有效值范围为10-100。要使<code>-–blkio-weight</code>生效，需要保证IO的调度算法为CFQ<br>  <code>echo &quot;cfq&quot; &gt; /sys/block/&lt;设备名&gt;/queue/scheduler</code></li>
+<li>blkio-weight-device<br>  针对特定设备的IO加权控制。其格式为DEVICE_NAME:WEIGHT</li>
+</ul>
+<h3 id="Volume"><a href="#Volume" class="headerlink" title="Volume"></a>Volume</h3><p>使用参数<code>--storage-opt</code>，传入<code>dm.basesize=&lt;容量大小&gt;</code>可以设置rootfs大小。如果不设置<code>dm.basesize</code>，默认值为10G，若要使<code>dm.basesize</code>生效，storage driver 必须是 device mapper。<br>设置rootfs大小后，需要重启docker服务，并且<code>--storage-opts</code>参数需要在启动docker服务时使用。<br>以RHEL7.2为例，需要修改<code>/etc/systemd/system/multi-user.target.wants/docker.service</code>中<code>/usr/bin/dockerd</code>的参数。</p>
+<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a href="http://www.infoq.com/cn/articles/docker-kernel-knowledge-namespace-resource-isolation?utm_source=tuicool" target="_blank" rel="external">Docker背后的内核知识——Namespace资源隔离</a></li>
+<li><a href="http://www.cnblogs.com/sammyliu/p/5878973.html" target="_blank" rel="external">理解Docker（3）：Docker 使用 Linux namespace 隔离容器的运行环境</a></li>
+<li><a href="http://www.cnblogs.com/ilinuxer/p/6188450.html" target="_blank" rel="external">Linux Namespace 介绍</a></li>
+<li><a href="https://segmentfault.com/a/1190000006913195" target="_blank" rel="external">Linux Namespace系列（07）：user namespace (CLONE_NEWUSER) (第一部分)</a></li>
+<li><a href="http://www.07net01.com/2017/01/1778663.html" target="_blank" rel="external">理解Docker容器网络之Linux Network Namespace</a></li>
+<li><a href="http://coolshell.cn/articles/17010.html" target="_blank" rel="external">DOCKER基础技术：LINUX NAMESPACE（上）</a></li>
+<li><a href="http://coolshell.cn/articles/17029.html" target="_blank" rel="external">DOCKER基础技术：LINUX NAMESPACE（下）</a></li>
+<li><a href="http://blog.chinaunix.net/uid-20788636-id-5029770.html" target="_blank" rel="external">调整docker中rootfs的分区大小</a></li>
+<li><a href="http://blog.csdn.net/horsefoot/article/details/51731543" target="_blank" rel="external">docker容器资源配额控制</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/01/24/linux/mount-usage/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1829,188 +2093,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/12/30/container/docker/dockerfile-write/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2016/12/30/container/docker/dockerfile-write/" itemprop="url">Dockerfile</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-12-30T10:01:58+08:00">
-                2016-12-30
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/container/" itemprop="url" rel="index">
-                    <span itemprop="name">container</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h1><p>Dockerfile是docker image构建脚本，是用于生成image。Dockerfile忽略大小写，使用‘#’注释，每行只执行一条指令。Dockerfile指令分为两种，构建指令和设置指令。</p>
-<ul>
-<li>构建指令，用于构建image，不会在image的容器上执行</li>
-<li>设置指令，用于设置image属性，会在image的容器上执行</li>
-</ul>
-<h1 id="Dockerfile指令"><a href="#Dockerfile指令" class="headerlink" title="Dockerfile指令"></a>Dockerfile指令</h1><h2 id="FROM"><a href="#FROM" class="headerlink" title="FROM"></a>FROM</h2><p>构建指令，用于指定基础image。该指令必须指定在Dockerfile其它指令的前面，后面的Dockerfile指令都依赖于该指令指定的image。FROM指令指定的基础image可以是官方docker hub仓库中的，也可以是位于本地仓库中的。</p>
-<p>指令格式：<code>FROM &lt;image&gt;[:&lt;tag&gt;]</code><br>若不指定<code>:&lt;tag&gt;</code>，默认使用<code>:latest</code>。</p>
-<h2 id="MAINTAINER"><a href="#MAINTAINER" class="headerlink" title="MAINTAINER"></a>MAINTAINER</h2><p>构建指令，用于将image的制作者相关信息写入到image中。</p>
-<p>指令格式：<code>MAINTAINER &lt;name&gt;</code></p>
-<h2 id="RUN"><a href="#RUN" class="headerlink" title="RUN"></a>RUN</h2><p>构建指令，可以运行任何被基础image支持的命令。</p>
-<p>指令格式：<code>RUN &lt;command&gt;</code> 或 <code>RUN [&quot;executable&quot;,&quot;param 1&quot;,&quot;param n&quot;]</code><br>一般用于软件安装</p>
-<h2 id="CMD"><a href="#CMD" class="headerlink" title="CMD"></a>CMD</h2><p>设置指令，用于container启动时指定的操作。该操作可以是执行自定义脚本，也可以是执行系统命令。该指令只能在文件中存在一次，如果有多个，则只执行最后一条。</p>
-<p>指令格式：<code>CMD &lt;executable&gt; &lt;param 1&gt; &lt;param n&gt;</code> 或 <code>CMD [&quot;executable&quot;, &quot;param 1&quot;, &quot;param n&quot;]</code></p>
-<h2 id="ENTRYPOINT"><a href="#ENTRYPOINT" class="headerlink" title="ENTRYPOINT"></a>ENTRYPOINT</h2><p>设置指令，指定容器启动时执行的命令，可以多次设置，但是只有最后一个有效。</p>
-<p>指令格式：<code>ENTRYPOINT [&quot;executable&quot;, &quot;param 1&quot;, &quot;param n&quot;]</code> 或 <code>ENTRYPOINT &lt;executable&gt; &lt;param 1&gt; &lt;param n&gt;</code><br>CMD指令和ENTRYPOINT会互相覆盖只有最后一个CMD或者ENTRYPOINT有效。</p>
-<p>和CMD指令配合使用来指定ENTRYPOINT的默认参数，这时CMD指令不是一个完整的可执行命令，仅仅是参数部分。ENTRYPOINT指令只能使用JSON方式指定执行命令，而不能指定参数。<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">FROM centos7</div><div class="line">CMD [<span class="string">"-l"</span>]</div><div class="line">ENTRYPOINT [<span class="string">"/usr/bin/ls"</span>]</div></pre></td></tr></table></figure></p>
-<h2 id="USER"><a href="#USER" class="headerlink" title="USER"></a>USER</h2><p>设置指令，设置启动容器的用户，默认是root用户</p>
-<p>指令格式：<code>USER &lt;user name&gt;</code></p>
-<h2 id="EXPOSE"><a href="#EXPOSE" class="headerlink" title="EXPOSE"></a>EXPOSE</h2><p>设置指令，该指令会将容器中的端口映射成宿主机器中的某个端口。需要访问容器的时候，可以不是用容器的IP地址而是使用宿主机器的IP地址和映射后的端口。首先在Dockerfile使用EXPOSE设置需要映射的容器端口，然后在运行容器的时候指定-p选项加上EXPOSE设置的端口，这样EXPOSE设置的端口号会被随机映射成宿主机器中的一个端口号。也可以指定需要映射到宿主机器的那个端口，这时要确保宿主机器上的端口号没有被使用。EXPOSE指令可以一次设置多个端口号，相应的运行容器的时候，可以配套的多次使用-p选项。</p>
-<p>指令格式：<code>EXPOSE &lt;port&gt; [&lt;port&gt;...]</code></p>
-<h2 id="ENV"><a href="#ENV" class="headerlink" title="ENV"></a>ENV</h2><p>构建指令，在image中设置一个环境变量</p>
-<p>指令格式：<code>ENV &lt;key&gt; &lt;value&gt;</code><br>设置了后，后续的RUN命令都可以使用，container启动后，可以通过docker inspect查看这个环境变量，也可以通过在docker run –env key=value时设置或修改环境变量。</p>
-<h2 id="ADD"><a href="#ADD" class="headerlink" title="ADD"></a>ADD</h2><p>构建指令，从src复制文件到container的dest路径。</p>
-<p>指令格式：<code>ADD &lt;src&gt; &lt;dest&gt;</code></p>
-<ul>
-<li><code>&lt;src&gt;</code>是相对被构建的源目录的相对路径，可以是文件或目录的路径，也可以是一个远程的文件url</li>
-<li><code>&lt;dest&gt;</code>是container中的绝对路径<br>所有拷贝到container中的文件和文件夹权限为0755，uid和gid为0；如果是一个目录，那么会将该目录下的所有文件添加到container中，不包括目录；如果文件是可识别的压缩格式，则docker会帮忙解压缩（注意压缩格式）；如果<code>&lt;src&gt;</code>是文件且<code>&lt;dest&gt;</code>中不使用斜杠结束，则会将<code>&lt;dest&gt;</code>视为文件，<code>&lt;src&gt;</code>的内容会写入<code>&lt;dest&gt;</code>；如果<code>&lt;src&gt;</code>是文件且<code>&lt;dest&gt;</code>中使用斜杠结束，则会<code>&lt;src&gt;</code>文件拷贝到<code>&lt;dest&gt;</code>目录下。</li>
-</ul>
-<h2 id="VOLUME"><a href="#VOLUME" class="headerlink" title="VOLUME"></a>VOLUME</h2><p>设置指令，指定挂载点。使容器中的一个目录具有持久化存储数据的功能，该目录可以被容器本身使用，也可以共享给其他容器使用。我们知道容器使用的是AUFS，这种文件系统不能持久化数据，当容器关闭后，所有的更改都会丢失。当容器中的应用有持久化数据的需求时可以在Dockerfile中使用该指令。</p>
-<p>指令格式：<code>VOLUME [&quot;&lt;mount point path&gt;&quot;]</code></p>
-<h2 id="WORKDIR"><a href="#WORKDIR" class="headerlink" title="WORKDIR"></a>WORKDIR</h2><p>设置指令，切换目录，可多次切换（相当于cd命令），对<code>RUN</code>、<code>CMD</code>、<code>ENTRYPOINT</code>生效</p>
-<p>指令格式：<code>WORKDIR &lt;path&gt;</code></p>
-<h2 id="ONBUILD"><a href="#ONBUILD" class="headerlink" title="ONBUILD"></a>ONBUILD</h2><p>设置指令，在子镜像中执行，在构建镜像时并不执行，而是在它的子镜像中执行</p>
-<p>指令格式：<code>ONBUILD &lt;Dockerfile指令&gt;</code></p>
-<h1 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h1><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div></pre></td><td class="code"><pre><div class="line"># 第一条有效指令必须指出基础镜像</div><div class="line">FROM my_ubuntu_03:latest</div><div class="line"></div><div class="line"># 作者</div><div class="line">MAINTAINER zhou bo</div><div class="line"></div><div class="line"># 环境变量</div><div class="line">ENV BASE_IMAGE=&quot;ubuntu:16&quot;</div><div class="line">ENV CURRENT_IMAGE=&quot;Simple Image&quot;</div><div class="line"></div><div class="line"># 安装 ssh server 端程序</div><div class="line">RUN apt-get update</div><div class="line">RUN apt-get install -y openssh-server</div><div class="line"></div><div class="line"># 映射端口22</div><div class="line">EXPOSE 22</div><div class="line"></div><div class="line"># 启动 ssh 守护进程</div><div class="line">CMD [&quot;-D&quot;]</div><div class="line">ENTRYPOINT [&quot;/usr/sbin/sshd&quot;]</div><div class="line"></div><div class="line"># 在 / 目录下挂在一个 DataFolder 目录</div><div class="line">VOLUME [&quot;/DataFolder&quot;]</div><div class="line"></div><div class="line"># 在子镜像中执行的指令</div><div class="line">ONBUILD ENV SON_IAMGE=&quot;你永远是我儿子&quot;</div></pre></td></tr></table></figure>
-<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a href="http://blog.csdn.net/qinyushuang/article/details/43342553" target="_blank" rel="external">如何使用Dockerfile构建镜像</a></li>
-<li><a href="http://blog.csdn.net/i6448038/article/details/50855538" target="_blank" rel="external">Dockerfile指令详解</a></li>
-<li><a href="http://www.tuicool.com/articles/YfMFVv6" target="_blank" rel="external">Dockerfile文件编写</a></li>
-<li><a href="http://blog.csdn.net/wanglei_storage/article/details/48709255" target="_blank" rel="external">dockerfile 多端口映射 expose</a></li>
-</ul>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2063,7 +2145,7 @@
             
               <a href="/archives/ || archive">
             
-                <span class="site-state-item-count">102</span>
+                <span class="site-state-item-count">103</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>

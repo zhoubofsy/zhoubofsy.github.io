@@ -98,14 +98,14 @@
 <meta name="description" content="Ceph中的RBD备份分为全量备份和增量备份，恢复也有增全量之分。 备份和恢复的操作都是基于快照来操作的。 RBD的format必须为2 （–image-format 2）  备份备份操作流程，先做一个全量备份，然后每隔一段时间做一个快照，并将快照导出。 准备创建一个RBD image 1$ rbd create --image-format 2 --size 1G crbd_cls17_1 全">
 <meta name="keywords" content="ceph,rbd">
 <meta property="og:type" content="article">
-<meta property="og:title" content="RBD备份及恢复方法">
+<meta property="og:title" content="RBD备份">
 <meta property="og:url" content="http://yoursite.com/2019/04/28/storage/ceph/rbd-export-import/index.html">
 <meta property="og:site_name" content="Bolog">
 <meta property="og:description" content="Ceph中的RBD备份分为全量备份和增量备份，恢复也有增全量之分。 备份和恢复的操作都是基于快照来操作的。 RBD的format必须为2 （–image-format 2）  备份备份操作流程，先做一个全量备份，然后每隔一段时间做一个快照，并将快照导出。 准备创建一个RBD image 1$ rbd create --image-format 2 --size 1G crbd_cls17_1 全">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2019-04-28T07:38:37.007Z">
+<meta property="og:updated_time" content="2019-05-05T01:32:37.170Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="RBD备份及恢复方法">
+<meta name="twitter:title" content="RBD备份">
 <meta name="twitter:description" content="Ceph中的RBD备份分为全量备份和增量备份，恢复也有增全量之分。 备份和恢复的操作都是基于快照来操作的。 RBD的format必须为2 （–image-format 2）  备份备份操作流程，先做一个全量备份，然后每隔一段时间做一个快照，并将快照导出。 准备创建一个RBD image 1$ rbd create --image-format 2 --size 1G crbd_cls17_1 全">
 
 
@@ -142,7 +142,7 @@
 
 
 
-  <title>RBD备份及恢复方法 | Bolog</title>
+  <title>RBD备份 | Bolog</title>
   
 
 
@@ -330,7 +330,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">RBD备份及恢复方法</h1>
+          <h1 class="post-title" itemprop="name headline">RBD备份</h1>
         
 
         <div class="post-meta">
@@ -464,6 +464,10 @@
 
           <div class="post-nav-prev post-nav-item">
             
+              <a href="/2019/05/05/storage/ceph/rbd-mirror/" rel="prev" title="rbd-mirror 跨集群备份">
+                rbd-mirror 跨集群备份 <i class="fa fa-chevron-right"></i>
+              </a>
+            
           </div>
         </div>
       
@@ -541,7 +545,7 @@
             
               <a href="/archives/ || archive">
             
-                <span class="site-state-item-count">102</span>
+                <span class="site-state-item-count">103</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>

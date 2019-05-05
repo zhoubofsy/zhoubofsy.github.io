@@ -309,6 +309,173 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/12/01/container/docker/docker-image-untar/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/12/01/container/docker/docker-image-untar/" itemprop="url">Untar Docker Image</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-12-01T09:57:17+08:00">
+                2017-12-01
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/container/" itemprop="url" rel="index">
+                    <span itemprop="name">container</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>docker中容器的运行离不开image，一个image中都存放有哪些东西呢？这些东西又是以何种方式组织在一起的呢？今天让我们来撕开这层面纱，看看image到底是什么样。</p>
+<h1 id="撕"><a href="#撕" class="headerlink" title="撕"></a>撕</h1><h2 id="导出tar包"><a href="#导出tar包" class="headerlink" title="导出tar包"></a>导出tar包</h2><p>首先我们使用<code>docker save</code>，将一个docker image保存成tar包，我们以<code>nginx官方镜像</code>为例</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">$ docker images</div><div class="line">REPOSITORY                               TAG                 IMAGE ID            CREATED             SIZE</div><div class="line">nginx                                   1.11.3              4efb2fcdb1ab        15 months ago       183MB</div><div class="line"></div><div class="line">$ docker save nginx:1.11.3 -o ./nginx.tar</div><div class="line">$ tar -xvf ./nginx.tar -C ./nginx</div><div class="line">...</div><div class="line">$ ls -l ./</div><div class="line">drwxrwxr-x 5 zhoub zhoub      4096 11月 28 16:55 nginx</div><div class="line">-rw------- 1 zhoub zhoub 191400960 11月 28 16:52 nginx.tar</div></pre></td></tr></table></figure>
+<h2 id="走近nginx目录"><a href="#走近nginx目录" class="headerlink" title="走近nginx目录"></a>走近nginx目录</h2><p>现在<code>nginx.tar</code>已经被解开了，接下来就要进入nginx目录一探究竟了。首先<code>tree</code>一下nginx目录，看看都有什么文件。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line">$ tree -L 2 ./nginx</div><div class="line">./nginx</div><div class="line">├── 01d69dac180439f10b5f2f06b71fa19c9f89fb85cb5fd543dba9bb2ca9b620ef</div><div class="line">│   ├── json</div><div class="line">│   ├── layer</div><div class="line">│   ├── layer.tar</div><div class="line">│   └── VERSION</div><div class="line">├── 4efb2fcdb1ab05fb03c9435234343c1cc65289eeb016be86193e88d3a5d84f6b.json</div><div class="line">├── 80cdba09b091f72276c031bd64488c3da5f82022812bc995f0859abe0855a872</div><div class="line">│   ├── json</div><div class="line">│   ├── layer</div><div class="line">│   ├── layer.tar</div><div class="line">│   └── VERSION</div><div class="line">├── c575e5db41b92dbf9e1814b8ea9cf989ef650e37cfcef12fa402e630db6a581f</div><div class="line">│   ├── json</div><div class="line">│   ├── layer</div><div class="line">│   ├── layer.tar</div><div class="line">│   └── VERSION</div><div class="line">├── manifest.json</div><div class="line">└── repositories</div></pre></td></tr></table></figure>
+<p>从目录结构上来看，有三个总体的描述文件<code>repositories</code>、<code>manifest.json</code>、<code>4efb2fcdb1ab05fb03c9435234343c1cc65289eeb016be86193e88d3a5d84f6b.json</code>，还有三个目录，这三个目录的结构基本相同都由<code>json</code>、<code>layer</code>、<code>VERSION</code>组成。</p>
+<p>通过这些名字，我们先简单猜测一下，image由很多layer组成，上层layer基于下层layer构建而成，下层layer基于基层layer构成。到底image是不是按我们的猜测构成的呢，让我们来看一看总体描述的三个文件。</p>
+<p>manifest.json:<br><figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">&#123;"Config":"4efb2fcdb1ab05fb03c9435234343c1cc65289eeb016be86193e88d3a5d84f6b.json","RepoTags":["nginx:1.11.3"],"Layers":["80cdba09b091f72276c031bd64488c3da5f82022812bc995f0859abe0855a872/layer.tar","c575e5db41b92dbf9e1814b8ea9cf989ef650e37cfcef12fa402e630db6a581f/layer.tar","01d69dac180439f10b5f2f06b71fa19c9f89fb85cb5fd543dba9bb2ca9b620ef/layer.tar"]&#125;]</div></pre></td></tr></table></figure></p>
+<p>通过<code>manifest.json</code>文件我们可以看出，<code>nginx:1.11.3</code>这个image的配置文件是<code>4efb2fcdb1ab05fb03c9435234343c1cc65289eeb016be86193e88d3a5d84f6b.json</code>，layer一共有三个分别是<code>80cdba09b091f72276c031bd64488c3da5f82022812bc995f0859abe0855a872/layer.tar</code>，<code>c575e5db41b92dbf9e1814b8ea9cf989ef650e37cfcef12fa402e630db6a581f/layer.tar</code>，<code>01d69dac180439f10b5f2f06b71fa19c9f89fb85cb5fd543dba9bb2ca9b620ef/layer.tar</code>。</p>
+<p>image的配置文件中都对image进行了哪些配置呢？让我们来看一看<br>4efb2fcdb1ab05fb03c9435234343c1cc65289eeb016be86193e88d3a5d84f6b.json<br><figure class="highlight json"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div></pre></td><td class="code"><pre><div class="line">&#123;</div><div class="line">    <span class="attr">"architecture"</span>:<span class="string">"amd64"</span>,</div><div class="line">    <span class="attr">"author"</span>:<span class="string">"NGINX Docker Maintainers \"docker-maint@nginx.com\""</span>,</div><div class="line">    <span class="attr">"config"</span>:&#123;</div><div class="line">        <span class="attr">"Hostname"</span>:<span class="string">"2da0903ff372"</span>,</div><div class="line">        <span class="attr">"Domainname"</span>:<span class="string">""</span>,</div><div class="line">        <span class="attr">"User"</span>:<span class="string">""</span>,</div><div class="line">        <span class="attr">"AttachStdin"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"AttachStdout"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"AttachStderr"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"ExposedPorts"</span>:&#123;<span class="attr">"443/tcp"</span>:&#123;&#125;,<span class="attr">"80/tcp"</span>:&#123;&#125;&#125;,</div><div class="line">        <span class="attr">"Tty"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"OpenStdin"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"StdinOnce"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"Env"</span>:[<span class="string">"PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"</span>,<span class="string">"NGINX_VERSION=1.11.3-1~jessie"</span>],</div><div class="line">        <span class="attr">"Cmd"</span>:[<span class="string">"nginx"</span>,<span class="string">"-g"</span>,<span class="string">"daemon off;"</span>],</div><div class="line">        <span class="attr">"ArgsEscaped"</span>:<span class="literal">true</span>,</div><div class="line">        <span class="attr">"Image"</span>:<span class="string">"sha256:27ca9d70a764c6955e354f5fdc706b03ed47601213ac9fc638a8943fcc7680f8"</span>,</div><div class="line">        <span class="attr">"Volumes"</span>:<span class="literal">null</span>,</div><div class="line">        <span class="attr">"WorkingDir"</span>:<span class="string">""</span>,</div><div class="line">        <span class="attr">"Entrypoint"</span>:<span class="literal">null</span>,</div><div class="line">        <span class="attr">"OnBuild"</span>:[],</div><div class="line">        <span class="attr">"Labels"</span>:&#123;&#125;</div><div class="line">    &#125;,</div><div class="line">    <span class="attr">"container"</span>:<span class="string">"25ab8b143580751e438246801e7ba720f6f84ee9faca3522532e7fbe1ed7021f"</span>,</div><div class="line">    <span class="attr">"container_config"</span>:&#123;</div><div class="line">        <span class="attr">"Hostname"</span>:<span class="string">"2da0903ff372"</span>,</div><div class="line">        <span class="attr">"Domainname"</span>:<span class="string">""</span>,</div><div class="line">        <span class="attr">"User"</span>:<span class="string">""</span>,</div><div class="line">        <span class="attr">"AttachStdin"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"AttachStdout"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"AttachStderr"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"ExposedPorts"</span>:&#123;<span class="attr">"443/tcp"</span>:&#123;&#125;,<span class="attr">"80/tcp"</span>:&#123;&#125;&#125;,</div><div class="line">        <span class="attr">"Tty"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"OpenStdin"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"StdinOnce"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"Env"</span>:[<span class="string">"PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"</span>,<span class="string">"NGINX_VERSION=1.11.3-1~jessie"</span>],</div><div class="line">        <span class="attr">"Cmd"</span>:[<span class="string">"/bin/sh"</span>,<span class="string">"-c"</span>,<span class="string">"#(nop) CMD [\"nginx\" \"-g\" \"daemon off;\"]"</span>],</div><div class="line">        <span class="attr">"ArgsEscaped"</span>:<span class="literal">true</span>,</div><div class="line">        <span class="attr">"Image"</span>:<span class="string">"sha256:27ca9d70a764c6955e354f5fdc706b03ed47601213ac9fc638a8943fcc7680f8"</span>,</div><div class="line">        <span class="attr">"Volumes"</span>:<span class="literal">null</span>,</div><div class="line">        <span class="attr">"WorkingDir"</span>:<span class="string">""</span>,</div><div class="line">        <span class="attr">"Entrypoint"</span>:<span class="literal">null</span>,</div><div class="line">        <span class="attr">"OnBuild"</span>:[],</div><div class="line">        <span class="attr">"Labels"</span>:&#123;&#125;</div><div class="line">    &#125;,</div><div class="line">    <span class="attr">"created"</span>:<span class="string">"2016-08-23T18:51:23.709520142Z"</span>,</div><div class="line">    <span class="attr">"docker_version"</span>:<span class="string">"1.10.3"</span>,</div><div class="line">    <span class="attr">"history"</span>:[</div><div class="line">        &#123;<span class="attr">"created"</span>:<span class="string">"2016-07-28T17:47:54.990622865Z"</span>,<span class="attr">"created_by"</span>:<span class="string">"/bin/sh -c #(nop) ADD file:0e0565652aa852f62033d99f84892216020d30f64521ded5e72d4940bc4c9697 in /"</span>&#125;,</div><div class="line">        &#123;<span class="attr">"created"</span>:<span class="string">"2016-07-28T17:47:55.809686499Z"</span>,<span class="attr">"created_by"</span>:<span class="string">"/bin/sh -c #(nop) CMD [\"/bin/bash\"]"</span>,<span class="attr">"empty_layer"</span>:<span class="literal">true</span>&#125;,</div><div class="line">        &#123;<span class="attr">"created"</span>:<span class="string">"2016-08-23T18:49:31.945397165Z"</span>,<span class="attr">"author"</span>:<span class="string">"NGINX Docker Maintainers \"docker-maint@nginx.com\""</span>,<span class="attr">"created_by"</span>:<span class="string">"/bin/sh -c #(nop) MAINTAINER NGINX Docker Maintainers \"docker-maint@nginx.com\""</span>,<span class="attr">"empty_layer"</span>:<span class="literal">true</span>&#125;,</div><div class="line">        &#123;<span class="attr">"created"</span>:<span class="string">"2016-08-23T18:49:33.057946615Z"</span>,<span class="attr">"author"</span>:<span class="string">"NGINX Docker Maintainers \"docker-maint@nginx.com\""</span>,<span class="attr">"created_by"</span>:<span class="string">"/bin/sh -c #(nop) ENV NGINX_VERSION=1.11.3-1~jessie"</span>,<span class="attr">"empty_layer"</span>:<span class="literal">true</span>&#125;,</div><div class="line">        &#123;<span class="attr">"created"</span>:<span class="string">"2016-08-23T18:51:19.236946594Z"</span>,<span class="attr">"author"</span>:<span class="string">"NGINX Docker Maintainers \"docker-maint@nginx.com\""</span>,<span class="attr">"created_by"</span>:<span class="string">"/bin/sh -c apt-key adv --keyserver hkp://pgp.mit.edu:80 --recv-keys 573BFD6B3D8FBC641079A6ABABF5BD827BD9BF62 \t\u0026\u0026 echo \"deb http://nginx.org/packages/mainline/debian/ jessie nginx\" \u003e\u003e /etc/apt/sources.list \t\u0026\u0026 apt-get update \t\u0026\u0026 apt-get install --no-install-recommends --no-install-suggests -y \t\t\t\t\t\tca-certificates \t\t\t\t\t\tnginx=$&#123;NGINX_VERSION&#125; \t\t\t\t\t\tnginx-module-xslt \t\t\t\t\t\tnginx-module-geoip \t\t\t\t\t\tnginx-module-image-filter \t\t\t\t\t\tnginx-module-perl \t\t\t\t\t\tnginx-module-njs \t\t\t\t\t\tgettext-base \t\u0026\u0026 rm -rf /var/lib/apt/lists/*"</span>&#125;,</div><div class="line">        &#123;<span class="attr">"created"</span>:<span class="string">"2016-08-23T18:51:21.574094006Z"</span>,<span class="attr">"author"</span>:<span class="string">"NGINX Docker Maintainers \"docker-maint@nginx.com\""</span>,<span class="attr">"created_by"</span>:<span class="string">"/bin/sh -c ln -sf /dev/stdout /var/log/nginx/access.log \t\u0026\u0026 ln -sf /dev/stderr /var/log/nginx/error.log"</span>&#125;,</div><div class="line">        &#123;<span class="attr">"created"</span>:<span class="string">"2016-08-23T18:51:22.632895061Z"</span>,<span class="attr">"author"</span>:<span class="string">"NGINX Docker Maintainers \"docker-maint@nginx.com\""</span>,<span class="attr">"created_by"</span>:<span class="string">"/bin/sh -c #(nop) EXPOSE 443/tcp 80/tcp"</span>,<span class="attr">"empty_layer"</span>:<span class="literal">true</span>&#125;,</div><div class="line">        &#123;<span class="attr">"created"</span>:<span class="string">"2016-08-23T18:51:23.709520142Z"</span>,<span class="attr">"author"</span>:<span class="string">"NGINX Docker Maintainers \"docker-maint@nginx.com\""</span>,<span class="attr">"created_by"</span>:<span class="string">"/bin/sh -c #(nop) CMD [\"nginx\" \"-g\" \"daemon off;\"]"</span>,<span class="attr">"empty_layer"</span>:<span class="literal">true</span>&#125;</div><div class="line">    ],</div><div class="line">    <span class="attr">"os"</span>:<span class="string">"linux"</span>,</div><div class="line">    <span class="attr">"rootfs"</span>:&#123;</div><div class="line">        <span class="attr">"type"</span>:<span class="string">"layers"</span>,</div><div class="line">        <span class="attr">"diff_ids"</span>:[</div><div class="line">            <span class="string">"sha256:2f71b45e4e254ddceb187b1467f5471f0e14d7124ac2dd7fdd7ddbc76e13f0e5"</span>,</div><div class="line">            <span class="string">"sha256:d7953e5e5bba5c637ce6eb81a4528a777c4265386cb12e9bff8124ef97538746"</span>,</div><div class="line">            <span class="string">"sha256:69ecf026ff94793ab573754612e6fa40b28331a47c3584de0b32d39a88959c37"</span></div><div class="line">        ]</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>看完这个配置文件我惊到了，如此庞大的一个配置文件告诉我们dockerfile能配的我能配，dockerfile不能配的我也能配。。。这个配置文件具体就不分析了。。。</p>
+<p>刚刚看完那个累心的配置文件，接下来让我们来说说这三个layer，哪一个layer是入口呢？</p>
+<p>repositories:<br><figure class="highlight json"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">&#123;<span class="attr">"nginx"</span>:&#123;<span class="attr">"1.11.3"</span>:<span class="string">"01d69dac180439f10b5f2f06b71fa19c9f89fb85cb5fd543dba9bb2ca9b620ef"</span>&#125;&#125;</div></pre></td></tr></table></figure></p>
+<p>我们通过查看<code>repositories</code>可以看出<code>1.11.3</code>这个版本的layer入口是<code>01d69dac180439f10b5f2f06b71fa19c9f89fb85cb5fd543dba9bb2ca9b620ef</code>。那么三个layer之间的依赖关系怎样呢？让我们进入各个layer一探究竟吧。</p>
+<h3 id="layer-01d69dac180439f10b5f2f06b71fa19c9f89fb85cb5fd543dba9bb2ca9b620ef"><a href="#layer-01d69dac180439f10b5f2f06b71fa19c9f89fb85cb5fd543dba9bb2ca9b620ef" class="headerlink" title="layer 01d69dac180439f10b5f2f06b71fa19c9f89fb85cb5fd543dba9bb2ca9b620ef"></a>layer 01d69dac180439f10b5f2f06b71fa19c9f89fb85cb5fd543dba9bb2ca9b620ef</h3><p>该layer中的<code>json</code>文件描述的本layer的配置信息</p>
+<p>json:<br><figure class="highlight json"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div></pre></td><td class="code"><pre><div class="line">&#123;</div><div class="line">    <span class="attr">"id"</span>:<span class="string">"01d69dac180439f10b5f2f06b71fa19c9f89fb85cb5fd543dba9bb2ca9b620ef"</span>,</div><div class="line">    <span class="attr">"parent"</span>:<span class="string">"c575e5db41b92dbf9e1814b8ea9cf989ef650e37cfcef12fa402e630db6a581f"</span>,</div><div class="line">    <span class="attr">"created"</span>:<span class="string">"2016-08-23T18:51:23.709520142Z"</span>,</div><div class="line">    <span class="attr">"container"</span>:<span class="string">"25ab8b143580751e438246801e7ba720f6f84ee9faca3522532e7fbe1ed7021f"</span>,</div><div class="line">    <span class="attr">"container_config"</span>:&#123;</div><div class="line">        <span class="attr">"Hostname"</span>:<span class="string">"2da0903ff372"</span>,</div><div class="line">        <span class="attr">"Domainname"</span>:<span class="string">""</span>,</div><div class="line">        <span class="attr">"User"</span>:<span class="string">""</span>,</div><div class="line">        <span class="attr">"AttachStdin"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"AttachStdout"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"AttachStderr"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"ExposedPorts"</span>:&#123;<span class="attr">"443/tcp"</span>:&#123;&#125;,<span class="attr">"80/tcp"</span>:&#123;&#125;&#125;,</div><div class="line">        <span class="attr">"Tty"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"OpenStdin"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"StdinOnce"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"Env"</span>:[<span class="string">"PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"</span>,<span class="string">"NGINX_VERSION=1.11.3-1~jessie"</span>],</div><div class="line">        <span class="attr">"Cmd"</span>:[<span class="string">"/bin/sh"</span>,<span class="string">"-c"</span>,<span class="string">"#(nop) CMD [\"nginx\" \"-g\" \"daemon off;\"]"</span>],</div><div class="line">        <span class="attr">"ArgsEscaped"</span>:<span class="literal">true</span>,</div><div class="line">        <span class="attr">"Image"</span>:<span class="string">"sha256:27ca9d70a764c6955e354f5fdc706b03ed47601213ac9fc638a8943fcc7680f8"</span>,</div><div class="line">        <span class="attr">"Volumes"</span>:<span class="literal">null</span>,</div><div class="line">        <span class="attr">"WorkingDir"</span>:<span class="string">""</span>,</div><div class="line">        <span class="attr">"Entrypoint"</span>:<span class="literal">null</span>,</div><div class="line">        <span class="attr">"OnBuild"</span>:[],</div><div class="line">        <span class="attr">"Labels"</span>:&#123;&#125;</div><div class="line">    &#125;,</div><div class="line">    <span class="attr">"docker_version"</span>:<span class="string">"1.10.3"</span>,</div><div class="line">    <span class="attr">"author"</span>:<span class="string">"NGINX Docker Maintainers \"docker-maint@nginx.com\""</span>,</div><div class="line">    <span class="attr">"config"</span>:&#123;</div><div class="line">        <span class="attr">"Hostname"</span>:<span class="string">"2da0903ff372"</span>,</div><div class="line">        <span class="attr">"Domainname"</span>:<span class="string">""</span>,</div><div class="line">        <span class="attr">"User"</span>:<span class="string">""</span>,</div><div class="line">        <span class="attr">"AttachStdin"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"AttachStdout"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"AttachStderr"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"ExposedPorts"</span>:&#123;<span class="attr">"443/tcp"</span>:&#123;&#125;,<span class="attr">"80/tcp"</span>:&#123;&#125;&#125;,</div><div class="line">        <span class="attr">"Tty"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"OpenStdin"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"StdinOnce"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"Env"</span>:[<span class="string">"PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"</span>,<span class="string">"NGINX_VERSION=1.11.3-1~jessie"</span>],</div><div class="line">        <span class="attr">"Cmd"</span>:[<span class="string">"nginx"</span>,<span class="string">"-g"</span>,<span class="string">"daemon off;"</span>],</div><div class="line">        <span class="attr">"ArgsEscaped"</span>:<span class="literal">true</span>,</div><div class="line">        <span class="attr">"Image"</span>:<span class="string">"sha256:27ca9d70a764c6955e354f5fdc706b03ed47601213ac9fc638a8943fcc7680f8"</span>,</div><div class="line">        <span class="attr">"Volumes"</span>:<span class="literal">null</span>,</div><div class="line">        <span class="attr">"WorkingDir"</span>:<span class="string">""</span>,</div><div class="line">        <span class="attr">"Entrypoint"</span>:<span class="literal">null</span>,</div><div class="line">        <span class="attr">"OnBuild"</span>:[],</div><div class="line">        <span class="attr">"Labels"</span>:&#123;&#125;</div><div class="line">    &#125;,</div><div class="line">    <span class="attr">"architecture"</span>:<span class="string">"amd64"</span>,</div><div class="line">    <span class="attr">"os"</span>:<span class="string">"linux"</span></div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>我们可以看到<code>parent</code>字段指出了当前layer的父layer是<code>c575e5db41b92dbf9e1814b8ea9cf989ef650e37cfcef12fa402e630db6a581f</code>。<br>当前layer中数据内容请见<code>layer.tar</code></p>
+<p>layer.tar:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">$ tree ./layer</div><div class="line">./layer</div><div class="line">└── var</div><div class="line">    └── log</div><div class="line">    └── nginx</div><div class="line">        ├── access.log -&gt; /dev/stdout</div><div class="line">        └── error.log -&gt; /dev/stderr</div></pre></td></tr></table></figure></p>
+<h3 id="layer-c575e5db41b92dbf9e1814b8ea9cf989ef650e37cfcef12fa402e630db6a581f"><a href="#layer-c575e5db41b92dbf9e1814b8ea9cf989ef650e37cfcef12fa402e630db6a581f" class="headerlink" title="layer c575e5db41b92dbf9e1814b8ea9cf989ef650e37cfcef12fa402e630db6a581f"></a>layer c575e5db41b92dbf9e1814b8ea9cf989ef650e37cfcef12fa402e630db6a581f</h3><p>该layer中的<code>json</code>文件描述的本layer的配置信息</p>
+<p>json:<br><figure class="highlight json"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line">&#123;</div><div class="line">    <span class="attr">"id"</span>:<span class="string">"c575e5db41b92dbf9e1814b8ea9cf989ef650e37cfcef12fa402e630db6a581f"</span>,</div><div class="line">    <span class="attr">"parent"</span>:<span class="string">"80cdba09b091f72276c031bd64488c3da5f82022812bc995f0859abe0855a872"</span>,</div><div class="line">    <span class="attr">"created"</span>:<span class="string">"1970-01-01T08:00:00+08:00"</span>,</div><div class="line">    <span class="attr">"container_config"</span>:&#123;</div><div class="line">        <span class="attr">"Hostname"</span>:<span class="string">""</span>,</div><div class="line">        <span class="attr">"Domainname"</span>:<span class="string">""</span>,</div><div class="line">        <span class="attr">"User"</span>:<span class="string">""</span>,</div><div class="line">        <span class="attr">"AttachStdin"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"AttachStdout"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"AttachStderr"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"Tty"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"OpenStdin"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"StdinOnce"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"Env"</span>:<span class="literal">null</span>,</div><div class="line">        <span class="attr">"Cmd"</span>:<span class="literal">null</span>,</div><div class="line">        <span class="attr">"Image"</span>:<span class="string">""</span>,</div><div class="line">        <span class="attr">"Volumes"</span>:<span class="literal">null</span>,</div><div class="line">        <span class="attr">"WorkingDir"</span>:<span class="string">""</span>,</div><div class="line">        <span class="attr">"Entrypoint"</span>:<span class="literal">null</span>,</div><div class="line">        <span class="attr">"OnBuild"</span>:<span class="literal">null</span>,</div><div class="line">        <span class="attr">"Labels"</span>:<span class="literal">null</span></div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>该layer中的父layer是<code>80cdba09b091f72276c031bd64488c3da5f82022812bc995f0859abe0855a872</code><br>当前layer中的数据内容请见<code>layer.tar</code></p>
+<p>layer.tar:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div></pre></td><td class="code"><pre><div class="line">$ tree -L 2 ./layer</div><div class="line">./layer</div><div class="line">├── etc</div><div class="line">│   ├── alternatives</div><div class="line">│   ├── apt</div><div class="line">│   ├── ca-certificates</div><div class="line">│   ├── ca-certificates.conf</div><div class="line">│   ├── default</div><div class="line">│   ├── fonts</div><div class="line">│   ├── group</div><div class="line">│   ├── group-</div><div class="line">│   ├── gshadow</div><div class="line">│   ├── gshadow-</div><div class="line">│   ├── init.d</div><div class="line">│   ├── ld.so.cache</div><div class="line">│   ├── logrotate.d</div><div class="line">│   ├── nginx</div><div class="line">│   ├── passwd</div><div class="line">│   ├── passwd-</div><div class="line">│   ├── perl</div><div class="line">│   ├── rc0.d</div><div class="line">│   ├── rc1.d</div><div class="line">│   ├── rc2.d</div><div class="line">│   ├── rc3.d</div><div class="line">│   ├── rc4.d</div><div class="line">│   ├── rc5.d</div><div class="line">│   ├── rc6.d</div><div class="line">│   ├── shadow</div><div class="line">│   ├── shadow-</div><div class="line">│   ├── ssl</div><div class="line">│   ├── subgid</div><div class="line">│   ├── subgid-</div><div class="line">│   ├── subuid</div><div class="line">│   ├── subuid-</div><div class="line">│   └── ucf.conf</div><div class="line">├── lib</div><div class="line">│   └── x86_64-linux-gnu</div><div class="line">├── tmp</div><div class="line">├── usr</div><div class="line">│   ├── bin</div><div class="line">│   ├── lib</div><div class="line">│   ├── local</div><div class="line">│   ├── sbin</div><div class="line">│   └── share</div><div class="line">└── var</div><div class="line">    ├── cache</div><div class="line">    ├── lib</div><div class="line">    └── log</div></pre></td></tr></table></figure></p>
+<h3 id="layer-80cdba09b091f72276c031bd64488c3da5f82022812bc995f0859abe0855a872"><a href="#layer-80cdba09b091f72276c031bd64488c3da5f82022812bc995f0859abe0855a872" class="headerlink" title="layer 80cdba09b091f72276c031bd64488c3da5f82022812bc995f0859abe0855a872"></a>layer 80cdba09b091f72276c031bd64488c3da5f82022812bc995f0859abe0855a872</h3><p>该layer中的<code>json</code>文件描述的本layer的配置信息<br>json:<br><figure class="highlight json"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line">&#123;</div><div class="line">    <span class="attr">"id"</span>:<span class="string">"80cdba09b091f72276c031bd64488c3da5f82022812bc995f0859abe0855a872"</span>,</div><div class="line">    <span class="attr">"created"</span>:<span class="string">"1970-01-01T08:00:00+08:00"</span>,</div><div class="line">    <span class="attr">"container_config"</span>:&#123;</div><div class="line">        <span class="attr">"Hostname"</span>:<span class="string">""</span>,</div><div class="line">        <span class="attr">"Domainname"</span>:<span class="string">""</span>,</div><div class="line">        <span class="attr">"User"</span>:<span class="string">""</span>,</div><div class="line">        <span class="attr">"AttachStdin"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"AttachStdout"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"AttachStderr"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"Tty"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"OpenStdin"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"StdinOnce"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"Env"</span>:<span class="literal">null</span>,</div><div class="line">        <span class="attr">"Cmd"</span>:<span class="literal">null</span>,</div><div class="line">        <span class="attr">"Image"</span>:<span class="string">""</span>,</div><div class="line">        <span class="attr">"Volumes"</span>:<span class="literal">null</span>,</div><div class="line">        <span class="attr">"WorkingDir"</span>:<span class="string">""</span>,</div><div class="line">        <span class="attr">"Entrypoint"</span>:<span class="literal">null</span>,</div><div class="line">        <span class="attr">"OnBuild"</span>:<span class="literal">null</span>,</div><div class="line">        <span class="attr">"Labels"</span>:<span class="literal">null</span></div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>从配置中可以看出，没有<code>parent</code>字段了。说明这个layer应该就是base layer了。(我十分好奇nginx镜像是用哪个基础镜像做出来的?)<br>当前layer中的数据内容请见<code>layer.tar</code><br>layer.tar:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div></pre></td><td class="code"><pre><div class="line">$ tree -L 1 ./layer</div><div class="line">./layer</div><div class="line">├── bin</div><div class="line">├── boot</div><div class="line">├── dev</div><div class="line">├── etc</div><div class="line">├── home</div><div class="line">├── lib</div><div class="line">├── lib64</div><div class="line">├── media</div><div class="line">├── mnt</div><div class="line">├── opt</div><div class="line">├── proc</div><div class="line">├── root</div><div class="line">├── run</div><div class="line">├── sbin</div><div class="line">├── srv</div><div class="line">├── sys</div><div class="line">├── tmp</div><div class="line">├── usr</div><div class="line">└── var</div></pre></td></tr></table></figure></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ cat ./layer/etc/debian_version</div><div class="line">8.5</div></pre></td></tr></table></figure>
+<p>噢，原来nginx镜像是基于debian 8.5做出来的。</p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/11/27/storage/ceph/radosgw-arch/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -2455,165 +2622,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/09/25/language/python/python-encode-decode/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/09/25/language/python/python-encode-decode/" itemprop="url">encode and decode</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-09-25T10:35:14+08:00">
-                2017-09-25
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/language/" itemprop="url" rel="index">
-                    <span itemprop="name">language</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>计算机只能处理数字，如果要处理文本，就必须先把文本转换为数字才能处理。最早的计算机在设计时采用8个比特（bit）作为一个字节（byte），所以，一个字节能表示的最大的整数就是255（二进制11111111=十进制255），如果要表示更大的整数，就必须用更多的字节。比如两个字节可以表示的最大整数是65535，4个字节可以表示的最大整数是4294967295。</p>
-<h2 id="ASCII"><a href="#ASCII" class="headerlink" title="ASCII"></a>ASCII</h2><p>规定了128个字符的编码(准确地说ASCII码是一个编码字符集),比如空格“SPACE”是32（二进制00100000），大写的字母A是65（二进制01000001）。这128个符号（包括32个不能打印出来的控制符号），只占用了一个字节的后面7位，最前面的1位统一规定为0。后128个称为扩展ASCII码，目前许多基于x86的系统都支持使用扩展ASCII码。256个ASCII码中的后128个扩展码可定制用来表示特殊字符和非英语字符，GB2312就是利用这后面的128个扩展字符来表示汉字，[161,254]共94个字符来组成双字节来表示简体汉字字符表。</p>
-<h2 id="Unicode"><a href="#Unicode" class="headerlink" title="Unicode"></a>Unicode</h2><p>光是英语字符ASCII编码字符集是够了，但是如果算上世界上其他的语言的字符，ASCII码显然不够了，于是Unicode编码字符集应运而生。Unicode用数字0-0x10FFFF来映射这些字符，最多可以容纳1114112个字符，或者说有1114112个码位。码位就是可以分配给字符的数字。UTF-8、UTF-16、UTF-32都是将所有Unicode用到的数字转换为程序数据的编码方案。全世界的字符加起来也用不了所有的码位，Unicode 5.0版本中，才用了238605个码位。</p>
-<h2 id="UTF8"><a href="#UTF8" class="headerlink" title="UTF8"></a>UTF8</h2><p>新问题的出现：如果统一成Unicode编码，乱码问题从此消失了。但是，如果你写的文本基本上全部是英文的话，用Unicode编码比ASCII编码需要多一倍的存储空间，在存储和传输上就十分不划算。因此，又出现了把Unicode编码转化为“可变长编码”的UTF-8编码。UTF-8编码把一个Unicode字符根据不同的数字大小编码成1-6个字节，常用的英文字母被编码成1个字节，汉字通常是3个字节，只有很生僻的字符才会被编码成4-6个字节。如果你要传输的文本包含大量英文字符，用UTF-8编码就能节省空间。ASCII编码实际上可以被看成是UTF-8编码的一部分，所以，大量只支持ASCII编码的历史遗留软件可以在UTF-8编码下继续工作。Unicode是字符集，UTF-8、UTF-16等是编码格式，定义“字符对应的数字”如何在以二进制的方式存储。</p>
-<h2 id="GB2312"><a href="#GB2312" class="headerlink" title="GB2312"></a>GB2312</h2><p>规定: 一个小于127的字符的意义与原来相同, 但两个大于127的字符连在一起时, 就表示一个汉字, 前面的一个字节(他称之为高字节)从0xA1用到 0xF7, 后面一个字节(低字节)从0xA1到0xFE, 这样我们就可以组合出大约7000多个简体汉字了. 在这些编码里, 我们还把数学符号,罗马希腊的 字母,日文的假名们都编进去了, 连在 ASCII 里本来就有的数字,标点,字母都统统重新编了两个字节长的编码, 这就是常说的”全角”字符, 而原来在127号以下的那些就叫”半角”字符了。</p>
-<h2 id="GBK"><a href="#GBK" class="headerlink" title="GBK"></a>GBK</h2><p>GBK 包括了 GB2312 的所有内容, 同时又增加了近20000个新的汉字(包括繁体字)和符号。</p>
-<h1 id="转换"><a href="#转换" class="headerlink" title="转换"></a>转换</h1><p>unicode兼容ascii，GBK兼容GB2312，转换也就是unicode与GBK之间的事情了。字符串在Python内部的表示是unicode编码，因此，在做编码转换时，通常需要以unicode作为中间编码，即先将其他编码的字符串解码（decode）成unicode，再从unicode编码（encode）成另一种编码。</p>
-<ul>
-<li>decode的作用是将其他编码的字符串转换成unicode编码，如str1.decode(‘gb2312’)，表示将gb2312编码的字符串转换成unicode编码</li>
-<li>encode的作用是将unicode编码转换成其他编码的字符串，如str2.encode(‘gb2312’)，表示将unicode编码的字符串转换成gb2312编码</li>
-</ul>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#encoding=utf8</span></div><div class="line"></div><div class="line">s = <span class="string">'中文'</span></div><div class="line"><span class="keyword">print</span> type(s)</div><div class="line"><span class="keyword">print</span> s</div><div class="line"></div><div class="line">us = s.decode(<span class="string">'utf8'</span>)</div><div class="line"><span class="keyword">print</span> type(us)</div><div class="line"><span class="keyword">print</span> s</div><div class="line"></div><div class="line">gs = us.encode(<span class="string">'gb2312'</span>)</div><div class="line"><span class="keyword">print</span> type(gs)</div><div class="line"><span class="keyword">print</span> gs</div></pre></td></tr></table></figure>
-<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a href="http://www.cnblogs.com/yuguangchuan/p/4310952.html" target="_blank" rel="external">三种常见字符编码简介：ASCII、Unicode和UTF-8</a></li>
-<li><a href="http://blog.csdn.net/nodeathphoenix/article/details/7057760" target="_blank" rel="external">Unicode 字符集与它的编码方式</a></li>
-<li><a href="http://blog.csdn.net/zhao1949/article/details/51198040" target="_blank" rel="external">字符编码的故事：ASCII，GB2312，Unicode，UTF-8，UTF-16</a></li>
-<li><a href="http://blog.csdn.net/q_l_s/article/details/51253542" target="_blank" rel="external">Python字符串的编码与解码(encode与decode)</a></li>
-</ul>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2666,7 +2674,7 @@
             
               <a href="/archives/ || archive">
             
-                <span class="site-state-item-count">102</span>
+                <span class="site-state-item-count">103</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
