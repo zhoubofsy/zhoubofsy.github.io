@@ -97,7 +97,7 @@
 
 <meta property="og:type" content="website">
 <meta property="og:title" content="Bolog">
-<meta property="og:url" content="http://yoursite.com/tags/DNS/index.html">
+<meta property="og:url" content="http://yoursite.com/tags/dns/index.html">
 <meta property="og:site_name" content="Bolog">
 <meta property="og:locale" content="zh-Hans">
 <meta name="twitter:card" content="summary">
@@ -131,13 +131,13 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/tags/DNS/"/>
+  <link rel="canonical" href="http://yoursite.com/tags/dns/"/>
 
 
 
 
 
-  <title>标签: DNS | Bolog</title>
+  <title>标签: dns | Bolog</title>
   
 
 
@@ -301,7 +301,7 @@
 
     <div id="posts" class="posts-collapse">
       <div class="collection-title">
-        <h1>DNS<small>标签</small>
+        <h1>dns<small>标签</small>
         </h1>
       </div>
 
@@ -313,9 +313,9 @@
 
       <h2 class="post-title">
         
-            <a class="post-title-link" href="/2017/02/17/network/dns-protocol/" itemprop="url">
+            <a class="post-title-link" href="/2017/04/27/container/k8s/k8s-analyze-service-discovery/" itemprop="url">
               
-                <span itemprop="name">DNS协议</span>
+                <span itemprop="name">K8s服务发现分析</span>
               
             </a>
         
@@ -323,9 +323,37 @@
 
       <div class="post-meta">
         <time class="post-time" itemprop="dateCreated"
-              datetime="2017-02-17T10:22:31+08:00"
-              content="2017-02-17" >
-          02-17
+              datetime="2017-04-27T10:23:14+08:00"
+              content="2017-04-27" >
+          04-27
+        </time>
+      </div>
+
+    </header>
+  </article>
+
+
+      
+        
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      <h2 class="post-title">
+        
+            <a class="post-title-link" href="/2017/03/01/container/rancher/rancher-dns-and-metadata/" itemprop="url">
+              
+                <span itemprop="name">Rancher服务发现分析</span>
+              
+            </a>
+        
+      </h2>
+
+      <div class="post-meta">
+        <time class="post-time" itemprop="dateCreated"
+              datetime="2017-03-01T15:52:16+08:00"
+              content="2017-03-01" >
+          03-01
         </time>
       </div>
 
@@ -387,7 +415,7 @@
             
               <a href="/archives/ || archive">
             
-                <span class="site-state-item-count">103</span>
+                <span class="site-state-item-count">104</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -890,52 +918,6 @@
           $('body').css('overflow', '');
 
           proceedsearch();
-        }
-      });
-    }
-
-    // handle and trigger popup window;
-    $('.popup-trigger').click(function(e) {
-      e.stopPropagation();
-      if (isfetched === false) {
-        searchFunc(path, 'local-search-input', 'local-search-result');
-      } else {
-        proceedsearch();
-      };
-    });
-
-    $('.popup-btn-close').click(onPopupClose);
-    $('.popup').click(function(e){
-      e.stopPropagation();
-    });
-    $(document).on('keyup', function (event) {
-      var shouldDismissSearchPopup = event.which === 27 &&
-        $('.search-popup').is(':visible');
-      if (shouldDismissSearchPopup) {
-        onPopupClose();
-      }
-    });
-  </script>
-
-
-
-
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-</body>
-</html>
-  proceedsearch();
         }
       });
     }
