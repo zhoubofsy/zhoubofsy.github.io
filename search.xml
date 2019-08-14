@@ -1,6 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title><![CDATA[OSD Journal 运维操作]]></title>
+    <url>%2F2019%2F08%2F13%2Fstorage%2Fceph%2Fosd-journal-operation%2F</url>
+    <content type="text"><![CDATA[部署创建可以使用ceph-osd命令单独创建初始化OSD日志1ceph-osd -i &#123;osd-id&#125; --mkjournal 默认在/var/lib/ceph/osd/ceph-{osd.id}目录下的journal文件中初始化日志数据；也可以通过-c制定配置文件ceph.conf，再在配置文件中制定OSD日志所在路径。 配置osd journaljournal所在的位置，默认为/var/lib/ceph/osd/{cluster}-{osd.id}/jouranl。可以是一个文件也可以是一个块设备。 osd jouranl size日志的大小，不同版本其默认值也不一样。通常根据OSD盘的性能来设置其大小。osd journal size = 2 * 写入带宽 * filestore max sync interval 写入带宽一般是固定的，所以可以根据filestore max sync interval来计算journal的大小。或者根据journal大小来设置filestore max sync interval。 更换迁移更换Journal盘有2种情况 Journal盘挂了只能删除对应的OSD重新创建 Journal还在运行 设置noout标记 停止关联的OSD 下刷 journal 到 osd ceph-osd -i {osd.io} --flush-journal 删除旧的 journal 链接 重建journal 链接 重建 journal ceph-osd -i {osd.id} --mkjournal 启动关联的OSD 去除noout标记 参考&amp;鸣谢 更换OSD Journal]]></content>
+      <categories>
+        <category>storage</category>
+      </categories>
+      <tags>
+        <tag>ceph</tag>
+      </tags>
+  </entry>
+  <entry>
     <title><![CDATA[s3 authorization]]></title>
     <url>%2F2019%2F08%2F04%2Fstorage%2Fceph%2Fs3-authorization%2F</url>
     <content type="text"><![CDATA[如果http请求中没有携带身份信息（AccessKey），则改该请求为匿名请求，会被认为是来自匿名用户的访问。 如果http请求中携带了身份信息（AccessKey），则认为访问来自该AccessKey所对应的用户。由于AccessKey是可以被他人获取到的， 为了防止其他人冒用您的AccessKey来访问服务，请求中还必须携带您的签名。在申请帐号以后，您将得到AccessKey和SecretKey， SecretKey是需要保密的。签名是由此次http请求的相关信息和您的SecretKey计算得到的，其他人因为不知道您的SecretKey，将不能 计算出正确的签名。 身份信息与签名可以放到请求头（Authorization）中，也可以放到请求参数中。 签名的方式与Amazon S3的签名方式兼容，支持signature version 2 和 signature version 4。 参考&amp;鸣谢 签名算法]]></content>
@@ -170,8 +181,8 @@
         <category>container</category>
       </categories>
       <tags>
-        <tag>ceph</tag>
         <tag>docker</tag>
+        <tag>ceph</tag>
       </tags>
   </entry>
   <entry>
@@ -860,6 +871,18 @@
       </tags>
   </entry>
   <entry>
+    <title><![CDATA[vi(m)进制转换]]></title>
+    <url>%2F2016%2F11%2F15%2Fvim%2Fvi-bin-text-change%2F</url>
+    <content type="text"><![CDATA[vi命令使用“xxd”或“od”工具转换十六进制方法如下： :%!xxd将当前文本转换为16进制格式 :%!xxd -c 12将当前文本转换为16进制格式,并每行显示12个字节 :%!xxd -r将当前文件转换回文本格式 参考&amp;鸣谢 vi下以16进制查看二进制文件]]></content>
+      <categories>
+        <category>vim</category>
+      </categories>
+      <tags>
+        <tag>vim</tag>
+        <tag>xxd</tag>
+      </tags>
+  </entry>
+  <entry>
     <title><![CDATA[MySQL修改密码方法]]></title>
     <url>%2F2016%2F11%2F15%2Fmysql%2Fmysql-password-functions%2F</url>
     <content type="text"><![CDATA[背景 OS Version : rhel 6.4 MySQL Version : 5.6.31 改密权限 root可以修改所有用户密码 所有用户在无任何权限情况下可修改自己密码 获得“update所有库”权限的用户可修改任何用户密码（包括root） (以上所诉，均使用set password方法) 改密三种方法Set Passwordset password for &lt;用户名&gt;@{localhost|%|...} =password(&#39;&lt;密码&gt;&#39;); grant … identified bygrant &lt;权限&gt; on &lt;数据库&gt;.&lt;数据表&gt; to &lt;user&gt;@{localhost|%|...} identified by &#39;&lt;密码&gt;&#39;; updateupdate &lt;库名&gt;.&lt;表名&gt; set password=password(&#39;&lt;密码&gt;&#39;) where user=&#39;&lt;用户名&gt;&#39; and host=&#39;{localhost | % | ...}&#39;;]]></content>
@@ -868,18 +891,6 @@
       </categories>
       <tags>
         <tag>mysql</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title><![CDATA[vi(m)进制转换]]></title>
-    <url>%2F2016%2F11%2F15%2Fvim%2Fvi-bin-text-change%2F</url>
-    <content type="text"><![CDATA[vi命令使用“xxd”或“od”工具转换十六进制方法如下： :%!xxd将当前文本转换为16进制格式 :%!xxd -c 12将当前文本转换为16进制格式,并每行显示12个字节 :%!xxd -r将当前文件转换回文本格式 参考&amp;鸣谢 vi下以16进制查看二进制文件]]></content>
-      <categories>
-        <category>vim</category>
-      </categories>
-      <tags>
-        <tag>xxd</tag>
-        <tag>vim</tag>
       </tags>
   </entry>
   <entry>
@@ -999,8 +1010,8 @@
         <category>storage</category>
       </categories>
       <tags>
-        <tag>ceph</tag>
         <tag>config</tag>
+        <tag>ceph</tag>
         <tag>osd</tag>
       </tags>
   </entry>
@@ -1012,8 +1023,8 @@
         <category>storage</category>
       </categories>
       <tags>
-        <tag>ceph</tag>
         <tag>config</tag>
+        <tag>ceph</tag>
         <tag>osd</tag>
       </tags>
   </entry>

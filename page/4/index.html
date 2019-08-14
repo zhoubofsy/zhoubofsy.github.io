@@ -309,6 +309,171 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/09/13/security/certificate-theory/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/09/13/security/certificate-theory/" itemprop="url">证书、签名、密钥那些事儿</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-09-13T14:59:55+08:00">
+                2017-09-13
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/security/" itemprop="url" rel="index">
+                    <span itemprop="name">security</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>我对这些问题的理解，一直是模模糊糊的，很多细节搞不清楚。网上看到一篇文章<a href="http:////www.ruanyifeng.com/blog/2011/08/what_is_a_digital_signature.html" target="_blank" rel="external">《数字签名是什么？》</a>，发现思路一下子就理清了。为了加深记忆，我把文字和图片都复制过来。</p>
+<p><img src="/images/certificate_theory/keys_1.png" alt="keys_1"></p>
+<p><img src="/images/certificate_theory/keys_2.png" alt="keys_2"></p>
+<p><img src="/images/certificate_theory/keys_3.png" alt="keys_3"></p>
+<p><img src="/images/certificate_theory/keys_4.png" alt="keys_4"></p>
+<p>鲍勃收信后，用私钥解密，就看到了信件内容。这里要强调的是，只要鲍勃的私钥不泄露，这封信就是安全的，即使落在别人手里，也无法解密。</p>
+<p><img src="/images/certificate_theory/sign_1.png" alt="sign_1"></p>
+<p>鲍勃给苏珊回信，决定采用”数字签名”。他写完后先用Hash函数，生成信件的摘要（digest）。</p>
+<p><img src="/images/certificate_theory/sign_2.png" alt="sign_2"></p>
+<p><img src="/images/certificate_theory/sign_3.png" alt="sign_3"></p>
+<p><img src="/images/certificate_theory/sign_4.png" alt="sign_4"></p>
+<p><img src="/images/certificate_theory/sign_5.png" alt="sign_5"></p>
+<p>苏珊再对信件本身使用Hash函数，将得到的结果，与上一步得到的摘要进行对比。如果两者一致，就证明这封信未被修改过。</p>
+<p><img src="/images/certificate_theory/cert_1.png" alt="cert_1"></p>
+<p>复杂的情况出现了。道格想欺骗苏珊，他偷偷使用了苏珊的电脑，用自己的公钥换走了鲍勃的公钥。此时，苏珊实际拥有的是道格的公钥，但是还以为这是鲍勃的公钥。因此，道格就可以冒充鲍勃，用自己的私钥做成”数字签名”，写信给苏珊，让苏珊用假的鲍勃公钥进行解密。</p>
+<p><img src="/images/certificate_theory/cert_2.png" alt="cert_2"></p>
+<p>后来，苏珊感觉不对劲，发现自己无法确定公钥是否真的属于鲍勃。她想到了一个办法，要求鲍勃去找”证书中心”（certificate authority，简称CA），为公钥做认证。证书中心用自己的私钥，对鲍勃的公钥和一些相关信息一起加密，生成”数字证书”（Digital Certificate）。</p>
+<p><img src="/images/certificate_theory/cert_3.png" alt="cert_3"></p>
+<p>鲍勃拿到数字证书以后，就可以放心了。以后再给苏珊写信，只要在签名的同时，再附上数字证书就行了。</p>
+<p><img src="/images/certificate_theory/cert_4.png" alt="cert_4"></p>
+<p>苏珊收信后，用CA的公钥解开数字证书，就可以拿到鲍勃真实的公钥了，然后就能证明”数字签名”是否真的是鲍勃签的。</p>
+<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a href="http://www.ruanyifeng.com/blog/2011/08/what_is_a_digital_signature.html" target="_blank" rel="external">数字签名是什么？</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/09/08/network/tcpdump-usage/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -966,7 +1131,7 @@
 <p>Apache Zeppelin是一个让交互式数据分析变得可行的基于网页的开源框架。Zeppelin提供了数据分析、数据可视化等功能。Zeppelin 是一个提供交互数据分析且基于Web的笔记本。方便你做出可数据驱动的、可交互且可协作的精美文档，并且支持多种语言，包括 Scala(使用 Apache Spark)、Python(Apache Spark)、SparkSQL、 Hive、 Markdown、Shell等等。</p>
 <h1 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h1><p>采用docker环境部署zeppelin</p>
 <p>OS：CentOS 7.3.1611<br>JAVA：OpenJDK 1.8<br>zeppelin: 0.7.2</p>
-<p>dockerfile:<br><figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">FROM</span> centos:<span class="number">7.3</span>.<span class="number">1611</span></div><div class="line"></div><div class="line"><span class="keyword">MAINTAINER</span> zhoub</div><div class="line"></div><div class="line"><span class="keyword">RUN</span> yum update -y</div><div class="line"><span class="keyword">RUN</span> yum install -y java-1.8.0-openjdk.x86_64</div><div class="line"><span class="keyword">RUN</span> echo "JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.141-1.b16.el7_3.x86_64/jre" | tee -a /etc/bashrc</div><div class="line"><span class="keyword">RUN</span> echo "export JAVA_HOME" | tee -a /etc/bashrc</div></pre></td></tr></table></figure></p>
+<p>dockerfile:<br><figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">FROM</span> centos:<span class="number">7.3</span>.<span class="number">1611</span></div><div class="line"></div><div class="line"><span class="keyword">MAINTAINER</span> zhoub</div><div class="line"></div><div class="line"><span class="keyword">RUN</span><span class="bash"> yum update -y</span></div><div class="line"><span class="keyword">RUN</span><span class="bash"> yum install -y java-1.8.0-openjdk.x86_64</span></div><div class="line"><span class="keyword">RUN</span><span class="bash"> <span class="built_in">echo</span> <span class="string">"JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.141-1.b16.el7_3.x86_64/jre"</span> | tee <span class="_">-a</span> /etc/bashrc</span></div><div class="line"><span class="keyword">RUN</span><span class="bash"> <span class="built_in">echo</span> <span class="string">"export JAVA_HOME"</span> | tee <span class="_">-a</span> /etc/bashrc</span></div></pre></td></tr></table></figure></p>
 <h1 id="下载安装"><a href="#下载安装" class="headerlink" title="下载安装"></a>下载安装</h1><p>从<a href="http://zeppelin.apache.org/download.html" target="_blank" rel="external">zeppelin官网</a>或github上下载，推荐下载最新版。解压tar包，然后在准备好的环境中运行<code>zeppelin/bin/zeppelin-daemon.sh start</code></p>
 <p>docker:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">#!/bin/sh</div><div class="line"></div><div class="line">cmd=&quot;/root/run/entry.sh&quot;</div><div class="line">image=&quot;centos7.3:java1.8&quot;</div><div class="line">net=&quot;hadoop_net&quot;</div><div class="line"></div><div class="line">docker run -d --rm -w /root/ -v $&#123;PWD&#125;/run:/root/run -v $&#123;PWD&#125;/zeppelin:/root/zeppelin -v $&#123;PWD&#125;/hbase:/root/hbase -p 8080 --network $&#123;net&#125; -h zeppelin --name zeppelin $&#123;image&#125; $&#123;cmd&#125;</div></pre></td></tr></table></figure></p>
 <p>entry.sh:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">#!/bin/sh</div><div class="line"></div><div class="line">/root/zeppelin/bin/zeppelin-daemon.sh start</div><div class="line"></div><div class="line">while true</div><div class="line">do</div><div class="line">    sleep 10s</div><div class="line">done</div></pre></td></tr></table></figure></p>
@@ -1880,169 +2045,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/05/25/storage/ceph/ceph-nfs-service-by-rgw-with-nfs-ganesha/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/05/25/storage/ceph/ceph-nfs-service-by-rgw-with-nfs-ganesha/" itemprop="url">Ceph提供NFS服务 —— RGW＋nfs-ganesha</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-05-25T09:43:37+08:00">
-                2017-05-25
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/storage/" itemprop="url" rel="index">
-                    <span itemprop="name">storage</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p><img src="/images/ceph/nfs-ganesha.jpg" alt="nfs-ganesha.jpg"></p>
-<p>Ceph是统一存储，包括块、文件、对象。其中块存储必须映射给linux内核，然后才能用，而内核客户端代码的更新收到了linus的限制，已经好久没更新了。librbd又不能直接用，不过道是可以用nbd映射一下使用。cephfs目前还不太适合生产环境。目前<code>*nix</code>对nfs的支持还是很全面的，而对librbd、cephfs的支持就是大不一样了。so，使ceph支持nfs协议很有意义了，but！ceph是分布式存储，被ganesha一搞，出现了单节点问题，所以只能想办法从HA角度解决了，这也是一种无奈，唉。。。</p>
-<p>（～～一丝光～～）从nfs v4.1开始支持并行存储，这或许是一缕新曙光。</p>
-<h1 id="方案"><a href="#方案" class="headerlink" title="方案"></a>方案</h1><p><img src="/images/ceph/ceph-nfs-service-by-rgw-with-nfs-ganesha.png" alt="ceph-nfs-service-by-rgw-with-nfs-ganesha.png"></p>
-<h1 id="实施"><a href="#实施" class="headerlink" title="实施"></a>实施</h1><h2 id="RGW搭建"><a href="#RGW搭建" class="headerlink" title="RGW搭建"></a>RGW搭建</h2><p>关于RGW的安装搭建请于<a href="http://www.ceph.com" target="_blank" rel="external">Ceph官网</a>查看</p>
-<h4 id="用户创建"><a href="#用户创建" class="headerlink" title="用户创建"></a>用户创建</h4><p>创建一个S3用户专门服务于nfs-ganesha</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div></pre></td><td class="code"><pre><div class="line">$ sudo radosgw-admin --uid=nfs_ganesha_user --display=&quot;User for NFS-Ganesha&quot;</div><div class="line">&#123;</div><div class="line">    &quot;user_id&quot;: &quot;nfs_ganesha_user&quot;,</div><div class="line">    &quot;display_name&quot;: &quot;User for NFS-Ganesha&quot;,</div><div class="line">    &quot;email&quot;: &quot;&quot;,</div><div class="line">    &quot;suspended&quot;: 0,</div><div class="line">    &quot;max_buckets&quot;: 1000,</div><div class="line">    &quot;auid&quot;: 0,</div><div class="line">    &quot;subusers&quot;: [],</div><div class="line">    &quot;keys&quot;: [</div><div class="line">        &#123;</div><div class="line">            &quot;user&quot;: &quot;nfs_ganesha_user&quot;,</div><div class="line">            &quot;access_key&quot;: &quot;xxxxxxxxxxxxxxxxxxxx&quot;,</div><div class="line">            &quot;secret_key&quot;: &quot;XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX&quot;</div><div class="line">        &#125;</div><div class="line">    ],</div><div class="line">    &quot;swift_keys&quot;: [],</div><div class="line">    &quot;caps&quot;: [],</div><div class="line">    &quot;op_mask&quot;: &quot;read, write, delete&quot;,</div><div class="line">    &quot;default_placement&quot;: &quot;&quot;,</div><div class="line">    &quot;placement_tags&quot;: [],</div><div class="line">    &quot;bucket_quota&quot;: &#123;</div><div class="line">        &quot;enabled&quot;: false,</div><div class="line">        &quot;max_size_kb&quot;: -1,</div><div class="line">        &quot;max_objects&quot;: -1</div><div class="line">    &#125;,</div><div class="line">    &quot;user_quota&quot;: &#123;</div><div class="line">        &quot;enabled&quot;: false,</div><div class="line">        &quot;max_size_kb&quot;: -1,</div><div class="line">        &quot;max_objects&quot;: -1</div><div class="line">    &#125;,</div><div class="line">    &quot;temp_url_keys&quot;: []</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p><code>user</code>、<code>access_key</code>、<code>secret_key</code>是后续nfs-ganesha配置是需要使用到的。</p>
-<h2 id="nfs-ganesha编译"><a href="#nfs-ganesha编译" class="headerlink" title="nfs-ganesha编译"></a>nfs-ganesha编译</h2><h4 id="获取Project"><a href="#获取Project" class="headerlink" title="获取Project"></a>获取Project</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">// clone nfs-ganesha project</div><div class="line">$ git clone https://github.com/nfs-ganesha/nfs-ganesha.git</div><div class="line">$ cd ./nfs-ganesha</div><div class="line"></div><div class="line">// 切换到v2.4 stable版本</div><div class="line">$ git checkout V2.4-stable</div><div class="line"></div><div class="line">// 获取submodule libntirpc</div><div class="line">$ git submodule update --init</div></pre></td></tr></table></figure>
-<p>在正式开始编译前，需要安装一些包，<code>libntirpc</code>强制使用了GSS，使用<code>-DUSE_GSS=OFF</code>是不能关闭GSS使用的。所以在编译nfs-ganesha时不需要关闭GSS。<br>本人编译使用的系统是rhel7.2，需要安装一些软件包<code>krb5-libs-1.14.1-27.el7_3.x86_64</code>、<code>krb5-devel-1.14.1-27.el7_3.x86_64</code>、<code>libgssglue-0.4-2.el7.nux.x86_64</code>、<code>libgssglue-devel-0.4-2.el7.nux.x86_64</code></p>
-<h4 id="编译安装"><a href="#编译安装" class="headerlink" title="编译安装"></a>编译安装</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line">// libntirpc 编译 </div><div class="line">$ cd ./nfs-ganesha/src/libntirpc</div><div class="line">$ cmake ./</div><div class="line">...</div><div class="line">$ make</div><div class="line">...</div><div class="line"></div><div class="line">// nfs-ganesha 编译</div><div class="line">$ cd ./nfs-ganesha</div><div class="line">$ mkdir ./build</div><div class="line">$ cd ./build</div><div class="line">$ cmake -DUSE_NLM=OFF -DRGW_PREFIX=/usr -DUSE_FSAL_RGW=ON -DUSE_FSAL_CEPH=OFF -DCMAKE_INSTALL_PREFIX=/home/xxxxx/.local -DUSE_GSS=ON -DUSE_FSAL_ZFS=OFF -DUSE_NFSIDMAP=OFF -DUSE_FSAL_GLUSTER=OFF ../src</div><div class="line">...</div><div class="line">$ make</div><div class="line">...</div><div class="line">$ make install</div><div class="line">...</div><div class="line"></div><div class="line">// 为了能让ganesha正常运行，需要更新一下ld.cache，保证动态库可以正常加载</div><div class="line">$ sudo echo &quot;/home/xxxxx/.local/lib64/ganesha&quot; &gt;&gt; /etc/ld.so.conf</div><div class="line">$ sudo ldconfig -v</div><div class="line"></div><div class="line">//生成RPM包</div><div class="line">$ cpack -G RPM</div><div class="line">...</div></pre></td></tr></table></figure>
-<h3 id="配置启动"><a href="#配置启动" class="headerlink" title="配置启动"></a>配置启动</h3><h4 id="配置RGW的Keyring"><a href="#配置RGW的Keyring" class="headerlink" title="配置RGW的Keyring"></a>配置RGW的Keyring</h4><p>librgw 访问ceph时会用到keyring，它回去<code>/var/lib/ceph/radosgw/ceph-admin</code>这个目录下去找<code>keyring</code>，这个目录需要用户自己创建并，copy一个keyring进去，这个keyring可以是admin，也可以是rgw实用的keyring，从权限管理角度建议使用rgw的keyring</p>
-<h4 id="撰写ganesha-conf-rgw"><a href="#撰写ganesha-conf-rgw" class="headerlink" title="撰写ganesha.conf.rgw"></a>撰写<code>ganesha.conf.rgw</code></h4><figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div></pre></td><td class="code"><pre><div class="line">###################################################</div><div class="line">#</div><div class="line"># EXPORT</div><div class="line">#</div><div class="line"># To function, all that is required is an EXPORT</div><div class="line">#</div><div class="line"># Define the absolute minimal export</div><div class="line">#</div><div class="line">###################################################</div><div class="line"></div><div class="line">EXPORT</div><div class="line">&#123;</div><div class="line">        # Export Id (mandatory, each EXPORT must have a unique Export_Id)</div><div class="line">        Export_Id = 1;</div><div class="line"></div><div class="line">        # Exported path (mandatory)</div><div class="line">        Path = "nfs_bucket";</div><div class="line"></div><div class="line">        # Pseudo Path (required for NFS v4)</div><div class="line">        Pseudo = "/nfs_bucket";</div><div class="line"></div><div class="line">        # Required for access (default is None)</div><div class="line">        # Could use CLIENT blocks instead</div><div class="line">        Access_Type = RW;</div><div class="line">        Protocols = 4;</div><div class="line">        Transports = TCP;</div><div class="line"></div><div class="line">        # Exporting FSAL</div><div class="line">        FSAL &#123;</div><div class="line">             # Name = VFS;</div><div class="line">             Name = RGW;</div><div class="line">             User_Id = "xxxxxxxxxxx";</div><div class="line">             Access_Key_Id = "xxxxxxxxxxxxxxxxxxxx";</div><div class="line">             Secret_Access_Key = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";</div><div class="line">        &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">RGW &#123;</div><div class="line">        ceph_conf = "/etc/ceph/ceph.conf";</div><div class="line">        name = "client.admin";</div><div class="line">        cluster = "ceph";</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<h4 id="运行ganesha进程"><a href="#运行ganesha进程" class="headerlink" title="运行ganesha进程"></a>运行ganesha进程</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo ganesha.nfsd -f /home/xxxxx/.local/etc/ganesha/ganesha.conf.rgw -F -L /var/log/ganesha.log</div></pre></td></tr></table></figure>
-<h4 id="客户端连接"><a href="#客户端连接" class="headerlink" title="客户端连接"></a>客户端连接</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo mount -t nfs4 192.168.1.82:/nfs_bucket /mnt</div></pre></td></tr></table></figure>
-<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a href="https://github.com/nfs-ganesha/nfs-ganesha/issues/152" target="_blank" rel="external">Will not compile with USE_GSS=”OFF”</a></li>
-<li><a href="http://www.tuicool.com/articles/yAV7R3N" target="_blank" rel="external">rgw实现nfs的首测</a></li>
-<li><a href="http://www.tuicool.com/articles/JFRn2me" target="_blank" rel="external">NFS + CephFS 构建基于 Ceph 的 NAS 服务</a></li>
-<li><a href="http://www.php230.com/1492048922.html" target="_blank" rel="external">通过ganesha-nfs将 Ceph 导出为 NFS</a></li>
-<li><a href="http://www.cnblogs.com/alexyuyu/articles/3509255.html" target="_blank" rel="external">LD_LIBRARY_PATH</a></li>
-</ul>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2095,7 +2097,7 @@
             
               <a href="/archives/ || archive">
             
-                <span class="site-state-item-count">108</span>
+                <span class="site-state-item-count">109</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
