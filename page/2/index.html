@@ -309,6 +309,701 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/05/13/storage/ceph/backfill_recovery_config/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/05/13/storage/ceph/backfill_recovery_config/" itemprop="url">Backfill & Recovery 恢复优化</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-05-13T14:20:56+08:00">
+                2019-05-13
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index">
+                    <span itemprop="name">storage</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>Backfill和Recovery都是用来恢复数据的，但二者的区别是Backfill是全量恢复，Recovery是增量恢复。而且在恢复过程中当出现Client访问恢复数据现象时，Backfill不会block client i/o，但Recovery会block client i/o。但二者如果占用带宽过大，还是会影响client i/o的。</p>
+<h1 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h1><p>Ceph Version : Jewel</p>
+<h1 id="优化"><a href="#优化" class="headerlink" title="优化"></a>优化</h1><ul>
+<li>默认情况下将Backfill和Recovery对Client I/O的影响降到最小。</li>
+<li>当需要Backfill或Recovery时，要根据集群负载动态调整。若集群负载低，可通过<code>ceph tell {osd.id} injectargs &quot;--config value&quot;</code>的放方式动态调整恢复速度，使其快速完成恢复操作。</li>
+<li>当恢复完成后，再次将Backfill和Recovery调整回默认值，以降低对Client I/O的影响。</li>
+</ul>
+<h2 id="Recovery-参数说明"><a href="#Recovery-参数说明" class="headerlink" title="Recovery 参数说明"></a>Recovery 参数说明</h2><table>
+<thead>
+<tr>
+<th style="text-align:left">参数</th>
+<th style="text-align:left">描述</th>
+<th style="text-align:center">默认值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">osd recovery max active</td>
+<td style="text-align:left">每个 OSD 一次处理的活跃恢复请求数量，增大此值能加速恢复，但它们会增加集群负载。</td>
+<td style="text-align:center">15</td>
+</tr>
+<tr>
+<td style="text-align:left">osd recovery max chunk</td>
+<td style="text-align:left">一次推送的数据块的最大尺寸。</td>
+<td style="text-align:center">8 &lt;&lt; 20</td>
+</tr>
+<tr>
+<td style="text-align:left">osd recovery threads</td>
+<td style="text-align:left">数据恢复时的线程数。</td>
+<td style="text-align:center">1</td>
+</tr>
+<tr>
+<td style="text-align:left">osd recovery thread timeout</td>
+<td style="text-align:left">恢复线程最大死亡时值。</td>
+<td style="text-align:center">30</td>
+</tr>
+</tbody>
+</table>
+<h2 id="Backfill-参数说明"><a href="#Backfill-参数说明" class="headerlink" title="Backfill 参数说明"></a>Backfill 参数说明</h2><table>
+<thead>
+<tr>
+<th style="text-align:left">参数</th>
+<th style="text-align:left">描述</th>
+<th style="text-align:center">默认值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">osd max backfills</td>
+<td style="text-align:left">单个 OSD 允许的最大回填操作数。</td>
+<td style="text-align:center">1</td>
+</tr>
+<tr>
+<td style="text-align:left">osd backfill full ratio</td>
+<td style="text-align:left">OSD 的占满率达到多少时拒绝接受回填请求</td>
+<td style="text-align:center">0.85</td>
+</tr>
+<tr>
+<td style="text-align:left">osd backfill retry interval</td>
+<td style="text-align:left">重试回填请求前等待秒数</td>
+<td style="text-align:center">10.0</td>
+</tr>
+</tbody>
+</table>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/05/05/storage/ceph/rbd-mirror/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/05/05/storage/ceph/rbd-mirror/" itemprop="url">rbd-mirror 跨集群备份</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-05-05T09:30:42+08:00">
+                2019-05-05
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index">
+                    <span itemprop="name">storage</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h1><p>Todo…</p>
+<h3 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h3><ul>
+<li>增加了RBD Journal的写入操作，是否会产生写放大现象。</li>
+<li>Ceph-RBD-Mirror回放日志的的时间间隔</li>
+<li>RBD Journal的容量大小如何配置</li>
+<li>RBD Journal存储介质是否可以优化</li>
+</ul>
+<h1 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h1><h2 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h2><h4 id="要求"><a href="#要求" class="headerlink" title="要求"></a>要求</h4><ul>
+<li>Ceph版本必须为Jewel及之后版本<br>  RBD-Mirror功能从Jewel版本引入，之前版本不支持该feature。本文以jewel版本为例进行演示。</li>
+<li>RBD feature必须包含<code>journaling</code><br>  RBD-Mirror依赖journal完成工作，类似Mysql的主从同步机制。使用日志回放方法备份数据。</li>
+</ul>
+<h4 id="准备"><a href="#准备" class="headerlink" title="准备"></a>准备</h4><ul>
+<li><p>准备两个集群分别为cls17和cls26<br>  cls17为primary集群，cls26为non-primary集群，将cls17内的RBD数据备份到cls26集群内</p>
+</li>
+<li><p>在这两个集群中创建同名pool——<code>rmp</code>（RBD Mirror Pool）</p>
+</li>
+</ul>
+<h4 id="ceph-rbd-mirror服务"><a href="#ceph-rbd-mirror服务" class="headerlink" title="ceph-rbd-mirror服务"></a>ceph-rbd-mirror服务</h4><p>根据RBD-Mirror的原理，需要在non-primery集群上启动<code>ceph-rbd-mirror</code>服务</p>
+<p><strong> 安装 </strong><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ yum install -y rbd-mirror</div></pre></td></tr></table></figure></p>
+<p><strong> 启动 </strong><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ systemctl enable ceph-rbd-mirror@admin.service</div><div class="line">$ systemctl start ceph-rbd-mirror@admin.service</div></pre></td></tr></table></figure></p>
+<p><code>@admin</code>是ceph中的<code>client.admin</code>用户，只是这里省略了<code>client.</code>。关于Ceph用户管理相关操作可以使用<code>ceph auth</code>命令。</p>
+<h4 id="Copy-Config-amp-keyring"><a href="#Copy-Config-amp-keyring" class="headerlink" title="Copy Config &amp; keyring"></a>Copy Config &amp; keyring</h4><p>将cls17集群中的<code>ceph.conf</code>和<code>ceph.client.admin.keyring</code>copy到cls26集群的<code>/etc/ceph</code>目录中，并重命名成<code>cls17.conf</code>和<code>cls17.client.admin.keyring</code>。然后在cls26集群中可通过指定<code>--cluster cls17</code>来指定访问集群。</p>
+<h2 id="备份Pool中所有RBD"><a href="#备份Pool中所有RBD" class="headerlink" title="备份Pool中所有RBD"></a>备份Pool中所有RBD</h2><h3 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h3><h4 id="Pool-Mirror-Mode"><a href="#Pool-Mirror-Mode" class="headerlink" title="Pool Mirror Mode"></a>Pool Mirror Mode</h4><p>需要将两个集群的的<code>rmp</code>pool的mirror mode设置成<code>pool</code>。</p>
+<p>集群cls26<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ rbd mirror pool enable rmp pool</div></pre></td></tr></table></figure></p>
+<p>集群cls17<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ rbd mirror pool enable rmp pool --cluster cls17</div></pre></td></tr></table></figure></p>
+<h4 id="Add-Peer"><a href="#Add-Peer" class="headerlink" title="Add Peer"></a>Add Peer</h4><p>将Primary集群信息加入到<code>rmp</code>pool中。</p>
+<p>集群cls26<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ rbd mirror pool peer add rmp client.admin@cls17</div></pre></td></tr></table></figure></p>
+<p>查看两个集群的peer信息<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">$ rbd mirror pool info rmp</div><div class="line">Mode: pool</div><div class="line">Peers:</div><div class="line">  UUID                                 NAME  CLIENT</div><div class="line">  2c2c1293-0e97-4c57-9bf1-e5f934274758 cls17 client.admin</div><div class="line">$</div><div class="line">$ rbd mirror pool info rmp --cluster cls17</div><div class="line">Mode: pool</div><div class="line">Peers: none</div></pre></td></tr></table></figure></p>
+<p>至此备份Pool中所有RBD的配置操作已经完成，接下来进行验证操作。</p>
+<h3 id="测试"><a href="#测试" class="headerlink" title="测试"></a>测试</h3><p>在集群cls17中<code>rmp</code>pool创建RBD，并查看集群cls26中<code>rmp</code>pool是否有回放操作（RBD是否备份到cls26集群）。由于整个RBD-Mirror依赖于<code>journaling</code>feature，所以创建RBD时需要指定该feature。若对当前<code>rmp</code>pool中存在RBD进行备份，需要先增加<code>jouranling</code>feature，使用<code>rbd feature enable rmp/rd1 journaling</code>命令。</p>
+<p>集群cls17<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ rbd create -p rmp --image-format 2 --image-feature layering,exclusive-lock,object-map,fast-diff,deep-flatten,journaling -s 1G rd1</div></pre></td></tr></table></figure></p>
+<p>集群cls26<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ rbd -p rmp ls</div><div class="line">rd1</div></pre></td></tr></table></figure></p>
+<h2 id="备份单个RBD"><a href="#备份单个RBD" class="headerlink" title="备份单个RBD"></a>备份单个RBD</h2><h3 id="配置-1"><a href="#配置-1" class="headerlink" title="配置"></a>配置</h3><h4 id="Pool-Mirror-Mode-1"><a href="#Pool-Mirror-Mode-1" class="headerlink" title="Pool Mirror Mode"></a>Pool Mirror Mode</h4><p>将两个集群的<code>rbd</code>pool的mirror mode设置成<code>image</code>。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ rbd mirror pool enable rbd image</div></pre></td></tr></table></figure>
+<h4 id="Add-Peer-1"><a href="#Add-Peer-1" class="headerlink" title="Add Peer"></a>Add Peer</h4><p>将Primary集群信息加入到<code>rbd</code>pool中。具体操作方法，同上。</p>
+<h4 id="Enable-Image-Mirror"><a href="#Enable-Image-Mirror" class="headerlink" title="Enable Image Mirror"></a>Enable Image Mirror</h4><p>集群cls17<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line">$ rbd info rd1</div><div class="line">rbd image &apos;rd1&apos;:</div><div class="line">    size 1024 MB in 256 objects</div><div class="line">    order 22 (4096 kB objects)</div><div class="line">    block_name_prefix: rbd_data.ad616b8b4567</div><div class="line">    format: 2</div><div class="line">    features: exclusive-lock, journaling</div><div class="line">    flags:</div><div class="line">    journal: ad616b8b4567</div><div class="line">    mirroring state: disabled</div><div class="line">$ rbd mirror image enable rbd/rd1</div><div class="line">Mirroring enabled</div><div class="line">$ rbd info rd1</div><div class="line">    rbd image &apos;rd1&apos;:</div><div class="line">    size 1024 MB in 256 objects</div><div class="line">    order 22 (4096 kB objects)</div><div class="line">    block_name_prefix: rbd_data.ad616b8b4567</div><div class="line">    format: 2</div><div class="line">    features: exclusive-lock, journaling</div><div class="line">    flags:</div><div class="line">    journal: ad616b8b4567</div><div class="line">    mirroring state: enabled</div><div class="line">    mirroring global id: f0c9972d-7585-4bda-a486-baa9a6f96eb5</div><div class="line">    mirroring primary: true</div></pre></td></tr></table></figure></p>
+<p>集群cls26<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">$ rbd info rd1</div><div class="line">rbd image &apos;rd1&apos;:</div><div class="line">    size 1024 MB in 256 objects</div><div class="line">    order 22 (4096 kB objects)</div><div class="line">    block_name_prefix: rbd_data.8587327b23c6</div><div class="line">    format: 2</div><div class="line">    features: exclusive-lock, journaling</div><div class="line">    flags:</div><div class="line">    journal: 8587327b23c6</div><div class="line">    mirroring state: enabled</div><div class="line">    mirroring global id: f0c9972d-7585-4bda-a486-baa9a6f96eb5</div><div class="line">    mirroring primary: false</div></pre></td></tr></table></figure></p>
+<h3 id="测试-1"><a href="#测试-1" class="headerlink" title="测试"></a>测试</h3><p>(同上)</p>
+<p><strong><em> 无论是全Pool备份，还是单个RBD备份，只要建立mirror关系，只有primary rbd才能处理读写操作 </em></strong></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/04/28/storage/ceph/rbd-export-import/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/04/28/storage/ceph/rbd-export-import/" itemprop="url">RBD备份</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-04-28T14:15:47+08:00">
+                2019-04-28
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index">
+                    <span itemprop="name">storage</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <ul>
+<li>Ceph中的RBD备份分为全量备份和增量备份，恢复也有增全量之分。</li>
+<li>备份和恢复的操作都是基于快照来操作的。</li>
+<li>RBD的format必须为2 （–image-format 2）</li>
+</ul>
+<h1 id="备份"><a href="#备份" class="headerlink" title="备份"></a>备份</h1><p>备份操作流程，先做一个全量备份，然后每隔一段时间做一个快照，并将快照导出。</p>
+<h2 id="准备"><a href="#准备" class="headerlink" title="准备"></a>准备</h2><p>创建一个RBD image</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ rbd create --image-format 2 --size 1G crbd_cls17_1</div></pre></td></tr></table></figure>
+<h2 id="全量"><a href="#全量" class="headerlink" title="全量"></a>全量</h2><p>创建一个快照，然后备份从image创建一直到创建快照之前的全量数据</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ rbd snap create crbd_cls17_1@s1</div><div class="line">$ rbd export-diff crbd_cls17_1@s1 ./crbd_base</div></pre></td></tr></table></figure>
+<h2 id="增量"><a href="#增量" class="headerlink" title="增量"></a>增量</h2><p>继续写入一段数据后，再次做快照，并导出增量数据</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ rbd snap create crbd_cls17_1@s2</div><div class="line">$ rbd export-diff crbd_cls17_1@s2 --from-snap s1 ./crbd_s1_s2</div></pre></td></tr></table></figure>
+<p>至此，全量和增量备份数据都以导出到文件<code>crbd_base</code>和<code>crbd_s1_s2</code>两个文件中。</p>
+<h1 id="恢复"><a href="#恢复" class="headerlink" title="恢复"></a>恢复</h1><h2 id="准备-1"><a href="#准备-1" class="headerlink" title="准备"></a>准备</h2><p>将之前导出的增全量备份数据<code>crbd_base</code>、<code>crbd_s1_s2</code>拷贝到需要导入的ceph集群上。创建一个rbd image用于导入备份数据。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ rbd create --image-format 2 --size 1G crbd_cls26_1</div></pre></td></tr></table></figure>
+<h2 id="全量-1"><a href="#全量-1" class="headerlink" title="全量"></a>全量</h2><p>恢复全量数据</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ rbd import-diff ./crbd_base crbd_cls26_1</div></pre></td></tr></table></figure>
+<h2 id="增量-1"><a href="#增量-1" class="headerlink" title="增量"></a>增量</h2><p>恢复增量数据</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ rbd import-diff ./crbd_s1_s2 crbd_cls26_1</div></pre></td></tr></table></figure>
+<p>Over!</p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/03/11/storage/ceph/journal-format/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/03/11/storage/ceph/journal-format/" itemprop="url">Journal Format</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-03-11T11:31:24+08:00">
+                2019-03-11
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index">
+                    <span itemprop="name">storage</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>Todo…</p>
+<h2 id="Journal存储格式"><a href="#Journal存储格式" class="headerlink" title="Journal存储格式"></a>Journal存储格式</h2><ol>
+<li>header</li>
+<li>Ring buffer</li>
+</ol>
+<p><img src="/images/ceph/journal_fmt_1.png" alt="journal_1"></p>
+<h3 id="header格式"><a href="#header格式" class="headerlink" title="header格式"></a>header格式</h3><p><img src="/images/ceph/journal_fmt_header.png" alt="journal_1"></p>
+<h2 id="Ring-buffer中entry-header格式"><a href="#Ring-buffer中entry-header格式" class="headerlink" title="Ring buffer中entry header格式"></a>Ring buffer中entry header格式</h2><p><img src="/images/ceph/journal_fmt_entry_header.png" alt="journal_1"></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/12/25/linux/kernel-module-sbull/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -985,7 +1680,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/04/02/storage/ceph/compile-luminous/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/04/02/storage/ceph/ceph-compile/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="博">
@@ -1004,7 +1699,7 @@
         
           <h1 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2018/04/02/storage/ceph/compile-luminous/" itemprop="url">Ceph luminous 编译</a></h1>
+                <a class="post-title-link" href="/2018/04/02/storage/ceph/ceph-compile/" itemprop="url">Ceph 编译</a></h1>
         
 
         <div class="post-meta">
@@ -1078,10 +1773,38 @@
       
         
           
-            <p>编译 Ceph luminous版本，luminous的改动还是蛮大的，而且改变了原有的configure为cmake。</p>
-<h1 id="编译环境"><a href="#编译环境" class="headerlink" title="编译环境"></a>编译环境</h1><h2 id="硬"><a href="#硬" class="headerlink" title="硬"></a>硬</h2><p>armv7l (Odroid XU4)</p>
-<h2 id="软"><a href="#软" class="headerlink" title="软"></a>软</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">$ lsb_release  -a</div><div class="line">LSB Version:    1.4</div><div class="line">Distributor ID: Arch</div><div class="line">Description:    Arch Linux</div><div class="line">Release:        rolling</div><div class="line">Codename:       n/a</div><div class="line"></div><div class="line">$ uname -a</div><div class="line">Linux HomeCenter 4.14.29-1-ARCH #1 SMP PREEMPT Fri Mar 23 02:57:06 UTC 2018 armv7l GNU/Linux</div><div class="line"></div><div class="line">$ gcc -v</div><div class="line">Using built-in specs.</div><div class="line">COLLECT_GCC=gcc</div><div class="line">COLLECT_LTO_WRAPPER=/usr/lib/gcc/armv7l-unknown-linux-gnueabihf/7.2.1/lto-wrapper</div><div class="line">Target: armv7l-unknown-linux-gnueabihf</div><div class="line">Configured with: /build/gcc/src/gcc/configure --prefix=/usr --libdir=/usr/lib --libexecdir=/usr/lib --mandir=/usr/share/man --infodir=/usr/share/info --with-bugurl=https://github.com/archlinuxarm/PKGBUILDs/issues --enable-languages=c,c++,fortran,go,lto,objc,obj-c++ --enable-shared --enable-threads=posix --with-system-zlib --with-isl --enable-__cxa_atexit --disable-libunwind-exceptions --enable-clocale=gnu --disable-libstdcxx-pch --disable-libssp --enable-gnu-unique-object --enable-linker-build-id --enable-lto --enable-plugin --enable-install-libiberty --with-linker-hash-style=gnu --enable-gnu-indirect-function --disable-multilib --disable-werror --enable-checking=release --enable-default-pie --enable-default-ssp --host=armv7l-unknown-linux-gnueabihf --build=armv7l-unknown-linux-gnueabihf --with-arch=armv7-a --with-float=hard --with-fpu=vfpv3-d16</div><div class="line">Thread model: posix</div><div class="line">gcc version 7.2.1 20180116 (GCC)</div></pre></td></tr></table></figure>
-<h1 id="编译"><a href="#编译" class="headerlink" title="编译"></a>编译</h1><p>按照官方的文档，编译总共分为4步。</p>
+            <h1 id="Nautilus"><a href="#Nautilus" class="headerlink" title="Nautilus"></a>Nautilus</h1><h2 id="编译环境"><a href="#编译环境" class="headerlink" title="编译环境"></a>编译环境</h2><h3 id="硬件"><a href="#硬件" class="headerlink" title="硬件"></a>硬件</h3><p>采用KVM虚拟机编译Ceph源码，具体配置如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line"># lscpu</div><div class="line">Architecture:          x86_64</div><div class="line">CPU op-mode(s):        32-bit, 64-bit</div><div class="line">Byte Order:            Little Endian</div><div class="line">CPU(s):                8</div><div class="line">On-line CPU(s) list:   0-7</div><div class="line">Thread(s) per core:    1</div><div class="line">Core(s) per socket:    1</div><div class="line">Socket(s):             8</div><div class="line">NUMA node(s):          1</div><div class="line">Vendor ID:             GenuineIntel</div><div class="line">CPU family:            6</div><div class="line">Model:                 13</div><div class="line">Model name:            QEMU Virtual CPU version 2.5+</div><div class="line">Stepping:              3</div><div class="line">CPU MHz:               2394.454</div><div class="line">BogoMIPS:              4788.90</div><div class="line">Hypervisor vendor:     KVM</div><div class="line">Virtualization type:   full</div><div class="line">L1d cache:             32K</div><div class="line">L1i cache:             32K</div><div class="line">L2 cache:              4096K</div><div class="line">NUMA node0 CPU(s):     0-7</div><div class="line">Flags:                 fpu de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pse36 clflush mmx fxsr sse sse2 syscall nx lm rep_good nopl cpuid tsc_known_freq pni cx16 x2apic hypervisor lahf_lm pti</div></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"># free -g</div><div class="line">              total        used        free      shared  buff/cache   available</div><div class="line">Mem:             15           7           5           0           2           7</div><div class="line">Swap:             0           0           0</div></pre></td></tr></table></figure>
+<h3 id="软件"><a href="#软件" class="headerlink" title="软件"></a>软件</h3><p>OS:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"># cat /etc/redhat-release</div><div class="line">CentOS Linux release 7.6.1810 (Core)</div></pre></td></tr></table></figure>
+<p>kernel:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"># uname -a</div><div class="line">Linux host-10-100-13-111 4.18.20 #1 SMP Tue Sep 17 11:21:39 CST 2019 x86_64 x86_64 x86_64 GNU/Linux</div></pre></td></tr></table></figure>
+<p>gcc:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"># gcc -v</div><div class="line">Using built-in specs.</div><div class="line">COLLECT_GCC=gcc</div><div class="line">COLLECT_LTO_WRAPPER=/opt/rh/devtoolset-7/root/usr/libexec/gcc/x86_64-redhat-linux/7/lto-wrapper</div><div class="line">Target: x86_64-redhat-linux</div><div class="line">Configured with: ../configure --enable-bootstrap --enable-languages=c,c++,fortran,lto --prefix=/opt/rh/devtoolset-7/root/usr --mandir=/opt/rh/devtoolset-7/root/usr/share/man --infodir=/opt/rh/devtoolset-7/root/usr/share/info --with-bugurl=http://bugzilla.redhat.com/bugzilla --enable-shared --enable-threads=posix --enable-checking=release --enable-multilib --with-system-zlib --enable-__cxa_atexit --disable-libunwind-exceptions --enable-gnu-unique-object --enable-linker-build-id --with-gcc-major-version-only --enable-plugin --with-linker-hash-style=gnu --enable-initfini-array --with-default-libstdcxx-abi=gcc4-compatible --with-isl=/builddir/build/BUILD/gcc-7.3.1-20180303/obj-x86_64-redhat-linux/isl-install --enable-libmpx --enable-gnu-indirect-function --with-tune=generic --with-arch_32=i686 --build=x86_64-redhat-linux</div><div class="line">Thread model: posix</div><div class="line">gcc version 7.3.1 20180303 (Red Hat 7.3.1-5) (GCC)</div></pre></td></tr></table></figure>
+<h2 id="编译"><a href="#编译" class="headerlink" title="编译"></a>编译</h2><h3 id="pre-compile"><a href="#pre-compile" class="headerlink" title="pre-compile"></a>pre-compile</h3><p>执行<code>install-deps.sh</code>，安装编译ceph依赖的软件包。</p>
+<h3 id="cmake"><a href="#cmake" class="headerlink" title="cmake"></a>cmake</h3><p>安装官方文档的步骤可以正常编译，但默认的编译是含有调试信息的。所以编译后的bin文件比较大。</p>
+<ol>
+<li>生成makefile文件<br> 使用<code>do_cmake.sh</code>脚本在<code>build</code>目录下生成<code>Makefile</code>文件</li>
+<li>编译<br> 使用<code>make</code>命令编译，此过程时间较长。</li>
+<li>瘦身<br> 编译后的binary文件包含有debug信息，所以文件较大。需要使用strip对其debug信息进行裁剪。裁剪有两个工具可以用一个是<code>objcopy</code>；另一个是<code>strip</code><br> eg: <pre><code>`objcopy --strip-debug ./radosgw`
+`strip --strip-debug --strip-unneeded ./radosgw`
+</code></pre></li>
+</ol>
+<h3 id="rpmbuild"><a href="#rpmbuild" class="headerlink" title="rpmbuild"></a>rpmbuild</h3><ol>
+<li>生成<code>rpmbuild</code>目录树<br> 使用<code>rpmdev-setuptree</code>命令创建<code>rpmbuild</code>目录树，该目录树会在<code>$home</code>目录下生成。可根据自己的需要将<code>rpmbuild</code>copy到指定的目录，但后续build过程需要指定这个目录。本人将<code>rpmbuild</code>目录移动到<code>/root/src</code>目录下。</li>
+<li>获取源码tar包到<code>rpmbuild/SOURCES</code>目录<br> 获取源码tar包可以到<code>https://download.ceph.com/tarballs/ceph-14.2.3.tar.gz</code>去下载。也可以将修改好的代码直接做成tar包。然后将tar包copy到<code>rpmbuild/SOURCES</code>目录下。</li>
+<li>提取tar包中的<code>ceph.spec</code><br> 从源码tar包中提取<code>ceph.spec</code>文件到<code>rpmbuild/SPECS</code>目录，用于后续rpmbuild使用。eg: <code>tar --strip-components=1 -C /root/src/rpmbuild/SPECS/ --no-anchored -xvzf /root/src/rpmbuild/SOURCES/ceph-14.2.3.tar.gz &quot;ceph.spec&quot;</code></li>
+<li>build rpms<br> rpmbuild具体使用<code>-bb</code>还是<code>-ba</code>根据个人需要而定吧。本人这里使用<code>-bb</code>只制作binary。eg: <code>rpmbuild -D &quot;_smp_mflags 4&quot; -D &quot;_topdir /root/src/rpmbuild&quot; -bb /root/src/rpmbuild/SPECS/ceph.spec</code>。<br> 由于本人将<code>rpmbuild</code>移动到了<code>/root/src</code>目录下，所以需要使用<code>-D &quot;_topdir /root/src/rpmbuild&quot;</code>去指定<code>rpmbuild</code>目录。<br> 本人不希望rpmbuild自动推算使用几个核心去编译，需要指定4个核心编译需要指定<code>-D &quot;_smp_mflags 4&quot;</code></li>
+</ol>
+<p>此时，可以静静等待编译完成。</p>
+<p><strong><em> 编译的过程中可能会遇到<code>BuildArch:noarch</code>错误 </em></strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">error: Arch dependent binaries in noarch package</div><div class="line"> </div><div class="line">  </div><div class="line">RPM build errors:</div><div class="line">    Arch dependent binaries in noarch package</div></pre></td></tr></table></figure>
+<p>可以通过在<code>spec</code>文件中增加<code>%define _binaries_in_noarch_packages_terminate_build 0</code>来解决此问题。</p>
+<h1 id="Luminous"><a href="#Luminous" class="headerlink" title="Luminous"></a>Luminous</h1><p>编译 Ceph luminous版本，luminous的改动还是蛮大的，而且改变了原有的configure为cmake。</p>
+<h2 id="编译环境-1"><a href="#编译环境-1" class="headerlink" title="编译环境"></a>编译环境</h2><h3 id="硬件-1"><a href="#硬件-1" class="headerlink" title="硬件"></a>硬件</h3><p>armv7l (Odroid XU4)</p>
+<h3 id="软件-1"><a href="#软件-1" class="headerlink" title="软件"></a>软件</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">$ lsb_release  -a</div><div class="line">LSB Version:    1.4</div><div class="line">Distributor ID: Arch</div><div class="line">Description:    Arch Linux</div><div class="line">Release:        rolling</div><div class="line">Codename:       n/a</div><div class="line"></div><div class="line">$ uname -a</div><div class="line">Linux HomeCenter 4.14.29-1-ARCH #1 SMP PREEMPT Fri Mar 23 02:57:06 UTC 2018 armv7l GNU/Linux</div><div class="line"></div><div class="line">$ gcc -v</div><div class="line">Using built-in specs.</div><div class="line">COLLECT_GCC=gcc</div><div class="line">COLLECT_LTO_WRAPPER=/usr/lib/gcc/armv7l-unknown-linux-gnueabihf/7.2.1/lto-wrapper</div><div class="line">Target: armv7l-unknown-linux-gnueabihf</div><div class="line">Configured with: /build/gcc/src/gcc/configure --prefix=/usr --libdir=/usr/lib --libexecdir=/usr/lib --mandir=/usr/share/man --infodir=/usr/share/info --with-bugurl=https://github.com/archlinuxarm/PKGBUILDs/issues --enable-languages=c,c++,fortran,go,lto,objc,obj-c++ --enable-shared --enable-threads=posix --with-system-zlib --with-isl --enable-__cxa_atexit --disable-libunwind-exceptions --enable-clocale=gnu --disable-libstdcxx-pch --disable-libssp --enable-gnu-unique-object --enable-linker-build-id --enable-lto --enable-plugin --enable-install-libiberty --with-linker-hash-style=gnu --enable-gnu-indirect-function --disable-multilib --disable-werror --enable-checking=release --enable-default-pie --enable-default-ssp --host=armv7l-unknown-linux-gnueabihf --build=armv7l-unknown-linux-gnueabihf --with-arch=armv7-a --with-float=hard --with-fpu=vfpv3-d16</div><div class="line">Thread model: posix</div><div class="line">gcc version 7.2.1 20180116 (GCC)</div></pre></td></tr></table></figure>
+<h2 id="编译-1"><a href="#编译-1" class="headerlink" title="编译"></a>编译</h2><p>按照官方的文档，编译总共分为4步。</p>
 <ol>
 <li>安装编译需要的依赖包 <code>./install-deps.sh</code></li>
 <li>使用cmake生成Makefile <code>./do_cmake.sh</code></li>
@@ -1090,9 +1813,9 @@
 </ol>
 <p>由于本人使用的是archlinux，简单查看了一下<code>install-deps.sh</code>这个脚本，发现没有与我使用os相匹配的处理；所以本人决定跳过第一步，并且我也不打算制作安装包，所以第四部也省略了。</p>
 <p>接下来就只剩下第2、3步了，那么ceph编译依赖的其他软件包怎么解决，就只能放倒编译过程中出现报错再去究其原因了。闲言少叙，我们开始编译。</p>
-<h2 id="cmake过程"><a href="#cmake过程" class="headerlink" title="cmake过程"></a>cmake过程</h2><p>从github上clone下来ceph代码，不需要取得submodule的代码，因为在<code>do_cmake.sh</code>中首先会做。执行<code>do_cmake.sh</code>后，先取submodule代码，然后创建build目录，并在build目录中执行cmake，生成Makefile。</p>
+<h3 id="cmake过程"><a href="#cmake过程" class="headerlink" title="cmake过程"></a>cmake过程</h3><p>从github上clone下来ceph代码，不需要取得submodule的代码，因为在<code>do_cmake.sh</code>中首先会做。执行<code>do_cmake.sh</code>后，先取submodule代码，然后创建build目录，并在build目录中执行cmake，生成Makefile。</p>
 <p>在获取submodule这个过程由于网络问题会出现不只一次的中断，这个时候需要先删除<code>build</code>目录，然后在重新执行<code>do_cmake.sh</code>。</p>
-<h2 id="make过程"><a href="#make过程" class="headerlink" title="make过程"></a>make过程</h2><p>ceph编译需要用到boost包，之前的版本都是需要用户手动安装，L版改为取源码自行编译了。可以先执行<code>make Boost</code>或直接执行<code>make</code>操作，我在编译boost的时候遇到了找不到<code>pyconfig.h</code>的编译错误，此时需要根据错误提示的文件及行数，找到对应的<code>cxxflags</code>并增加<code>-I/usr/include/python2.7/</code>这样再次执行<code>make</code>操作boost就能正常编译了。</p>
+<h3 id="make过程"><a href="#make过程" class="headerlink" title="make过程"></a>make过程</h3><p>ceph编译需要用到boost包，之前的版本都是需要用户手动安装，L版改为取源码自行编译了。可以先执行<code>make Boost</code>或直接执行<code>make</code>操作，我在编译boost的时候遇到了找不到<code>pyconfig.h</code>的编译错误，此时需要根据错误提示的文件及行数，找到对应的<code>cxxflags</code>并增加<code>-I/usr/include/python2.7/</code>这样再次执行<code>make</code>操作boost就能正常编译了。</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">Scanning dependencies of target ceph-dencoder</div><div class="line">[  0%] Building CXX object src/CMakeFiles/ceph-dencoder.dir/test/encoding/ceph_dencoder.cc.o</div><div class="line">c++: internal compiler error: Killed (program cc1plus)</div><div class="line">Please submit a full bug report,</div><div class="line">with preprocessed source if appropriate.</div><div class="line">See &lt;https://github.com/archlinuxarm/PKGBUILDs/issues&gt; for instructions.</div><div class="line">make[2]: *** [src/CMakeFiles/ceph-dencoder.dir/build.make:64: src/CMakeFiles/ceph-dencoder.dir/test/encoding/ceph_dencoder.cc.o] Error 4</div><div class="line">make[1]: *** [CMakeFiles/Makefile2:1609: src/CMakeFiles/ceph-dencoder.dir/all] Error 2</div><div class="line">make: *** [Makefile:141: all] Error 2</div></pre></td></tr></table></figure>
 <p>由于我使用的是嵌入式设备，内存只有2g大小，并且没有配置swap，在编译过程中会遇到<code>g++: internal compiler error: Killed (program cc1plus)</code>错误，这种错误都是由于内存不足导致的。对于我的环境而言，只能通过增加swap来解决（<a href="https://wiki.archlinux.org/index.php/Swap" target="_blank" rel="external">关于增加swap的方法</a>）。</p>
 <p>问题解决了，就一路make下去吧。</p>
@@ -1100,6 +1823,9 @@
 <li><a href="https://blog.csdn.net/BXD1314/article/details/47338391" target="_blank" rel="external">解决: g++: internal compiler error: Killed (program cc1plus)</a></li>
 <li><a href="https://superuser.com/questions/608410/building-boost-in-arch" target="_blank" rel="external">Building Boost in Arch</a></li>
 <li><a href="https://wiki.archlinux.org/index.php/Swap" target="_blank" rel="external">Swap</a></li>
+<li><a href="https://www.cnblogs.com/zhang-wen/p/6070626.html" target="_blank" rel="external">rpmbuild用法</a></li>
+<li><a href="https://www.cnblogs.com/schangech/p/5641108.html" target="_blank" rel="external">RPM包rpmbuild SPEC文件深度说明 【装载】</a></li>
+<li><a href="https://ceph.com/planet/编译的ceph二进制文件过大问题/" target="_blank" rel="external">编译的Ceph二进制文件过大问题</a></li>
 </ul>
 
           
@@ -1494,637 +2220,11 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/12/07/container/docker/docker-volplugin-nbd-rbd/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/12/07/container/docker/docker-volplugin-nbd-rbd/" itemprop="url">Docker Volume Plugin 之 NBD-RBD(Ceph)</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-12-07T11:04:03+08:00">
-                2017-12-07
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/container/" itemprop="url" rel="index">
-                    <span itemprop="name">container</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>Ceph官网有一篇<a href="http://ceph.com/planet/getting-started-with-the-docker-rbd-volume-plugin/" target="_blank" rel="external">“Getting started with the Docker RBD volume plugin”</a>里面提到了一个驱动<a href="https://github.com/yp-engineering/rbd-docker-plugin" target="_blank" rel="external">“github.com/yp-engineering/rbd-docker-plugin”</a>，此驱动使用的是krbd（kernel RBD）。krbd与librbd相比很多功能被阉割了，如果你只想用Ceph作为backend，那你可以使用这个驱动。如果你不甘心只是简单的使用Ceph，还想体验他的很多特性，那你可以考虑下面这个方案。。。</p>
-<h1 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h1><p>本方案的想法来自于Ceph的一个命令<code>nbd-rbd</code>，只要你的系统支持nbd，并且支持docker，nbd与rbd的通讯方式依然使用socket文件的形式，只是rbd client相关程序需要放置到容器中；因为有些操作系统没有包管理器，不能方便的安装软件包(如：CoreOS)。</p>
-<p><img src="/images/docker/docker_volplugin_nbd_rbd.png" alt="docker_volplugin_nbd_rbd.png"></p>
-<p>图画的这么清晰，还需要再说明吗！好吧，还是再说点儿吧。</p>
-<ul>
-<li>每个nbd设备与rbd设备之间使用一个socket文件进行通讯</li>
-<li>NBDServer用于管理所有nbd设备</li>
-<li>RBDServer用于管理所有rbd设备</li>
-</ul>
-<h1 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h1><p><strong><em> Todo… </em></strong></p>
-<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1>
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/12/01/container/docker/docker-image-untar/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/12/01/container/docker/docker-image-untar/" itemprop="url">Untar Docker Image</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-12-01T09:57:17+08:00">
-                2017-12-01
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/container/" itemprop="url" rel="index">
-                    <span itemprop="name">container</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>docker中容器的运行离不开image，一个image中都存放有哪些东西呢？这些东西又是以何种方式组织在一起的呢？今天让我们来撕开这层面纱，看看image到底是什么样。</p>
-<h1 id="撕"><a href="#撕" class="headerlink" title="撕"></a>撕</h1><h2 id="导出tar包"><a href="#导出tar包" class="headerlink" title="导出tar包"></a>导出tar包</h2><p>首先我们使用<code>docker save</code>，将一个docker image保存成tar包，我们以<code>nginx官方镜像</code>为例</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">$ docker images</div><div class="line">REPOSITORY                               TAG                 IMAGE ID            CREATED             SIZE</div><div class="line">nginx                                   1.11.3              4efb2fcdb1ab        15 months ago       183MB</div><div class="line"></div><div class="line">$ docker save nginx:1.11.3 -o ./nginx.tar</div><div class="line">$ tar -xvf ./nginx.tar -C ./nginx</div><div class="line">...</div><div class="line">$ ls -l ./</div><div class="line">drwxrwxr-x 5 zhoub zhoub      4096 11月 28 16:55 nginx</div><div class="line">-rw------- 1 zhoub zhoub 191400960 11月 28 16:52 nginx.tar</div></pre></td></tr></table></figure>
-<h2 id="走近nginx目录"><a href="#走近nginx目录" class="headerlink" title="走近nginx目录"></a>走近nginx目录</h2><p>现在<code>nginx.tar</code>已经被解开了，接下来就要进入nginx目录一探究竟了。首先<code>tree</code>一下nginx目录，看看都有什么文件。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line">$ tree -L 2 ./nginx</div><div class="line">./nginx</div><div class="line">├── 01d69dac180439f10b5f2f06b71fa19c9f89fb85cb5fd543dba9bb2ca9b620ef</div><div class="line">│   ├── json</div><div class="line">│   ├── layer</div><div class="line">│   ├── layer.tar</div><div class="line">│   └── VERSION</div><div class="line">├── 4efb2fcdb1ab05fb03c9435234343c1cc65289eeb016be86193e88d3a5d84f6b.json</div><div class="line">├── 80cdba09b091f72276c031bd64488c3da5f82022812bc995f0859abe0855a872</div><div class="line">│   ├── json</div><div class="line">│   ├── layer</div><div class="line">│   ├── layer.tar</div><div class="line">│   └── VERSION</div><div class="line">├── c575e5db41b92dbf9e1814b8ea9cf989ef650e37cfcef12fa402e630db6a581f</div><div class="line">│   ├── json</div><div class="line">│   ├── layer</div><div class="line">│   ├── layer.tar</div><div class="line">│   └── VERSION</div><div class="line">├── manifest.json</div><div class="line">└── repositories</div></pre></td></tr></table></figure>
-<p>从目录结构上来看，有三个总体的描述文件<code>repositories</code>、<code>manifest.json</code>、<code>4efb2fcdb1ab05fb03c9435234343c1cc65289eeb016be86193e88d3a5d84f6b.json</code>，还有三个目录，这三个目录的结构基本相同都由<code>json</code>、<code>layer</code>、<code>VERSION</code>组成。</p>
-<p>通过这些名字，我们先简单猜测一下，image由很多layer组成，上层layer基于下层layer构建而成，下层layer基于基层layer构成。到底image是不是按我们的猜测构成的呢，让我们来看一看总体描述的三个文件。</p>
-<p>manifest.json:<br><figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">&#123;"Config":"4efb2fcdb1ab05fb03c9435234343c1cc65289eeb016be86193e88d3a5d84f6b.json","RepoTags":["nginx:1.11.3"],"Layers":["80cdba09b091f72276c031bd64488c3da5f82022812bc995f0859abe0855a872/layer.tar","c575e5db41b92dbf9e1814b8ea9cf989ef650e37cfcef12fa402e630db6a581f/layer.tar","01d69dac180439f10b5f2f06b71fa19c9f89fb85cb5fd543dba9bb2ca9b620ef/layer.tar"]&#125;]</div></pre></td></tr></table></figure></p>
-<p>通过<code>manifest.json</code>文件我们可以看出，<code>nginx:1.11.3</code>这个image的配置文件是<code>4efb2fcdb1ab05fb03c9435234343c1cc65289eeb016be86193e88d3a5d84f6b.json</code>，layer一共有三个分别是<code>80cdba09b091f72276c031bd64488c3da5f82022812bc995f0859abe0855a872/layer.tar</code>，<code>c575e5db41b92dbf9e1814b8ea9cf989ef650e37cfcef12fa402e630db6a581f/layer.tar</code>，<code>01d69dac180439f10b5f2f06b71fa19c9f89fb85cb5fd543dba9bb2ca9b620ef/layer.tar</code>。</p>
-<p>image的配置文件中都对image进行了哪些配置呢？让我们来看一看<br>4efb2fcdb1ab05fb03c9435234343c1cc65289eeb016be86193e88d3a5d84f6b.json<br><figure class="highlight json"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div></pre></td><td class="code"><pre><div class="line">&#123;</div><div class="line">    <span class="attr">"architecture"</span>:<span class="string">"amd64"</span>,</div><div class="line">    <span class="attr">"author"</span>:<span class="string">"NGINX Docker Maintainers \"docker-maint@nginx.com\""</span>,</div><div class="line">    <span class="attr">"config"</span>:&#123;</div><div class="line">        <span class="attr">"Hostname"</span>:<span class="string">"2da0903ff372"</span>,</div><div class="line">        <span class="attr">"Domainname"</span>:<span class="string">""</span>,</div><div class="line">        <span class="attr">"User"</span>:<span class="string">""</span>,</div><div class="line">        <span class="attr">"AttachStdin"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"AttachStdout"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"AttachStderr"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"ExposedPorts"</span>:&#123;<span class="attr">"443/tcp"</span>:&#123;&#125;,<span class="attr">"80/tcp"</span>:&#123;&#125;&#125;,</div><div class="line">        <span class="attr">"Tty"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"OpenStdin"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"StdinOnce"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"Env"</span>:[<span class="string">"PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"</span>,<span class="string">"NGINX_VERSION=1.11.3-1~jessie"</span>],</div><div class="line">        <span class="attr">"Cmd"</span>:[<span class="string">"nginx"</span>,<span class="string">"-g"</span>,<span class="string">"daemon off;"</span>],</div><div class="line">        <span class="attr">"ArgsEscaped"</span>:<span class="literal">true</span>,</div><div class="line">        <span class="attr">"Image"</span>:<span class="string">"sha256:27ca9d70a764c6955e354f5fdc706b03ed47601213ac9fc638a8943fcc7680f8"</span>,</div><div class="line">        <span class="attr">"Volumes"</span>:<span class="literal">null</span>,</div><div class="line">        <span class="attr">"WorkingDir"</span>:<span class="string">""</span>,</div><div class="line">        <span class="attr">"Entrypoint"</span>:<span class="literal">null</span>,</div><div class="line">        <span class="attr">"OnBuild"</span>:[],</div><div class="line">        <span class="attr">"Labels"</span>:&#123;&#125;</div><div class="line">    &#125;,</div><div class="line">    <span class="attr">"container"</span>:<span class="string">"25ab8b143580751e438246801e7ba720f6f84ee9faca3522532e7fbe1ed7021f"</span>,</div><div class="line">    <span class="attr">"container_config"</span>:&#123;</div><div class="line">        <span class="attr">"Hostname"</span>:<span class="string">"2da0903ff372"</span>,</div><div class="line">        <span class="attr">"Domainname"</span>:<span class="string">""</span>,</div><div class="line">        <span class="attr">"User"</span>:<span class="string">""</span>,</div><div class="line">        <span class="attr">"AttachStdin"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"AttachStdout"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"AttachStderr"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"ExposedPorts"</span>:&#123;<span class="attr">"443/tcp"</span>:&#123;&#125;,<span class="attr">"80/tcp"</span>:&#123;&#125;&#125;,</div><div class="line">        <span class="attr">"Tty"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"OpenStdin"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"StdinOnce"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"Env"</span>:[<span class="string">"PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"</span>,<span class="string">"NGINX_VERSION=1.11.3-1~jessie"</span>],</div><div class="line">        <span class="attr">"Cmd"</span>:[<span class="string">"/bin/sh"</span>,<span class="string">"-c"</span>,<span class="string">"#(nop) CMD [\"nginx\" \"-g\" \"daemon off;\"]"</span>],</div><div class="line">        <span class="attr">"ArgsEscaped"</span>:<span class="literal">true</span>,</div><div class="line">        <span class="attr">"Image"</span>:<span class="string">"sha256:27ca9d70a764c6955e354f5fdc706b03ed47601213ac9fc638a8943fcc7680f8"</span>,</div><div class="line">        <span class="attr">"Volumes"</span>:<span class="literal">null</span>,</div><div class="line">        <span class="attr">"WorkingDir"</span>:<span class="string">""</span>,</div><div class="line">        <span class="attr">"Entrypoint"</span>:<span class="literal">null</span>,</div><div class="line">        <span class="attr">"OnBuild"</span>:[],</div><div class="line">        <span class="attr">"Labels"</span>:&#123;&#125;</div><div class="line">    &#125;,</div><div class="line">    <span class="attr">"created"</span>:<span class="string">"2016-08-23T18:51:23.709520142Z"</span>,</div><div class="line">    <span class="attr">"docker_version"</span>:<span class="string">"1.10.3"</span>,</div><div class="line">    <span class="attr">"history"</span>:[</div><div class="line">        &#123;<span class="attr">"created"</span>:<span class="string">"2016-07-28T17:47:54.990622865Z"</span>,<span class="attr">"created_by"</span>:<span class="string">"/bin/sh -c #(nop) ADD file:0e0565652aa852f62033d99f84892216020d30f64521ded5e72d4940bc4c9697 in /"</span>&#125;,</div><div class="line">        &#123;<span class="attr">"created"</span>:<span class="string">"2016-07-28T17:47:55.809686499Z"</span>,<span class="attr">"created_by"</span>:<span class="string">"/bin/sh -c #(nop) CMD [\"/bin/bash\"]"</span>,<span class="attr">"empty_layer"</span>:<span class="literal">true</span>&#125;,</div><div class="line">        &#123;<span class="attr">"created"</span>:<span class="string">"2016-08-23T18:49:31.945397165Z"</span>,<span class="attr">"author"</span>:<span class="string">"NGINX Docker Maintainers \"docker-maint@nginx.com\""</span>,<span class="attr">"created_by"</span>:<span class="string">"/bin/sh -c #(nop) MAINTAINER NGINX Docker Maintainers \"docker-maint@nginx.com\""</span>,<span class="attr">"empty_layer"</span>:<span class="literal">true</span>&#125;,</div><div class="line">        &#123;<span class="attr">"created"</span>:<span class="string">"2016-08-23T18:49:33.057946615Z"</span>,<span class="attr">"author"</span>:<span class="string">"NGINX Docker Maintainers \"docker-maint@nginx.com\""</span>,<span class="attr">"created_by"</span>:<span class="string">"/bin/sh -c #(nop) ENV NGINX_VERSION=1.11.3-1~jessie"</span>,<span class="attr">"empty_layer"</span>:<span class="literal">true</span>&#125;,</div><div class="line">        &#123;<span class="attr">"created"</span>:<span class="string">"2016-08-23T18:51:19.236946594Z"</span>,<span class="attr">"author"</span>:<span class="string">"NGINX Docker Maintainers \"docker-maint@nginx.com\""</span>,<span class="attr">"created_by"</span>:<span class="string">"/bin/sh -c apt-key adv --keyserver hkp://pgp.mit.edu:80 --recv-keys 573BFD6B3D8FBC641079A6ABABF5BD827BD9BF62 \t\u0026\u0026 echo \"deb http://nginx.org/packages/mainline/debian/ jessie nginx\" \u003e\u003e /etc/apt/sources.list \t\u0026\u0026 apt-get update \t\u0026\u0026 apt-get install --no-install-recommends --no-install-suggests -y \t\t\t\t\t\tca-certificates \t\t\t\t\t\tnginx=$&#123;NGINX_VERSION&#125; \t\t\t\t\t\tnginx-module-xslt \t\t\t\t\t\tnginx-module-geoip \t\t\t\t\t\tnginx-module-image-filter \t\t\t\t\t\tnginx-module-perl \t\t\t\t\t\tnginx-module-njs \t\t\t\t\t\tgettext-base \t\u0026\u0026 rm -rf /var/lib/apt/lists/*"</span>&#125;,</div><div class="line">        &#123;<span class="attr">"created"</span>:<span class="string">"2016-08-23T18:51:21.574094006Z"</span>,<span class="attr">"author"</span>:<span class="string">"NGINX Docker Maintainers \"docker-maint@nginx.com\""</span>,<span class="attr">"created_by"</span>:<span class="string">"/bin/sh -c ln -sf /dev/stdout /var/log/nginx/access.log \t\u0026\u0026 ln -sf /dev/stderr /var/log/nginx/error.log"</span>&#125;,</div><div class="line">        &#123;<span class="attr">"created"</span>:<span class="string">"2016-08-23T18:51:22.632895061Z"</span>,<span class="attr">"author"</span>:<span class="string">"NGINX Docker Maintainers \"docker-maint@nginx.com\""</span>,<span class="attr">"created_by"</span>:<span class="string">"/bin/sh -c #(nop) EXPOSE 443/tcp 80/tcp"</span>,<span class="attr">"empty_layer"</span>:<span class="literal">true</span>&#125;,</div><div class="line">        &#123;<span class="attr">"created"</span>:<span class="string">"2016-08-23T18:51:23.709520142Z"</span>,<span class="attr">"author"</span>:<span class="string">"NGINX Docker Maintainers \"docker-maint@nginx.com\""</span>,<span class="attr">"created_by"</span>:<span class="string">"/bin/sh -c #(nop) CMD [\"nginx\" \"-g\" \"daemon off;\"]"</span>,<span class="attr">"empty_layer"</span>:<span class="literal">true</span>&#125;</div><div class="line">    ],</div><div class="line">    <span class="attr">"os"</span>:<span class="string">"linux"</span>,</div><div class="line">    <span class="attr">"rootfs"</span>:&#123;</div><div class="line">        <span class="attr">"type"</span>:<span class="string">"layers"</span>,</div><div class="line">        <span class="attr">"diff_ids"</span>:[</div><div class="line">            <span class="string">"sha256:2f71b45e4e254ddceb187b1467f5471f0e14d7124ac2dd7fdd7ddbc76e13f0e5"</span>,</div><div class="line">            <span class="string">"sha256:d7953e5e5bba5c637ce6eb81a4528a777c4265386cb12e9bff8124ef97538746"</span>,</div><div class="line">            <span class="string">"sha256:69ecf026ff94793ab573754612e6fa40b28331a47c3584de0b32d39a88959c37"</span></div><div class="line">        ]</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>看完这个配置文件我惊到了，如此庞大的一个配置文件告诉我们dockerfile能配的我能配，dockerfile不能配的我也能配。。。这个配置文件具体就不分析了。。。</p>
-<p>刚刚看完那个累心的配置文件，接下来让我们来说说这三个layer，哪一个layer是入口呢？</p>
-<p>repositories:<br><figure class="highlight json"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">&#123;<span class="attr">"nginx"</span>:&#123;<span class="attr">"1.11.3"</span>:<span class="string">"01d69dac180439f10b5f2f06b71fa19c9f89fb85cb5fd543dba9bb2ca9b620ef"</span>&#125;&#125;</div></pre></td></tr></table></figure></p>
-<p>我们通过查看<code>repositories</code>可以看出<code>1.11.3</code>这个版本的layer入口是<code>01d69dac180439f10b5f2f06b71fa19c9f89fb85cb5fd543dba9bb2ca9b620ef</code>。那么三个layer之间的依赖关系怎样呢？让我们进入各个layer一探究竟吧。</p>
-<h3 id="layer-01d69dac180439f10b5f2f06b71fa19c9f89fb85cb5fd543dba9bb2ca9b620ef"><a href="#layer-01d69dac180439f10b5f2f06b71fa19c9f89fb85cb5fd543dba9bb2ca9b620ef" class="headerlink" title="layer 01d69dac180439f10b5f2f06b71fa19c9f89fb85cb5fd543dba9bb2ca9b620ef"></a>layer 01d69dac180439f10b5f2f06b71fa19c9f89fb85cb5fd543dba9bb2ca9b620ef</h3><p>该layer中的<code>json</code>文件描述的本layer的配置信息</p>
-<p>json:<br><figure class="highlight json"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div></pre></td><td class="code"><pre><div class="line">&#123;</div><div class="line">    <span class="attr">"id"</span>:<span class="string">"01d69dac180439f10b5f2f06b71fa19c9f89fb85cb5fd543dba9bb2ca9b620ef"</span>,</div><div class="line">    <span class="attr">"parent"</span>:<span class="string">"c575e5db41b92dbf9e1814b8ea9cf989ef650e37cfcef12fa402e630db6a581f"</span>,</div><div class="line">    <span class="attr">"created"</span>:<span class="string">"2016-08-23T18:51:23.709520142Z"</span>,</div><div class="line">    <span class="attr">"container"</span>:<span class="string">"25ab8b143580751e438246801e7ba720f6f84ee9faca3522532e7fbe1ed7021f"</span>,</div><div class="line">    <span class="attr">"container_config"</span>:&#123;</div><div class="line">        <span class="attr">"Hostname"</span>:<span class="string">"2da0903ff372"</span>,</div><div class="line">        <span class="attr">"Domainname"</span>:<span class="string">""</span>,</div><div class="line">        <span class="attr">"User"</span>:<span class="string">""</span>,</div><div class="line">        <span class="attr">"AttachStdin"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"AttachStdout"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"AttachStderr"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"ExposedPorts"</span>:&#123;<span class="attr">"443/tcp"</span>:&#123;&#125;,<span class="attr">"80/tcp"</span>:&#123;&#125;&#125;,</div><div class="line">        <span class="attr">"Tty"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"OpenStdin"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"StdinOnce"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"Env"</span>:[<span class="string">"PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"</span>,<span class="string">"NGINX_VERSION=1.11.3-1~jessie"</span>],</div><div class="line">        <span class="attr">"Cmd"</span>:[<span class="string">"/bin/sh"</span>,<span class="string">"-c"</span>,<span class="string">"#(nop) CMD [\"nginx\" \"-g\" \"daemon off;\"]"</span>],</div><div class="line">        <span class="attr">"ArgsEscaped"</span>:<span class="literal">true</span>,</div><div class="line">        <span class="attr">"Image"</span>:<span class="string">"sha256:27ca9d70a764c6955e354f5fdc706b03ed47601213ac9fc638a8943fcc7680f8"</span>,</div><div class="line">        <span class="attr">"Volumes"</span>:<span class="literal">null</span>,</div><div class="line">        <span class="attr">"WorkingDir"</span>:<span class="string">""</span>,</div><div class="line">        <span class="attr">"Entrypoint"</span>:<span class="literal">null</span>,</div><div class="line">        <span class="attr">"OnBuild"</span>:[],</div><div class="line">        <span class="attr">"Labels"</span>:&#123;&#125;</div><div class="line">    &#125;,</div><div class="line">    <span class="attr">"docker_version"</span>:<span class="string">"1.10.3"</span>,</div><div class="line">    <span class="attr">"author"</span>:<span class="string">"NGINX Docker Maintainers \"docker-maint@nginx.com\""</span>,</div><div class="line">    <span class="attr">"config"</span>:&#123;</div><div class="line">        <span class="attr">"Hostname"</span>:<span class="string">"2da0903ff372"</span>,</div><div class="line">        <span class="attr">"Domainname"</span>:<span class="string">""</span>,</div><div class="line">        <span class="attr">"User"</span>:<span class="string">""</span>,</div><div class="line">        <span class="attr">"AttachStdin"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"AttachStdout"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"AttachStderr"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"ExposedPorts"</span>:&#123;<span class="attr">"443/tcp"</span>:&#123;&#125;,<span class="attr">"80/tcp"</span>:&#123;&#125;&#125;,</div><div class="line">        <span class="attr">"Tty"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"OpenStdin"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"StdinOnce"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"Env"</span>:[<span class="string">"PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"</span>,<span class="string">"NGINX_VERSION=1.11.3-1~jessie"</span>],</div><div class="line">        <span class="attr">"Cmd"</span>:[<span class="string">"nginx"</span>,<span class="string">"-g"</span>,<span class="string">"daemon off;"</span>],</div><div class="line">        <span class="attr">"ArgsEscaped"</span>:<span class="literal">true</span>,</div><div class="line">        <span class="attr">"Image"</span>:<span class="string">"sha256:27ca9d70a764c6955e354f5fdc706b03ed47601213ac9fc638a8943fcc7680f8"</span>,</div><div class="line">        <span class="attr">"Volumes"</span>:<span class="literal">null</span>,</div><div class="line">        <span class="attr">"WorkingDir"</span>:<span class="string">""</span>,</div><div class="line">        <span class="attr">"Entrypoint"</span>:<span class="literal">null</span>,</div><div class="line">        <span class="attr">"OnBuild"</span>:[],</div><div class="line">        <span class="attr">"Labels"</span>:&#123;&#125;</div><div class="line">    &#125;,</div><div class="line">    <span class="attr">"architecture"</span>:<span class="string">"amd64"</span>,</div><div class="line">    <span class="attr">"os"</span>:<span class="string">"linux"</span></div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>我们可以看到<code>parent</code>字段指出了当前layer的父layer是<code>c575e5db41b92dbf9e1814b8ea9cf989ef650e37cfcef12fa402e630db6a581f</code>。<br>当前layer中数据内容请见<code>layer.tar</code></p>
-<p>layer.tar:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">$ tree ./layer</div><div class="line">./layer</div><div class="line">└── var</div><div class="line">    └── log</div><div class="line">    └── nginx</div><div class="line">        ├── access.log -&gt; /dev/stdout</div><div class="line">        └── error.log -&gt; /dev/stderr</div></pre></td></tr></table></figure></p>
-<h3 id="layer-c575e5db41b92dbf9e1814b8ea9cf989ef650e37cfcef12fa402e630db6a581f"><a href="#layer-c575e5db41b92dbf9e1814b8ea9cf989ef650e37cfcef12fa402e630db6a581f" class="headerlink" title="layer c575e5db41b92dbf9e1814b8ea9cf989ef650e37cfcef12fa402e630db6a581f"></a>layer c575e5db41b92dbf9e1814b8ea9cf989ef650e37cfcef12fa402e630db6a581f</h3><p>该layer中的<code>json</code>文件描述的本layer的配置信息</p>
-<p>json:<br><figure class="highlight json"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line">&#123;</div><div class="line">    <span class="attr">"id"</span>:<span class="string">"c575e5db41b92dbf9e1814b8ea9cf989ef650e37cfcef12fa402e630db6a581f"</span>,</div><div class="line">    <span class="attr">"parent"</span>:<span class="string">"80cdba09b091f72276c031bd64488c3da5f82022812bc995f0859abe0855a872"</span>,</div><div class="line">    <span class="attr">"created"</span>:<span class="string">"1970-01-01T08:00:00+08:00"</span>,</div><div class="line">    <span class="attr">"container_config"</span>:&#123;</div><div class="line">        <span class="attr">"Hostname"</span>:<span class="string">""</span>,</div><div class="line">        <span class="attr">"Domainname"</span>:<span class="string">""</span>,</div><div class="line">        <span class="attr">"User"</span>:<span class="string">""</span>,</div><div class="line">        <span class="attr">"AttachStdin"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"AttachStdout"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"AttachStderr"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"Tty"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"OpenStdin"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"StdinOnce"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"Env"</span>:<span class="literal">null</span>,</div><div class="line">        <span class="attr">"Cmd"</span>:<span class="literal">null</span>,</div><div class="line">        <span class="attr">"Image"</span>:<span class="string">""</span>,</div><div class="line">        <span class="attr">"Volumes"</span>:<span class="literal">null</span>,</div><div class="line">        <span class="attr">"WorkingDir"</span>:<span class="string">""</span>,</div><div class="line">        <span class="attr">"Entrypoint"</span>:<span class="literal">null</span>,</div><div class="line">        <span class="attr">"OnBuild"</span>:<span class="literal">null</span>,</div><div class="line">        <span class="attr">"Labels"</span>:<span class="literal">null</span></div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>该layer中的父layer是<code>80cdba09b091f72276c031bd64488c3da5f82022812bc995f0859abe0855a872</code><br>当前layer中的数据内容请见<code>layer.tar</code></p>
-<p>layer.tar:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div></pre></td><td class="code"><pre><div class="line">$ tree -L 2 ./layer</div><div class="line">./layer</div><div class="line">├── etc</div><div class="line">│   ├── alternatives</div><div class="line">│   ├── apt</div><div class="line">│   ├── ca-certificates</div><div class="line">│   ├── ca-certificates.conf</div><div class="line">│   ├── default</div><div class="line">│   ├── fonts</div><div class="line">│   ├── group</div><div class="line">│   ├── group-</div><div class="line">│   ├── gshadow</div><div class="line">│   ├── gshadow-</div><div class="line">│   ├── init.d</div><div class="line">│   ├── ld.so.cache</div><div class="line">│   ├── logrotate.d</div><div class="line">│   ├── nginx</div><div class="line">│   ├── passwd</div><div class="line">│   ├── passwd-</div><div class="line">│   ├── perl</div><div class="line">│   ├── rc0.d</div><div class="line">│   ├── rc1.d</div><div class="line">│   ├── rc2.d</div><div class="line">│   ├── rc3.d</div><div class="line">│   ├── rc4.d</div><div class="line">│   ├── rc5.d</div><div class="line">│   ├── rc6.d</div><div class="line">│   ├── shadow</div><div class="line">│   ├── shadow-</div><div class="line">│   ├── ssl</div><div class="line">│   ├── subgid</div><div class="line">│   ├── subgid-</div><div class="line">│   ├── subuid</div><div class="line">│   ├── subuid-</div><div class="line">│   └── ucf.conf</div><div class="line">├── lib</div><div class="line">│   └── x86_64-linux-gnu</div><div class="line">├── tmp</div><div class="line">├── usr</div><div class="line">│   ├── bin</div><div class="line">│   ├── lib</div><div class="line">│   ├── local</div><div class="line">│   ├── sbin</div><div class="line">│   └── share</div><div class="line">└── var</div><div class="line">    ├── cache</div><div class="line">    ├── lib</div><div class="line">    └── log</div></pre></td></tr></table></figure></p>
-<h3 id="layer-80cdba09b091f72276c031bd64488c3da5f82022812bc995f0859abe0855a872"><a href="#layer-80cdba09b091f72276c031bd64488c3da5f82022812bc995f0859abe0855a872" class="headerlink" title="layer 80cdba09b091f72276c031bd64488c3da5f82022812bc995f0859abe0855a872"></a>layer 80cdba09b091f72276c031bd64488c3da5f82022812bc995f0859abe0855a872</h3><p>该layer中的<code>json</code>文件描述的本layer的配置信息<br>json:<br><figure class="highlight json"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line">&#123;</div><div class="line">    <span class="attr">"id"</span>:<span class="string">"80cdba09b091f72276c031bd64488c3da5f82022812bc995f0859abe0855a872"</span>,</div><div class="line">    <span class="attr">"created"</span>:<span class="string">"1970-01-01T08:00:00+08:00"</span>,</div><div class="line">    <span class="attr">"container_config"</span>:&#123;</div><div class="line">        <span class="attr">"Hostname"</span>:<span class="string">""</span>,</div><div class="line">        <span class="attr">"Domainname"</span>:<span class="string">""</span>,</div><div class="line">        <span class="attr">"User"</span>:<span class="string">""</span>,</div><div class="line">        <span class="attr">"AttachStdin"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"AttachStdout"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"AttachStderr"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"Tty"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"OpenStdin"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"StdinOnce"</span>:<span class="literal">false</span>,</div><div class="line">        <span class="attr">"Env"</span>:<span class="literal">null</span>,</div><div class="line">        <span class="attr">"Cmd"</span>:<span class="literal">null</span>,</div><div class="line">        <span class="attr">"Image"</span>:<span class="string">""</span>,</div><div class="line">        <span class="attr">"Volumes"</span>:<span class="literal">null</span>,</div><div class="line">        <span class="attr">"WorkingDir"</span>:<span class="string">""</span>,</div><div class="line">        <span class="attr">"Entrypoint"</span>:<span class="literal">null</span>,</div><div class="line">        <span class="attr">"OnBuild"</span>:<span class="literal">null</span>,</div><div class="line">        <span class="attr">"Labels"</span>:<span class="literal">null</span></div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>从配置中可以看出，没有<code>parent</code>字段了。说明这个layer应该就是base layer了。(我十分好奇nginx镜像是用哪个基础镜像做出来的?)<br>当前layer中的数据内容请见<code>layer.tar</code><br>layer.tar:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div></pre></td><td class="code"><pre><div class="line">$ tree -L 1 ./layer</div><div class="line">./layer</div><div class="line">├── bin</div><div class="line">├── boot</div><div class="line">├── dev</div><div class="line">├── etc</div><div class="line">├── home</div><div class="line">├── lib</div><div class="line">├── lib64</div><div class="line">├── media</div><div class="line">├── mnt</div><div class="line">├── opt</div><div class="line">├── proc</div><div class="line">├── root</div><div class="line">├── run</div><div class="line">├── sbin</div><div class="line">├── srv</div><div class="line">├── sys</div><div class="line">├── tmp</div><div class="line">├── usr</div><div class="line">└── var</div></pre></td></tr></table></figure></p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ cat ./layer/etc/debian_version</div><div class="line">8.5</div></pre></td></tr></table></figure>
-<p>噢，原来nginx镜像是基于debian 8.5做出来的。</p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/11/27/storage/ceph/radosgw-arch/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/11/27/storage/ceph/radosgw-arch/" itemprop="url">俯瞰 RadosGW</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-27T22:18:29+08:00">
-                2017-11-27
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/storage/" itemprop="url" rel="index">
-                    <span itemprop="name">storage</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>Ceph号称统一存储，何为统一，就是将块、文件、对象统一到一起。RadosGW（简称RGW）就是Ceph中提供对象存储服务的模块。它能提供S3和Swift两种对象存储接口，当然也是最主流的两种接口。</p>
-<p>本文不打算介绍概念性的东西，只为扒一扒RGW的架构。废话不多讲，直接上图</p>
-<p><img src="/images/ceph/rgw_arch.png" alt="rgw_arch.png"></p>
-<p>我觉得画的挺清楚了，就不细讲了。</p>
-<hr>
-<p>一张图不过瘾，再来一发。</p>
-<p><img src="/images/ceph/rgw_structural.png" alt="rgw_structural"></p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/11/20/network/dnsmasq-usage/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/11/20/network/dnsmasq-usage/" itemprop="url">DNSmasq使用</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-11-20T16:40:02+08:00">
-                2017-11-20
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/network/" itemprop="url" rel="index">
-                    <span itemprop="name">network</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>DNSmasq是一个小巧且方便地用于配置DNS和DHCP的工具，适用于小型网络，它提供了DNS功能和可选择的DHCP功能。它服务那些只在本地适用的域名，这些域名是不会在全球的DNS服务器中出现的。DHCP服务器和DNS服务器结合，并且允许DHCP分配的地址能在DNS中正常解析，而这些DHCP分配的地址和相关命令可以配置到每台主机中，也可以配置到一台核心设备中（比如路由器），DNSmasq支持静态和动态两种DHCP配置方式。</p>
-<h1 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h1><p>在<code>rhel7.4</code>上的安装<code>yum install -y dnsmasq</code>, 完成dnsmasq的安装同时也推荐安装<code>bind-utils</code>，这个包提供很多dns测试相关工具<code>yum install -y bind-utils</code>, 如<code>dig</code>、<code>nslookup</code></p>
-<h1 id="配置启动"><a href="#配置启动" class="headerlink" title="配置启动"></a>配置启动</h1><p>创建两个dnsmasq节点，一个做<code>base dns</code>，一个做<code>upper dns</code></p>
-<p><code>base dns</code>的<code>dnsmasq.conf</code>配置：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">listen-address=172.17.0.2,127.0.0.1</div><div class="line"></div><div class="line"># 配置上游DNS服务器</div><div class="line">server=/dockxen.mydns/172.17.0.3</div><div class="line"></div><div class="line"># 配置别名</div><div class="line">cname=web.dockxen.dns,rhel82</div></pre></td></tr></table></figure></p>
-<p><strong><em> 在使用CNAME时，<code>&lt;target&gt;</code>必须本机可访问对象，所以此处我将<code>rhel82</code>放到<code>/etc/hosts</code>中 </em></strong></p>
-<p><code>base dns</code>的<code>/etc/hosts</code>配置：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">127.0.0.1       localhost</div><div class="line">::1     localhost ip6-localhost ip6-loopback</div><div class="line">172.17.0.2      dnsbase</div><div class="line">192.168.1.82    rhel82</div></pre></td></tr></table></figure></p>
-<p><code>upper dns</code>配置：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">address=/myweb.dockxen.mydns/192.168.1.82</div><div class="line"></div><div class="line">listen-address=172.17.0.3,127.0.0.1</div><div class="line"></div><div class="line"># The fields are &lt;name&gt;,&lt;target&gt;,&lt;port&gt;,&lt;priority&gt;,&lt;weight&gt;</div><div class="line">srv-host=_ldap._tcp.dockxen.mydns,myweb.dockxen.mydns,8000,0,100</div></pre></td></tr></table></figure></p>
-<p>完成<code>base dns</code>和<code>upper dns</code>的配置后使用<code>dnsmasq -d</code> debug模式启动，可以看到部分调试信息</p>
-<h1 id="测试验证"><a href="#测试验证" class="headerlink" title="测试验证"></a>测试验证</h1><p>测试验证需要安装<code>bind-utils</code>，测试中会用到其中的<code>dig</code>和<code>nslookup</code>，开始测试前修改<code>/etc/resolv.conf</code>中的<code>nameserver 172.17.0.2</code></p>
-<h2 id="验证A"><a href="#验证A" class="headerlink" title="验证A"></a>验证A</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line">[root@dnclient /]# dig myweb.dockxen.mydns</div><div class="line"></div><div class="line">; &lt;&lt;&gt;&gt; DiG 9.9.4-RedHat-9.9.4-51.el7 &lt;&lt;&gt;&gt; myweb.dockxen.mydns</div><div class="line">;; global options: +cmd</div><div class="line">;; Got answer:</div><div class="line">;; -&gt;&gt;HEADER&lt;&lt;- opcode: QUERY, status: NOERROR, id: 22751</div><div class="line">;; flags: qr aa rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0</div><div class="line"></div><div class="line">;; QUESTION SECTION:</div><div class="line">;myweb.dockxen.mydns.           IN      A</div><div class="line"></div><div class="line">;; ANSWER SECTION:</div><div class="line">myweb.dockxen.mydns.    0       IN      A       192.168.1.82</div><div class="line"></div><div class="line">;; Query time: 0 msec</div><div class="line">;; SERVER: 172.17.0.2#53(172.17.0.2)</div><div class="line">;; WHEN: Mon Nov 20 09:29:48 UTC 2017</div><div class="line">;; MSG SIZE  rcvd: 53</div><div class="line"></div><div class="line">[root@dnclient /]# nslookup myweb.dockxen.mydns</div><div class="line">Server:         172.17.0.2</div><div class="line">Address:        172.17.0.2#53</div><div class="line"></div><div class="line">Name:   myweb.dockxen.mydns</div><div class="line">Address: 192.168.1.82</div></pre></td></tr></table></figure>
-<h2 id="验证CNAME"><a href="#验证CNAME" class="headerlink" title="验证CNAME"></a>验证CNAME</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div></pre></td><td class="code"><pre><div class="line">[root@dnclient /]# dig web.dockxen.dns</div><div class="line"></div><div class="line">; &lt;&lt;&gt;&gt; DiG 9.9.4-RedHat-9.9.4-51.el7 &lt;&lt;&gt;&gt; web.dockxen.dns</div><div class="line">;; global options: +cmd</div><div class="line">;; Got answer:</div><div class="line">;; -&gt;&gt;HEADER&lt;&lt;- opcode: QUERY, status: NOERROR, id: 55429</div><div class="line">;; flags: qr aa rd ra; QUERY: 1, ANSWER: 2, AUTHORITY: 0, ADDITIONAL: 1</div><div class="line"></div><div class="line">;; OPT PSEUDOSECTION:</div><div class="line">; EDNS: version: 0, flags:; udp: 4096</div><div class="line">;; QUESTION SECTION:</div><div class="line">;web.dockxen.dns.               IN      A</div><div class="line"></div><div class="line">;; ANSWER SECTION:</div><div class="line">web.dockxen.dns.        0       IN      CNAME   rhel82.</div><div class="line">rhel82.                 0       IN      A       192.168.1.82</div><div class="line"></div><div class="line">;; Query time: 0 msec</div><div class="line">;; SERVER: 172.17.0.2#53(172.17.0.2)</div><div class="line">;; WHEN: Mon Nov 20 09:30:59 UTC 2017</div><div class="line">;; MSG SIZE  rcvd: 80</div><div class="line"></div><div class="line">[root@dnclient /]# nslookup web.dockxen.dns</div><div class="line">Server:         172.17.0.2</div><div class="line">Address:        172.17.0.2#53</div><div class="line"></div><div class="line">web.dockxen.dns canonical name = rhel82.</div><div class="line">Name:   rhel82</div><div class="line">Address: 192.168.1.82</div></pre></td></tr></table></figure>
-<h2 id="验证SRV"><a href="#验证SRV" class="headerlink" title="验证SRV"></a>验证SRV</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">[root@dnclient /]# dig +noall +answer SRV _ldap._tcp.dockxen.mydns</div><div class="line">_ldap._tcp.dockxen.mydns. 0     IN      SRV     0 100 8000 myweb.dockxen.mydns.</div><div class="line">[root@dnclient /]# nslookup -type=srv _ldap._tcp.dockxen.mydns</div><div class="line">Server:         172.17.0.2</div><div class="line">Address:        172.17.0.2#53</div><div class="line"></div><div class="line">_ldap._tcp.dockxen.mydns        service = 0 100 8000 myweb.dockxen.mydns.</div></pre></td></tr></table></figure>
-<h1 id="应用"><a href="#应用" class="headerlink" title="应用"></a>应用</h1><h2 id="etcd的服务发现"><a href="#etcd的服务发现" class="headerlink" title="etcd的服务发现"></a>etcd的服务发现</h2><p>etcd各个节点之间的通讯使用域名方式访问，由于etcd节点ip地址可以以dhcp方式获取，每次etcd节点重启都有可能导致访问地址发生变化。若使用<code>/etc/hosts</code>文件进行“域名－ip”映射涉及到<code>/etc/hosts</code>文件同步分发问题，所以使用dnsmasq来完成“域名－ip”的映射。</p>
-<p>关于etcd的服务发现配置请见<code>参考&amp;鸣谢</code></p>
-<h2 id="kube-dns的服务发现"><a href="#kube-dns的服务发现" class="headerlink" title="kube-dns的服务发现"></a>kube-dns的服务发现</h2><p>请见<a href="https://zhoubofsy.github.io/2017/04/27/container/k8s/k8s-analyze-service-discovery/" target="_blank" rel="external">《K8s服务发现分析》</a></p>
-<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a href="https://mritd.me/2016/09/01/Etcd-集群搭建/" target="_blank" rel="external">Etcd集群搭建</a></li>
-<li><a href="https://coreos.com/etcd/docs/latest/v2/clustering.html#dns-discovery" target="_blank" rel="external">DNS Discovery</a></li>
-</ul>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><span class="space">&hellip;</span><a class="page-number" href="/page/11/">11</a><a class="extend next" rel="next" href="/page/3/"><i class="fa fa-angle-right"></i></a>
+    <a class="extend prev" rel="prev" href="/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><span class="space">&hellip;</span><a class="page-number" href="/page/12/">12</a><a class="extend next" rel="next" href="/page/3/"><i class="fa fa-angle-right"></i></a>
   </nav>
 
 
@@ -2172,7 +2272,7 @@
             
               <a href="/archives/ || archive">
             
-                <span class="site-state-item-count">110</span>
+                <span class="site-state-item-count">114</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -2194,7 +2294,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">105</span>
+                <span class="site-state-item-count">106</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
