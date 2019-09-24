@@ -1868,7 +1868,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/11/15/vim/vi-bin-text-change/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/11/15/mysql/mysql-password-functions/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="博">
@@ -1887,7 +1887,7 @@
         
           <h1 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2016/11/15/vim/vi-bin-text-change/" itemprop="url">vi(m)进制转换</a></h1>
+                <a class="post-title-link" href="/2016/11/15/mysql/mysql-password-functions/" itemprop="url">MySQL修改密码方法</a></h1>
         
 
         <div class="post-meta">
@@ -1922,8 +1922,8 @@
               
               
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/vim/" itemprop="url" rel="index">
-                    <span itemprop="name">vim</span>
+                  <a href="/categories/mysql/" itemprop="url" rel="index">
+                    <span itemprop="name">mysql</span>
                   </a>
                 </span>
 
@@ -1961,18 +1961,19 @@
       
         
           
-            <h1 id="vi命令"><a href="#vi命令" class="headerlink" title="vi命令"></a>vi命令</h1><p>使用“xxd”或“od”工具转换十六进制<br>方法如下：</p>
-<ul>
-<li><code>:%!xxd</code>将当前文本转换为16进制格式</li>
-<li><code>:%!xxd -c 12</code>将当前文本转换为16进制格式,并每行显示12个字节</li>
-<li><p><code>:%!xxd -r</code>将当前文件转换回文本格式</p>
-</li>
-<li><h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1></li>
-<li><ol>
-<li><a href="http://lwg2001s.iteye.com/blog/2035826" target="_blank" rel="external">vi下以16进制查看二进制文件</a></li>
-</ol>
-</li>
+            <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><ul>
+<li>OS Version : rhel 6.4</li>
+<li>MySQL Version : 5.6.31</li>
 </ul>
+<h1 id="改密权限"><a href="#改密权限" class="headerlink" title="改密权限"></a>改密权限</h1><ul>
+<li>root可以修改所有用户密码</li>
+<li>所有用户在无任何权限情况下可修改自己密码</li>
+<li>获得“update所有库”权限的用户可修改任何用户密码（包括root）</li>
+</ul>
+<p><strong>(以上所诉，均使用<code>set password</code>方法)</strong></p>
+<h1 id="改密三种方法"><a href="#改密三种方法" class="headerlink" title="改密三种方法"></a>改密三种方法</h1><h2 id="Set-Password"><a href="#Set-Password" class="headerlink" title="Set Password"></a>Set Password</h2><p><code>set password for &lt;用户名&gt;@{localhost|%|...} =password(&#39;&lt;密码&gt;&#39;);</code></p>
+<h2 id="grant-…-identified-by"><a href="#grant-…-identified-by" class="headerlink" title="grant … identified by"></a>grant … identified by</h2><p><code>grant &lt;权限&gt; on &lt;数据库&gt;.&lt;数据表&gt; to &lt;user&gt;@{localhost|%|...} identified by &#39;&lt;密码&gt;&#39;;</code></p>
+<h2 id="update"><a href="#update" class="headerlink" title="update"></a>update</h2><p><code>update &lt;库名&gt;.&lt;表名&gt; set password=password(&#39;&lt;密码&gt;&#39;) where user=&#39;&lt;用户名&gt;&#39; and host=&#39;{localhost | % | ...}&#39;;</code></p>
 
           
         
