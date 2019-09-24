@@ -309,6 +309,160 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/11/15/mysql/mysql-password-functions/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2016/11/15/mysql/mysql-password-functions/" itemprop="url">MySQL修改密码方法</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-11-15T00:00:00+08:00">
+                2016-11-15
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/mysql/" itemprop="url" rel="index">
+                    <span itemprop="name">mysql</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><ul>
+<li>OS Version : rhel 6.4</li>
+<li>MySQL Version : 5.6.31</li>
+</ul>
+<h1 id="改密权限"><a href="#改密权限" class="headerlink" title="改密权限"></a>改密权限</h1><ul>
+<li>root可以修改所有用户密码</li>
+<li>所有用户在无任何权限情况下可修改自己密码</li>
+<li>获得“update所有库”权限的用户可修改任何用户密码（包括root）</li>
+</ul>
+<p><strong>(以上所诉，均使用<code>set password</code>方法)</strong></p>
+<h1 id="改密三种方法"><a href="#改密三种方法" class="headerlink" title="改密三种方法"></a>改密三种方法</h1><h2 id="Set-Password"><a href="#Set-Password" class="headerlink" title="Set Password"></a>Set Password</h2><p><code>set password for &lt;用户名&gt;@{localhost|%|...} =password(&#39;&lt;密码&gt;&#39;);</code></p>
+<h2 id="grant-…-identified-by"><a href="#grant-…-identified-by" class="headerlink" title="grant … identified by"></a>grant … identified by</h2><p><code>grant &lt;权限&gt; on &lt;数据库&gt;.&lt;数据表&gt; to &lt;user&gt;@{localhost|%|...} identified by &#39;&lt;密码&gt;&#39;;</code></p>
+<h2 id="update"><a href="#update" class="headerlink" title="update"></a>update</h2><p><code>update &lt;库名&gt;.&lt;表名&gt; set password=password(&#39;&lt;密码&gt;&#39;) where user=&#39;&lt;用户名&gt;&#39; and host=&#39;{localhost | % | ...}&#39;;</code></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/11/15/vim/vi-bin-text-change/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -414,6 +568,156 @@
 </ol>
 </li>
 </ul>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/09/23/uwsgi/uwsgi-config-problem-1/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2016/09/23/uwsgi/uwsgi-config-problem-1/" itemprop="url">uWSGI中设置“cap = setuid,setpid”导致python脚本权限降低</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-09-23T00:00:00+08:00">
+                2016-09-23
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/uwsgi/" itemprop="url" rel="index">
+                    <span itemprop="name">uwsgi</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="问题发现"><a href="#问题发现" class="headerlink" title="问题发现"></a>问题发现</h1><h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><ul>
+<li>uwsgi version： 2.0.13.1</li>
+<li>python version: 2.6.6</li>
+<li>采用 Nginx + uWSGI + Python 架构，均拥有ROOT权限</li>
+</ul>
+<h3 id="现象"><a href="#现象" class="headerlink" title="现象"></a>现象</h3><p>Python执行os.mkdir操作，提示“Permission Denied”</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">Traceback (most recent call last):</div><div class="line">File &quot;/cs/nginx/uwsgi/main.py&quot;, line 24, in application</div><div class="line">result = process().entry(environ, start_response)</div><div class="line">File &quot;/cs/nginx/uwsgi/rds/base_mng.py&quot;, line 90, in entry</div><div class="line">self.process_put_request(env)</div><div class="line">File &quot;/cs/nginx/uwsgi/rds/init_rds.py&quot;, line 149, in process_put_request</div><div class="line">result = self.do_put_request(env)</div><div class="line">File &quot;/cs/nginx/uwsgi/rds/init_rds.py&quot;, line 140, in do_put_request</div><div class="line">err_code = op.do()</div><div class="line">File &quot;/cs/nginx/uwsgi/rds/init_rds.py&quot;, line 70, in do</div><div class="line">if 0 == init_create_mp(mp):</div><div class="line">File &quot;/cs/nginx/uwsgi/rds/init/main.py&quot;, line 44, in init_create_mp</div><div class="line">os.mkdir(mp,0755)</div><div class="line">OSError: [Errno 13] Permission denied: &apos;/aaab&apos;</div></pre></td></tr></table></figure>
+<h1 id="解决"><a href="#解决" class="headerlink" title="解决"></a>解决</h1><p>Python脚本的权限，有uWSGI来决定，所以该错误肯定跟uWSGI有关，通过调整uwsgi.ini文件中的用户和权限相关配置发现，将<code>cap = setuid,setgid</code>去掉，可以正常创建目录。</p>
+<p>但：<strong><em>具体原因不明，可能跟setuid和setgid的使用有关，有可能是个Bug</em></strong></p>
 
           
         
@@ -1648,156 +1952,6 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/09/23/uwsgi/uwsgi-config-problem-1/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2016/09/23/uwsgi/uwsgi-config-problem-1/" itemprop="url">uWSGI中设置“cap = setuid,setpid”导致python脚本权限降低</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-09-23T00:00:00+08:00">
-                2016-09-23
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/uwsgi/" itemprop="url" rel="index">
-                    <span itemprop="name">uwsgi</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="问题发现"><a href="#问题发现" class="headerlink" title="问题发现"></a>问题发现</h1><h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><ul>
-<li>uwsgi version： 2.0.13.1</li>
-<li>python version: 2.6.6</li>
-<li>采用 Nginx + uWSGI + Python 架构，均拥有ROOT权限</li>
-</ul>
-<h3 id="现象"><a href="#现象" class="headerlink" title="现象"></a>现象</h3><p>Python执行os.mkdir操作，提示“Permission Denied”</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">Traceback (most recent call last):</div><div class="line">File &quot;/cs/nginx/uwsgi/main.py&quot;, line 24, in application</div><div class="line">result = process().entry(environ, start_response)</div><div class="line">File &quot;/cs/nginx/uwsgi/rds/base_mng.py&quot;, line 90, in entry</div><div class="line">self.process_put_request(env)</div><div class="line">File &quot;/cs/nginx/uwsgi/rds/init_rds.py&quot;, line 149, in process_put_request</div><div class="line">result = self.do_put_request(env)</div><div class="line">File &quot;/cs/nginx/uwsgi/rds/init_rds.py&quot;, line 140, in do_put_request</div><div class="line">err_code = op.do()</div><div class="line">File &quot;/cs/nginx/uwsgi/rds/init_rds.py&quot;, line 70, in do</div><div class="line">if 0 == init_create_mp(mp):</div><div class="line">File &quot;/cs/nginx/uwsgi/rds/init/main.py&quot;, line 44, in init_create_mp</div><div class="line">os.mkdir(mp,0755)</div><div class="line">OSError: [Errno 13] Permission denied: &apos;/aaab&apos;</div></pre></td></tr></table></figure>
-<h1 id="解决"><a href="#解决" class="headerlink" title="解决"></a>解决</h1><p>Python脚本的权限，有uWSGI来决定，所以该错误肯定跟uWSGI有关，通过调整uwsgi.ini文件中的用户和权限相关配置发现，将<code>cap = setuid,setgid</code>去掉，可以正常创建目录。</p>
-<p>但：<strong><em>具体原因不明，可能跟setuid和setgid的使用有关，有可能是个Bug</em></strong></p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/08/10/mysql/20160810-mysql-python-install-on-rhel7-2/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -2572,152 +2726,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/06/07/power/20160607-control-usb-power/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2016/06/07/power/20160607-control-usb-power/" itemprop="url">控制USB设备的电源</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-06-07T10:32:19+08:00">
-                2016-06-07
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/power/" itemprop="url" rel="index">
-                    <span itemprop="name">power</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="上电"><a href="#上电" class="headerlink" title="上电"></a>上电</h2><p>eg:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">echo &quot;1-4.4.4&quot; &gt; /sys/bus/usb/drivers/usb/bind</div></pre></td></tr></table></figure></p>
-<h2 id="下电"><a href="#下电" class="headerlink" title="下电"></a>下电</h2><p>eg:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">echo &quot;1-4.4.4&quot; &gt; /sys/bus/usb/drivers/usb/unbind</div></pre></td></tr></table></figure></p>
-<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a href="http://stackoverflow.com/questions/4702216/controlling-a-usb-power-supply-on-off-with-linux" target="_blank" rel="external">Controlling a USB power supply(on/off) with linux</a></li>
-</ul>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2770,7 +2778,7 @@
             
               <a href="/archives/ || archive">
             
-                <span class="site-state-item-count">114</span>
+                <span class="site-state-item-count">115</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
