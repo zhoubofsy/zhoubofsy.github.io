@@ -309,6 +309,185 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/09/04/bigdata/hadoop/hive-load-from-hbase/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/09/04/bigdata/hadoop/hive-load-from-hbase/" itemprop="url">从hbase向hive导入数据</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-09-04T09:51:00+08:00">
+                2017-09-04
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Big-Data/" itemprop="url" rel="index">
+                    <span itemprop="name">Big-Data</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p><strong> 纯转载 </strong></p>
+<p>当我们用HBase 存储实时数据的时候， 如果要做一些数据分析方面的操作， 就比较困难了， 要写MapReduce Job。 Hive 主要是用来做数据分析的数据仓库，支持标准SQL 查询， 做数据分析很是方便，于是便很自然地想到用Hive来载入HBase的数据做分析， 但是很奇怪地是， 上网查了一下， 只看到以下两种情况：</p>
+<ol>
+<li>如何用Hive 往HBase里面插入大量的数据。</li>
+<li>Hive 与HBase集成， 直接从Hive里面连HBase的数据库进行查询。参考链接： <a href="https://cwiki.apache.org/confluence/display/Hive/HBaseIntegration" target="_blank" rel="external">https://cwiki.apache.org/confluence/display/Hive/HBaseIntegration</a></li>
+</ol>
+<p>选项1是我们需求的逆操作， 直接忽略， 选项2,  虽然没有做专门的Benchmark, 但总感觉直接对HBase进行查询操作不怎么靠谱， 如果我们要频繁做很多类型的数据分析， 那HBase的压力一定会倍增。<br>难道没有把HBase里面的数据直接导入到Hive当中的工具或者方法吗？<br>找了一会， 似乎没找到， 那么只好自己想一个解决方案了。</p>
+<p>思路：<br>利用选项2,  先打通Hive对HBase指定表的全表访问， 再建立一个新的空表， 把查询出来的数据全部导入到新表当中， 以后的所有数据分析操作在新表中完成。<br>说干就干， 让我们试一个简单的例子。</p>
+<ul>
+<li><p>首先在HBase里面建一个表， 名为 student， 包含 id 和 name 两个column</p>
+  <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">hbase shell</div><div class="line">create &apos;student&apos;, &apos;id&apos;, &apos;name&apos;</div></pre></td></tr></table></figure>
+</li>
+<li><p>向表中插入两行数据</p>
+  <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">put &apos;student&apos;, &apos;row1&apos;, &apos;id:val&apos;, &apos;1&apos;</div><div class="line">put &apos;student&apos;, &apos;row1&apos;, &apos;name:val&apos;, &apos;Tony&apos;</div><div class="line">put &apos;student&apos;, &apos;row2&apos;, &apos;id:val&apos;, &apos;2&apos;</div><div class="line">put &apos;student&apos;, &apos;row2&apos;, &apos;name:val&apos;, &apos;Mike&apos;</div></pre></td></tr></table></figure>
+<p>  注意：在插入数据的时候一定要指定column (如id:val, name:val) 直接使用column family (如 id, name) 去存数据会导致后面Hive 建表的时候有问题。</p>
+</li>
+<li><p>扫描此表， 确定数据已经插入</p>
+  <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">scan &apos;student&apos;</div><div class="line">ROW                               COLUMN+CELL                                                                                     </div><div class="line"> row1                             column=id:val, timestamp=1384939342989, value=1                                                 </div><div class="line"> row1                             column=name:val, timestamp=1384939365511, value=Tony                                            </div><div class="line"> row2                             column=id:val, timestamp=1384939351444, value=2                                                 </div><div class="line"> row2                             column=name:val, timestamp=1384939379245, value=Mike</div></pre></td></tr></table></figure>
+</li>
+<li><p>从Hive建立可以访问HBase的外部表</p>
+  <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">CREATE EXTERNAL TABLE student(key string, id int, name string) </div><div class="line">STORED BY &apos;org.apache.hadoop.hive.hbase.HBaseStorageHandler&apos;</div><div class="line">WITH SERDEPROPERTIES (&quot;hbase.columns.mapping&quot; = &quot;id:val,name:val&quot;)</div><div class="line">TBLPROPERTIES(&quot;hbase.table.name&quot; = &quot;student&quot;);</div></pre></td></tr></table></figure>
+</li>
+<li><p>Hive中建立一个新的空表</p>
+  <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">hive&gt; select * from student;</div><div class="line">OK</div><div class="line">row1    1    Tony</div><div class="line">row2    2    Mike</div></pre></td></tr></table></figure>
+<p>  但是此时这个表实际上是一个虚拟表， 实际的数据还在HBase中。 下面需要在Hive中另建一个结构一样的空表， 再把数据导出来。</p>
+</li>
+<li><p>Hive中建立一个新的空表</p>
+  <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">CREATE TABLE new_student (</div><div class="line">  key string,</div><div class="line">  id INT,</div><div class="line">  name STRING)</div><div class="line">ROW FORMAT DELIMITED</div><div class="line">FIELDS TERMINATED BY &apos;\t&apos;</div><div class="line">STORED AS TEXTFILE;</div></pre></td></tr></table></figure>
+</li>
+<li><p>将数据从HBase中导入到新的Hive表中</p>
+  <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">hive&gt; INSERT OVERWRITE TABLE new_student SELECT * FROM student;</div><div class="line">hive&gt; select * from new_student;</div><div class="line">OK</div><div class="line">row1    1    Tony</div><div class="line">row2    2    Mike</div></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>至此大功告成！<br>以后所有复杂的数据查询和数据分析都可以在new_student表中完成。</p>
+<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a href="http://www.cnblogs.com/npumenglei/p/how_to_use_hive_load_data_from_hbase.html" target="_blank" rel="external">Hive如何加载和导入HBase的数据</a></li>
+<li><a href="http://blog.csdn.net/lifuxiangcaohui/article/details/40588929" target="_blank" rel="external">Hive总结（七）Hive四种数据导入方式</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/08/31/apple/xhyve-usage/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -584,7 +763,7 @@
 <p>Apache Zeppelin是一个让交互式数据分析变得可行的基于网页的开源框架。Zeppelin提供了数据分析、数据可视化等功能。Zeppelin 是一个提供交互数据分析且基于Web的笔记本。方便你做出可数据驱动的、可交互且可协作的精美文档，并且支持多种语言，包括 Scala(使用 Apache Spark)、Python(Apache Spark)、SparkSQL、 Hive、 Markdown、Shell等等。</p>
 <h1 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h1><p>采用docker环境部署zeppelin</p>
 <p>OS：CentOS 7.3.1611<br>JAVA：OpenJDK 1.8<br>zeppelin: 0.7.2</p>
-<p>dockerfile:<br><figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">FROM</span> centos:<span class="number">7.3</span>.<span class="number">1611</span></div><div class="line"></div><div class="line"><span class="keyword">MAINTAINER</span> zhoub</div><div class="line"></div><div class="line"><span class="keyword">RUN</span> yum update -y</div><div class="line"><span class="keyword">RUN</span> yum install -y java-1.8.0-openjdk.x86_64</div><div class="line"><span class="keyword">RUN</span> echo "JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.141-1.b16.el7_3.x86_64/jre" | tee -a /etc/bashrc</div><div class="line"><span class="keyword">RUN</span> echo "export JAVA_HOME" | tee -a /etc/bashrc</div></pre></td></tr></table></figure></p>
+<p>dockerfile:<br><figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">FROM</span> centos:<span class="number">7.3</span>.<span class="number">1611</span></div><div class="line"></div><div class="line"><span class="keyword">MAINTAINER</span> zhoub</div><div class="line"></div><div class="line"><span class="keyword">RUN</span><span class="bash"> yum update -y</span></div><div class="line"><span class="keyword">RUN</span><span class="bash"> yum install -y java-1.8.0-openjdk.x86_64</span></div><div class="line"><span class="keyword">RUN</span><span class="bash"> <span class="built_in">echo</span> <span class="string">"JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.141-1.b16.el7_3.x86_64/jre"</span> | tee <span class="_">-a</span> /etc/bashrc</span></div><div class="line"><span class="keyword">RUN</span><span class="bash"> <span class="built_in">echo</span> <span class="string">"export JAVA_HOME"</span> | tee <span class="_">-a</span> /etc/bashrc</span></div></pre></td></tr></table></figure></p>
 <h1 id="下载安装"><a href="#下载安装" class="headerlink" title="下载安装"></a>下载安装</h1><p>从<a href="http://zeppelin.apache.org/download.html" target="_blank" rel="external">zeppelin官网</a>或github上下载，推荐下载最新版。解压tar包，然后在准备好的环境中运行<code>zeppelin/bin/zeppelin-daemon.sh start</code></p>
 <p>docker:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">#!/bin/sh</div><div class="line"></div><div class="line">cmd=&quot;/root/run/entry.sh&quot;</div><div class="line">image=&quot;centos7.3:java1.8&quot;</div><div class="line">net=&quot;hadoop_net&quot;</div><div class="line"></div><div class="line">docker run -d --rm -w /root/ -v $&#123;PWD&#125;/run:/root/run -v $&#123;PWD&#125;/zeppelin:/root/zeppelin -v $&#123;PWD&#125;/hbase:/root/hbase -p 8080 --network $&#123;net&#125; -h zeppelin --name zeppelin $&#123;image&#125; $&#123;cmd&#125;</div></pre></td></tr></table></figure></p>
 <p>entry.sh:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">#!/bin/sh</div><div class="line"></div><div class="line">/root/zeppelin/bin/zeppelin-daemon.sh start</div><div class="line"></div><div class="line">while true</div><div class="line">do</div><div class="line">    sleep 10s</div><div class="line">done</div></pre></td></tr></table></figure></p>
@@ -1857,191 +2036,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/05/18/container/coreos/coreos-build/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/05/18/container/coreos/coreos-build/" itemprop="url">CoreOS镜像制作</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-05-18T13:56:31+08:00">
-                2017-05-18
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/container/" itemprop="url" rel="index">
-                    <span itemprop="name">container</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p><img src="/images/coreos/coreos_build.jpg" alt="coreos_build.jpg"></p>
-<h1 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h1><p>CoreOS，一个轻量的linux分布式操作系统。CoreOS中的应用都以容器形式在系统中运行。个人觉得CoreOS不能算是一个linux发行版，只能算是一种订制系统。(BTW，CoreOS的订制应该是源自Gentoo这个发行版)</p>
-<h1 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h1><ul>
-<li>CoreOS的编译与操作系统无关（此处使用的是RHEL7.2），硬件要求必须是X86-64系统。</li>
-<li>编译系统必须安装 curl、git、python2、bzip2</li>
-<li>CoreOS SDK编译有两种方法（<a href="https://coreos.com/os/docs/latest/sdk-modifying-coreos.html" target="_blank" rel="external">Option1 &amp; Option2</a>），Option1 需要选择和需要编译的CoreOS相匹配的golang版本。</li>
-<li>使用Option2 方法安装，需要设置<code>https_proxy</code>代理（否则，无法法访问GoogleSource）</li>
-</ul>
-<h1 id="制作-amp-安装"><a href="#制作-amp-安装" class="headerlink" title="制作&amp;安装"></a>制作&amp;安装</h1><p>本人使用Option2方法完成CoreOS编译，并使用coreos-install安装CoreOS到xen vm上。</p>
-<h2 id="制作"><a href="#制作" class="headerlink" title="制作"></a>制作</h2><h3 id="准备"><a href="#准备" class="headerlink" title="准备"></a>准备</h3><h4 id="安装Repo"><a href="#安装Repo" class="headerlink" title="安装Repo"></a>安装Repo</h4><p>下载repo，用于下载CoreOS SDK<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">curl http://storage.googleapis.com/git-repo-downloads/repo &gt; ./repo</div><div class="line">chmod a+x ./repo</div></pre></td></tr></table></figure></p>
-<h4 id="下载SDK"><a href="#下载SDK" class="headerlink" title="下载SDK"></a>下载SDK</h4><p>创建一个目录用于存放coreos sdk<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">mkdir coreos</div><div class="line">cd coreos</div></pre></td></tr></table></figure></p>
-<p>repo初始化目录，并同步git repos<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">repo init -u https://github.com/coreos/manifest.git</div><div class="line">repo sync</div></pre></td></tr></table></figure></p>
-<h4 id="Chroot到coreos-SDK"><a href="#Chroot到coreos-SDK" class="headerlink" title="Chroot到coreos SDK"></a>Chroot到coreos SDK</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">./chromite/bin/cros_sdk</div></pre></td></tr></table></figure>
-<h3 id="编译"><a href="#编译" class="headerlink" title="编译"></a>编译</h3><h4 id="设置core用户登陆密码"><a href="#设置core用户登陆密码" class="headerlink" title="设置core用户登陆密码"></a>设置core用户登陆密码</h4><p>设置core用户密码，已被系统安装完后登陆系统使用。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">./set_shared_user_password.sh</div></pre></td></tr></table></figure></p>
-<h4 id="选择目标编译平台"><a href="#选择目标编译平台" class="headerlink" title="选择目标编译平台"></a>选择目标编译平台</h4><p>选择<code>amd64-usr</code>或<code>arm64-usr</code><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">./setup_board --default --board=amd64-usr</div></pre></td></tr></table></figure></p>
-<h4 id="编译Packages"><a href="#编译Packages" class="headerlink" title="编译Packages"></a>编译Packages</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">./build_packages</div></pre></td></tr></table></figure>
-<h4 id="制作CoreOS镜像"><a href="#制作CoreOS镜像" class="headerlink" title="制作CoreOS镜像"></a>制作CoreOS镜像</h4><p>可以选择编译开发版(<code>dev</code>)还是生成版(<code>prod</code>)<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">./build_image prod</div></pre></td></tr></table></figure></p>
-<h4 id="制作可以引导CoreOS镜像"><a href="#制作可以引导CoreOS镜像" class="headerlink" title="制作可以引导CoreOS镜像"></a>制作可以引导CoreOS镜像</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">./image_to_vm.sh --board=amd64-usr --format=xen --from=/mnt/host/source/src/build/images/amd64-usr/developer-1409.0.0+2017-05-15-1456-a1/coreos_production_image.bin --disk_layout=base</div></pre></td></tr></table></figure>
-<ul>
-<li><code>--format</code> 根据不同需要选择制作不同格式的可引导镜像</li>
-<li><code>--disk_layout</code> 默认是空，建议选择<code>base</code></li>
-</ul>
-<h2 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h2><p><strong><em> 经过上述步骤的操作，已经将coreos镜像制作完成，并放置在”./src/build/images/amd64-usr”目录下。 </em></strong></p>
-<p>安装的过程需要使用liveCD启动，然后挂在需要安装的裸盘，使用<code>coreos-install</code>安装。镜像的传递是，先将镜像放置到一个webserver上，然后<code>coreos-install</code>再通过这个webserver下载、并安装。</p>
-<p><strong><em> 在将镜像放置到webserver之前，需要先将镜像压缩成bz2文件，然后再将bz2进行签名 </em></strong>（签名无法使用官方的私钥，只能自己申请，<a href="https://zhoubofsy.github.io/2017/05/18/security/gpg-usage/" target="_blank" rel="external">详细请见</a>）。</p>
-<h3 id="步骤"><a href="#步骤" class="headerlink" title="步骤"></a>步骤</h3><p><strong><em> 本人的安装步骤，不是唯一的、方便、快捷的方法，更多安装方式建议阅者自行调研 </em></strong></p>
-<h4 id="下载coreos-install安装脚本"><a href="#下载coreos-install安装脚本" class="headerlink" title="下载coreos-install安装脚本"></a>下载coreos-install安装脚本</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">wget https://raw.githubusercontent.com/coreos/init/master/bin/coreos-install</div></pre></td></tr></table></figure>
-<h4 id="修改coreos-install中的公钥"><a href="#修改coreos-install中的公钥" class="headerlink" title="修改coreos-install中的公钥"></a>修改coreos-install中的公钥</h4><p>在coreos-install中有个变量<code>GPG_KEY</code>用于存储官方的公钥，需要将这个公钥换成你给镜像签名时对应的公钥。</p>
-<p><strong> 此处略去俺公钥内容 </strong></p>
-<p>镜像在下载到目标机后，coreos-install会对下载的镜像进行校验，这是不替换公钥，只能想办法让官方帮你签名</p>
-<h4 id="使用coreos-install安装CoreOS"><a href="#使用coreos-install安装CoreOS" class="headerlink" title="使用coreos-install安装CoreOS"></a>使用coreos-install安装CoreOS</h4><p>使用liveCD启动系统后，先确认需要安装CoreOS的硬盘，然后执行<code>coreos-install</code>进行安装</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">sudo ./coreos-install -d /dev/xvda -V 1409.0.0 -o xen -v -b http://192.168.1.82:8000 -c /media/configdrive/openstack/latest/user_data</div></pre></td></tr></table></figure>
-<ul>
-<li><code>-d</code> 指定安装目标设备</li>
-<li><code>-V</code> 指定安装版本，一定要与URL中的路径能匹配上</li>
-<li><code>-o</code> 镜像名称中需要指出是<code>xen</code>or<code>kvm</code>or…</li>
-<li><code>-b</code> 镜像下载URL</li>
-</ul>
-<h1 id="问题-amp-解决"><a href="#问题-amp-解决" class="headerlink" title="问题&amp;解决"></a>问题&amp;解决</h1><h2 id="不能引导问题"><a href="#不能引导问题" class="headerlink" title="不能引导问题"></a>不能引导问题</h2><p>若成功编译安装，但不能正常引导，可以对比做bzip2之前镜像的前512字节和安装后xvda的前512字节是否一致。本人遇到不能引导问题，是因为本应使用<code>bzip2</code>压缩的镜像使用了<code>tar</code></p>
-<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li>感谢同事为我提供的VPN翻墙服务</li>
-<li>感谢同事为我提供的WebService服务，方便完成网络安装CoreOS</li>
-<li><a href="https://coreos.com/os/docs/latest/sdk-modifying-coreos.html" target="_blank" rel="external">container linux document</a></li>
-</ul>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2094,7 +2088,7 @@
             
               <a href="/archives/ || archive">
             
-                <span class="site-state-item-count">116</span>
+                <span class="site-state-item-count">117</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>

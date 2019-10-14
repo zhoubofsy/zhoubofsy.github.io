@@ -309,6 +309,167 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/10/19/bigdata/hadoop/Phoenix-index/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2017/10/19/bigdata/hadoop/Phoenix-index/" itemprop="url">Phoenix 二级索引</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-10-19T14:10:36+08:00">
+                2017-10-19
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Big-Data/" itemprop="url" rel="index">
+                    <span itemprop="name">Big-Data</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>在Hbase中，只有一个单一的按照字典序排序的rowKey索引，当使用rowKey来进行数据查询的时候速度较快，但是如果不使用rowKey来查询的话就会使用filter来对全表进行扫描，很大程度上降低了检索性能。而Phoenix提供了二级索引技术来应对这种使用rowKey之外的条件进行检索的场景。</p>
+<h1 id="Global-Index"><a href="#Global-Index" class="headerlink" title="Global Index"></a>Global Index</h1><p>Global indexing适用于多读少写的业务场景。使用Global indexing的话在写数据的时候会消耗大量开销，因为所有对数据表的更新操作（DELETE, UPSERT VALUES and UPSERT SELECT）,会引起索引表的更新，而索引表是分布在不同的数据节点上的，跨节点的数据传输带来了较大的性能消耗。在读数据的时候Phoenix会选择索引表来降低查询消耗的时间。<strong><em> 在默认情况下如果想查询的字段不是索引字段的话索引表不会被使用，也就是说不会带来查询速度的提升。 </em></strong></p>
+<h2 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h2><p>HBase集群的每个regionserver节点的hbase-site.xml中加入配置，并重启HBase集群</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">property</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">name</span>&gt;</span>hbase.regionserver.wal.codec<span class="tag">&lt;/<span class="name">name</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">value</span>&gt;</span>org.apache.hadoop.hbase.regionserver.wal.IndexedWALEditCodec<span class="tag">&lt;/<span class="name">value</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">property</span>&gt;</span></div></pre></td></tr></table></figure>
+<p>注: phoenix有两种链接方式JDBC和phoenix-client，phoenix-client可以正常创建索引；zeppelin使用jdbc连接不能正常创建索引，提示如下错误。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line">java.sql.SQLException: ERROR 1029 (42Y88): Mutable secondary indexes must have the hbase.regionserver.wal.codec property set to org.apache.hadoop.hbase.regionserver.wal.IndexedWALEditCodec in the hbase-sites.xml of every region server. tableName=CMP_IDX</div><div class="line">    at org.apache.phoenix.exception.SQLExceptionCode$Factory$1.newException(SQLExceptionCode.java:464)</div><div class="line">    at org.apache.phoenix.exception.SQLExceptionInfo.buildException(SQLExceptionInfo.java:150)</div><div class="line">    at org.apache.phoenix.schema.MetaDataClient.createIndex(MetaDataClient.java:1293)</div><div class="line">    at org.apache.phoenix.compile.CreateIndexCompiler$1.execute(CreateIndexCompiler.java:85)</div><div class="line">    at org.apache.phoenix.jdbc.PhoenixStatement$2.call(PhoenixStatement.java:358)</div><div class="line">    at org.apache.phoenix.jdbc.PhoenixStatement$2.call(PhoenixStatement.java:341)</div><div class="line">    at org.apache.phoenix.call.CallRunner.run(CallRunner.java:53)</div><div class="line">    at org.apache.phoenix.jdbc.PhoenixStatement.executeMutation(PhoenixStatement.java:340)</div><div class="line">    at org.apache.phoenix.jdbc.PhoenixStatement.execute(PhoenixStatement.java:1511)</div><div class="line">    at org.apache.commons.dbcp2.DelegatingStatement.execute(DelegatingStatement.java:291)</div><div class="line">    at org.apache.commons.dbcp2.DelegatingStatement.execute(DelegatingStatement.java:291)</div><div class="line">    at org.apache.zeppelin.jdbc.JDBCInterpreter.executeSql(JDBCInterpreter.java:581)</div><div class="line">    at org.apache.zeppelin.jdbc.JDBCInterpreter.interpret(JDBCInterpreter.java:692)</div><div class="line">    at org.apache.zeppelin.interpreter.LazyOpenInterpreter.interpret(LazyOpenInterpreter.java:97)</div><div class="line">    at org.apache.zeppelin.interpreter.remote.RemoteInterpreterServer$InterpretJob.jobRun(RemoteInterpreterServer.java:498)</div><div class="line">    at org.apache.zeppelin.scheduler.Job.run(Job.java:175)</div><div class="line">    at org.apache.zeppelin.scheduler.ParallelScheduler$JobRunner.run(ParallelScheduler.java:162)</div><div class="line">    at java.util.concurrent.Executors$RunnableAdapter.call(Unknown Source)</div><div class="line">    at java.util.concurrent.FutureTask.run(Unknown Source)</div><div class="line">    at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.access$201(Unknown Source)</div><div class="line">    at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(Unknown Source)</div><div class="line">    at java.util.concurrent.ThreadPoolExecutor.runWorker(Unknown Source)</div><div class="line">    at java.util.concurrent.ThreadPoolExecutor$Worker.run(Unknown Source)</div><div class="line">    at java.lang.Thread.run(Unknown Source)</div></pre></td></tr></table></figure></p>
+<h2 id="索引操作"><a href="#索引操作" class="headerlink" title="索引操作"></a>索引操作</h2><p>在开始创建索引以前先创建一个表，并向其中填充测试数据（此处填充的数据仅用于功能测试）</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">0: jdbc:phoenix:&gt; create table usertable (id varchar primary key,firstname varchar, lastname varchar);</div><div class="line">0: jdbc:phoenix:&gt; !tables</div><div class="line">+------------+--------------+-------------------------+---------------+----------+------------+----------------------------+-------------+</div><div class="line">| TABLE_CAT  | TABLE_SCHEM  |       TABLE_NAME        |  TABLE_TYPE   | REMARKS  | TYPE_NAME  | SELF_REFERENCING_COL_NAME  | REF_GENERAT |</div><div class="line">+------------+--------------+-------------------------+---------------+----------+------------+----------------------------+-------------+</div><div class="line">|            | SYSTEM       | CATALOG                 | SYSTEM TABLE  |          |            |                            |             |</div><div class="line">|            | SYSTEM       | FUNCTION                | SYSTEM TABLE  |          |            |                            |             |</div><div class="line">|            | SYSTEM       | SEQUENCE                | SYSTEM TABLE  |          |            |                            |             |</div><div class="line">|            | SYSTEM       | STATS                   | SYSTEM TABLE  |          |            |                            |             |</div><div class="line">|            |              | USERTABLE               | TABLE         |          |            |                            |             |</div><div class="line">+------------+--------------+-------------------------+---------------+----------+------------+----------------------------+-------------+</div><div class="line"></div><div class="line">0: jdbc:phoenix:&gt; upsert into usertable(id, firstname, lastname) values('1', 'Hello', 'world');</div><div class="line">...</div><div class="line">0: jdbc:phoenix:&gt; upsert into usertable(id, firstname, lastname) values('5', 'Hello', 'phoenix');</div></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">base(main):019:0&gt; scan &apos;USERTABLE&apos;</div><div class="line">ROW                                 COLUMN+CELL</div><div class="line"> 1                                  column=0:FIRSTNAME, timestamp=1508397473229, value=Hello</div><div class="line"> 1                                  column=0:LASTNAME, timestamp=1508397473229, value=world</div><div class="line"> 1                                  column=0:_0, timestamp=1508397473229, value=x</div><div class="line"> 2                                  column=0:FIRSTNAME, timestamp=1508397529852, value=Hello</div><div class="line"> 2                                  column=0:LASTNAME, timestamp=1508397529852, value=world</div><div class="line"> 2                                  column=0:_0, timestamp=1508397529852, value=x</div><div class="line"> 3                                  column=0:FIRSTNAME, timestamp=1508397535836, value=Hello</div><div class="line"> 3                                  column=0:LASTNAME, timestamp=1508397535836, value=world</div><div class="line"> 3                                  column=0:_0, timestamp=1508397535836, value=x</div><div class="line"> 4                                  column=0:FIRSTNAME, timestamp=1508397643594, value=Hello</div><div class="line"> 4                                  column=0:LASTNAME, timestamp=1508397643594, value=phoenix</div><div class="line"> 4                                  column=0:_0, timestamp=1508397643594, value=x</div><div class="line"> 5                                  column=0:FIRSTNAME, timestamp=1508397648938, value=Hello</div><div class="line"> 5                                  column=0:LASTNAME, timestamp=1508397648938, value=phoenix</div><div class="line"> 5                                  column=0:_0, timestamp=1508397648938, value=x</div><div class="line">5 row(s) in 0.3220 seconds</div></pre></td></tr></table></figure>
+<h3 id="创建索引"><a href="#创建索引" class="headerlink" title="创建索引"></a>创建索引</h3><figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line">0: jdbc:phoenix:&gt; create index idx_name on usertable (lastname) include(firstname);</div><div class="line">0: jdbc:phoenix:&gt; 0: jdbc:phoenix:&gt; !tables</div><div class="line">+------------+--------------+-------------------------+---------------+----------+------------+----------------------------+-------------+</div><div class="line">| TABLE_CAT  | TABLE_SCHEM  |       TABLE_NAME        |  TABLE_TYPE   | REMARKS  | TYPE_NAME  | SELF_REFERENCING_COL_NAME  | REF_GENERAT |</div><div class="line">+------------+--------------+-------------------------+---------------+----------+------------+----------------------------+-------------+</div><div class="line">|            |              | IDX_NAME                | INDEX         |          |            |                            |             |</div><div class="line">|            | SYSTEM       | CATALOG                 | SYSTEM TABLE  |          |            |                            |             |</div><div class="line">|            | SYSTEM       | FUNCTION                | SYSTEM TABLE  |          |            |                            |             |</div><div class="line">|            | SYSTEM       | SEQUENCE                | SYSTEM TABLE  |          |            |                            |             |</div><div class="line">|            | SYSTEM       | STATS                   | SYSTEM TABLE  |          |            |                            |             |</div><div class="line">|            |              | USERTABLE               | TABLE         |          |            |                            |             |</div><div class="line">+------------+--------------+-------------------------+---------------+----------+------------+----------------------------+-------------+</div><div class="line">0: jdbc:phoenix:&gt; !index usertable</div><div class="line">+------------+--------------+-------------+-------------+------------------+-------------+-------+-------------------+--------------+----+</div><div class="line">| TABLE_CAT  | TABLE_SCHEM  | TABLE_NAME  | NON_UNIQUE  | INDEX_QUALIFIER  | INDEX_NAME  | TYPE  | ORDINAL_POSITION  | COLUMN_NAME  | AS |</div><div class="line">+------------+--------------+-------------+-------------+------------------+-------------+-------+-------------------+--------------+----+</div><div class="line">|            |              | USERTABLE   | true        |                  | IDX_NAME    | 3     | 1                 | 0:LASTNAME   | A  |</div><div class="line">|            |              | USERTABLE   | true        |                  | IDX_NAME    | 3     | 2                 | :ID          | A  |</div><div class="line">|            |              | USERTABLE   | true        |                  | IDX_NAME    | 3     | 3                 | 0:FIRSTNAME  |    |</div><div class="line">+------------+--------------+-------------+-------------+------------------+-------------+-------+-------------------+--------------+----+</div></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">hbase(main):020:0&gt; scan &apos;IDX_NAME&apos;</div><div class="line">ROW                                 COLUMN+CELL</div><div class="line"> phoenix\x004                       column=0:0:FIRSTNAME, timestamp=1508397686228, value=Hello</div><div class="line"> phoenix\x004                       column=0:_0, timestamp=1508397686228, value=x</div><div class="line"> phoenix\x005                       column=0:0:FIRSTNAME, timestamp=1508397686228, value=Hello</div><div class="line"> phoenix\x005                       column=0:_0, timestamp=1508397686228, value=x</div><div class="line"> world\x001                         column=0:0:FIRSTNAME, timestamp=1508397686228, value=Hello</div><div class="line"> world\x001                         column=0:_0, timestamp=1508397686228, value=x</div><div class="line"> world\x002                         column=0:0:FIRSTNAME, timestamp=1508397686228, value=Hello</div><div class="line"> world\x002                         column=0:_0, timestamp=1508397686228, value=x</div><div class="line"> world\x003                         column=0:0:FIRSTNAME, timestamp=1508397686228, value=Hello</div><div class="line"> world\x003                         column=0:_0, timestamp=1508397686228, value=x</div><div class="line">5 row(s) in 0.3180 seconds</div></pre></td></tr></table></figure>
+<h3 id="使用索引"><a href="#使用索引" class="headerlink" title="使用索引"></a>使用索引</h3><p>正常的select … where … 是不会用到索引表的，要想用到索引表，必须查询出的字段也是索引字段。(此处的结论需要在后续的性能测试中进行验证)</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">0: jdbc:phoenix:&gt; select firstname from usertable where lastname = 'phoenix';</div><div class="line">+------------+</div><div class="line">| FIRSTNAME  |</div><div class="line">+------------+</div><div class="line">| Hello      |</div><div class="line">| Hello      |</div><div class="line">+------------+</div></pre></td></tr></table></figure>
+<h2 id="性能测试"><a href="#性能测试" class="headerlink" title="性能测试"></a>性能测试</h2><h3 id="读"><a href="#读" class="headerlink" title="读"></a>读</h3><p>Todo…</p>
+<h3 id="写"><a href="#写" class="headerlink" title="写"></a>写</h3><p>Todo…</p>
+<h1 id="Local-Index"><a href="#Local-Index" class="headerlink" title="Local Index"></a>Local Index</h1><p>Todo…</p>
+<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a href="http://www.cnblogs.com/mario-nb/p/6350266.html?utm_source=itdadao&amp;utm_medium=referral" target="_blank" rel="external">Phoenix的二级索引</a></li>
+<li><a href="http://www.cnblogs.com/MOBIN/p/5467284.html" target="_blank" rel="external">Phoenix二级索引(Secondary Indexing)的使用</a></li>
+<li><a href="http://blog.csdn.net/lifuxiangcaohui/article/details/55518390" target="_blank" rel="external">HBase phoenix二级索引</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/10/17/storage/fs-ext2/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -2535,185 +2696,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/09/04/bigdata/hadoop/hive-load-from-hbase/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2017/09/04/bigdata/hadoop/hive-load-from-hbase/" itemprop="url">从hbase向hive导入数据</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-09-04T09:51:00+08:00">
-                2017-09-04
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Big-Data/" itemprop="url" rel="index">
-                    <span itemprop="name">Big-Data</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p><strong> 纯转载 </strong></p>
-<p>当我们用HBase 存储实时数据的时候， 如果要做一些数据分析方面的操作， 就比较困难了， 要写MapReduce Job。 Hive 主要是用来做数据分析的数据仓库，支持标准SQL 查询， 做数据分析很是方便，于是便很自然地想到用Hive来载入HBase的数据做分析， 但是很奇怪地是， 上网查了一下， 只看到以下两种情况：</p>
-<ol>
-<li>如何用Hive 往HBase里面插入大量的数据。</li>
-<li>Hive 与HBase集成， 直接从Hive里面连HBase的数据库进行查询。参考链接： <a href="https://cwiki.apache.org/confluence/display/Hive/HBaseIntegration" target="_blank" rel="external">https://cwiki.apache.org/confluence/display/Hive/HBaseIntegration</a></li>
-</ol>
-<p>选项1是我们需求的逆操作， 直接忽略， 选项2,  虽然没有做专门的Benchmark, 但总感觉直接对HBase进行查询操作不怎么靠谱， 如果我们要频繁做很多类型的数据分析， 那HBase的压力一定会倍增。<br>难道没有把HBase里面的数据直接导入到Hive当中的工具或者方法吗？<br>找了一会， 似乎没找到， 那么只好自己想一个解决方案了。</p>
-<p>思路：<br>利用选项2,  先打通Hive对HBase指定表的全表访问， 再建立一个新的空表， 把查询出来的数据全部导入到新表当中， 以后的所有数据分析操作在新表中完成。<br>说干就干， 让我们试一个简单的例子。</p>
-<ul>
-<li><p>首先在HBase里面建一个表， 名为 student， 包含 id 和 name 两个column</p>
-  <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">hbase shell</div><div class="line">create &apos;student&apos;, &apos;id&apos;, &apos;name&apos;</div></pre></td></tr></table></figure>
-</li>
-<li><p>向表中插入两行数据</p>
-  <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">put &apos;student&apos;, &apos;row1&apos;, &apos;id:val&apos;, &apos;1&apos;</div><div class="line">put &apos;student&apos;, &apos;row1&apos;, &apos;name:val&apos;, &apos;Tony&apos;</div><div class="line">put &apos;student&apos;, &apos;row2&apos;, &apos;id:val&apos;, &apos;2&apos;</div><div class="line">put &apos;student&apos;, &apos;row2&apos;, &apos;name:val&apos;, &apos;Mike&apos;</div></pre></td></tr></table></figure>
-<p>  注意：在插入数据的时候一定要指定column (如id:val, name:val) 直接使用column family (如 id, name) 去存数据会导致后面Hive 建表的时候有问题。</p>
-</li>
-<li><p>扫描此表， 确定数据已经插入</p>
-  <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">scan &apos;student&apos;</div><div class="line">ROW                               COLUMN+CELL                                                                                     </div><div class="line"> row1                             column=id:val, timestamp=1384939342989, value=1                                                 </div><div class="line"> row1                             column=name:val, timestamp=1384939365511, value=Tony                                            </div><div class="line"> row2                             column=id:val, timestamp=1384939351444, value=2                                                 </div><div class="line"> row2                             column=name:val, timestamp=1384939379245, value=Mike</div></pre></td></tr></table></figure>
-</li>
-<li><p>从Hive建立可以访问HBase的外部表</p>
-  <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">CREATE EXTERNAL TABLE student(key string, id int, name string) </div><div class="line">STORED BY &apos;org.apache.hadoop.hive.hbase.HBaseStorageHandler&apos;</div><div class="line">WITH SERDEPROPERTIES (&quot;hbase.columns.mapping&quot; = &quot;id:val,name:val&quot;)</div><div class="line">TBLPROPERTIES(&quot;hbase.table.name&quot; = &quot;student&quot;);</div></pre></td></tr></table></figure>
-</li>
-<li><p>Hive中建立一个新的空表</p>
-  <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">hive&gt; select * from student;</div><div class="line">OK</div><div class="line">row1    1    Tony</div><div class="line">row2    2    Mike</div></pre></td></tr></table></figure>
-<p>  但是此时这个表实际上是一个虚拟表， 实际的数据还在HBase中。 下面需要在Hive中另建一个结构一样的空表， 再把数据导出来。</p>
-</li>
-<li><p>Hive中建立一个新的空表</p>
-  <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">CREATE TABLE new_student (</div><div class="line">  key string,</div><div class="line">  id INT,</div><div class="line">  name STRING)</div><div class="line">ROW FORMAT DELIMITED</div><div class="line">FIELDS TERMINATED BY &apos;\t&apos;</div><div class="line">STORED AS TEXTFILE;</div></pre></td></tr></table></figure>
-</li>
-<li><p>将数据从HBase中导入到新的Hive表中</p>
-  <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">hive&gt; INSERT OVERWRITE TABLE new_student SELECT * FROM student;</div><div class="line">hive&gt; select * from new_student;</div><div class="line">OK</div><div class="line">row1    1    Tony</div><div class="line">row2    2    Mike</div></pre></td></tr></table></figure>
-</li>
-</ul>
-<p>至此大功告成！<br>以后所有复杂的数据查询和数据分析都可以在new_student表中完成。</p>
-<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a href="http://www.cnblogs.com/npumenglei/p/how_to_use_hive_load_data_from_hbase.html" target="_blank" rel="external">Hive如何加载和导入HBase的数据</a></li>
-<li><a href="http://blog.csdn.net/lifuxiangcaohui/article/details/40588929" target="_blank" rel="external">Hive总结（七）Hive四种数据导入方式</a></li>
-</ul>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2766,7 +2748,7 @@
             
               <a href="/archives/ || archive">
             
-                <span class="site-state-item-count">116</span>
+                <span class="site-state-item-count">117</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
