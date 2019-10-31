@@ -95,18 +95,18 @@
 
 
 
-<meta name="description" content="yum 安装1yum install &amp;#123;软件名称&amp;#125; 查询1yum search &amp;#123;关键字s&amp;#125; 下载(不安装)1yum install --downloadonly &amp;#123;需要下载的软件名，可多个&amp;#125; --downloaddir=&amp;#123;下载位置，目录名&amp;#125; 按依赖关系安装本地rpm包1yum localinstall *.rpm r">
+<meta name="description" content="yum 安装1yum install &amp;#123;软件名称&amp;#125; 查询1yum search &amp;#123;关键字s&amp;#125; 下载(不安装)1yum install --downloadonly &amp;#123;需要下载的软件名，可多个&amp;#125; --downloaddir=&amp;#123;下载位置，目录名&amp;#125; 按依赖关系安装本地rpm包1yum localinstall *.rpm 查">
 <meta name="keywords" content="yum,rpm">
 <meta property="og:type" content="article">
 <meta property="og:title" content="yum 和 rpm 使用方法总结">
 <meta property="og:url" content="http://yoursite.com/2016/04/13/linux/rhel/yum-rpm-usage-md/index.html">
 <meta property="og:site_name" content="Bolog">
-<meta property="og:description" content="yum 安装1yum install &amp;#123;软件名称&amp;#125; 查询1yum search &amp;#123;关键字s&amp;#125; 下载(不安装)1yum install --downloadonly &amp;#123;需要下载的软件名，可多个&amp;#125; --downloaddir=&amp;#123;下载位置，目录名&amp;#125; 按依赖关系安装本地rpm包1yum localinstall *.rpm r">
+<meta property="og:description" content="yum 安装1yum install &amp;#123;软件名称&amp;#125; 查询1yum search &amp;#123;关键字s&amp;#125; 下载(不安装)1yum install --downloadonly &amp;#123;需要下载的软件名，可多个&amp;#125; --downloaddir=&amp;#123;下载位置，目录名&amp;#125; 按依赖关系安装本地rpm包1yum localinstall *.rpm 查">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2016-11-13T10:02:51.000Z">
+<meta property="og:updated_time" content="2019-10-31T03:11:40.722Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="yum 和 rpm 使用方法总结">
-<meta name="twitter:description" content="yum 安装1yum install &amp;#123;软件名称&amp;#125; 查询1yum search &amp;#123;关键字s&amp;#125; 下载(不安装)1yum install --downloadonly &amp;#123;需要下载的软件名，可多个&amp;#125; --downloaddir=&amp;#123;下载位置，目录名&amp;#125; 按依赖关系安装本地rpm包1yum localinstall *.rpm r">
+<meta name="twitter:description" content="yum 安装1yum install &amp;#123;软件名称&amp;#125; 查询1yum search &amp;#123;关键字s&amp;#125; 下载(不安装)1yum install --downloadonly &amp;#123;需要下载的软件名，可多个&amp;#125; --downloaddir=&amp;#123;下载位置，目录名&amp;#125; 按依赖关系安装本地rpm包1yum localinstall *.rpm 查">
 
 
 
@@ -407,6 +407,9 @@
 <h3 id="查询"><a href="#查询" class="headerlink" title="查询"></a>查询</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">yum search &#123;关键字s&#125;</div></pre></td></tr></table></figure>
 <h3 id="下载-不安装"><a href="#下载-不安装" class="headerlink" title="下载(不安装)"></a>下载(不安装)</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">yum install --downloadonly &#123;需要下载的软件名，可多个&#125; --downloaddir=&#123;下载位置，目录名&#125;</div></pre></td></tr></table></figure>
 <h3 id="按依赖关系安装本地rpm包"><a href="#按依赖关系安装本地rpm包" class="headerlink" title="按依赖关系安装本地rpm包"></a>按依赖关系安装本地rpm包</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">yum localinstall *.rpm</div></pre></td></tr></table></figure>
+<h3 id="查看包版本"><a href="#查看包版本" class="headerlink" title="查看包版本"></a>查看包版本</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">yum list &#123;安装包名称&#125; --showduplicates</div></pre></td></tr></table></figure>
+<h3 id="安装指定版本的rpm包"><a href="#安装指定版本的rpm包" class="headerlink" title="安装指定版本的rpm包"></a>安装指定版本的rpm包</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">yum install &#123;安装包名称&#125;-&lt;VERSION_STRING&gt;</div></pre></td></tr></table></figure>
+<p>eg: <code>yum install ceph-13.2.6-0.el7</code></p>
 <h2 id="rpm"><a href="#rpm" class="headerlink" title="rpm"></a>rpm</h2><hr>
 <ul>
 <li>每个rpm包上记录着它所依赖的rpm包</li>
@@ -603,7 +606,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#yum"><span class="nav-number">1.</span> <span class="nav-text">yum</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#安装"><span class="nav-number">1.1.</span> <span class="nav-text">安装</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#查询"><span class="nav-number">1.2.</span> <span class="nav-text">查询</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#下载-不安装"><span class="nav-number">1.3.</span> <span class="nav-text">下载(不安装)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#按依赖关系安装本地rpm包"><span class="nav-number">1.4.</span> <span class="nav-text">按依赖关系安装本地rpm包</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#rpm"><span class="nav-number">2.</span> <span class="nav-text">rpm</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#安装-1"><span class="nav-number">2.1.</span> <span class="nav-text">安装</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#卸载"><span class="nav-number">2.2.</span> <span class="nav-text">卸载</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#解压"><span class="nav-number">2.3.</span> <span class="nav-text">解压</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#查看包依赖关系"><span class="nav-number">2.4.</span> <span class="nav-text">查看包依赖关系</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考-amp-鸣谢"><span class="nav-number">3.</span> <span class="nav-text">参考&鸣谢</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#yum"><span class="nav-number">1.</span> <span class="nav-text">yum</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#安装"><span class="nav-number">1.1.</span> <span class="nav-text">安装</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#查询"><span class="nav-number">1.2.</span> <span class="nav-text">查询</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#下载-不安装"><span class="nav-number">1.3.</span> <span class="nav-text">下载(不安装)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#按依赖关系安装本地rpm包"><span class="nav-number">1.4.</span> <span class="nav-text">按依赖关系安装本地rpm包</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#查看包版本"><span class="nav-number">1.5.</span> <span class="nav-text">查看包版本</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#安装指定版本的rpm包"><span class="nav-number">1.6.</span> <span class="nav-text">安装指定版本的rpm包</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#rpm"><span class="nav-number">2.</span> <span class="nav-text">rpm</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#安装-1"><span class="nav-number">2.1.</span> <span class="nav-text">安装</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#卸载"><span class="nav-number">2.2.</span> <span class="nav-text">卸载</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#解压"><span class="nav-number">2.3.</span> <span class="nav-text">解压</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#查看包依赖关系"><span class="nav-number">2.4.</span> <span class="nav-text">查看包依赖关系</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考-amp-鸣谢"><span class="nav-number">3.</span> <span class="nav-text">参考&鸣谢</span></a></li></ol></div>
             
 
           </div>
