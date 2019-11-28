@@ -309,6 +309,303 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/08/20/storage/ceph/changcun-ceph-deployment/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/08/20/storage/ceph/changcun-ceph-deployment/" itemprop="url">长春Ceph环境部署</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-08-20T09:21:47+08:00">
+                2019-08-20
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index">
+                    <span itemprop="name">storage</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h1><h2 id="硬件环境"><a href="#硬件环境" class="headerlink" title="硬件环境"></a>硬件环境</h2><ul>
+<li>CPU</li>
+<li>内存</li>
+<li>硬盘<br>  SAS 300G x 2<br>  SATA 6T x 4<br>  SSD 480G x 6</li>
+</ul>
+<h2 id="软件环境"><a href="#软件环境" class="headerlink" title="软件环境"></a>软件环境</h2><ul>
+<li>操作系统<br>  Centos 7.6.1810</li>
+<li>Ceph软件版本<br>  14.2.2</li>
+</ul>
+<h1 id="部署方案"><a href="#部署方案" class="headerlink" title="部署方案"></a>部署方案</h1><p><img src="/images/ceph/changcun_ceph_solution.png" alt="changcun_ceph_solution.png"></p>
+<h3 id="OS"><a href="#OS" class="headerlink" title="OS"></a>OS</h3><p>两个SAS盘（300G）做成RAID1，用于存储操作系统。</p>
+<h3 id="SATA-Pool"><a href="#SATA-Pool" class="headerlink" title="SATA Pool"></a>SATA Pool</h3><ul>
+<li>OSD Data<br>  每个SATA（6T）做成RAID0，用于存储每个OSD数据</li>
+<li>OSD Journal<br>  两个SSD（480G）做成RAID1，再分成4个分区给每台主机中的4个OSD提供Journal数据存储服务</li>
+<li>ObjectStore<br>  OSD后端存储引擎使用Filestore</li>
+<li>Replication<br>  副本数：3<br>  最小允许副本数：1</li>
+</ul>
+<h3 id="SSD-Pool"><a href="#SSD-Pool" class="headerlink" title="SSD Pool"></a>SSD Pool</h3><ul>
+<li>OSD<br>  每个SSD（480G）做成RAID0，用于存储每个OSD的数据</li>
+<li>ObjectStore<br>  OSD后端存储引擎使用Bluestore</li>
+<li>Replication<br>  副本数：3<br>  最小允许副本数：1</li>
+</ul>
+<h1 id="部署步骤"><a href="#部署步骤" class="headerlink" title="部署步骤"></a>部署步骤</h1><h2 id="Ceph集群部署"><a href="#Ceph集群部署" class="headerlink" title="Ceph集群部署"></a>Ceph集群部署</h2><p>Ceph集群的节点分为管理节点、MON节点、OSD节点</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">节点</th>
+<th style="text-align:left">用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">MON节点</td>
+<td style="text-align:left">用于监控集群、为客户端提供ClusterMap等服务</td>
+</tr>
+<tr>
+<td style="text-align:center">OSD节点</td>
+<td style="text-align:left">数据存储节点，用于完成数据的持久化工作</td>
+</tr>
+<tr>
+<td style="text-align:center">ADMIN节点</td>
+<td style="text-align:left">集群维护管理节点，提供管理员权限</td>
+</tr>
+<tr>
+<td style="text-align:center">MDS节点</td>
+<td style="text-align:left">提供Cephfs服务</td>
+</tr>
+<tr>
+<td style="text-align:center">RGW节点</td>
+<td style="text-align:left">提供对象存储服务</td>
+</tr>
+<tr>
+<td style="text-align:center">MGR节点</td>
+<td style="text-align:left">提供监控（zabbix、prometheus等）、dashboard等服务</td>
+</tr>
+<tr>
+<td style="text-align:center">iSCSI-GW节点</td>
+<td style="text-align:left">提供iSCSI Target 服务</td>
+</tr>
+</tbody>
+</table>
+<p>更多Ceph内容，请见<a href="https://docs.ceph.com/docs/nautilus/" target="_blank" rel="external">此链接</a></p>
+<ul>
+<li>需要在部署集群前，做通管理节点与集群节点（包括：MON节点、OSD节点）之间的ssh无密码访问。</li>
+<li>将各个节点的hostname和ip地址对应后，写入<code>/etc/hosts</code>文件，并将此文件同步到各个节点上<br>  以ceph13为例：  <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">[root@ceph13 cluster]# cat /etc/hosts</div><div class="line">127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4</div><div class="line">::1         localhost localhost.localdomain localhost6 localhost6.localdomain6</div><div class="line"></div><div class="line">10.53.2.13      ceph13  ceph13</div><div class="line">10.53.2.16      ceph16  ceph16</div><div class="line">10.53.2.19      ceph19  ceph19</div></pre></td></tr></table></figure>
+</li>
+</ul>
+<h3 id="Ceph-deploy-安装"><a href="#Ceph-deploy-安装" class="headerlink" title="Ceph-deploy 安装"></a>Ceph-deploy 安装</h3><p>在管理节点上安装Ceph-deploy工具。</p>
+<p>安装EPEL<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">yum install -y epel-release</div></pre></td></tr></table></figure></p>
+<p>修改/增加ceph.repo，并安装ceph-deploy<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">[ceph-noarch]</div><div class="line">name=Ceph noarch packages</div><div class="line">baseurl=https://download.ceph.com/rpm-nautilus/el7/noarch</div><div class="line">enabled=1</div><div class="line">gpgcheck=1</div><div class="line">type=rpm-md</div><div class="line">gpgkey=https://download.ceph.com/keys/release.asc</div></pre></td></tr></table></figure></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">yum update -y</div><div class="line">yum install -y ceph-deploy</div></pre></td></tr></table></figure>
+<h3 id="Create-the-cluster"><a href="#Create-the-cluster" class="headerlink" title="Create the cluster"></a>Create the cluster</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">mkdir &#123;my-cluster&#125;</div><div class="line">cd &#123;my-cluster&#125;</div><div class="line">ceph-deploy new &#123;initial-monitor-node(s)&#125;</div></pre></td></tr></table></figure>
+<p>eg:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">[root@ceph13 ~]# mkdir cluster</div><div class="line">[root@ceph13 ~]# cd cluster</div><div class="line">[root@ceph13 cluster]# ceph-deploy new ceph13 ceph16 ceph19</div></pre></td></tr></table></figure></p>
+<h3 id="修改集群初始化配置"><a href="#修改集群初始化配置" class="headerlink" title="修改集群初始化配置"></a>修改集群初始化配置</h3><p>修改<code>{my-cluster}</code>目录中的<code>ceph.conf</code><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">[root@ceph13 cluster]# ls -al</div><div class="line">总用量 600</div><div class="line">drwxr-xr-x. 2 root root    244 8月  21 15:51 .</div><div class="line">dr-xr-x---. 8 root root   4096 8月  11 16:27 ..</div><div class="line">-rw-------. 1 root root    113 8月  10 16:17 ceph.bootstrap-mds.keyring</div><div class="line">-rw-------. 1 root root    113 8月  10 16:17 ceph.bootstrap-mgr.keyring</div><div class="line">-rw-------. 1 root root    113 8月  10 16:17 ceph.bootstrap-osd.keyring</div><div class="line">-rw-------. 1 root root    113 8月  10 16:17 ceph.bootstrap-rgw.keyring</div><div class="line">-rw-------. 1 root root    151 8月  10 16:17 ceph.client.admin.keyring</div><div class="line">-rw-r--r--. 1 root root    293 8月  10 15:15 ceph.conf</div><div class="line">-rw-r--r--. 1 root root 580431 8月  10 17:13 ceph-deploy-ceph.log</div><div class="line">-rw-------. 1 root root     73 8月  10 15:12 ceph.mon.keyring</div></pre></td></tr></table></figure></p>
+<ul>
+<li>配置public、cluster网络</li>
+<li>配置osd rebalance</li>
+<li>配置scrub和deep-scrub</li>
+<li>关闭crushmap 启动更新配置<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">[global]</div><div class="line"></div><div class="line">public network = &#123;ip-address&#125;/&#123;bits&#125;</div><div class="line">cluster network = &#123;ip-address&#125;/&#123;bits&#125;</div><div class="line"></div><div class="line">osd crush update on start = false</div><div class="line"></div><div class="line">[osd]</div><div class="line">osd max backfills = 1</div><div class="line">osd recovery op priority = 1</div><div class="line">osd recovery max active = 1</div><div class="line">osd client op priority = 63</div><div class="line">osd recovery delay start = 0.5</div><div class="line"></div><div class="line">osd scrub chunk min = 1</div><div class="line">osd scrub chunk max = 5</div><div class="line">osd scrub sleep = 5</div><div class="line">osd deep scrub interval = 2592000 # 60(秒)*60(分)*24(时)*30(天)</div></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>eg:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line">[root@ceph13 cluster]# cat /etc/ceph/ceph.conf </div><div class="line">[global]</div><div class="line">fsid = 20192dd5-3228-4135-9831-c9d7de74a890</div><div class="line">mon_initial_members = ceph13, ceph16, ceph19</div><div class="line">mon_host = 10.53.2.13,10.53.2.16,10.53.2.19</div><div class="line">auth_cluster_required = cephx</div><div class="line">auth_service_required = cephx</div><div class="line">auth_client_required = cephx</div><div class="line">osd crush update on start = false</div><div class="line"></div><div class="line">public network = 10.53.2.0/24</div><div class="line">cluster network = 10.53.1.0/24</div><div class="line"></div><div class="line">[osd]</div><div class="line">osd max backfills = 1</div><div class="line">osd recovery op priority = 1</div><div class="line">osd recovery max active = 1</div><div class="line">osd client op priority = 63</div><div class="line">osd recovery delay start = 0.5</div><div class="line"></div><div class="line">osd scrub chunk min = 1</div><div class="line">osd scrub chunk max = 5</div><div class="line">osd scrub sleep = 5</div><div class="line">osd deep scrub interval = 2592000</div></pre></td></tr></table></figure></p>
+<h3 id="ceph软件安装"><a href="#ceph软件安装" class="headerlink" title="ceph软件安装"></a>ceph软件安装</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ceph-deploy install --stable nautilus &#123;ceph-node(s)&#125;</div></pre></td></tr></table></figure>
+<p>eg:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ceph-deploy install --stable nautilus ceph13 ceph16 ceph19</div></pre></td></tr></table></figure></p>
+<p><strong><em> 此处安装过程比较慢，失败的话建议重试几次。</em></strong></p>
+<h3 id="MON节点创建初始化"><a href="#MON节点创建初始化" class="headerlink" title="MON节点创建初始化"></a>MON节点创建初始化</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ceph-deploy mon create-initial</div></pre></td></tr></table></figure>
+<p>此命令会根据<code>ceph.conf</code>进行MON节点的创建及初始化工作</p>
+<h3 id="部署管理节点"><a href="#部署管理节点" class="headerlink" title="部署管理节点"></a>部署管理节点</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ceph-deploy admin &#123;ceph-node(s)&#125;</div></pre></td></tr></table></figure>
+<p>eg:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ceph-deploy admin ceph13 ceph16 ceph19</div></pre></td></tr></table></figure></p>
+<h3 id="部署mgr节点（可选）"><a href="#部署mgr节点（可选）" class="headerlink" title="部署mgr节点（可选）"></a>部署mgr节点（可选）</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ceph-deploy mgr create &#123;ceph-node(s)&#125;</div></pre></td></tr></table></figure>
+<p>eg:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ceph-deploy mgr create ceph13 ceph16 ceph19</div></pre></td></tr></table></figure></p>
+<p><strong><em> 若不部署mgr服务，集群会有告警，但不影响使用。</em></strong></p>
+<h3 id="部署OSD节点（Filestore）"><a href="#部署OSD节点（Filestore）" class="headerlink" title="部署OSD节点（Filestore）"></a>部署OSD节点（Filestore）</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ceph-deploy osd create --filestore --data &#123;device path&#125; --journal &#123;device path&#125; &#123;ceph-node&#125;</div></pre></td></tr></table></figure>
+<ul>
+<li><code>--filestore</code><br>  指定数据存储引擎</li>
+<li><code>--data</code><br>  指定osd数据存储设备(SATA盘)</li>
+<li><code>--journal</code><br>  指定osd journal存储设备(SSD Journal盘)</li>
+<li><code>ceph-node</code><br>  指定osd所在主机的hostname</li>
+</ul>
+<p>eg:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">ceph-deploy osd create ceph13 --filestore --data /dev/sdb --journal /dev/sdf1</div><div class="line">ceph-deploy osd create ceph13 --filestore --data /dev/sdb --journal /dev/sdf1</div><div class="line">ceph-deploy osd create ceph13 --filestore --data /dev/sdc --journal /dev/sdf2</div><div class="line">ceph-deploy osd create ceph13 --filestore --data /dev/sdd --journal /dev/sdf3</div><div class="line">ceph-deploy osd create ceph13 --filestore --data /dev/sde --journal /dev/sdf4</div><div class="line">ceph-deploy osd create ceph16 --filestore --data /dev/sdb --journal /dev/sdf1</div><div class="line">ceph-deploy osd create ceph16 --filestore --data /dev/sdc --journal /dev/sdf2</div><div class="line">ceph-deploy osd create ceph16 --filestore --data /dev/sdd --journal /dev/sdf3</div><div class="line">ceph-deploy osd create ceph16 --filestore --data /dev/sde --journal /dev/sdf4</div><div class="line">ceph-deploy osd create ceph19 --filestore --data /dev/sdb --journal /dev/sdf1</div><div class="line">ceph-deploy osd create ceph19 --filestore --data /dev/sdc --journal /dev/sdf2</div><div class="line">ceph-deploy osd create ceph19 --filestore --data /dev/sdd --journal /dev/sdf3</div><div class="line">ceph-deploy osd create ceph19 --filestore --data /dev/sde --journal /dev/sdf4</div></pre></td></tr></table></figure></p>
+<h3 id="部署OSD节点（Bluestore）"><a href="#部署OSD节点（Bluestore）" class="headerlink" title="部署OSD节点（Bluestore）"></a>部署OSD节点（Bluestore）</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ceph-deploy osd create --data &#123;device path&#125; &#123;ceph-node&#125;</div></pre></td></tr></table></figure>
+<ul>
+<li><code>--data</code><br>  指定osd数据存储设备(SSD盘)</li>
+<li><code>ceph-node</code><br>  指定osd所在主机的hostname</li>
+</ul>
+<p>eg:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">ceph-deploy osd create ceph13 --data /dev/sdg</div><div class="line">ceph-deploy osd create ceph13 --data /dev/sdh</div><div class="line">ceph-deploy osd create ceph13 --data /dev/sdi</div><div class="line">ceph-deploy osd create ceph13 --data /dev/sdj</div><div class="line">ceph-deploy osd create ceph16 --data /dev/sdg</div><div class="line">ceph-deploy osd create ceph16 --data /dev/sdh</div><div class="line">ceph-deploy osd create ceph16 --data /dev/sdi</div><div class="line">ceph-deploy osd create ceph16 --data /dev/sdj</div><div class="line">ceph-deploy osd create ceph19 --data /dev/sdg</div><div class="line">ceph-deploy osd create ceph19 --data /dev/sdh</div><div class="line">ceph-deploy osd create ceph19 --data /dev/sdi</div><div class="line">ceph-deploy osd create ceph19 --data /dev/sdj</div></pre></td></tr></table></figure></p>
+<p>部署完所有OSD节点后，此集群部署完成可以通过<code>ceph -s</code>查看集群状态。</p>
+<p>eg:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div></pre></td><td class="code"><pre><div class="line">[root@ceph13 cluster]# ceph -s</div><div class="line">  cluster:</div><div class="line">    id:     20192dd5-3228-4135-9831-c9d7de74a890</div><div class="line">    health: HEALTH_OK</div><div class="line"></div><div class="line">  services:</div><div class="line">    mon: 3 daemons, quorum ceph13,ceph16,ceph19 (age 10d)</div><div class="line">    mgr: ceph13(active, since 10d), standbys: ceph16, ceph19</div><div class="line">    osd: 24 osds: 24 up (since 9d), 24 in (since 10d)</div><div class="line"></div><div class="line">  data:</div><div class="line">    pools:   3 pools, 1536 pgs</div><div class="line">    objects: 20.80k objects, 81 GiB</div><div class="line">    usage:   244 GiB used, 70 TiB / 71 TiB avail</div><div class="line">    pgs:     1536 active+clean</div><div class="line"></div><div class="line">  io:</div><div class="line">    client:   309 KiB/s rd, 145 KiB/s wr, 41 op/s rd, 12 op/s wr</div><div class="line"></div><div class="line">[root@ceph13 cluster]# ceph osd tree</div><div class="line">ID  CLASS WEIGHT   TYPE NAME            STATUS REWEIGHT PRI-AFF </div><div class="line">-15        5.21997 root ssd                                     </div><div class="line"> -9        1.73999     host ceph13_ssd                          </div><div class="line"> 12   ssd  0.43500         osd.12           up  1.00000 1.00000 </div><div class="line"> 13   ssd  0.43500         osd.13           up  1.00000 1.00000 </div><div class="line"> 14   ssd  0.43500         osd.14           up  1.00000 1.00000 </div><div class="line"> 15   ssd  0.43500         osd.15           up  1.00000 1.00000 </div><div class="line">-11        1.73999     host ceph16_ssd                          </div><div class="line"> 16   ssd  0.43500         osd.16           up  1.00000 1.00000 </div><div class="line"> 17   ssd  0.43500         osd.17           up  1.00000 1.00000 </div><div class="line"> 18   ssd  0.43500         osd.18           up  1.00000 1.00000 </div><div class="line"> 19   ssd  0.43500         osd.19           up  1.00000 1.00000 </div><div class="line">-13        1.73999     host ceph19_ssd                          </div><div class="line"> 20   ssd  0.43500         osd.20           up  1.00000 1.00000 </div><div class="line"> 21   ssd  0.43500         osd.21           up  1.00000 1.00000 </div><div class="line"> 22   ssd  0.43500         osd.22           up  1.00000 1.00000 </div><div class="line"> 23   ssd  0.43500         osd.23           up  1.00000 1.00000 </div><div class="line"> -1       65.41200 root default                                 </div><div class="line"> -3       21.80400     host ceph13_sata                         </div><div class="line">  0   hdd  5.45099         osd.0            up  1.00000 1.00000 </div><div class="line">  1   hdd  5.45099         osd.1            up  1.00000 1.00000 </div><div class="line">  2   hdd  5.45099         osd.2            up  1.00000 1.00000 </div><div class="line">  3   hdd  5.45099         osd.3            up  1.00000 1.00000 </div><div class="line"> -5       21.80400     host ceph16_sata                         </div><div class="line">  4   hdd  5.45099         osd.4            up  1.00000 1.00000 </div><div class="line">  5   hdd  5.45099         osd.5            up  1.00000 1.00000 </div><div class="line">  6   hdd  5.45099         osd.6            up  1.00000 1.00000 </div><div class="line">  7   hdd  5.45099         osd.7            up  1.00000 1.00000 </div><div class="line"> -7       21.80400     host ceph19_sata                         </div><div class="line">  8   hdd  5.45099         osd.8            up  1.00000 1.00000 </div><div class="line">  9   hdd  5.45099         osd.9            up  1.00000 1.00000 </div><div class="line"> 10   hdd  5.45099         osd.10           up  1.00000 1.00000 </div><div class="line"> 11   hdd  5.45099         osd.11           up  1.00000 1.00000</div></pre></td></tr></table></figure></p>
+<h2 id="iscsi-gw部署"><a href="#iscsi-gw部署" class="headerlink" title="iscsi-gw部署"></a>iscsi-gw部署</h2><h3 id="依赖软件安装"><a href="#依赖软件安装" class="headerlink" title="依赖软件安装"></a>依赖软件安装</h3><p>iscsi-gw软件在<code>192.168.1.70</code>的<code>/home/zhoub/rpms</code>目录下。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line">[zhoub@CentOS ceph-iscsi-rpms]$ ls -al</div><div class="line">总用量 588</div><div class="line">drwxr-xr-x.  9 zhoub zhoub   4096 6月  19 16:31 .</div><div class="line">drwxrwxr-x.  3 zhoub zhoub     53 8月   8 13:42 ..</div><div class="line">drwxrwxr-x. 10 zhoub zhoub   4096 6月  19 16:10 ceph-iscsi</div><div class="line">drwxrwxr-x.  9 zhoub zhoub    213 6月  19 16:10 configshell-fb</div><div class="line">-rw-r--r--.  1 root  root  284340 8月  11 2017 libnl3-3.2.28-4.el7.x86_64.rpm</div><div class="line">drwxrwxr-x.  2 zhoub zhoub    240 6月  19 15:51 pip</div><div class="line">drwxr-xr-x.  2 zhoub zhoub   4096 6月  19 16:10 pip_packages</div><div class="line">-rw-r--r--.  1 root  root  137912 11月 12 2018 pyOpenSSL-0.13.1-4.el7.x86_64.rpm</div><div class="line">-rw-r--r--.  1 root  root   96088 7月   4 2014 pyparsing-1.5.6-9.el7.noarch.rpm</div><div class="line">-rw-r--r--.  1 root  root   58008 7月   4 2014 python-kmod-0.9-4.el7.x86_64.rpm</div><div class="line">-rw-r--r--.  1 zhoub zhoub     76 6月  19 16:10 requirement.txt</div><div class="line">drwxrwxr-x. 11 zhoub zhoub    223 6月  19 16:10 rtslib-fb</div><div class="line">drwxrwxr-x. 10 zhoub zhoub    248 6月  19 16:10 targetcli-fb</div><div class="line">drwxr-xr-x.  2 root  root     112 6月  19 16:28 tcmu-runner</div></pre></td></tr></table></figure>
+<h4 id="pip安装"><a href="#pip安装" class="headerlink" title="pip安装"></a>pip安装</h4><p>在<code>rpms/ceph-iscsi-rpms/pip</code>目录下。</p>
+<p>pip 安装依赖的软件<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">[zhoub@CentOS pip]$ ls -al</div><div class="line">总用量 4080</div><div class="line">drwxrwxr-x. 2 zhoub zhoub     240 6月  19 15:51 .</div><div class="line">drwxr-xr-x. 9 zhoub zhoub    4096 6月  19 16:31 ..</div><div class="line">-rw-rw-r--. 1 zhoub zhoub 3700178 6月  19 15:31 pip_19.1.1.tar.gz</div><div class="line">-rw-r--r--. 1 root  root     5932 3月  14 2015 python-backports-1.0-8.el7.x86_64.rpm</div><div class="line">-rw-r--r--. 1 root  root    12896 4月  25 2018 python-backports-ssl_match_hostname-3.5.0.1-1.el7.noarch.rpm</div><div class="line">-rw-r--r--. 1 root  root    35176 11月 21 2016 python-ipaddress-1.0.16-2.el7.noarch.rpm</div><div class="line">-rw-r--r--. 1 root  root   406404 8月  11 2017 python-setuptools-0.9.8-7.el7.noarch.rpm</div></pre></td></tr></table></figure></p>
+<p>安装pip及其依赖的软件<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">cd pip</div><div class="line">yum localinstall *.rpm</div><div class="line">tar -xzvf ./pip_19.1.1.tar.gz</div><div class="line">cd pip_19.1.1</div><div class="line">python setup.py install</div></pre></td></tr></table></figure></p>
+<h4 id="安装pip-package"><a href="#安装pip-package" class="headerlink" title="安装pip package"></a>安装pip package</h4><p>在线安装使用<code>rpms/ceph-iscsi-rpms/requirement.txt</code>文件进行安装</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">[zhoub@CentOS ceph-iscsi-rpms]$  cat requirement.txt</div><div class="line">pyudev&gt;=0.16.1</div><div class="line">Flask</div><div class="line">requests</div><div class="line">crypto</div><div class="line">netifaces</div><div class="line">urwid</div><div class="line">pyparsing</div><div class="line">cryptography</div></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">pip install -r ./requirement.txt</div></pre></td></tr></table></figure>
+<p>离线安装包在<code>rpms/ceph-iscsi-rpms/pip_packages</code>中</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div></pre></td><td class="code"><pre><div class="line">[zhoub@CentOS pip_packages]$ ls -al</div><div class="line">总用量 5828</div><div class="line">drwxr-xr-x. 2 zhoub zhoub    4096 6月  19 16:10 .</div><div class="line">drwxr-xr-x. 9 zhoub zhoub    4096 6月  19 16:31 ..</div><div class="line">-rw-r--r--. 1 zhoub zhoub  101571 6月  19 16:10 asn1crypto-0.24.0-py2.py3-none-any.whl</div><div class="line">-rw-r--r--. 1 zhoub zhoub  157119 6月  19 16:10 certifi-2019.6.16-py2.py3-none-any.whl</div><div class="line">-rw-r--r--. 1 zhoub zhoub  415091 6月  19 16:10 cffi-1.12.3-cp27-cp27mu-manylinux1_x86_64.whl</div><div class="line">-rw-r--r--. 1 zhoub zhoub  133356 6月  19 16:10 chardet-3.0.4-py2.py3-none-any.whl</div><div class="line">-rw-r--r--. 1 zhoub zhoub   81299 6月  19 16:10 Click-7.0-py2.py3-none-any.whl</div><div class="line">-rw-r--r--. 1 zhoub zhoub   18019 6月  19 16:10 crypto-1.4.1-py2.py3-none-any.whl</div><div class="line">-rw-r--r--. 1 zhoub zhoub 2288455 6月  19 16:10 cryptography-2.7-cp27-cp27mu-manylinux1_x86_64.whl</div><div class="line">-rw-r--r--. 1 zhoub zhoub   12427 6月  19 16:10 enum34-1.1.6-py2-none-any.whl</div><div class="line">-rw-r--r--. 1 zhoub zhoub   92053 6月  19 16:10 Flask-1.0.3-py2.py3-none-any.whl</div><div class="line">-rw-r--r--. 1 zhoub zhoub   58594 6月  19 16:10 idna-2.8-py2.py3-none-any.whl</div><div class="line">-rw-r--r--. 1 zhoub zhoub   18155 6月  19 16:10 ipaddress-1.0.22-py2.py3-none-any.whl</div><div class="line">-rw-r--r--. 1 zhoub zhoub   16743 6月  19 16:10 itsdangerous-1.1.0-py2.py3-none-any.whl</div><div class="line">-rw-r--r--. 1 zhoub zhoub  124883 6月  19 16:10 Jinja2-2.10.1-py2.py3-none-any.whl</div><div class="line">-rw-r--r--. 1 zhoub zhoub   24348 6月  19 16:10 MarkupSafe-1.1.1-cp27-cp27mu-manylinux1_x86_64.whl</div><div class="line">-rw-r--r--. 1 zhoub zhoub  590559 6月  19 16:10 Naked-0.1.31-py2.py3-none-any.whl</div><div class="line">-rw-r--r--. 1 zhoub zhoub   31249 6月  19 16:10 netifaces-0.10.9-cp27-cp27mu-manylinux1_x86_64.whl</div><div class="line">-rw-r--r--. 1 zhoub zhoub  158295 6月  19 16:10 pycparser-2.19.tar.gz</div><div class="line">-rw-r--r--. 1 zhoub zhoub   62288 6月  19 16:10 pyparsing-2.4.0-py2.py3-none-any.whl</div><div class="line">-rw-r--r--. 1 zhoub zhoub   89469 6月  19 16:10 pyudev-0.21.0.tar.gz</div><div class="line">-rw-r--r--. 1 zhoub zhoub  274442 6月  19 16:10 PyYAML-5.1.1.tar.gz</div><div class="line">-rw-r--r--. 1 zhoub zhoub   57952 6月  19 16:10 requests-2.22.0-py2.py3-none-any.whl</div><div class="line">-rw-r--r--. 1 zhoub zhoub    4933 6月  19 16:10 shellescape-3.4.1-py2.py3-none-any.whl</div><div class="line">-rw-r--r--. 1 zhoub zhoub   10586 6月  19 16:10 six-1.12.0-py2.py3-none-any.whl</div><div class="line">-rw-r--r--. 1 zhoub zhoub  150942 6月  19 16:10 urllib3-1.25.3-py2.py3-none-any.whl</div><div class="line">-rw-r--r--. 1 zhoub zhoub  604167 6月  19 16:10 urwid-2.0.1.tar.gz</div><div class="line">-rw-r--r--. 1 zhoub zhoub  327611 6月  19 16:10 Werkzeug-0.15.4-py2.py3-none-any.whl</div></pre></td></tr></table></figure>
+<h4 id="安装依赖rpms"><a href="#安装依赖rpms" class="headerlink" title="安装依赖rpms"></a>安装依赖rpms</h4><p>rpm包在<code>rpms/ceph-iscsi-rpms/</code>目录下。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">yum localinstall libnl3-3.2.28-4.el7.x86_64.rpm</div><div class="line">yum localinstall pyOpenSSL-0.13.1-4.el7.x86_64.rpm</div><div class="line">yum localinstall pyparsing-1.5.6-9.el7.noarch.rpm</div><div class="line">yum localinstall python-kmod-0.9-4.el7.x86_64.rpm</div></pre></td></tr></table></figure>
+<h4 id="安装TCMU-RUNNER"><a href="#安装TCMU-RUNNER" class="headerlink" title="安装TCMU-RUNNER"></a>安装TCMU-RUNNER</h4><p>rpm包在<code>rpms/ceph-iscsi-rpms/tcmu-runner</code>目录下。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">cd tcmu-runner</div><div class="line">yum localinstall *.rpm</div></pre></td></tr></table></figure>
+<p>启动<code>tcmu-runner</code>服务</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">systemctl daemon-reload</div><div class="line">systemctl enable tcmu-runner</div><div class="line">systemctl start tcmu-runner</div></pre></td></tr></table></figure>
+<p>源码地址：<a href="https://github.com/open-iscsi/tcmu-runner" target="_blank" rel="external">https://github.com/open-iscsi/tcmu-runner</a><br>commit：8d8e612e50b7787c57f32f59bba7def9bb06954b</p>
+<h4 id="安装RTSLIB-FB"><a href="#安装RTSLIB-FB" class="headerlink" title="安装RTSLIB-FB"></a>安装RTSLIB-FB</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">cd rtslib-fb</div><div class="line">python setup.py install</div></pre></td></tr></table></figure>
+<p>源码地址：<a href="https://github.com/open-iscsi/rtslib-fb" target="_blank" rel="external">https://github.com/open-iscsi/rtslib-fb</a><br>commit: 03d6c7813187cd141a3a08f4b7978190187d56c1</p>
+<h4 id="安装CONFIGSHELL-FB"><a href="#安装CONFIGSHELL-FB" class="headerlink" title="安装CONFIGSHELL-FB"></a>安装CONFIGSHELL-FB</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">cd configshell-fb</div><div class="line">python setup.py install</div></pre></td></tr></table></figure>
+<p>源码地址：<a href="https://github.com/open-iscsi/configshell-fb" target="_blank" rel="external">https://github.com/open-iscsi/configshell-fb</a><br>commit: 166ba97e36d7b53e7fa53d7853a8b9f5a509503c</p>
+<h4 id="安装TARGETCLI-FB"><a href="#安装TARGETCLI-FB" class="headerlink" title="安装TARGETCLI-FB"></a>安装TARGETCLI-FB</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">cd targetcli-fb</div><div class="line">python setup.py install</div><div class="line">mkdir /etc/target</div><div class="line">mkdir /var/target</div></pre></td></tr></table></figure>
+<p>源码地址：<a href="https://github.com/open-iscsi/targetcli-fb" target="_blank" rel="external">https://github.com/open-iscsi/targetcli-fb</a><br>commit: 85031ad48b011f5626cd0a287749abcaa145277b</p>
+<h4 id="安装CEPH-ISCSI"><a href="#安装CEPH-ISCSI" class="headerlink" title="安装CEPH-ISCSI"></a>安装CEPH-ISCSI</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">cd ceph-iscsi</div><div class="line">python setup.py install --install-scripts=/usr/bin</div><div class="line">cp ./usr/lib/systemd/system/rbd-target-gw.service /lib/systemd/system/</div><div class="line">cp ./usr/lib/systemd/system/rbd-target-api.service /lib/systemd/system/</div></pre></td></tr></table></figure>
+<p>启动<code>rbd-target-gw</code>和<code>rbd-target-api</code>服务</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">systemctl daemon-reload</div><div class="line">systemctl enable rbd-target-gw</div><div class="line">systemctl enable rbd-target-api</div><div class="line">systemctl start rbd-target-gw</div><div class="line">systemctl start rbd-target-api</div></pre></td></tr></table></figure>
+<p>源码地址：<a href="https://github.com/ceph/ceph-iscsi" target="_blank" rel="external">https://github.com/ceph/ceph-iscsi</a><br>commit: c5ebf29e1a0caa2e4bef44370b40fe940b66aaad</p>
+<h3 id="配置iscsi-gateway-cfg"><a href="#配置iscsi-gateway-cfg" class="headerlink" title="配置iscsi-gateway.cfg"></a>配置iscsi-gateway.cfg</h3><p>创建一个<code>/etc/ceph/iscsi-gateway.cfg</code>文件，在文件中增加如下内容</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div></pre></td><td class="code"><pre><div class="line">[config]</div><div class="line"># Name of the Ceph storage cluster. A suitable Ceph configuration file allowing</div><div class="line"># access to the Ceph storage cluster from the gateway node is required, if not</div><div class="line"># colocated on an OSD node.</div><div class="line">cluster_name = ceph</div><div class="line"></div><div class="line"># Place a copy of the ceph cluster&apos;s admin keyring in the gateway&apos;s /etc/ceph</div><div class="line"># drectory and reference the filename here</div><div class="line">gateway_keyring = ceph.client.admin.keyring</div><div class="line"></div><div class="line"></div><div class="line"># API settings.</div><div class="line"># The API supports a number of options that allow you to tailor it to your</div><div class="line"># local environment. If you want to run the API under https, you will need to</div><div class="line"># create cert/key files that are compatible for each iSCSI gateway node, that is</div><div class="line"># not locked to a specific node. SSL cert and key files *must* be called</div><div class="line"># &apos;iscsi-gateway.crt&apos; and &apos;iscsi-gateway.key&apos; and placed in the &apos;/etc/ceph/&apos; directory</div><div class="line"># on *each* gateway node. With the SSL files in place, you can use &apos;api_secure = true&apos;</div><div class="line"># to switch to https mode.</div><div class="line"></div><div class="line"># To support the API, the bear minimum settings are:</div><div class="line">api_secure = false</div><div class="line"></div><div class="line"># Additional API configuration options are as follows, defaults shown.</div><div class="line"># api_user = admin</div><div class="line"># api_password = admin</div><div class="line"># api_port = 5001</div><div class="line"># iscsi-gw 最少需要部署两个服务</div><div class="line">trusted_ip_list = 10.53.2.13,10.53.2.16,10.53.2.19</div></pre></td></tr></table></figure>
+<p>重启<code>rbd-target-api</code>服务</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">systemctl daemon-reload</div><div class="line">systemctl stop rbd-target-api</div><div class="line">systemctl start rbd-target-api</div></pre></td></tr></table></figure>
+<p><strong><em> rbd-target-api 需要依赖 rbd pool，若集群中没有rbd pool ，需要手动创建。 </em></strong></p>
+<h3 id="配置iscsi-target"><a href="#配置iscsi-target" class="headerlink" title="配置iscsi-target"></a>配置iscsi-target</h3><p>在iscsi-gw服务所在节点上输入<code>gwcli</code>进入gw交互模式</p>
+<h4 id="创建target-iqn"><a href="#创建target-iqn" class="headerlink" title="创建target iqn"></a>创建target iqn</h4><p>eg:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">/&gt; cd /iscsi-target</div><div class="line">/iscsi-target&gt; create iqn.2019-08.com.hna.iscsi-gw:iscsi-igw</div></pre></td></tr></table></figure></p>
+<h4 id="创建iscsi-gateway"><a href="#创建iscsi-gateway" class="headerlink" title="创建iscsi-gateway"></a>创建iscsi-gateway</h4><p>eg:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">/iscsi-target&gt; cd iqn.2019-08.com.hna.iscsi-gw:iscsi-igw/gateways</div><div class="line">/iscsi-target...-igw/gateways&gt;  create ceph13 10.53.2.13</div><div class="line">/iscsi-target...-igw/gateways&gt;  create ceph16 10.53.2.16</div><div class="line">/iscsi-target...-igw/gateways&gt;  create ceph19 10.53.2.19</div></pre></td></tr></table></figure></p>
+<p>创建gateway时，输入的gateway名称为hostname, ip要与其对应上，并且在<code>/etc/hosts</code>文件中也要将<code>hostname</code>和<code>ip</code>对应上。</p>
+<h4 id="创建rbd-image"><a href="#创建rbd-image" class="headerlink" title="创建rbd image"></a>创建rbd image</h4><p>eg:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">/iscsi-target...-igw/gateways&gt; cd /disks</div><div class="line">/disks&gt; create pool=sata image=vol_sata_23t size=23T</div><div class="line">/disks&gt; create pool=ssd image=vol_ssd_1800g size=1800G</div></pre></td></tr></table></figure></p>
+<h4 id="创建client-iqn"><a href="#创建client-iqn" class="headerlink" title="创建client iqn"></a>创建client iqn</h4><p>eg:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">/disks&gt; cd /iscsi-targets/iqn.2019-08.com.hna.iscsi-gw:iscsi-igw/hosts/</div><div class="line">/iscsi-target...csi-igw/hosts&gt;  create iqn.2019-08.com.example:2b14c50a</div><div class="line"></div><div class="line">/disks&gt; cd /iscsi-targets/iqn.2019-08.com.hna.iscsi-gw:iscsi-igw/hosts/</div><div class="line">/iscsi-target...csi-igw/hosts&gt;  create iqn.2019-08.com.example:479172ae</div><div class="line"></div><div class="line">/disks&gt; cd /iscsi-targets/iqn.2019-08.com.hna.iscsi-gw:iscsi-igw/hosts/</div><div class="line">/iscsi-target...csi-igw/hosts&gt;  create iqn.2019-08.com.example:066f5c54</div></pre></td></tr></table></figure></p>
+<p>设置chap用户名密码<br>eg:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">/&gt; cd iscsi-targets/iqn.2019-08.com.hna.iscsi-gw:iscsi-igw/hosts/iqn.2019-08.com.example:2b14c50a/</div><div class="line">/iscsi-target...mple:2b14c50a&gt; auth username=iqn.2019-08.com.example password=1qaz2wsx3edc</div><div class="line"></div><div class="line">/&gt; cd iscsi-targets/iqn.2019-08.com.hna.iscsi-gw:iscsi-igw/hosts/iqn.2019-08.com.example:479172ae/</div><div class="line">/iscsi-target...mple:479172ae&gt; auth username=iqn.2019-08.com.example password=1qaz2wsx3edc</div><div class="line"></div><div class="line">/&gt; cd iscsi-targets/iqn.2019-08.com.hna.iscsi-gw:iscsi-igw/hosts/iqn.2019-08.com.example:066f5c54/</div><div class="line">/iscsi-target...mple:066f5c54&gt; auth username=iqn.2019-08.com.example password=1qaz2wsx3edc</div></pre></td></tr></table></figure></p>
+<h4 id="创建host-groups"><a href="#创建host-groups" class="headerlink" title="创建host-groups"></a>创建host-groups</h4><p>eg:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">/&gt; cd iscsi-targets/iqn.2019-08.com.hna.iscsi-gw:iscsi-igw/host-groups/</div><div class="line">/iscsi-target...w/host-groups&gt; create xen</div></pre></td></tr></table></figure></p>
+<h4 id="添加client-iqn"><a href="#添加client-iqn" class="headerlink" title="添加client iqn"></a>添加client iqn</h4><p>eg:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">/&gt; cd iscsi-targets/iqn.2019-08.com.hna.iscsi-gw:iscsi-igw/host-groups/xen/</div><div class="line">/iscsi-target...st-groups/xen&gt; host add iqn.2019-08.com.example:066f5c54</div><div class="line">/iscsi-target...st-groups/xen&gt; host add iqn.2019-08.com.example:2b14c50a</div><div class="line">/iscsi-target...st-groups/xen&gt; host add iqn.2019-08.com.example:479172ae</div></pre></td></tr></table></figure></p>
+<h4 id="添加rbd-image"><a href="#添加rbd-image" class="headerlink" title="添加rbd image"></a>添加rbd image</h4><p>eg:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">/&gt; cd iscsi-targets/iqn.2019-08.com.hna.iscsi-gw:iscsi-igw/host-groups/xen/</div><div class="line">/iscsi-target...st-groups/xen&gt; disk add sata/vol_sata_23t</div><div class="line">/iscsi-target...st-groups/xen&gt; disk add ssd/vol_ssd_1800g</div></pre></td></tr></table></figure></p>
+<p>至此iscsi-gw的搭建及配置完成，客户端可以通过iscsi协议访问ceph存储了。</p>
+<p>eg:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div></pre></td><td class="code"><pre><div class="line">/&gt; ls</div><div class="line">o- / ......................................................................................................................... [...]</div><div class="line">  o- cluster ......................................................................................................... [Clusters: 1]</div><div class="line">  | o- ceph ............................................................................................................ [HEALTH_OK]</div><div class="line">  |   o- pools .......................................................................................................... [Pools: 3]</div><div class="line">  |   | o- rbd ................................................................... [(x3), Commit: 0.00Y/21703946M (0%), Used: 6823b]</div><div class="line">  |   | o- sata ......................................................... [(x3), Commit: 23.0T/21703946M (111%), Used: 14325219841b]</div><div class="line">  |   | o- ssd ........................................................ [(x3), Commit: 1800G/1744741760K (108%), Used: 27569961653b]</div><div class="line">  |   o- topology ............................................................................................... [OSDs: 24,MONs: 3]</div><div class="line">  o- disks ...................................................................................................... [25352G, Disks: 2]</div><div class="line">  | o- sata ......................................................................................................... [sata (23.0T)]</div><div class="line">  | | o- vol_sata_23t .................................................................................. [sata/vol_sata_23t (23.0T)]</div><div class="line">  | o- ssd ........................................................................................................... [ssd (1800G)]</div><div class="line">  |   o- vol_ssd_1800g ................................................................................. [ssd/vol_ssd_1800g (1800G)]</div><div class="line">  o- iscsi-targets ............................................................................... [DiscoveryAuth: None, Targets: 1]</div><div class="line">    o- iqn.2019-08.com.hna.iscsi-gw:iscsi-igw ........................................................................ [Gateways: 3]</div><div class="line">      o- disks .......................................................................................................... [Disks: 2]</div><div class="line">      | o- sata/vol_sata_23t ....................................................................................... [Owner: ceph13]</div><div class="line">      | o- ssd/vol_ssd_1800g ....................................................................................... [Owner: ceph19]</div><div class="line">      o- gateways ............................................................................................ [Up: 3/3, Portals: 3]</div><div class="line">      | o- ceph13 ................................................................................................ [10.53.2.13 (UP)]</div><div class="line">      | o- ceph16 ................................................................................................ [10.53.2.16 (UP)]</div><div class="line">      | o- ceph19 ................................................................................................ [10.53.2.19 (UP)]</div><div class="line">      o- host-groups .................................................................................................. [Groups : 1]</div><div class="line">      | o- xen ................................................................................................ [Hosts: 3, Disks: 2]</div><div class="line">      |   o- iqn.2019-08.com.example:066f5c54 ............................................................................... [host]</div><div class="line">      |   o- iqn.2019-08.com.example:2b14c50a ............................................................................... [host]</div><div class="line">      |   o- iqn.2019-08.com.example:479172ae ............................................................................... [host]</div><div class="line">      |   o- sata/vol_sata_23t .............................................................................................. [disk]</div><div class="line">      |   o- ssd/vol_ssd_1800g .............................................................................................. [disk]</div><div class="line">      o- hosts .............................................................................................. [Hosts: 3: Auth: CHAP]</div><div class="line">        o- iqn.2019-08.com.example:2b14c50a .............................................. [LOGGED-IN, Auth: CHAP, Disks: 2(25352G)]</div><div class="line">        | o- lun 0 ....................................................................... [sata/vol_sata_23t(23.0T), Owner: ceph13]</div><div class="line">        | o- lun 1 ....................................................................... [ssd/vol_ssd_1800g(1800G), Owner: ceph19]</div><div class="line">        o- iqn.2019-08.com.example:479172ae .............................................. [LOGGED-IN, Auth: CHAP, Disks: 2(25352G)]</div><div class="line">        | o- lun 0 ....................................................................... [sata/vol_sata_23t(23.0T), Owner: ceph13]</div><div class="line">        | o- lun 1 ....................................................................... [ssd/vol_ssd_1800g(1800G), Owner: ceph19]</div><div class="line">        o- iqn.2019-08.com.example:066f5c54 .............................................. [LOGGED-IN, Auth: CHAP, Disks: 2(25352G)]</div><div class="line">          o- lun 0 ....................................................................... [sata/vol_sata_23t(23.0T), Owner: ceph13]</div><div class="line">          o- lun 1 ....................................................................... [ssd/vol_ssd_1800g(1800G), Owner: ceph19]</div></pre></td></tr></table></figure></p>
+<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a href="https://docs.ceph.com/docs/nautilus/start/quick-ceph-deploy/" target="_blank" rel="external">ceph installation</a></li>
+<li><a href="https://docs.ceph.com/docs/nautilus/rbd/iscsi-overview/" target="_blank" rel="external">LIO iSCSI Gateway</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/08/13/storage/ceph/osd-journal-operation/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -619,182 +916,6 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/08/04/storage/ceph/s3-authorization-v2/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2019/08/04/storage/ceph/s3-authorization-v2/" itemprop="url">s3 authorization v2</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-08-04T14:20:20+08:00">
-                2019-08-04
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/storage/" itemprop="url" rel="index">
-                    <span itemprop="name">storage</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>s3 authorization v2</p>
-<h2 id="参数传递"><a href="#参数传递" class="headerlink" title="参数传递"></a>参数传递</h2><h3 id="通过Authorization请求头"><a href="#通过Authorization请求头" class="headerlink" title="通过Authorization请求头"></a>通过<code>Authorization</code>请求头</h3><figure class="highlight http"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="attribute">Authorization</span>: AWS AWSAccessKeyId:Signature</div></pre></td></tr></table></figure>
-<ul>
-<li><code>AWSAccessKeyId</code>: 你的<code>AccessKey</code></li>
-<li><code>Signature</code>: 计算得到的签名</li>
-</ul>
-<p>eg:<br><figure class="highlight http"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="attribute">Authorization</span>: AWS ziw5dp1alvty9n47qksu:frJIUN8DYpKDtOLCwo//yllqDzg=</div></pre></td></tr></table></figure></p>
-<h3 id="通过请求参数"><a href="#通过请求参数" class="headerlink" title="通过请求参数"></a>通过请求参数</h3><p>HTTP请求中的参数：</p>
-<ul>
-<li><code>AWSAccessKeyId</code>: 你的<code>AccessKey</code></li>
-<li><code>Signature</code>: 计算得到的签名</li>
-<li><code>Expires</code>: 签名的过期时间</li>
-</ul>
-<p>eg:<br><figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">GET /yourbucket/yourkey?AWSAccessKeyId=ziw5dp1alvty9n47qksu&amp;Expires=1141889120&amp;Signature=vjbyPxybdZaNmGa%2ByT272YEAiv4%3D</div></pre></td></tr></table></figure></p>
-<h2 id="签名计算"><a href="#签名计算" class="headerlink" title="签名计算"></a>签名计算</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">Signature = Base64(HMAC-SHA1(YourSecretKey, UTF-<span class="number">8</span>-Encoding-Of(StringToSign)))</div></pre></td></tr></table></figure>
-<ul>
-<li>YourSecretKey: 你的<code>SecretKey</code></li>
-<li>StringToSign</li>
-</ul>
-<h3 id="StringToSign"><a href="#StringToSign" class="headerlink" title="StringToSign"></a>StringToSign</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">StringToSign =  HTTP-Verb + <span class="string">"\n"</span> +</div><div class="line">                Content-MD5 + <span class="string">"\n"</span> +</div><div class="line">                Content-Type + <span class="string">"\n"</span> +</div><div class="line">                Date|Expires + <span class="string">"\n"</span> +</div><div class="line">                CanonicalizedAmzHeaders +</div><div class="line">                CanonicalizedResource</div></pre></td></tr></table></figure>
-<ul>
-<li>HTTP-Verb: 请求的方法，如：<code>PUT</code>，<code>GET</code>，<code>DELETE</code>，<code>POST</code> </li>
-<li>Content-MD5: 请求头Content-MD5的内容，如果没有这个头，由空字符串代替</li>
-<li>Content-Type: 请求头Content-Type的内容，如果没有这个头，由空字符串代替</li>
-<li>Date|Expires: 如果使用Authorization头携带签名信息，为Date头的内容，如果没有Date头，由空字符串代替；如果使用请求参数携带签名信息，为参数Expires的内容</li>
-<li><p>CanonicalizedAmzHeaders: 请求中所有以x-amz-开始的头所组成的字符串,如果没有这样的头，由空字符串代替<br>  eg:</p>
-  <figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">原始请求头：</div><div class="line">Date: Tue, 27 Mar 2007 19:36:42 +0000</div><div class="line">X-Amz-b:   Bar</div><div class="line">x-amz-a: foob</div><div class="line">x-Amz-a:   fooa</div><div class="line">Host: johnsmith.s3.amazonaws.com</div><div class="line"></div><div class="line">对应的CanonicalizedAmzHeaders为：</div><div class="line">x-amz-a:fooa,foob</div><div class="line">x-amz-b:Bar</div></pre></td></tr></table></figure>
-</li>
-<li><p>CanonicalizedResource: 请求所对应的资源<br>  eg:</p>
-  <figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">GET /?foo=bar</div><div class="line">GET /yourbucket/yourkey?foo=bar</div><div class="line">GET /yourbucket/yourkey?acl&amp;foo=bar</div><div class="line"></div><div class="line">对应的nicalizedResource分别为：</div><div class="line"></div><div class="line">／</div><div class="line">/yourbucket/yourkey</div><div class="line">/yourbucket/yourkey?acl</div></pre></td></tr></table></figure>
-</li>
-</ul>
-<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a href="https://doc.bscstorage.com/doc/s2/signature/signature.html" target="_blank" rel="external">签名算法</a></li>
-</ul>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/08/04/storage/ceph/s3-authorization-v4/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -928,6 +1049,182 @@
 <li>CanonicalHeaders 需要加入签名计算的头排序后组成的字符串</li>
 <li>SignedHeaders 加入到签名计算的头的名字的列表，各个名字之间用逗号分隔</li>
 <li>HexEncode(Hash(RequestPayload)) 请求body的hash的16进制编码,如果通过请求参数携带签名，此处应由字符串<code>UNSIGNED-PAYLOAD</code>代替</li>
+</ul>
+<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a href="https://doc.bscstorage.com/doc/s2/signature/signature.html" target="_blank" rel="external">签名算法</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/08/04/storage/ceph/s3-authorization-v2/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/08/04/storage/ceph/s3-authorization-v2/" itemprop="url">s3 authorization v2</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-08-04T14:20:20+08:00">
+                2019-08-04
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index">
+                    <span itemprop="name">storage</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>s3 authorization v2</p>
+<h2 id="参数传递"><a href="#参数传递" class="headerlink" title="参数传递"></a>参数传递</h2><h3 id="通过Authorization请求头"><a href="#通过Authorization请求头" class="headerlink" title="通过Authorization请求头"></a>通过<code>Authorization</code>请求头</h3><figure class="highlight http"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="attribute">Authorization</span>: AWS AWSAccessKeyId:Signature</div></pre></td></tr></table></figure>
+<ul>
+<li><code>AWSAccessKeyId</code>: 你的<code>AccessKey</code></li>
+<li><code>Signature</code>: 计算得到的签名</li>
+</ul>
+<p>eg:<br><figure class="highlight http"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="attribute">Authorization</span>: AWS ziw5dp1alvty9n47qksu:frJIUN8DYpKDtOLCwo//yllqDzg=</div></pre></td></tr></table></figure></p>
+<h3 id="通过请求参数"><a href="#通过请求参数" class="headerlink" title="通过请求参数"></a>通过请求参数</h3><p>HTTP请求中的参数：</p>
+<ul>
+<li><code>AWSAccessKeyId</code>: 你的<code>AccessKey</code></li>
+<li><code>Signature</code>: 计算得到的签名</li>
+<li><code>Expires</code>: 签名的过期时间</li>
+</ul>
+<p>eg:<br><figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">GET /yourbucket/yourkey?AWSAccessKeyId=ziw5dp1alvty9n47qksu&amp;Expires=1141889120&amp;Signature=vjbyPxybdZaNmGa%2ByT272YEAiv4%3D</div></pre></td></tr></table></figure></p>
+<h2 id="签名计算"><a href="#签名计算" class="headerlink" title="签名计算"></a>签名计算</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">Signature = Base64(HMAC-SHA1(YourSecretKey, UTF-<span class="number">8</span>-Encoding-Of(StringToSign)))</div></pre></td></tr></table></figure>
+<ul>
+<li>YourSecretKey: 你的<code>SecretKey</code></li>
+<li>StringToSign</li>
+</ul>
+<h3 id="StringToSign"><a href="#StringToSign" class="headerlink" title="StringToSign"></a>StringToSign</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">StringToSign =  HTTP-Verb + <span class="string">"\n"</span> +</div><div class="line">                Content-MD5 + <span class="string">"\n"</span> +</div><div class="line">                Content-Type + <span class="string">"\n"</span> +</div><div class="line">                Date|Expires + <span class="string">"\n"</span> +</div><div class="line">                CanonicalizedAmzHeaders +</div><div class="line">                CanonicalizedResource</div></pre></td></tr></table></figure>
+<ul>
+<li>HTTP-Verb: 请求的方法，如：<code>PUT</code>，<code>GET</code>，<code>DELETE</code>，<code>POST</code> </li>
+<li>Content-MD5: 请求头Content-MD5的内容，如果没有这个头，由空字符串代替</li>
+<li>Content-Type: 请求头Content-Type的内容，如果没有这个头，由空字符串代替</li>
+<li>Date|Expires: 如果使用Authorization头携带签名信息，为Date头的内容，如果没有Date头，由空字符串代替；如果使用请求参数携带签名信息，为参数Expires的内容</li>
+<li><p>CanonicalizedAmzHeaders: 请求中所有以x-amz-开始的头所组成的字符串,如果没有这样的头，由空字符串代替<br>  eg:</p>
+  <figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">原始请求头：</div><div class="line">Date: Tue, 27 Mar 2007 19:36:42 +0000</div><div class="line">X-Amz-b:   Bar</div><div class="line">x-amz-a: foob</div><div class="line">x-Amz-a:   fooa</div><div class="line">Host: johnsmith.s3.amazonaws.com</div><div class="line"></div><div class="line">对应的CanonicalizedAmzHeaders为：</div><div class="line">x-amz-a:fooa,foob</div><div class="line">x-amz-b:Bar</div></pre></td></tr></table></figure>
+</li>
+<li><p>CanonicalizedResource: 请求所对应的资源<br>  eg:</p>
+  <figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">GET /?foo=bar</div><div class="line">GET /yourbucket/yourkey?foo=bar</div><div class="line">GET /yourbucket/yourkey?acl&amp;foo=bar</div><div class="line"></div><div class="line">对应的nicalizedResource分别为：</div><div class="line"></div><div class="line">／</div><div class="line">/yourbucket/yourkey</div><div class="line">/yourbucket/yourkey?acl</div></pre></td></tr></table></figure>
+</li>
 </ul>
 <h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
 <li><a href="https://doc.bscstorage.com/doc/s2/signature/signature.html" target="_blank" rel="external">签名算法</a></li>
@@ -1945,224 +2242,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/12/25/linux/kernel-module-sbull/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/12/25/linux/kernel-module-sbull/" itemprop="url">Linux块设备驱动——sbull</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-12-25T00:04:12+08:00">
-                2018-12-25
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/linux/" itemprop="url" rel="index">
-                    <span itemprop="name">linux</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>块设备驱动程序，linux内核中的一类驱动程序。通过传输固定大小的随机数据来访问设备。</p>
-<h1 id="初始化"><a href="#初始化" class="headerlink" title="初始化"></a>初始化</h1><h2 id="注册块设备驱动"><a href="#注册块设备驱动" class="headerlink" title="注册块设备驱动"></a>注册块设备驱动</h2><p>向内核注册设备驱动程序使用函数<code>int register_blkdev(unsigned int major, const char *name);</code>(linux/fs.h)，参数是该设备使用的主设备号和名称(名字在<code>/proc/devices</code>中显示)。若传入的主设备号为0，内核将分配一个新的主设备号，并将该设备号返回给调用者；失败则返回负值。</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">static</span> <span class="keyword">int</span> __<span class="function">init <span class="title">sbull_init</span><span class="params">(<span class="keyword">void</span>)</span></span></div><div class="line">&#123;</div><div class="line">    <span class="keyword">int</span> i;</div><div class="line">    sbull_major = register_blkdev(sbull_major,<span class="string">"sbull"</span>); <span class="comment">// 注册块设备，第一个是设备号，0为动态</span></div><div class="line">    <span class="keyword">if</span>(sbull_major &lt;= <span class="number">0</span>)&#123;                               <span class="comment">//分配，第二个是设备名</span></div><div class="line">        printk(KERN_WARNING <span class="string">"sbull:unable to get major number\n"</span>);</div><div class="line">        <span class="keyword">return</span> -EBUSY;</div><div class="line">    &#125;</div><div class="line">    <span class="comment">/* 为块核心数据结构 sbull_dev 分配空间*/</span></div><div class="line">    Devices = kmalloc(ndevices *<span class="keyword">sizeof</span>(<span class="keyword">struct</span> sbull_dev),GFP_KERNEL);</div><div class="line">    <span class="keyword">if</span>(Devices == <span class="literal">NULL</span>)</div><div class="line">        <span class="keyword">goto</span> out_unregister;</div><div class="line">    <span class="keyword">for</span>(i = <span class="number">0</span>;i &lt; ndevices;i++)       <span class="comment">/* 初始化 sbull_dev 核心数据结构 */</span></div><div class="line">        setup_device(Devices + i,i);</div><div class="line">    <span class="keyword">return</span> <span class="number">0</span>; </div><div class="line">out_unregister:</div><div class="line">    unregister_blkdev(sbull_major,<span class="string">"sbd"</span>);</div><div class="line">    <span class="keyword">return</span> -ENOMEM;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>对于<code>register_blkdev</code>的调用是可选的，该接口所做的事情是：如果需要的话分配一个动态的主设备号；在<code>/proc/devices</code>中创建一个入口项。</p>
-<h2 id="注册磁盘"><a href="#注册磁盘" class="headerlink" title="注册磁盘"></a>注册磁盘</h2><p>内核使用<code>gendisk</code>结构(<code>linux/genhd.h</code>)来表示一个独立的磁盘设备。内核还使用该结构体表示分区。该结构中的许多成员必须由驱动程序进行初始化。</p>
-<ul>
-<li>major<br>  <code>int major;</code>主设备号</li>
-<li>first_minor<br>  <code>int first_minor;</code>一个驱动器至少使用一个次设备号，如果驱动器是可被分区的用户将要为每个可能的分区都分配一个次设备号。</li>
-<li>minors<br>  <code>int minors;</code>常取16，一个完整的磁盘可以包含15个分区。</li>
-<li>disk_name<br>  <code>char disk_name[32];</code>磁盘设备名字，该名字显示在<code>/proc/partitions</code>和<code>sysfs</code>中。</li>
-<li>fops<br>  <code>struct block_device_operations *fops;</code>块设备操作</li>
-<li>queue<br>  <code>struct request_queue *queue;</code>设备I/O请求队列</li>
-<li>flags<br>  <code>int flags;</code>驱动器状态标志。可移动介质将被设置为<code>GENHD_FL_REMOVABLE</code>；CD-ROM设备被设置为<code>GENHD_FL_CD</code>；若不希望在<code>/proc/partitions</code>中显示分区信息可设置为<code>GENHD_FL_SUPPRESS_PARTITION_INFO</code></li>
-<li>capacity<br>  <code>sector_t capacity;</code>以512字节为一个扇区，该驱动器可以包含的扇区数。驱动程序不能直接设置该成员，而要将扇区数传给<code>set_capacity</code></li>
-<li>private_data<br>  <code>void *private_data;</code>块设备驱动可以使用该成员保存指向其内部数据的指针</li>
-</ul>
-<p><code>gendisk</code>是一个动态分配的结构，驱动程序不能自己动态分配该结构，必须使用<code>alloc_disk</code>分配，使用<code>del_gendisk</code>回收。</p>
-<ul>
-<li>alloc_disk<br>  <code>struct gendisk *alloc_disk(int minors);</code>参数<code>minors</code>是该磁盘使用的次设备号的数目。为了能正常工作，<code>minors</code>传入后就不能更改了。</li>
-<li>add_disk<br>  <code>void add_disk(struct gendisk *gd);</code>使用<code>alloc_disk</code>分配的<code>gendisk</code>不能使磁盘对系统可用，还需要<code>add_disk</code>将磁盘设备激活，并随时准备调用它提供的方法。在驱动程序完全被初始化并且能够响应对磁盘的请求前，请不要调用<code>add_disk</code></li>
-<li>get_disk and put_disk<br>  <code>gendisk</code>是一个引用技术结构，<code>get_disk</code>和<code>put_disk</code>函数负责处理引用计数。</li>
-<li>del_gendisk<br>  <code>void del_gendisk(struct gendisk *gd);</code>调用<code>del_gendisk</code>会删除<code>gendisk</code>中的最终计数。当没有用户继续使用时，将真正删除该结构。此后，在系统中不会找到该设备信息。</li>
-</ul>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">setup_device</span><span class="params">(<span class="keyword">struct</span> sbull_dev *dev,<span class="keyword">int</span> which)</span></span></div><div class="line">&#123;</div><div class="line">    <span class="built_in">memset</span>(dev,<span class="number">0</span>,<span class="keyword">sizeof</span>(<span class="keyword">struct</span> sbull_dev));    <span class="comment">/* 初始化 dev 所指内容为0*/</span></div><div class="line">    dev-&gt;size = nsectors * hardsect_size;</div><div class="line">    dev-&gt;data = vmalloc(dev-&gt;size);</div><div class="line">    <span class="keyword">if</span>(dev-&gt;data == <span class="literal">NULL</span>)</div><div class="line">    &#123;</div><div class="line">        printk(KERN_NOTICE <span class="string">"vmalloc failure.\n"</span>);</div><div class="line">        <span class="keyword">return</span> ;</div><div class="line">    &#125;</div><div class="line">    spin_lock_init(&amp;dev-&gt;lock);               <span class="comment">/* 初始化自旋锁*/</span></div><div class="line">    <span class="comment">/* 在分配请求队列前要先初始化自旋锁*/</span></div><div class="line">    <span class="comment">/* The timer which "invalidates the device给内核定时器初始化 "*/</span></div><div class="line">    init_timer(&amp;dev-&gt;timer); <span class="comment">/*初始化定时器，实际将结构中的list成员初始化为空*/</span>            </div><div class="line">    dev-&gt;timer.data = (<span class="keyword">unsigned</span> <span class="keyword">long</span>)dev;   <span class="comment">/*被用作function函数的调用参数*/</span></div><div class="line">    dev-&gt;timer.function = sbull_invalidate; <span class="comment">/* 当定时器到期时，就执行function指定的函数*/</span></div><div class="line">                                                                 </div><div class="line">    <span class="comment">/*</span></div><div class="line">     * The I/O queue, depending on whether we are using our own</div><div class="line">     * make_request function or not.</div><div class="line">     */</div><div class="line">    <span class="keyword">switch</span>(request_mode)</div><div class="line">    &#123;</div><div class="line">        <span class="keyword">case</span> RM_NOQUEUE:</div><div class="line">            dev-&gt;<span class="built_in">queue</span> = blk_alloc_queue(GFP_KERNEL);  <span class="comment">/* 分配“请求队列” */</span></div><div class="line">            <span class="keyword">if</span>(dev-&gt;<span class="built_in">queue</span> == <span class="literal">NULL</span>)</div><div class="line">                <span class="keyword">goto</span> out_vfree;</div><div class="line">            blk_queue_make_request(dev-&gt;<span class="built_in">queue</span>,sbull_make_request); <span class="comment">/*绑定"制造请求"函数 */</span></div><div class="line">            <span class="keyword">break</span>;</div><div class="line">        <span class="keyword">case</span> RM_FULL:</div><div class="line">            dev-&gt;<span class="built_in">queue</span> = blk_init_queue(sbull_full_request,&amp;dev-&gt;lock); <span class="comment">/*请求队列初始化*/</span></div><div class="line">            <span class="keyword">if</span>(dev-&gt;<span class="built_in">queue</span> == <span class="literal">NULL</span>)</div><div class="line">                <span class="keyword">goto</span> out_vfree;</div><div class="line">            <span class="keyword">break</span>;</div><div class="line">        <span class="keyword">case</span> RM_SIMPLE:</div><div class="line">            dev-&gt;<span class="built_in">queue</span> = blk_init_queue(sbull_request,&amp;dev-&gt;lock); <span class="comment">/*请求队列初始化*/</span></div><div class="line">            <span class="keyword">if</span>(dev-&gt;<span class="built_in">queue</span> == <span class="literal">NULL</span>)</div><div class="line">                <span class="keyword">goto</span> out_vfree;</div><div class="line">            <span class="keyword">break</span>;</div><div class="line">        <span class="keyword">default</span>:</div><div class="line">            printk(KERN_NOTICE <span class="string">"Bad request mode %d,using simple\n"</span>,request_mode);     </div><div class="line">    &#125;</div><div class="line">    blk_queue_hardsect_size(dev-&gt;<span class="built_in">queue</span>,hardsect_size);  <span class="comment">/* 硬件扇区尺寸设置 */</span></div><div class="line">    dev-&gt;<span class="built_in">queue</span>-&gt;queuedata = dev;</div><div class="line">    dev-&gt;gd = alloc_disk(SBULL_MINORS);             <span class="comment">/* 动态分配 gendisk 结构体*/</span></div><div class="line">    <span class="keyword">if</span>(!dev-&gt;gd)</div><div class="line">    &#123;</div><div class="line">        printk(KERN_NOTICE <span class="string">"alloc_disk failure\n"</span>);</div><div class="line">        <span class="keyword">goto</span> out_vfree;</div><div class="line">    &#125;</div><div class="line">    <span class="comment">/* 初始化 gendisk */</span></div><div class="line">    dev-&gt;gd-&gt;major = sbull_major;                 <span class="comment">/* 主设备号 */</span></div><div class="line">    dev-&gt;gd-&gt;first_minor = which * SBULL_MINORS;  <span class="comment">/* 第一个次设备号 */</span></div><div class="line">    dev-&gt;gd-&gt;fops = &amp;sbull_ops;                   <span class="comment">/* 块设备操作结构体 */</span></div><div class="line">    dev-&gt;gd-&gt;<span class="built_in">queue</span> = dev-&gt;<span class="built_in">queue</span>;                  <span class="comment">/* 请求队列 */</span></div><div class="line">    dev-&gt;gd-&gt;private_data = dev;                  <span class="comment">/* 私有数据 */</span></div><div class="line">    <span class="built_in">snprintf</span>(dev-&gt;gd-&gt;disk_name,<span class="number">32</span>,<span class="string">"sbull%c"</span>,which + <span class="string">'a'</span>);</div><div class="line">    <span class="comment">/* 每个请求的大小都是扇区大小的整数倍，内核总是认为扇区大小是512字节，因此必须进行转换*/</span></div><div class="line">    set_capacity(dev-&gt;gd,nsectors*(hardsect_size/KERNEL_SECTOR_SIZE));</div><div class="line">    add_disk(dev-&gt;gd);  <span class="comment">/* 完成以上初始化后，调用 add_disk 函数来注册这个磁盘设备 */</span></div><div class="line">    <span class="keyword">return</span> ;</div><div class="line">             </div><div class="line">out_vfree:</div><div class="line">    <span class="keyword">if</span>(dev-&gt;data)</div><div class="line">        vfree(dev-&gt;data);       <span class="comment">/* 释放用 vmalloc 申请的不连续空间*/</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<h1 id="逆初始化"><a href="#逆初始化" class="headerlink" title="逆初始化"></a>逆初始化</h1><h2 id="注销块设备驱动"><a href="#注销块设备驱动" class="headerlink" title="注销块设备驱动"></a>注销块设备驱动</h2><p>与<code>register_blkdev</code>对应的注销函数为<code>int unregister_blkdev(unsigned int major, const char *name);</code>，传入的参数与传递给<code>register_blkdev</code>的参数必须匹配。</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">sbull_exit</span><span class="params">(<span class="keyword">void</span>)</span></span></div><div class="line">&#123;</div><div class="line">    <span class="keyword">int</span> i;</div><div class="line">    <span class="keyword">for</span>(i = <span class="number">0</span>; i &lt; ndevices;i++)</div><div class="line">    &#123;</div><div class="line">        <span class="keyword">struct</span> sbull_dev *dev = Devices + i;</div><div class="line">        del_timer_sync(&amp;dev-&gt;timer);            <span class="comment">/* 去掉 "介质移除" 定时器*/</span></div><div class="line">        <span class="keyword">if</span>(dev-&gt;gd)</div><div class="line">        &#123;</div><div class="line">            del_gendisk(dev-&gt;gd);             <span class="comment">/* 释放 gendisk 结构体*/</span></div><div class="line">            put_disk(dev-&gt;gd);                <span class="comment">/* 释放对 gendisk 的引用 */</span></div><div class="line">        &#125;</div><div class="line">        <span class="keyword">if</span>(dev-&gt;<span class="built_in">queue</span>)</div><div class="line">        &#123;</div><div class="line">            <span class="keyword">if</span>(request_mode == RM_NOQUEUE)</div><div class="line">                blk_put_queue(dev-&gt;<span class="built_in">queue</span>);</div><div class="line">            <span class="keyword">else</span></div><div class="line">                blk_cleanup_queue(dev-&gt;<span class="built_in">queue</span>);   <span class="comment">// 清除请求队列</span></div><div class="line">        &#125;</div><div class="line">        <span class="keyword">if</span>(dev-&gt;data)</div><div class="line">            vfree(dev-&gt;data);</div><div class="line">    &#125;</div><div class="line">    unregister_blkdev(sbull_major,<span class="string">"sbull"</span>);</div><div class="line">    kfree(Devices);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<h1 id="块设备操作"><a href="#块设备操作" class="headerlink" title="块设备操作"></a>块设备操作</h1><p>字符设备使用<code>file_operations</code>结构，块设备使用类似的结构<code>block_device_operations</code>(linux2.6在<code>linux/fs.h</code>中，linux4.4在<code>linux/blkdev.h</code>中)</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> block_device_operations &#123;</div><div class="line">        <span class="keyword">int</span> (*open) (<span class="keyword">struct</span> block_device *, <span class="keyword">fmode_t</span>);</div><div class="line">        <span class="keyword">void</span> (*release) (<span class="keyword">struct</span> gendisk *, <span class="keyword">fmode_t</span>);</div><div class="line">        <span class="keyword">int</span> (*rw_page)(<span class="keyword">struct</span> block_device *, <span class="keyword">sector_t</span>, <span class="keyword">struct</span> page *, <span class="keyword">int</span> rw);</div><div class="line">        <span class="keyword">int</span> (*ioctl) (<span class="keyword">struct</span> block_device *, <span class="keyword">fmode_t</span>, <span class="keyword">unsigned</span>, <span class="keyword">unsigned</span> <span class="keyword">long</span>);</div><div class="line">        <span class="keyword">int</span> (*compat_ioctl) (<span class="keyword">struct</span> block_device *, <span class="keyword">fmode_t</span>, <span class="keyword">unsigned</span>, <span class="keyword">unsigned</span> <span class="keyword">long</span>);</div><div class="line">        <span class="keyword">long</span> (*direct_access)(<span class="keyword">struct</span> block_device *, <span class="keyword">sector_t</span>, <span class="keyword">void</span> __pmem **, <span class="keyword">unsigned</span> <span class="keyword">long</span> *pfn);</div><div class="line">        <span class="function"><span class="keyword">unsigned</span> <span class="title">int</span> <span class="params">(*check_events)</span> <span class="params">(<span class="keyword">struct</span> gendisk *disk, <span class="keyword">unsigned</span> <span class="keyword">int</span> clearing)</span></span>;</div><div class="line">        <span class="comment">/* -&gt;media_changed() is DEPRECATED, use -&gt;check_events() instead */</span></div><div class="line">        <span class="keyword">int</span> (*media_changed) (<span class="keyword">struct</span> gendisk *);</div><div class="line">        <span class="keyword">void</span> (*unlock_native_capacity) (<span class="keyword">struct</span> gendisk *);</div><div class="line">        <span class="keyword">int</span> (*revalidate_disk) (<span class="keyword">struct</span> gendisk *);</div><div class="line">        <span class="keyword">int</span> (*getgeo)(<span class="keyword">struct</span> block_device *, <span class="keyword">struct</span> hd_geometry *);</div><div class="line">        <span class="comment">/* this callback is with swap_lock and sometimes page table lock held */</span></div><div class="line">        <span class="keyword">void</span> (*swap_slot_free_notify) (<span class="keyword">struct</span> block_device *, <span class="keyword">unsigned</span> <span class="keyword">long</span>);</div><div class="line">        <span class="keyword">struct</span> <span class="keyword">module</span> *owner;</div><div class="line">        <span class="keyword">const</span> <span class="keyword">struct</span> pr_ops *pr_ops;</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
-<ul>
-<li>open<br>  <code>int (*open) (struct inode *inode, struct file *filp);</code>当设备被打开时调用它。</li>
-<li>release<br>  <code>int (*release) (struct inode *inode, struct file *filp);</code>当设备被关闭时调用它。</li>
-<li>ioctl<br>  <code>int (*ioctl) (struct inode *inode, struct file *filp, unsigned int cmd, unsigned long arg);</code>实现ioctl系统调用的函数，块设备层会先截取大量的标准请求，因此大多数块设备的ioctl函数都十分短小。</li>
-<li>media_changed<br>  <code>int (*media_changed) (struct gendisk *gd);</code>内核调用该函数检查用户是否更换了驱动器内的介质，如果更换返回一个非零值。该函数只适用于那些支持可移动介质。</li>
-<li>revalidate_disk<br>  <code>int (*revalidate_disk) (struct gendisk *gd);</code>当介质被更换时被调用。</li>
-<li>owner<br>  <code>struct module *owner;</code>指向拥有该结构的模块指针，通常被初始化为<code>THIS_MODULE</code></li>
-</ul>
-<h2 id="open"><a href="#open" class="headerlink" title="open"></a>open</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> <span class="title">sbull_open</span><span class="params">(<span class="keyword">struct</span> inode *inode,<span class="keyword">struct</span> file *filp)</span></span></div><div class="line">&#123;</div><div class="line">    <span class="keyword">struct</span> sbull_dev *dev = inode-&gt;i_bdev-&gt;bd_disk-&gt;private_data;</div><div class="line">    del_timer_sync(&amp;dev-&gt;timer); <span class="comment">//去掉"介质移除"定时器</span></div><div class="line">    filp-&gt;private_data = dev;</div><div class="line">    spin_lock(&amp;dev-&gt;lock);</div><div class="line">    <span class="keyword">if</span>(!dev-&gt;users)</div><div class="line">        check_disk_change(inode-&gt;i_bdev);</div><div class="line">    dev-&gt;users++;                <span class="comment">// 使用计数加 1</span></div><div class="line">    spin_unlock(&amp;dev-&gt;lock);</div><div class="line">    <span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<h2 id="release"><a href="#release" class="headerlink" title="release"></a>release</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> <span class="title">sbull_release</span><span class="params">(<span class="keyword">struct</span> inode *inode,<span class="keyword">struct</span> file *filp)</span></span></div><div class="line">&#123;</div><div class="line">    <span class="keyword">struct</span> sbull_dev *dev = inode-&gt;i_bdev-&gt;bd_disk-&gt;private_data;</div><div class="line">    spin_lock(&amp;dev-&gt;lock);</div><div class="line">    dev-&gt;users--;               <span class="comment">// 使用计数减 1</span></div><div class="line">    <span class="keyword">if</span>(!dev-&gt;users)</div><div class="line">    &#123;</div><div class="line">        <span class="comment">//30秒的定时器，如果这个时段内设备没有被打开则移除设备</span></div><div class="line">        dev-&gt;timer.expires = jiffies + INVALIDATE_DELAY;</div><div class="line">        add_timer(&amp;dev-&gt;timer);                      <span class="comment">//将定时器添加到定时器队列中</span></div><div class="line">    &#125;</div><div class="line">    spin_unlock(&amp;dev-&gt;lock);</div><div class="line">    <span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<h2 id="media-changed"><a href="#media-changed" class="headerlink" title="media_changed"></a>media_changed</h2><p><code>open</code>中调用<code>check_disk_change</code>函数触发<code>media_changed</code>检查介质是否被改变。如果介质改变则返回非零值。</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">sbull_media_changed</span><span class="params">(<span class="keyword">struct</span> gendisk *gd)</span></span></div><div class="line">&#123;</div><div class="line">    <span class="keyword">struct</span> sbull_dev *dev = gd-&gt;private_data;</div><div class="line">    <span class="keyword">return</span> dev-&gt;media_change;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<h2 id="revalidate-disk"><a href="#revalidate-disk" class="headerlink" title="revalidate_disk"></a>revalidate_disk</h2><p>介质改变后，内核会调用<code>revalidate_disk</code>，调用完成后，内核将重新读取设备的分区表。</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">sbull_revalidate</span><span class="params">(<span class="keyword">struct</span> gendisk *gd)</span></span></div><div class="line">&#123;</div><div class="line">    <span class="keyword">struct</span> sbull_dev *dev = gd-&gt;private_data;</div><div class="line">    <span class="keyword">if</span>(dev-&gt;media_change)</div><div class="line">    &#123;</div><div class="line">        dev-&gt;media_change = <span class="number">0</span>;</div><div class="line">        <span class="built_in">memset</span>(dev-&gt;data,<span class="number">0</span>,dev-&gt;size);</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<h2 id="ioctl"><a href="#ioctl" class="headerlink" title="ioctl"></a>ioctl</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">sbull_ioctl</span><span class="params">(<span class="keyword">struct</span> inode *inode,<span class="keyword">struct</span> file *filp,<span class="keyword">unsigned</span> <span class="keyword">int</span> cmd,<span class="keyword">unsigned</span> <span class="keyword">long</span> arg)</span></span></div><div class="line">&#123;</div><div class="line">    <span class="keyword">long</span> size;</div><div class="line">    <span class="keyword">struct</span> hd_geometry geo;</div><div class="line">    <span class="keyword">struct</span> sbull_dev *dev = filp-&gt;private_data; <span class="comment">// 通过 file-&gt;private 获得设备结构体</span></div><div class="line">    <span class="keyword">switch</span>(cmd)</div><div class="line">    &#123;</div><div class="line">        <span class="keyword">case</span> HDIO_GETGEO:</div><div class="line">            <span class="comment">/*</span></div><div class="line">             * Get geometry: since we are a virtual device, we have to make</div><div class="line">             * up something plausible. So we claim 16 sectors, four heads,</div><div class="line">             * and calculate the corresponding number of cylinders. We set the</div><div class="line">             * start of data at sector four.</div><div class="line">             */ </div><div class="line">            size = dev-&gt;size *(hardsect_size/KERNEL_SECTOR_SIZE);</div><div class="line">            <span class="comment">/* 获得几何信息 */</span></div><div class="line">            geo.cylinders = (size &amp; ~<span class="number">0x3f</span>) &gt;&gt; <span class="number">6</span>;</div><div class="line">            geo.heads = <span class="number">4</span>;</div><div class="line">            geo.sectors = <span class="number">16</span>;</div><div class="line">            geo.start = <span class="number">4</span>;</div><div class="line">            <span class="keyword">if</span>(copy_to_user((<span class="keyword">void</span> __user *)arg,&amp;geo,<span class="keyword">sizeof</span>(geo)))</div><div class="line">                <span class="keyword">return</span> -EFAULT;</div><div class="line">            <span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">return</span> -ENOTTY;   <span class="comment">// 不知道的命令</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>内核对块设备的物理信息并不感兴趣，它只把设备看成是线性的扇区数组。但一些用户空间的应用程序依然需要查询磁盘的物理信息。特别是<code>fdisk</code>工具。</p>
-<h2 id="请求处理"><a href="#请求处理" class="headerlink" title="请求处理"></a>请求处理</h2><p>块设备中没有字符设备中的read、write函数，那么块设备是如何处理I/O请求的呢？早在<code>sbull_init</code>中初始化queue时需要传入一个queue处理函数，待内核接收到磁盘I/O时，会调用queue处理函数来处理。</p>
-<h3 id="request-queue"><a href="#request-queue" class="headerlink" title="request queue"></a>request queue</h3><p>一个请求队列就是一个动态的数据结构，该结构必须由块设备的I/O子系统创建。</p>
-<h4 id="创建删除"><a href="#创建删除" class="headerlink" title="创建删除"></a>创建删除</h4><ul>
-<li>创建初始化<br>  <code>request_queue_t *blk_init_queue(request_fn_proc *request, spinlock_t *lock);</code>参数<code>request</code>是处理这个队列的函数指针，lock是控制访问队列权限的自旋锁。由于创建过程会分配内存，因此会有失败的可能，所以在使用队列前一定要检查返回值。</li>
-<li>删除<br>  <code>void blk_cleanup_queue(request_queue_t *);</code>调用该函数后，驱动程序将不会再得到这个队列中的请求，也不能再引用这个队列了。</li>
-</ul>
-<h4 id="队列元素"><a href="#队列元素" class="headerlink" title="队列元素"></a>队列元素</h4><ul>
-<li>从队列中获取请求<br>  <code>struct request *elv_next_request(request_queue_t *queue);</code>返回一个需要处理的请求指针，该指针由I/O调度器决定，如果没有请求需要处理返回NULL。该函数被调用后，请求依然保存在队列中，但是为其做了活动标记，该标记保证了当开始执行该请求时I/O调度器不再将该请求与其他请求合并。</li>
-<li>从队列中删除请求<br>  <code>void blkdev_dequeue_request(struct request *req);</code>将请求从队列中删除。</li>
-<li>请求返回队列<br>  <code>void elv_requeue_request(request_queue_t *queue, struct request *req);</code>将拿出队列的请求再返回给队列。当驱动需要同时处理同一队列中的多个请求时，一般多用<code>blkdev_dequeue_request</code>和<code>elv_requeue_request</code></li>
-</ul>
-<h3 id="request"><a href="#request" class="headerlink" title="request"></a>request</h3><p>一个块请求队列可以包含那些实际并不向磁盘读写数据的请求，生产商信息、底层诊断操作、与特殊设备模式相关指令、介质写模式设定等。每个request结构都代表一个块设备的I/O请求，这个I/O请求可以通过对多个独立请求的合并而来。</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">sbull_request</span><span class="params">(<span class="keyword">request_queue_t</span> *q)</span></span></div><div class="line">&#123;</div><div class="line">    <span class="keyword">struct</span> request *req;          <span class="comment">//定义请求结构体</span></div><div class="line">    <span class="keyword">while</span>((req = elv_next_request(q)) != <span class="literal">NULL</span>)<span class="comment">//elv_next_request()获得队列中第一个未完成请求</span></div><div class="line">    &#123;</div><div class="line">        <span class="keyword">struct</span> sbull_dev *dev = req-&gt;rq_disk-&gt;private_data;</div><div class="line">        <span class="keyword">if</span>(!blk_fs_request(req))     <span class="comment">//判断是否为文件系统请求</span></div><div class="line">        &#123;</div><div class="line">            printk(KERN_NOTICE <span class="string">"Skip non-fs request\n"</span>);</div><div class="line">            end_request(req,<span class="number">0</span>);   <span class="comment">//通知请求处理失败，0为失败，1为成功</span></div><div class="line">            <span class="keyword">continue</span>; </div><div class="line">        &#125;</div><div class="line">        sbull_transfer(dev,req-&gt;sector,req-&gt;current_nr_sectors,req-&gt;buffer,rq_data_dir(req));</div><div class="line">        end_request(req,<span class="number">1</span>);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<ul>
-<li><code>elv_next_request</code><br>  用来获取队列中第一个未完成的请求，当没有请求需要处理时，返回NULL。请求被获取后并不从队列中删除。</li>
-<li><code>blk_fs_request</code><br>  用来判断该请求是否是一个文件系统请求。</li>
-<li><code>end_request</code><br>  <code>void end_request(struct request *req, int succeeded);</code>传递当前请求的指针和完成结果（0表示不成功，非0表示成功）。</li>
-<li><code>req-&gt;sector</code><br>  在设备上开始扇区的索引号</li>
-<li><code>req-&gt;buffer</code><br>  传输或者接收数据的缓冲区指针</li>
-<li><code>rq_data_dir</code><br>  传输方向，返回0表示从设备读数据，非0表示向设备写入数据</li>
-</ul>
-<p>如果多个请求都是对磁盘中相邻扇区进行操作，则内核将合并它们，内核不会合并在单独request结构中的读写操作，如果合并的结果会打破对请求队列的限制，则内核也不会对请求进行合并。</p>
-<h3 id="bio"><a href="#bio" class="headerlink" title="bio"></a>bio</h3><p>一个request结构是作为一个bio结构的链表实现的，保证在执行请求的时候驱动程序能知道执行的位置。当内核以文件系统、虚拟内存子系统或者系统调用的形式决定从块I/O设备输入、输出块数据时，它将再结合一个bio结构，用来描述这个操作。该结构被传递给I/O代码，代码会把它合并到一个已存在的request结构中，或者根据需要再创建一个新的request结构。bio结构包含了驱动程序执行请求的全部信息，而不必与初始化这个请求的用户空间的进程相关联。</p>
-<p><img src="/images/linux/block.png" alt="block"></p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> bio &#123;</div><div class="line">        <span class="keyword">struct</span> bio              *bi_next;       <span class="comment">/* request queue link */</span></div><div class="line">        <span class="keyword">struct</span> block_device     *bi_bdev;</div><div class="line">        <span class="keyword">unsigned</span> <span class="keyword">int</span>            bi_flags;       <span class="comment">/* status, command, etc */</span></div><div class="line">        <span class="keyword">int</span>                     bi_error;</div><div class="line">        <span class="keyword">unsigned</span> <span class="keyword">long</span>           bi_rw;          <span class="comment">/* bottom bits READ/WRITE, top bits priority */</span></div><div class="line">        <span class="keyword">struct</span> bvec_iter        bi_iter;</div><div class="line">        <span class="comment">/* Number of segments in this BIO after</span></div><div class="line">         * physical address coalescing is performed.</div><div class="line">         */</div><div class="line">        <span class="keyword">unsigned</span> <span class="keyword">int</span>            bi_phys_segments;</div><div class="line">        <span class="comment">/*</span></div><div class="line">         * To keep track of the max segment size, we account for the</div><div class="line">         * sizes of the first and last mergeable segments in this bio.</div><div class="line">         */</div><div class="line">        <span class="keyword">unsigned</span> <span class="keyword">int</span>            bi_seg_front_size;</div><div class="line">        <span class="keyword">unsigned</span> <span class="keyword">int</span>            bi_seg_back_size;</div><div class="line">        <span class="keyword">atomic_t</span>                __bi_remaining;</div><div class="line">        <span class="keyword">bio_end_io_t</span>            *bi_end_io;</div><div class="line">        <span class="keyword">void</span>                    *bi_private;</div><div class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> CONFIG_BLK_CGROUP</span></div><div class="line">        <span class="comment">/*</span></div><div class="line">         * Optional ioc and css associated with this bio.  Put on bio</div><div class="line">         * release.  Read comment on top of bio_associate_current().</div><div class="line">         */</div><div class="line">        <span class="keyword">struct</span> io_context       *bi_ioc;</div><div class="line">        <span class="keyword">struct</span> cgroup_subsys_state *bi_css;</div><div class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></div><div class="line">        <span class="keyword">union</span> &#123;</div><div class="line"><span class="meta">#<span class="meta-keyword">if</span> defined(CONFIG_BLK_DEV_INTEGRITY)</span></div><div class="line">                <span class="keyword">struct</span> bio_integrity_payload *bi_integrity; <span class="comment">/* data integrity */</span></div><div class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></div><div class="line">        &#125;;</div><div class="line">        <span class="keyword">unsigned</span> <span class="keyword">short</span>          bi_vcnt;        <span class="comment">/* how many bio_vec's */</span></div><div class="line">        <span class="comment">/*</span></div><div class="line">         * Everything starting with bi_max_vecs will be preserved by bio_reset()</div><div class="line">         */</div><div class="line">        <span class="keyword">unsigned</span> <span class="keyword">short</span>          bi_max_vecs;    <span class="comment">/* max bvl_vecs we can hold */</span></div><div class="line">        <span class="keyword">atomic_t</span>                __bi_cnt;       <span class="comment">/* pin count */</span></div><div class="line">        <span class="keyword">struct</span> bio_vec          *bi_io_vec;     <span class="comment">/* the actual vec list */</span></div><div class="line">        <span class="keyword">struct</span> bio_set          *bi_pool;</div><div class="line">        <span class="comment">/*</span></div><div class="line">         * We can inline a number of vecs at the end of the bio, to avoid</div><div class="line">         * double allocations for a small number of bio_vecs. This member</div><div class="line">         * MUST obviously be kept at the very end of the bio.</div><div class="line">         */</div><div class="line">        <span class="keyword">struct</span> bio_vec          bi_inline_vecs[<span class="number">0</span>];</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
-<p>bio的核心是一个名为<code>bi_io_vec</code>的数组</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> bio_vec &#123;</div><div class="line">        <span class="keyword">struct</span> page     *bv_page;</div><div class="line">        <span class="keyword">unsigned</span> <span class="keyword">int</span>    bv_len;</div><div class="line">        <span class="keyword">unsigned</span> <span class="keyword">int</span>    bv_offset;</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
-<h4 id="遍历request中的bio"><a href="#遍历request中的bio" class="headerlink" title="遍历request中的bio"></a>遍历request中的bio</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> <span class="title">sbull_xfer_request</span><span class="params">(<span class="keyword">struct</span> sbull_dev *dev,<span class="keyword">struct</span> request *req)</span></span></div><div class="line">&#123;</div><div class="line">    <span class="keyword">struct</span> bio *bio;</div><div class="line">    <span class="keyword">int</span> nsect = <span class="number">0</span>;</div><div class="line">    rq_for_each_bio(bio,req)<span class="comment">//此宏遍历请求中的每个bio,传递用于sbull_xfer_bio()传输的指针</span></div><div class="line">    &#123;</div><div class="line">        sbull_xfer_bio(dev,bio);  <span class="comment">//调用 bio 处理函数</span></div><div class="line">        nsect += bio-&gt;bi_size/KERNEL_SECTOR_SIZE; <span class="comment">//传递的字节数/扇区大小等于扇区数</span></div><div class="line">    &#125;</div><div class="line">    <span class="keyword">return</span> nsect;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<h4 id="遍历bio中的segment"><a href="#遍历bio中的segment" class="headerlink" title="遍历bio中的segment"></a>遍历bio中的segment</h4><p>遍历bio中的segment，也就是遍历bio结构中的<code>bi_io_vec</code>。</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> <span class="title">sbull_xfer_bio</span><span class="params">(<span class="keyword">struct</span> sbull_dev *dev,<span class="keyword">struct</span> bio *bio)</span></span></div><div class="line">&#123;</div><div class="line">    <span class="keyword">int</span> i;</div><div class="line">    <span class="keyword">struct</span> bio_vec *bvec;              <span class="comment">//定义实际的 vec 列表</span></div><div class="line">    <span class="keyword">sector_t</span> sector = bio-&gt;bi_sector;  <span class="comment">//定义要传输的第一个扇区</span></div><div class="line">    <span class="comment">//下面的宏遍历bio的每一段，获得一个内核虚拟地址来存取缓冲</span></div><div class="line">    bio_for_each_segment(bvec,bio,i)</div><div class="line">    &#123;</div><div class="line">        <span class="keyword">char</span> *buffer = __bio_kmap_atomic(bio,i,KM_USER0);<span class="comment">//通过kmap_atomic()函数获得返</span></div><div class="line">        <span class="comment">//回bio的第i个缓冲区的虚拟地址</span></div><div class="line">        sbull_transfer(dev,</div><div class="line">                       sector,                        <span class="comment">// 开始扇区的索引号</span></div><div class="line">                       bio_cur_sectors(bio),          <span class="comment">// 需要传输的扇区数  </span></div><div class="line">                       buffer,                        <span class="comment">// 传输数据的缓冲区指针</span></div><div class="line">                       bio_data_dir(bio)== WRITE);    <span class="comment">// 传输方向，0表述从设备读，非0从设备写</span></div><div class="line">        sector += bio_cur_sectors(bio);     <span class="comment">//返回扇区数</span></div><div class="line">        __bio_kunmap_atomic(bio,KM_USER0); <span class="comment">//返回由 __bio_kmap_atomic()获得的内核虚拟地址</span></div><div class="line">    &#125;</div><div class="line">    <span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li>《设备驱动程序》</li>
-</ul>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2215,7 +2294,7 @@
             
               <a href="/archives/ || archive">
             
-                <span class="site-state-item-count">119</span>
+                <span class="site-state-item-count">120</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
@@ -2237,7 +2316,7 @@
             
             <div class="site-state-item site-state-tags">
               <a href="/tags/index.html">
-                <span class="site-state-item-count">107</span>
+                <span class="site-state-item-count">108</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>
