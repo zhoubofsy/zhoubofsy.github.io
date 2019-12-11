@@ -103,7 +103,7 @@
 <meta property="og:site_name" content="Bolog">
 <meta property="og:description" content="export cephfs创建用户目录使用admin用户将根目录挂载，并创建用户使用需要的目录 1mount -t ceph &amp;lt;monitor ip&amp;gt;:6789:/ /mnt/ -o name=admin,secret=xxxxxxxxxxxxxxxxxxxxxxxx== 在/mnt目录下创建kubefs目录 给目录设置配额(Quota)设置目录配额是linux内核本身提供的功能，ce">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2019-11-28T11:36:44.100Z">
+<meta property="og:updated_time" content="2019-11-29T07:07:14.303Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="cephfs export">
 <meta name="twitter:description" content="export cephfs创建用户目录使用admin用户将根目录挂载，并创建用户使用需要的目录 1mount -t ceph &amp;lt;monitor ip&amp;gt;:6789:/ /mnt/ -o name=admin,secret=xxxxxxxxxxxxxxxxxxxxxxxx== 在/mnt目录下创建kubefs目录 给目录设置配额(Quota)设置目录配额是linux内核本身提供的功能，ce">
@@ -414,7 +414,7 @@
 <h3 id="挂载"><a href="#挂载" class="headerlink" title="挂载"></a>挂载</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">mount -t ceph &lt;monitor ip&gt;:6789:/kubefs /mnt/ -o name=kubefs,secret=xxxxxxxxxxxxxxxxxxxxxx==</div></pre></td></tr></table></figure>
 <h1 id="export-nfs"><a href="#export-nfs" class="headerlink" title="export nfs"></a>export nfs</h1><p>cephfs本身不支持nfs协议，可以通过nfs-ganesha将cephfs转成nfs提供出去。</p>
 <h3 id="镜像"><a href="#镜像" class="headerlink" title="镜像"></a>镜像</h3><p><a href="https://hub.docker.com/r/ananace/nfs-ganesha-ceph" target="_blank" rel="external">ananace/nfs-ganesha-ceph</a></p>
-<h3 id="ganesha配置"><a href="#ganesha配置" class="headerlink" title="ganesha配置"></a>ganesha配置</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div></pre></td><td class="code"><pre><div class="line"># NFS protocol options</div><div class="line">EXPORT</div><div class="line">&#123;</div><div class="line">  # Export Id (mandatory, each EXPORT must have a unique Export_Id)</div><div class="line">  Export_Id = 77;</div><div class="line"></div><div class="line">  # Exported path (mandatory)</div><div class="line">  Path = /;</div><div class="line"></div><div class="line">  # Pseudo Path (for NFS v4)</div><div class="line">  Pseudo = /;</div><div class="line"></div><div class="line">  # Access control options</div><div class="line">  Access_Type = RW;</div><div class="line">  Squash = No_Root_Squash;</div><div class="line"></div><div class="line">  # NFS protocol options</div><div class="line">  SecType = &quot;sys&quot;;</div><div class="line">  Transports = TCP;</div><div class="line">  Protocols = 4;</div><div class="line"></div><div class="line">  # Exporting FSAL</div><div class="line">  FSAL &#123;</div><div class="line">    Name = CEPH;</div><div class="line">    Filesystem = &quot;cephfs&quot;;</div><div class="line">    User_Id = &quot;admin&quot;;</div><div class="line">    Secret_Access_Key = &quot;xxxxxxxxxxxxxxxxxxxxx&quot;;</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h3 id="ganesha配置"><a href="#ganesha配置" class="headerlink" title="ganesha配置"></a>ganesha配置</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div></pre></td><td class="code"><pre><div class="line"># NFS protocol options</div><div class="line">EXPORT</div><div class="line">&#123;</div><div class="line">  # Export Id (mandatory, each EXPORT must have a unique Export_Id)</div><div class="line">  Export_Id = 77;</div><div class="line"></div><div class="line">  # Exported path (mandatory)</div><div class="line">  Path = /;</div><div class="line"></div><div class="line">  # Pseudo Path (for NFS v4)</div><div class="line">  Pseudo = /;</div><div class="line"></div><div class="line">  # Access control options</div><div class="line">  Access_Type = RW;</div><div class="line">  Squash = No_Root_Squash;</div><div class="line"></div><div class="line">  # NFS protocol options</div><div class="line">  SecType = &quot;sys&quot;;</div><div class="line">  Transports = TCP;</div><div class="line">  Protocols = 4;</div><div class="line"></div><div class="line">  # Exporting FSAL</div><div class="line">  FSAL &#123;</div><div class="line">    Name = CEPH;</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <h3 id="运行ganesha容器"><a href="#运行ganesha容器" class="headerlink" title="运行ganesha容器"></a>运行ganesha容器</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">docker run -d --net=host  -v /home/xxx/ceph/etc_ceph/:/etc/ceph -v /home/xxx/ceph/ganesha/:/etc/ganesha --name nfs -e GANESHA_BOOTSTRAP_CONFIG=no ananace/nfs-ganesha-ceph</div></pre></td></tr></table></figure>
 
       
@@ -461,6 +461,10 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/12/11/storage/ceph/ceph-repo/" rel="prev" title="ceph-repo 仓库搭建">
+                ceph-repo 仓库搭建 <i class="fa fa-chevron-right"></i>
+              </a>
             
           </div>
         </div>
@@ -539,7 +543,7 @@
             
               <a href="/archives/ || archive">
             
-                <span class="site-state-item-count">120</span>
+                <span class="site-state-item-count">122</span>
                 <span class="site-state-item-name">日志</span>
               </a>
             </div>
