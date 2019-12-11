@@ -103,7 +103,7 @@
 <meta property="og:site_name" content="Bolog">
 <meta property="og:description" content="Yum源安装createrepo1yum install -y createrepo 创建仓库使用createrepo工具创建、更新仓库 按Yum源的规则创建目录树rpm-&amp;lt;ceph版本名称&amp;gt;/&amp;lt;os version&amp;gt;/&amp;lt;arch&amp;gt;12mkdir -p ./ceph_repo/rpm-mimic/el7/x86_64/mkdir -p ./ceph_repo/r">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2019-12-11T09:21:16.644Z">
+<meta property="og:updated_time" content="2019-12-11T11:10:28.290Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="ceph-repo 仓库搭建">
 <meta name="twitter:description" content="Yum源安装createrepo1yum install -y createrepo 创建仓库使用createrepo工具创建、更新仓库 按Yum源的规则创建目录树rpm-&amp;lt;ceph版本名称&amp;gt;/&amp;lt;os version&amp;gt;/&amp;lt;arch&amp;gt;12mkdir -p ./ceph_repo/rpm-mimic/el7/x86_64/mkdir -p ./ceph_repo/r">
@@ -409,6 +409,7 @@
 <p>创建仓库<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">createrepo ./ceph_repo/rpm-mimic/el7/x86_64</div><div class="line">createrepo ./ceph_repo/rpm-mimic/el7/noarch</div></pre></td></tr></table></figure></p>
 <p>若仓库中RPM有更新、增加、删除，需要更新仓库<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">createrepo --update ./ceph_repo/rpm-mimic/el7/x86_64/</div></pre></td></tr></table></figure></p>
 <h2 id="发布仓库"><a href="#发布仓库" class="headerlink" title="发布仓库"></a>发布仓库</h2><p>本示例以docker形式发布仓库<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">docker run -d --net=host --name ceph_repo -v $PWD/ceph_repo:/root/repo -w /root/repo/ --restart=always python:3 python -m http.server 80</div></pre></td></tr></table></figure></p>
+<p>or<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">docker run -d --net=host --name ceph_repo -v $PWD/ceph_repo:/root/repo -w /root/repo/ --restart=always python:3 python -m SimpleHTTPServer 80</div></pre></td></tr></table></figure></p>
 <h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
 <li><a href="https://www.cnblogs.com/mython/p/10898461.html" target="_blank" rel="external">yum源仓库的三种搭建方式</a></li>
 </ul>
