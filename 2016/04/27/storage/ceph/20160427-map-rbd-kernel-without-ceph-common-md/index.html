@@ -95,18 +95,18 @@
 
 
 
-<meta name="description" content="例子123modprobe rbdecho &amp;quot;192.168.1.234 name=admin,secret=AQAHzRBX77ORERAAqfW0YAqq8+ETXMqWtPKwkQ== rbd testrbd&amp;quot; &amp;gt; /sys/bus/rbd/addecho 1 &amp;gt; /sys/bus/rbd/remove 解释 192.168.1.234 为 Monitor 地">
+<meta name="description" content="例子123modprobe rbdecho &amp;quot;192.168.1.234 name=admin,secret=AQAHzRBX77ORERAAqfW0YAqq8+ETXMqWtPKwkQ== rbd testrbd&amp;quot; &amp;gt; /sys/bus/rbd/addecho 1 &amp;gt; /sys/bus/rbd/remove 如果你在执行echo时候提示参数错误，请现查看modin">
 <meta name="keywords" content="ceph,rbd">
 <meta property="og:type" content="article">
 <meta property="og:title" content="不使用ceph-common 进行内核映射 rbd 块设备">
 <meta property="og:url" content="http://yoursite.com/2016/04/27/storage/ceph/20160427-map-rbd-kernel-without-ceph-common-md/index.html">
 <meta property="og:site_name" content="Bolog">
-<meta property="og:description" content="例子123modprobe rbdecho &amp;quot;192.168.1.234 name=admin,secret=AQAHzRBX77ORERAAqfW0YAqq8+ETXMqWtPKwkQ== rbd testrbd&amp;quot; &amp;gt; /sys/bus/rbd/addecho 1 &amp;gt; /sys/bus/rbd/remove 解释 192.168.1.234 为 Monitor 地">
+<meta property="og:description" content="例子123modprobe rbdecho &amp;quot;192.168.1.234 name=admin,secret=AQAHzRBX77ORERAAqfW0YAqq8+ETXMqWtPKwkQ== rbd testrbd&amp;quot; &amp;gt; /sys/bus/rbd/addecho 1 &amp;gt; /sys/bus/rbd/remove 如果你在执行echo时候提示参数错误，请现查看modin">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2016-11-13T10:02:51.000Z">
+<meta property="og:updated_time" content="2020-06-22T10:25:51.862Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="不使用ceph-common 进行内核映射 rbd 块设备">
-<meta name="twitter:description" content="例子123modprobe rbdecho &amp;quot;192.168.1.234 name=admin,secret=AQAHzRBX77ORERAAqfW0YAqq8+ETXMqWtPKwkQ== rbd testrbd&amp;quot; &amp;gt; /sys/bus/rbd/addecho 1 &amp;gt; /sys/bus/rbd/remove 解释 192.168.1.234 为 Monitor 地">
+<meta name="twitter:description" content="例子123modprobe rbdecho &amp;quot;192.168.1.234 name=admin,secret=AQAHzRBX77ORERAAqfW0YAqq8+ETXMqWtPKwkQ== rbd testrbd&amp;quot; &amp;gt; /sys/bus/rbd/addecho 1 &amp;gt; /sys/bus/rbd/remove 如果你在执行echo时候提示参数错误，请现查看modin">
 
 
 
@@ -403,6 +403,9 @@
 
       
         <h2 id="例子"><a href="#例子" class="headerlink" title="例子"></a>例子</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">modprobe rbd</div><div class="line">echo &quot;192.168.1.234 name=admin,secret=AQAHzRBX77ORERAAqfW0YAqq8+ETXMqWtPKwkQ== rbd testrbd&quot; &gt; /sys/bus/rbd/add</div><div class="line">echo 1 &gt; /sys/bus/rbd/remove</div></pre></td></tr></table></figure>
+<p>如果你在执行<code>echo</code>时候提示参数错误，请现查看<code>modinfo rbd</code>看看里面的<code>single_major</code>默认值是否为<code>false</code><br>eg:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line">$ modinfo rbd</div><div class="line">filename:       /lib/modules/3.10.0-693.el7.x86_64/kernel/drivers/block/rbd.ko.xz</div><div class="line">license:        GPL</div><div class="line">description:    RADOS Block Device (RBD) driver</div><div class="line">author:         Jeff Garzik &lt;jeff@garzik.org&gt;</div><div class="line">author:         Yehuda Sadeh &lt;yehuda@hq.newdream.net&gt;</div><div class="line">author:         Sage Weil &lt;sage@newdream.net&gt;</div><div class="line">author:         Alex Elder &lt;elder@inktank.com&gt;</div><div class="line">rhelversion:    7.4</div><div class="line">srcversion:     B41E51769EC95E3DBDB16AB</div><div class="line">depends:        libceph</div><div class="line">intree:         Y</div><div class="line">vermagic:       3.10.0-693.el7.x86_64 SMP mod_unload modversions</div><div class="line">signer:         CentOS Linux kernel signing key</div><div class="line">sig_key:        DA:18:7D:CA:7D:BE:53:AB:05:BD:13:BD:0C:4E:21:F4:22:B6:A4:9C</div><div class="line">sig_hashalgo:   sha256</div><div class="line">parm:           single_major:Use a single major number for all rbd devices (default: false) (bool)</div></pre></td></tr></table></figure></p>
+<p>如果<code>single_major</code>默认值为<code>ture</code>，那么在加载rbd模块时，需要将<code>single_major</code>设置成false<br>eg:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">modprobe rbd single_major=0</div></pre></td></tr></table></figure></p>
+<p>然后在重新执行<code>echo</code>。</p>
 <h2 id="解释"><a href="#解释" class="headerlink" title="解释"></a>解释</h2><ul>
 <li>192.168.1.234 为 Monitor 地址</li>
 <li>name，制定使用的用户，可通过“ceph auth list” 查看</li>
@@ -413,6 +416,7 @@
 </ul>
 <h2 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h2><ul>
 <li><a href="http://cephnotes.ksperis.com/blog/2014/01/09/map-rbd-kernel-without-install-ceph-common" target="_blank" rel="external">Map Rbd Kernel Without Install Ceph-common</a></li>
+<li><a href="https://github.com/coreos/bugs/issues/2544" target="_blank" rel="external">RBD failed to mount using rbd kernel module: tee: /sys/bus/rbd/add: Invalid argument #2544</a></li>
 </ul>
 
       
