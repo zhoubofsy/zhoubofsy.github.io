@@ -579,9 +579,9 @@
         <category>apple</category>
       </categories>
       <tags>
-        <tag>mac</tag>
         <tag>vm</tag>
         <tag>xhyve</tag>
+        <tag>mac</tag>
         <tag>docker</tag>
       </tags>
   </entry>
@@ -710,8 +710,8 @@
       </categories>
       <tags>
         <tag>docker</tag>
-        <tag>xenserver</tag>
         <tag>plan</tag>
+        <tag>xenserver</tag>
       </tags>
   </entry>
   <entry>
@@ -733,8 +733,8 @@
         <category>container</category>
       </categories>
       <tags>
-        <tag>k8s</tag>
         <tag>dns</tag>
+        <tag>k8s</tag>
       </tags>
   </entry>
   <entry>
@@ -767,8 +767,8 @@
         <category>container</category>
       </categories>
       <tags>
-        <tag>dns</tag>
         <tag>rancher</tag>
+        <tag>dns</tag>
       </tags>
   </entry>
   <entry>
@@ -1076,20 +1076,8 @@
         <category>vim</category>
       </categories>
       <tags>
-        <tag>vim</tag>
         <tag>xxd</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title><![CDATA[uWSGI中设置“cap = setuid,setpid”导致python脚本权限降低]]></title>
-    <url>%2F2016%2F09%2F23%2Fuwsgi%2Fuwsgi-config-problem-1%2F</url>
-    <content type="text"><![CDATA[问题发现背景 uwsgi version： 2.0.13.1 python version: 2.6.6 采用 Nginx + uWSGI + Python 架构，均拥有ROOT权限 现象Python执行os.mkdir操作，提示“Permission Denied” 1234567891011121314Traceback (most recent call last):File &quot;/cs/nginx/uwsgi/main.py&quot;, line 24, in applicationresult = process().entry(environ, start_response)File &quot;/cs/nginx/uwsgi/rds/base_mng.py&quot;, line 90, in entryself.process_put_request(env)File &quot;/cs/nginx/uwsgi/rds/init_rds.py&quot;, line 149, in process_put_requestresult = self.do_put_request(env)File &quot;/cs/nginx/uwsgi/rds/init_rds.py&quot;, line 140, in do_put_requesterr_code = op.do()File &quot;/cs/nginx/uwsgi/rds/init_rds.py&quot;, line 70, in doif 0 == init_create_mp(mp):File &quot;/cs/nginx/uwsgi/rds/init/main.py&quot;, line 44, in init_create_mpos.mkdir(mp,0755)OSError: [Errno 13] Permission denied: &apos;/aaab&apos; 解决Python脚本的权限，有uWSGI来决定，所以该错误肯定跟uWSGI有关，通过调整uwsgi.ini文件中的用户和权限相关配置发现，将cap = setuid,setgid去掉，可以正常创建目录。 但：具体原因不明，可能跟setuid和setgid的使用有关，有可能是个Bug]]></content>
-      <categories>
-        <category>uwsgi</category>
-      </categories>
-      <tags>
-        <tag>config</tag>
-        <tag>uwsgi</tag>
+        <tag>vim</tag>
       </tags>
   </entry>
   <entry>
@@ -1118,6 +1106,18 @@
       </tags>
   </entry>
   <entry>
+    <title><![CDATA[uWSGI中设置“cap = setuid,setpid”导致python脚本权限降低]]></title>
+    <url>%2F2016%2F09%2F23%2Fuwsgi%2Fuwsgi-config-problem-1%2F</url>
+    <content type="text"><![CDATA[问题发现背景 uwsgi version： 2.0.13.1 python version: 2.6.6 采用 Nginx + uWSGI + Python 架构，均拥有ROOT权限 现象Python执行os.mkdir操作，提示“Permission Denied” 1234567891011121314Traceback (most recent call last):File &quot;/cs/nginx/uwsgi/main.py&quot;, line 24, in applicationresult = process().entry(environ, start_response)File &quot;/cs/nginx/uwsgi/rds/base_mng.py&quot;, line 90, in entryself.process_put_request(env)File &quot;/cs/nginx/uwsgi/rds/init_rds.py&quot;, line 149, in process_put_requestresult = self.do_put_request(env)File &quot;/cs/nginx/uwsgi/rds/init_rds.py&quot;, line 140, in do_put_requesterr_code = op.do()File &quot;/cs/nginx/uwsgi/rds/init_rds.py&quot;, line 70, in doif 0 == init_create_mp(mp):File &quot;/cs/nginx/uwsgi/rds/init/main.py&quot;, line 44, in init_create_mpos.mkdir(mp,0755)OSError: [Errno 13] Permission denied: &apos;/aaab&apos; 解决Python脚本的权限，有uWSGI来决定，所以该错误肯定跟uWSGI有关，通过调整uwsgi.ini文件中的用户和权限相关配置发现，将cap = setuid,setgid去掉，可以正常创建目录。 但：具体原因不明，可能跟setuid和setgid的使用有关，有可能是个Bug]]></content>
+      <categories>
+        <category>uwsgi</category>
+      </categories>
+      <tags>
+        <tag>config</tag>
+        <tag>uwsgi</tag>
+      </tags>
+  </entry>
+  <entry>
     <title><![CDATA[RHEL7.2下MySQL-python安装]]></title>
     <url>%2F2016%2F08%2F10%2Fmysql%2F20160810-mysql-python-install-on-rhel7-2%2F</url>
     <content type="text"><![CDATA[背景使用python2.7 依赖库 gcc需要安装gcc编译器，用于编译_mysql.c python安装python-devel解决找不到“Python.h”问题 mysql安装 mysql-community-devel]]></content>
@@ -1125,9 +1125,9 @@
         <category>python</category>
       </categories>
       <tags>
-        <tag>python</tag>
         <tag>mysql</tag>
         <tag>rhel</tag>
+        <tag>python</tag>
       </tags>
   </entry>
   <entry>
