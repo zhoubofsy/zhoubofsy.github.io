@@ -79,7 +79,7 @@
 <link href="/css/main.css?v=5.1.2" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="docker,ceph,nfs,cephfs," />
+  <meta name="keywords" content="ceph,docker,nfs,cephfs," />
 
 
 
@@ -96,7 +96,7 @@
 
 
 <meta name="description" content="export cephfs创建用户目录使用admin用户将根目录挂载，并创建用户使用需要的目录 1mount -t ceph &amp;lt;monitor ip&amp;gt;:6789:/ /mnt/ -o name=admin,secret=xxxxxxxxxxxxxxxxxxxxxxxx== 在/mnt目录下创建kubefs目录 给目录设置配额(Quota)设置目录配额是linux内核本身提供的功能，ce">
-<meta name="keywords" content="docker,ceph,nfs,cephfs">
+<meta name="keywords" content="ceph,docker,nfs,cephfs">
 <meta property="og:type" content="article">
 <meta property="og:title" content="cephfs export">
 <meta property="og:url" content="http://yoursite.com/2019/11/28/storage/ceph/cephfs-export/index.html">
@@ -428,6 +428,35 @@
     
 
     
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div></div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>Donate</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechatpay.png" alt="博 WeChat Pay"/>
+        <p>WeChat Pay</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/images/alipay.jpeg" alt="博 Alipay"/>
+        <p>Alipay</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
 
     
 
@@ -435,9 +464,9 @@
       
         <div class="post-tags">
           
-            <a href="/tags/docker/" rel="tag"># docker</a>
-          
             <a href="/tags/ceph/" rel="tag"># ceph</a>
+          
+            <a href="/tags/docker/" rel="tag"># docker</a>
           
             <a href="/tags/nfs/" rel="tag"># nfs</a>
           
