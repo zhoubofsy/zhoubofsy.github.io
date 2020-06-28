@@ -68,7 +68,7 @@
 
 
 
-  <meta name="keywords" content="ceph,docker,cephfs,nfs," />
+  <meta name="keywords" content="ceph,docker,nfs,cephfs," />
 
 
 
@@ -80,7 +80,7 @@
 
 
 <meta name="description" content="export cephfs创建用户目录使用admin用户将根目录挂载，并创建用户使用需要的目录 1mount -t ceph &amp;lt;monitor ip&amp;gt;:6789:/ /mnt/ -o name=admin,secret=xxxxxxxxxxxxxxxxxxxxxxxx== 在/mnt目录下创建kubefs目录 给目录设置配额(Quota)设置目录配额是linux内核本身提供的功能，ce">
-<meta name="keywords" content="ceph,docker,cephfs,nfs">
+<meta name="keywords" content="ceph,docker,nfs,cephfs">
 <meta property="og:type" content="article">
 <meta property="og:title" content="cephfs export">
 <meta property="og:url" content="http://yoursite.com/2019/11/28/storage/ceph/cephfs-export/index.html">
@@ -370,7 +370,7 @@
                   <i class="fa fa-comment-o"></i>
                 </span>
                 <a href="/2019/11/28/storage/ceph/cephfs-export/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count gitment-comments-count" data-xid="/2019/11/28/storage/ceph/cephfs-export/" itemprop="commentsCount"></span>
+                  <span class="post-comments-count valine-comment-count" data-xid="/2019/11/28/storage/ceph/cephfs-export/" itemprop="commentCount"></span>
                 </a>
               </span>
             
@@ -462,9 +462,9 @@
           
             <a href="/tags/docker/" rel="tag"># docker</a>
           
-            <a href="/tags/cephfs/" rel="tag"># cephfs</a>
-          
             <a href="/tags/nfs/" rel="tag"># nfs</a>
+          
+            <a href="/tags/cephfs/" rel="tag"># cephfs</a>
           
         </div>
       
@@ -520,11 +520,7 @@
 
   
     <div class="comments" id="comments">
-      
-        <div id="gitment-container"></div>
-      
     </div>
-
   
 
 
@@ -814,45 +810,30 @@
 
 
 
-<!-- LOCAL: You can save these files to your site and update links -->
-    
-        
-        <link rel="stylesheet" href="https://aimingoo.github.io/gitmint/style/default.css">
-        <script src="https://aimingoo.github.io/gitmint/dist/gitmint.browser.js"></script>
-    
-<!-- END LOCAL -->
-
-    
-
-    
-      <script type="text/javascript">
-      function renderGitment(){
-        var gitment = new Gitmint({
-            id: window.location.pathname, 
-            owner: 'zhoubofsy',
-            repo: 'zhoubofsygitment',
-            
-            lang: "" || navigator.language || navigator.systemLanguage || navigator.userLanguage,
-            
-            oauth: {
-            
-            
-                client_secret: '478f8511687999ac85664313c08c94a1420e13f6',
-            
-                client_id: 'Iv1.9c9e3f90ac2cc9f9'
-            }});
-        gitment.render('gitment-container');
-      }
-
-      
-      renderGitment();
-      
-      </script>
-    
 
 
 
-
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//unpkg.com/valine/dist/Valine.min.js"></script>
+  
+  <script type="text/javascript">
+    var GUEST = ['nick','mail','link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item=>{
+      return GUEST.indexOf(item)>-1;
+    });
+    new Valine({
+        el: '#comments' ,
+        verify: false,
+        notify: false,
+        appId: 'PrJuolBVUJouwFAAIeEFAN7Q-gzGzoHsz',
+        appKey: 'C2Jc1LswoSpNO3opFC5K6Yd7',
+        placeholder: 'Just go go',
+        avatar:'mm',
+        guest_info:guest,
+        pageSize:'10' || 10,
+    });
+  </script>
 
 
 

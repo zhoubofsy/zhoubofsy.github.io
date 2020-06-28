@@ -316,43 +316,6 @@
 
       <h2 class="post-title">
         
-            <a class="post-title-link" href="/1984/10/10/owlgroup_introduce/" itemprop="url">
-              
-                <span itemprop="name">工作简历</span>
-              
-            </a>
-        
-      </h2>
-
-      <div class="post-meta">
-        <time class="post-time" itemprop="dateCreated"
-              datetime="1984-10-10T14:00:00+08:00"
-              content="1984-10-10" >
-          10-10
-        </time>
-      </div>
-
-    </header>
-  </article>
-
-
-
-      
-
-        
-        
-        
-
-        
-        
-
-        
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      <h2 class="post-title">
-        
             <a class="post-title-link" href="/1984/10/10/introduce/" itemprop="url">
               
                 <span itemprop="name">工作简历</span>
@@ -393,6 +356,43 @@
             <a class="post-title-link" href="/1984/10/10/introduce_en/" itemprop="url">
               
                 <span itemprop="name">Resume</span>
+              
+            </a>
+        
+      </h2>
+
+      <div class="post-meta">
+        <time class="post-time" itemprop="dateCreated"
+              datetime="1984-10-10T14:00:00+08:00"
+              content="1984-10-10" >
+          10-10
+        </time>
+      </div>
+
+    </header>
+  </article>
+
+
+
+      
+
+        
+        
+        
+
+        
+        
+
+        
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+
+      <h2 class="post-title">
+        
+            <a class="post-title-link" href="/1984/10/10/owlgroup_introduce/" itemprop="url">
+              
+                <span itemprop="name">工作简历</span>
               
             </a>
         
@@ -685,21 +685,30 @@
 
 
 
-<!-- LOCAL: You can save these files to your site and update links -->
-    
-        
-        <link rel="stylesheet" href="https://aimingoo.github.io/gitmint/style/default.css">
-        <script src="https://aimingoo.github.io/gitmint/dist/gitmint.browser.js"></script>
-    
-<!-- END LOCAL -->
-
-    
-
-    
 
 
 
-
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//unpkg.com/valine/dist/Valine.min.js"></script>
+  
+  <script type="text/javascript">
+    var GUEST = ['nick','mail','link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item=>{
+      return GUEST.indexOf(item)>-1;
+    });
+    new Valine({
+        el: '#comments' ,
+        verify: false,
+        notify: false,
+        appId: 'PrJuolBVUJouwFAAIeEFAN7Q-gzGzoHsz',
+        appKey: 'C2Jc1LswoSpNO3opFC5K6Yd7',
+        placeholder: 'Just go go',
+        avatar:'mm',
+        guest_info:guest,
+        pageSize:'10' || 10,
+    });
+  </script>
 
 
 

@@ -299,9 +299,9 @@
 
       <h2 class="post-title">
         
-            <a class="post-title-link" href="/2016/09/23/uwsgi/uwsgi-limit-process-resource/" itemprop="url">
+            <a class="post-title-link" href="/2016/09/23/uwsgi/uwsgi-config-problem-1/" itemprop="url">
               
-                <span itemprop="name">limit-as限制子进程资源，导致Mysqld服务无法启动</span>
+                <span itemprop="name">uWSGI中设置“cap = setuid,setpid”导致python脚本权限降低</span>
               
             </a>
         
@@ -327,9 +327,9 @@
 
       <h2 class="post-title">
         
-            <a class="post-title-link" href="/2016/09/23/uwsgi/uwsgi-config-problem-1/" itemprop="url">
+            <a class="post-title-link" href="/2016/09/23/uwsgi/uwsgi-limit-process-resource/" itemprop="url">
               
-                <span itemprop="name">uWSGI中设置“cap = setuid,setpid”导致python脚本权限降低</span>
+                <span itemprop="name">limit-as限制子进程资源，导致Mysqld服务无法启动</span>
               
             </a>
         
@@ -620,21 +620,30 @@
 
 
 
-<!-- LOCAL: You can save these files to your site and update links -->
-    
-        
-        <link rel="stylesheet" href="https://aimingoo.github.io/gitmint/style/default.css">
-        <script src="https://aimingoo.github.io/gitmint/dist/gitmint.browser.js"></script>
-    
-<!-- END LOCAL -->
-
-    
-
-    
 
 
 
-
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//unpkg.com/valine/dist/Valine.min.js"></script>
+  
+  <script type="text/javascript">
+    var GUEST = ['nick','mail','link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item=>{
+      return GUEST.indexOf(item)>-1;
+    });
+    new Valine({
+        el: '#comments' ,
+        verify: false,
+        notify: false,
+        appId: 'PrJuolBVUJouwFAAIeEFAN7Q-gzGzoHsz',
+        appKey: 'C2Jc1LswoSpNO3opFC5K6Yd7',
+        placeholder: 'Just go go',
+        avatar:'mm',
+        guest_info:guest,
+        pageSize:'10' || 10,
+    });
+  </script>
 
 
 

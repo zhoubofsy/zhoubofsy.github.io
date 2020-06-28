@@ -372,7 +372,7 @@
                   <i class="fa fa-comment-o"></i>
                 </span>
                 <a href="/2016/09/23/mysql/mysql-priv-mng-md/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count gitment-comments-count" data-xid="/2016/09/23/mysql/mysql-priv-mng-md/" itemprop="commentsCount"></span>
+                  <span class="post-comments-count valine-comment-count" data-xid="/2016/09/23/mysql/mysql-priv-mng-md/" itemprop="commentCount"></span>
                 </a>
               </span>
             
@@ -1276,8 +1276,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2016/08/10/mysql/20160810-mysql-python-install-on-rhel7-2/" rel="next" title="RHEL7.2下MySQL-python安装">
-                <i class="fa fa-chevron-left"></i> RHEL7.2下MySQL-python安装
+              <a href="/2016/09/23/uwsgi/uwsgi-config-problem-1/" rel="next" title="uWSGI中设置“cap = setuid,setpid”导致python脚本权限降低">
+                <i class="fa fa-chevron-left"></i> uWSGI中设置“cap = setuid,setpid”导致python脚本权限降低
               </a>
             
           </div>
@@ -1286,8 +1286,8 @@
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/2016/09/23/uwsgi/uwsgi-config-problem-1/" rel="prev" title="uWSGI中设置“cap = setuid,setpid”导致python脚本权限降低">
-                uWSGI中设置“cap = setuid,setpid”导致python脚本权限降低 <i class="fa fa-chevron-right"></i>
+              <a href="/2016/11/15/vim/vi-bin-text-change/" rel="prev" title="vi(m)进制转换">
+                vi(m)进制转换 <i class="fa fa-chevron-right"></i>
               </a>
             
           </div>
@@ -1319,11 +1319,7 @@
 
   
     <div class="comments" id="comments">
-      
-        <div id="gitment-container"></div>
-      
     </div>
-
   
 
 
@@ -1613,45 +1609,30 @@
 
 
 
-<!-- LOCAL: You can save these files to your site and update links -->
-    
-        
-        <link rel="stylesheet" href="https://aimingoo.github.io/gitmint/style/default.css">
-        <script src="https://aimingoo.github.io/gitmint/dist/gitmint.browser.js"></script>
-    
-<!-- END LOCAL -->
-
-    
-
-    
-      <script type="text/javascript">
-      function renderGitment(){
-        var gitment = new Gitmint({
-            id: window.location.pathname, 
-            owner: 'zhoubofsy',
-            repo: 'zhoubofsygitment',
-            
-            lang: "" || navigator.language || navigator.systemLanguage || navigator.userLanguage,
-            
-            oauth: {
-            
-            
-                client_secret: '478f8511687999ac85664313c08c94a1420e13f6',
-            
-                client_id: 'Iv1.9c9e3f90ac2cc9f9'
-            }});
-        gitment.render('gitment-container');
-      }
-
-      
-      renderGitment();
-      
-      </script>
-    
 
 
 
-
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//unpkg.com/valine/dist/Valine.min.js"></script>
+  
+  <script type="text/javascript">
+    var GUEST = ['nick','mail','link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item=>{
+      return GUEST.indexOf(item)>-1;
+    });
+    new Valine({
+        el: '#comments' ,
+        verify: false,
+        notify: false,
+        appId: 'PrJuolBVUJouwFAAIeEFAN7Q-gzGzoHsz',
+        appKey: 'C2Jc1LswoSpNO3opFC5K6Yd7',
+        placeholder: 'Just go go',
+        avatar:'mm',
+        guest_info:guest,
+        pageSize:'10' || 10,
+    });
+  </script>
 
 
 
