@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="spdk," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="SPDK（Storage Performance Development Kit）是Intel发布的存储性能开发工具集 用户使用现在的固态设备，比如Intel® SSD DC P3700 Series Non-Volatile Memory Express（NVMe）驱动，面临一个主要的挑战：因为吞吐量和延迟性能比传统的磁盘好太多，现在总的处理时间中，存储软件占用了更大的比例。换句话说，存储软件栈">
+<meta name="keywords" content="spdk">
+<meta property="og:type" content="article">
+<meta property="og:title" content="SPDK简介">
+<meta property="og:url" content="http://yoursite.com/2020/11/17/storage/spdk-introduce/index.html">
+<meta property="og:site_name" content="Bolog">
+<meta property="og:description" content="SPDK（Storage Performance Development Kit）是Intel发布的存储性能开发工具集 用户使用现在的固态设备，比如Intel® SSD DC P3700 Series Non-Volatile Memory Express（NVMe）驱动，面临一个主要的挑战：因为吞吐量和延迟性能比传统的磁盘好太多，现在总的处理时间中，存储软件占用了更大的比例。换句话说，存储软件栈">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://yoursite.com/images/spdk/introduction-to-the-storage-performance-development-kit-spdk-fig2.png">
+<meta property="og:image" content="http://yoursite.com/images/spdk/spdk_component.png">
+<meta property="og:updated_time" content="2020-11-18T07:50:55.410Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="SPDK简介">
+<meta name="twitter:description" content="SPDK（Storage Performance Development Kit）是Intel发布的存储性能开发工具集 用户使用现在的固态设备，比如Intel® SSD DC P3700 Series Non-Volatile Memory Express（NVMe）驱动，面临一个主要的挑战：因为吞吐量和延迟性能比传统的磁盘好太多，现在总的处理时间中，存储软件占用了更大的比例。换句话说，存储软件栈">
+<meta name="twitter:image" content="http://yoursite.com/images/spdk/introduction-to-the-storage-performance-development-kit-spdk-fig2.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: 'ea19d365600df16c1e8ef4c09ccb9bea',
+      indexName: 'bolog',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2020/11/17/storage/spdk-introduce/"/>
+
+
+
+
+
+<script data-ad-client="ca-pub-7938886583915179" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+
+  <title>SPDK简介 | Bolog</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Bolog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/11/17/storage/spdk-introduce/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">SPDK简介</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2020-11-17T10:17:29+08:00">
+                2020-11-17
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index">
+                    <span itemprop="name">storage</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2020/11/17/storage/spdk-introduce/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count valine-comment-count" data-xid="/2020/11/17/storage/spdk-introduce/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>SPDK（Storage Performance Development Kit）是Intel发布的存储性能开发工具集</p>
+<p>用户使用现在的固态设备，比如Intel® SSD DC P3700 Series Non-Volatile Memory Express（NVMe）驱动，面临一个主要的挑战：因为吞吐量和延迟性能比传统的磁盘好太多，现在总的处理时间中，存储软件占用了更大的比例。换句话说，存储软件栈的性能和效率在整个存储系统中越来越重要。随着存储设备继续发展，它将面临远远超过正在使用的软件体系结构的风险（即存储设备受制于相关软件的不足而不能发挥全部性能）</p>
+<h1 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h1><ul>
+<li>用户态运行<br>  避免内核上下文切换和中断将会节省大量的处理开销，允许更多的时钟周期被用来做实际的数据存储。无论存储算法（去冗，加密，压缩，空白块存储）多么复杂，浪费更少的时钟周期总是意味着更好的性能和延迟。这并不是说内核增加了不必要的开销；相反，内核增加了那些可能不适用于专用存储堆栈的通用计算用例的相关开销。SPDK的指导原则是通过消除每一处额外的软件开销来提供最少的延迟和最高的效率。</li>
+<li>轮询模式取代中断模式（Polled Mode Drivers, PMDs）<br>  在传统的I/O模型中，应用程序提交读写请求后睡眠，一旦I/O完成，中断就会将其唤醒。PMDs的工作方式不同，应用程序提交读写请求后继续执行其他工作，以一定的时间间隔回头检查I/O是否已经完成。这种方式避免了中断带来的延迟和开销，并使得应用程序提高了I/O的效率。<br>  在机械盘时代，中断开销只占整个I/O时间的一个很小的百分比，因此给系统带来了巨大的效率提升。然而，在固态设备的时代，持续引入更低延迟的持久化设备，中断开销成为了整个I/O时间中不能被忽视的部分。这个问题在更低延迟的设备上只会越来越严重。系统已经能够每秒处理数百万个I/O，所以消除数百万个事务的这种开销，能够快速地复制到多个内核中。数据包和数据块被立即分发，等待时间减小到最少，使得延迟更低，一致性延迟更多（抖动更少），吞吐量也得到提高。</li>
+<li>无锁机制<br>  在IO路径上避免采用任何锁机制进行同步，降低时延并提升吞吐量</li>
+</ul>
+<h1 id="架构"><a href="#架构" class="headerlink" title="架构"></a>架构</h1><p><img src="/images/spdk/introduction-to-the-storage-performance-development-kit-spdk-fig2.png" alt="introduction-to-the-storage-performance-development-kit-spdk-fig2"></p>
+<h3 id="Hardware-Drivers"><a href="#Hardware-Drivers" class="headerlink" title="Hardware Drivers"></a>Hardware Drivers</h3><h4 id="NVMe-Driver"><a href="#NVMe-Driver" class="headerlink" title="NVMe Driver"></a>NVMe Driver</h4><p>SPDK的基础组件，这个高优化无锁的驱动提供了高扩展性，高效性和高性能。</p>
+<h4 id="Inter-QuickData-Technology"><a href="#Inter-QuickData-Technology" class="headerlink" title="Inter QuickData Technology"></a>Inter QuickData Technology</h4><p>Intel I/O Acceleration Technology（Inter IOAT，英特尔I/O加速技术），这是一种基于Xeon处理器平台上的copy offload引擎。通过提供用户空间访问，减少了DMA数据移动的阈值，允许对小尺寸I/O或NTB的更好利用。</p>
+<h3 id="Back-end-Block-Devices"><a href="#Back-end-Block-Devices" class="headerlink" title="Back-end Block Devices"></a>Back-end Block Devices</h3><h4 id="NVMe-oF-Initiator"><a href="#NVMe-oF-Initiator" class="headerlink" title="NVMe-oF Initiator"></a>NVMe-oF Initiator</h4><p>本地SPDK NVMe驱动和NVMe-oF启动器共享一套共同的API命令。这意味着，比如本地/远程复制非常容易实现。</p>
+<h4 id="Ceph-RADOS-Block-Device"><a href="#Ceph-RADOS-Block-Device" class="headerlink" title="Ceph RADOS Block Device"></a>Ceph RADOS Block Device</h4><p>Ceph RBD 成为SPDK的后端设备</p>
+<h4 id="Blobstore-Block-Device"><a href="#Blobstore-Block-Device" class="headerlink" title="Blobstore Block Device"></a>Blobstore Block Device</h4><p>由SPDK Blobstore分配的块设备，是虚拟机或数据库可以与之交互的虚拟设备。这些设备得到SPDK基础架构的优势，意味着零拷贝和令人难以置信的可扩展性。</p>
+<h4 id="Linux-AIO"><a href="#Linux-AIO" class="headerlink" title="Linux AIO"></a>Linux AIO</h4><p>允许SPDK与内核设备（比如机械硬盘）交互。</p>
+<h3 id="Storage-Services"><a href="#Storage-Services" class="headerlink" title="Storage Services"></a>Storage Services</h3><h4 id="Block-Device-Abstration-Layer"><a href="#Block-Device-Abstration-Layer" class="headerlink" title="Block Device Abstration Layer"></a>Block Device Abstration Layer</h4><p>这种通用的块设备抽象是连接到各种不同设备驱动和块设备的存储协议的粘合剂。还在块层中提供灵活的API用于额外的用户功能（磁盘阵列，压缩，去冗等等）。</p>
+<h4 id="Blobstore"><a href="#Blobstore" class="headerlink" title="Blobstore"></a>Blobstore</h4><p>为SPDK实现一个高精简的文件式语义（非POSIX）。这可以为数据库，容器，虚拟机或其他不依赖于大部分POSIX文件系统功能集（比如用户访问控制）的工作负载提供高性能基础。</p>
+<h3 id="Storage-Protocols"><a href="#Storage-Protocols" class="headerlink" title="Storage Protocols"></a>Storage Protocols</h3><h4 id="iSCSI-Target"><a href="#iSCSI-Target" class="headerlink" title="iSCSI Target"></a>iSCSI Target</h4><p>建立了通过以太网的块流量规范，大约是内核LIO效率的两倍。现在的版本默认使用内核TCP/IP协议栈。</p>
+<h4 id="vhost-scsi-target"><a href="#vhost-scsi-target" class="headerlink" title="vhost-scsi target"></a>vhost-scsi target</h4><p>KVM/QEMU的功能利用了SPDK NVMe驱动，使得访客虚拟机访问存储设备时延迟更低，使得I/O密集型工作负载的整体CPU负载减低。</p>
+<h4 id="NVMe-oF-Target"><a href="#NVMe-oF-Target" class="headerlink" title="NVMe-oF Target"></a>NVMe-oF Target</h4><p>实现了NVMe-oF规范。虽然这取决于RDMA硬件，NVMe-oF的目标可以为每个CPU核提供高达40Gbps的流量。</p>
+<h1 id="应用方案"><a href="#应用方案" class="headerlink" title="应用方案"></a>应用方案</h1><p><img src="/images/spdk/spdk_component.png" alt="spdk_component"></p>
+<h3 id="网络前端"><a href="#网络前端" class="headerlink" title="网络前端"></a>网络前端</h3><p>网络前端子组件包括DPDK网卡驱动和用户态网络服务UNS（这是一个Linux内核TCP/IP协议栈的替代品，能够突破通用TCP/IP协议栈的种种性能限制瓶颈）。DPDK在网卡侧提供了一个高性能的发包收包处理框架，在数据从网卡到操作系统用户态之间提供了一条快速通道。</p>
+<h3 id="处理框架"><a href="#处理框架" class="headerlink" title="处理框架"></a>处理框架</h3><p>拿到了数据包内容，将iSCSI命令转换为SCSI块级命令。然而，在它将这些命令发到“后端”驱动之前，SPDK提供了一套API框架，让厂商能够插入自己定义的处理逻辑(架构图中绿色的方框)。通过这种机制，存储厂商可在这里实现例如缓存、去重、压缩、加密、RAID计算，或擦除码(Erasure Coding)计算等功能，使这些功能包含在SPDK的处理流程中。</p>
+<h3 id="后端"><a href="#后端" class="headerlink" title="后端"></a>后端</h3><p>SPDK和物理块设备交互(读和写操作)。如前所述，SPDK提供了用户态的PMD，支持NVMe设备、Linux AIO设备(传统机械硬盘)、RAMDISK设备，以及利用到英特尔I/O加速技术的新设备(CBDMA)。这一系列后端设备驱动涵盖了不同性能的存储分层，保证SPDK几乎与每种存储应用形成关联。</p>
+<h1 id="使用及编译"><a href="#使用及编译" class="headerlink" title="使用及编译"></a>使用及编译</h1><h2 id="编译安装"><a href="#编译安装" class="headerlink" title="编译安装"></a>编译安装</h2><p>SPDK使用了DPDK中的一些功能，编译SPDK需要依赖DPDK，所以需要先编译安装DPDK</p>
+<p>编译DPDK<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"># make config T=x86_64-native-linuxapp-gcc</div><div class="line"># make</div><div class="line"># make install</div></pre></td></tr></table></figure></p>
+<p>默认DPDK会安装到<code>/usr/local</code>目录下</p>
+<p>编译SPDK<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"># ./configure --with-dpdk=/usr/local</div><div class="line"># make</div></pre></td></tr></table></figure></p>
+<h2 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h2><p>nvme设备插入主机会被系统自动识别。若想使用spdk访问该设备必须现将nvme unbind。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div></pre></td><td class="code"><pre><div class="line"># lsblk</div><div class="line">NAME    MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT</div><div class="line">sda       8:0    0  7.3T  0 disk</div><div class="line">└─sda1    8:1    0  7.3T  0 part /</div><div class="line">sdb       8:16   0  7.3T  0 disk</div><div class="line">sdc       8:32   0  7.3T  0 disk</div><div class="line">sdd       8:48   0  3.8G  0 disk</div><div class="line">└─sdd1    8:49   0  3.8G  0 part /boot</div><div class="line">nvme0n1 259:0    0  1.5T  0 disk</div><div class="line"></div><div class="line"># cd &lt;spdk_dir&gt;/scripts</div><div class="line"># sh setup.sh</div><div class="line"></div><div class="line"># lsblk</div><div class="line">NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT</div><div class="line">sda      8:0    0  7.3T  0 disk</div><div class="line">└─sda1   8:1    0  7.3T  0 part /</div><div class="line">sdb      8:16   0  7.3T  0 disk</div><div class="line">sdc      8:32   0  7.3T  0 disk</div><div class="line">sdd      8:48   0  3.8G  0 disk</div><div class="line">└─sdd1   8:49   0  3.8G  0 part /boot</div></pre></td></tr></table></figure>
+<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a href="https://www.cnblogs.com/whl320124/articles/9969395.html" target="_blank" rel="external">SPDK简介</a></li>
+<li><a href="https://www.jianshu.com/p/6892df050b5a" target="_blank" rel="external">使用fio测试SPDK</a></li>
+<li><a href="https://rootw.github.io/2018/05/SPDK-all/" target="_blank" rel="external">【SPDK】一、概述</a></li>
+<li><a href="https://software.intel.com/content/www/us/en/develop/articles/introduction-to-the-storage-performance-development-kit-spdk.html" target="_blank" rel="external">Introduction to the Storage Performance Development Kit (SPDK)</a></li>
+<li><a href="https://tonydeng.github.io/sdn-handbook/dpdk/spdk.html" target="_blank" rel="external">SPDK</a></li>
+</ul>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div></div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechatpay.png" alt="博 微信支付"/>
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/images/alipay.jpeg" alt="博 支付宝"/>
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/spdk/" rel="tag"># spdk</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/11/11/storage/ceph/async-messenger-introduce/" rel="next" title="AsyncMessenger介绍">
+                <i class="fa fa-chevron-left"></i> AsyncMessenger介绍
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+    </div>
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">博</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">129</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">19</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">114</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#原理"><span class="nav-number">1.</span> <span class="nav-text">原理</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#架构"><span class="nav-number">2.</span> <span class="nav-text">架构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Hardware-Drivers"><span class="nav-number">2.0.1.</span> <span class="nav-text">Hardware Drivers</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#NVMe-Driver"><span class="nav-number">2.0.1.1.</span> <span class="nav-text">NVMe Driver</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Inter-QuickData-Technology"><span class="nav-number">2.0.1.2.</span> <span class="nav-text">Inter QuickData Technology</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Back-end-Block-Devices"><span class="nav-number">2.0.2.</span> <span class="nav-text">Back-end Block Devices</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#NVMe-oF-Initiator"><span class="nav-number">2.0.2.1.</span> <span class="nav-text">NVMe-oF Initiator</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Ceph-RADOS-Block-Device"><span class="nav-number">2.0.2.2.</span> <span class="nav-text">Ceph RADOS Block Device</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Blobstore-Block-Device"><span class="nav-number">2.0.2.3.</span> <span class="nav-text">Blobstore Block Device</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Linux-AIO"><span class="nav-number">2.0.2.4.</span> <span class="nav-text">Linux AIO</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Storage-Services"><span class="nav-number">2.0.3.</span> <span class="nav-text">Storage Services</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Block-Device-Abstration-Layer"><span class="nav-number">2.0.3.1.</span> <span class="nav-text">Block Device Abstration Layer</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Blobstore"><span class="nav-number">2.0.3.2.</span> <span class="nav-text">Blobstore</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Storage-Protocols"><span class="nav-number">2.0.4.</span> <span class="nav-text">Storage Protocols</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#iSCSI-Target"><span class="nav-number">2.0.4.1.</span> <span class="nav-text">iSCSI Target</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#vhost-scsi-target"><span class="nav-number">2.0.4.2.</span> <span class="nav-text">vhost-scsi target</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#NVMe-oF-Target"><span class="nav-number">2.0.4.3.</span> <span class="nav-text">NVMe-oF Target</span></a></li></ol></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#应用方案"><span class="nav-number">3.</span> <span class="nav-text">应用方案</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#网络前端"><span class="nav-number">3.0.1.</span> <span class="nav-text">网络前端</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#处理框架"><span class="nav-number">3.0.2.</span> <span class="nav-text">处理框架</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#后端"><span class="nav-number">3.0.3.</span> <span class="nav-text">后端</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#使用及编译"><span class="nav-number">4.</span> <span class="nav-text">使用及编译</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#编译安装"><span class="nav-number">4.1.</span> <span class="nav-text">编译安装</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#使用"><span class="nav-number">4.2.</span> <span class="nav-text">使用</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参考-amp-鸣谢"><span class="nav-number">5.</span> <span class="nav-text">参考&鸣谢</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">博</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Gemini</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//unpkg.com/valine/dist/Valine.min.js"></script>
+  
+  <script type="text/javascript">
+    var GUEST = ['nick','mail','link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item=>{
+      return GUEST.indexOf(item)>-1;
+    });
+    new Valine({
+        el: '#comments' ,
+        verify: false,
+        notify: false,
+        appId: 'PrJuolBVUJouwFAAIeEFAN7Q-gzGzoHsz',
+        appKey: 'C2Jc1LswoSpNO3opFC5K6Yd7',
+        placeholder: 'Just go go',
+        avatar:'mm',
+        guest_info:guest,
+        pageSize:'10' || 10,
+    });
+  </script>
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
