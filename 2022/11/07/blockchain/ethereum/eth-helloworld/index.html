@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="ethereum,">
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="问：写一个以太坊智能合约helloworld总共分几步？答：三步，第一步创建以太坊服务环境；第二步撰写、编译、部署helloworld智能合约；第三步运行智能合约 部署Ethereum环境本人使用docker搭建Ethereum环境，拉取ubuntu:20.04镜像。 1docker pull --platform linux/amd64 ubuntu:20.04 然后，创建容器并开始安装Ethe">
+<meta name="keywords" content="ethereum">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Hello Ethereum">
+<meta property="og:url" content="http://yoursite.com/2022/11/07/blockchain/ethereum/eth-helloworld/index.html">
+<meta property="og:site_name" content="Bolog">
+<meta property="og:description" content="问：写一个以太坊智能合约helloworld总共分几步？答：三步，第一步创建以太坊服务环境；第二步撰写、编译、部署helloworld智能合约；第三步运行智能合约 部署Ethereum环境本人使用docker搭建Ethereum环境，拉取ubuntu:20.04镜像。 1docker pull --platform linux/amd64 ubuntu:20.04 然后，创建容器并开始安装Ethe">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://yoursite.com/images/blockchain/solidity_remix_compile.jpg">
+<meta property="og:image" content="http://yoursite.com/images/blockchain/solidity_remix_deploy_setting_1.jpg">
+<meta property="og:image" content="http://yoursite.com/images/blockchain/solidity_remix_deploy_setting_2.jpg">
+<meta property="og:image" content="http://yoursite.com/images/blockchain/solidity_remix_deploy.jpg">
+<meta property="og:image" content="http://yoursite.com/images/blockchain/solidity_remix_deploy_log.jpg">
+<meta property="og:updated_time" content="2022-11-08T05:08:24.411Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Hello Ethereum">
+<meta name="twitter:description" content="问：写一个以太坊智能合约helloworld总共分几步？答：三步，第一步创建以太坊服务环境；第二步撰写、编译、部署helloworld智能合约；第三步运行智能合约 部署Ethereum环境本人使用docker搭建Ethereum环境，拉取ubuntu:20.04镜像。 1docker pull --platform linux/amd64 ubuntu:20.04 然后，创建容器并开始安装Ethe">
+<meta name="twitter:image" content="http://yoursite.com/images/blockchain/solidity_remix_compile.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: 'ea19d365600df16c1e8ef4c09ccb9bea',
+      indexName: 'bolog',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2022/11/07/blockchain/ethereum/eth-helloworld/">
+
+
+
+
+
+<script data-ad-client="ca-pub-7938886583915179" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+
+  <title>Hello Ethereum | Bolog</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Bolog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br>
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off" placeholder="搜索..." spellcheck="false" type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2022/11/07/blockchain/ethereum/eth-helloworld/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Hello Ethereum</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2022-11-07T16:00:21+08:00">
+                2022-11-07
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/blockchain/" itemprop="url" rel="index">
+                    <span itemprop="name">blockchain</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2022/11/07/blockchain/ethereum/eth-helloworld/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count valine-comment-count" data-xid="/2022/11/07/blockchain/ethereum/eth-helloworld/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>问：写一个以太坊智能合约helloworld总共分几步？<br>答：三步，第一步创建以太坊服务环境；第二步撰写、编译、部署helloworld智能合约；第三步运行智能合约</p>
+<h1 id="部署Ethereum环境"><a href="#部署Ethereum环境" class="headerlink" title="部署Ethereum环境"></a>部署Ethereum环境</h1><p>本人使用docker搭建Ethereum环境，拉取<code>ubuntu:20.04</code>镜像。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker pull --platform linux/amd64 ubuntu:20.04</span><br></pre></td></tr></table></figure>
+<p>然后，创建容器并开始安装Ethereum</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">docker run -it --name eth_server --net host ubuntu:20.04 /bin/bash</span><br><span class="line">docker run -it --net bridge -p 8545:8545 -p 8551:8551 --name eth_server ubuntu:20.04 /bin/bash</span><br></pre></td></tr></table></figure>
+<h2 id="安装Ethereum"><a href="#安装Ethereum" class="headerlink" title="安装Ethereum"></a>安装Ethereum</h2><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> apt update -y</span></span><br><span class="line">...</span><br><span class="line"><span class="meta">#</span><span class="bash"> apt install -y software-properties-common</span></span><br><span class="line">...</span><br><span class="line"><span class="meta">#</span><span class="bash"> add-apt-repository -y ppa:ethereum/ethereum</span></span><br><span class="line">...</span><br><span class="line"><span class="meta">#</span><span class="bash"> apt update -y</span></span><br><span class="line">...</span><br><span class="line"><span class="meta">#</span><span class="bash"> apt install -y ethereum</span></span><br></pre></td></tr></table></figure>
+<p>安装成功后，确认一下eth版本。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> geth version</span></span><br><span class="line">Geth</span><br><span class="line">Version: 1.10.26-stable</span><br><span class="line">Git Commit: e5eb32acee19cc9fca6a03b10283b7484246b15a</span><br><span class="line">Architecture: amd64</span><br><span class="line">Go Version: go1.18.5</span><br><span class="line">Operating System: linux</span><br><span class="line">GOPATH=</span><br><span class="line">GOROOT=go</span><br></pre></td></tr></table></figure>
+<h2 id="初始化"><a href="#初始化" class="headerlink" title="初始化"></a>初始化</h2><h3 id="创建配置文件"><a href="#创建配置文件" class="headerlink" title="创建配置文件"></a>创建配置文件</h3><p>创建一个<code>genesis.json</code>的文件，填充如下内容。</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">"Config"</span>: &#123;</span><br><span class="line">        <span class="attr">"chainId"</span>: <span class="number">110</span>,</span><br><span class="line">        <span class="attr">"homesteadBlock"</span>: <span class="number">0</span>,</span><br><span class="line">        <span class="attr">"byzantiumBlock"</span>: <span class="number">0</span>,</span><br><span class="line">        <span class="attr">"constantinopleBlock"</span>: <span class="number">0</span>,</span><br><span class="line">        <span class="attr">"eip150Block"</span>: <span class="number">0</span>,</span><br><span class="line">        <span class="attr">"eip155Block"</span>: <span class="number">0</span>,</span><br><span class="line">        <span class="attr">"eip158Block"</span>: <span class="number">0</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">"difficulty"</span>: <span class="string">"0"</span>,</span><br><span class="line">    <span class="attr">"gasLimit"</span>: <span class="string">"2100000"</span>,</span><br><span class="line">    <span class="attr">"alloc"</span>: &#123;&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="初始化Ethereum数据"><a href="#初始化Ethereum数据" class="headerlink" title="初始化Ethereum数据"></a>初始化Ethereum数据</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> geth --datadir ./eth-data --allow-insecure-unlock --http --http.addr 172.17.0.2 --http.api <span class="string">"admin,debug,web3,eth,txpool,personal,ethash,miner,net"</span> --http.corsdomain <span class="string">"*"</span> --dev init genesis.json</span></span><br><span class="line">INFO [11-07|16:04:14.139] Maximum peer count                       ETH=50 LES=0 total=50</span><br><span class="line">INFO [11-07|16:04:14.151] Smartcard socket not found, disabling    err="stat /run/pcscd/pcscd.comm: no such file or directory"</span><br><span class="line">INFO [11-07|16:04:14.179] Set global gas cap                       cap=50,000,000</span><br><span class="line">INFO [11-07|16:04:14.190] Allocated cache and file handles         database=/root/eth-data/geth/chaindata cache=16.00MiB handles=16</span><br><span class="line">INFO [11-07|16:04:14.224] Opened ancient database                  database=/root/eth-data/geth/chaindata/ancient/chain readonly=false</span><br><span class="line">INFO [11-07|16:04:14.226] Writing custom genesis block</span><br><span class="line">INFO [11-07|16:04:14.230] Persisted trie from memory database      nodes=0 size=0.00B time="347µs" gcnodes=0 gcsize=0.00B gctime=0s livenodes=1 livesize=0.00B</span><br><span class="line">INFO [11-07|16:04:14.238] Successfully wrote genesis state         database=chaindata                     hash=a697c6..9bf39b</span><br><span class="line">INFO [11-07|16:04:14.238] Allocated cache and file handles         database=/root/eth-data/geth/lightchaindata cache=16.00MiB handles=16</span><br><span class="line">INFO [11-07|16:04:14.259] Opened ancient database                  database=/root/eth-data/geth/lightchaindata/ancient/chain readonly=false</span><br><span class="line">INFO [11-07|16:04:14.259] Writing custom genesis block</span><br><span class="line">INFO [11-07|16:04:14.261] Persisted trie from memory database      nodes=0 size=0.00B time="21.917µs" gcnodes=0 gcsize=0.00B gctime=0s livenodes=1 livesize=0.00B</span><br><span class="line">INFO [11-07|16:04:14.262] Successfully wrote genesis state         database=lightchaindata                     hash=a697c6..9bf39b</span><br></pre></td></tr></table></figure>
+<h2 id="启动节点"><a href="#启动节点" class="headerlink" title="启动节点"></a>启动节点</h2><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> geth --datadir ./eth-data --networkid 110 --allow-insecure-unlock --http --http.addr 172.17.0.2 --http.api <span class="string">"admin,debug,web3,eth,txpool,personal,ethash,miner,net"</span> --http.corsdomain <span class="string">"*"</span> --dev</span></span><br><span class="line">INFO [11-07|16:14:23.231] Starting Geth in ephemeral dev mode...</span><br><span class="line">WARN [11-07|16:14:23.234] You are running Geth in --dev mode. Please note the following:</span><br><span class="line"></span><br><span class="line">  1. This mode is only intended for fast, iterative development without assumptions on</span><br><span class="line">     security or persistence.</span><br><span class="line">  2. The database is created in memory unless specified otherwise. Therefore, shutting down</span><br><span class="line">     your computer or losing power will wipe your entire block data and chain state for</span><br><span class="line">     your dev environment.</span><br><span class="line">  3. A random, pre-allocated developer account will be available and unlocked as</span><br><span class="line">     eth.coinbase, which can be used for testing. The random dev account is temporary,</span><br><span class="line">     stored on a ramdisk, and will be lost if your machine is restarted.</span><br><span class="line">  4. Mining is enabled by default. However, the client will only seal blocks if transactions</span><br><span class="line">     are pending in the mempool. The miner's minimum accepted gas price is 1.</span><br><span class="line">  5. Networking is disabled; there is no listen-address, the maximum number of peers is set</span><br><span class="line">     to 0, and discovery is disabled.</span><br><span class="line">INFO [11-07|16:14:23.251] Maximum peer count                       ETH=50 LES=0 total=50</span><br><span class="line">INFO [11-07|16:14:23.261] Smartcard socket not found, disabling    err="stat /run/pcscd/pcscd.comm: no such file or directory"</span><br><span class="line">INFO [11-07|16:14:23.291] Set global gas cap                       cap=50,000,000</span><br><span class="line">INFO [11-07|16:14:23.649] Using developer account                  address=0xA9CB6DB62D6673ae5CD79D0d29796Dd9DF1d1A5e</span><br><span class="line">INFO [11-07|16:14:23.652] Allocated cache and file handles         database=/root/eth-data/geth/chaindata cache=512.00MiB handles=524,288 readonly=true</span><br><span class="line">INFO [11-07|16:14:23.675] Opened ancient database                  database=/root/eth-data/geth/chaindata/ancient/chain readonly=true</span><br><span class="line">INFO [11-07|16:14:23.691] Allocated trie memory caches             clean=154.00MiB dirty=256.00MiB</span><br><span class="line">INFO [11-07|16:14:23.691] Allocated cache and file handles         database=/root/eth-data/geth/chaindata cache=512.00MiB handles=524,288</span><br><span class="line">INFO [11-07|16:14:23.756] Opened ancient database                  database=/root/eth-data/geth/chaindata/ancient/chain readonly=false</span><br><span class="line">INFO [11-07|16:14:23.763]</span><br><span class="line">INFO [11-07|16:14:23.764] ---------------------------------------------------------------------------------------------------------------------------------------------------------</span><br><span class="line">INFO [11-07|16:14:23.764] Chain ID:  110 (unknown)</span><br><span class="line">INFO [11-07|16:14:23.764] Consensus: unknown</span><br><span class="line">INFO [11-07|16:14:23.764]</span><br><span class="line">INFO [11-07|16:14:23.765] Pre-Merge hard forks:</span><br><span class="line">INFO [11-07|16:14:23.765]  - Homestead:                   0        (https://github.com/ethereum/execution-specs/blob/master/network-upgrades/mainnet-upgrades/homestead.md)</span><br><span class="line">INFO [11-07|16:14:23.765]  - Tangerine Whistle (EIP 150): 0        (https://github.com/ethereum/execution-specs/blob/master/network-upgrades/mainnet-upgrades/tangerine-whistle.md)</span><br><span class="line">INFO [11-07|16:14:23.765]  - Spurious Dragon/1 (EIP 155): 0        (https://github.com/ethereum/execution-specs/blob/master/network-upgrades/mainnet-upgrades/spurious-dragon.md)</span><br><span class="line">INFO [11-07|16:14:23.765]  - Spurious Dragon/2 (EIP 158): 0        (https://github.com/ethereum/execution-specs/blob/master/network-upgrades/mainnet-upgrades/spurious-dragon.md)</span><br><span class="line">INFO [11-07|16:14:23.765]  - Byzantium:                   &lt;nil&gt; (https://github.com/ethereum/execution-specs/blob/master/network-upgrades/mainnet-upgrades/byzantium.md)</span><br><span class="line">INFO [11-07|16:14:23.765]  - Constantinople:              &lt;nil&gt; (https://github.com/ethereum/execution-specs/blob/master/network-upgrades/mainnet-upgrades/constantinople.md)</span><br><span class="line">INFO [11-07|16:14:23.765]  - Petersburg:                  &lt;nil&gt; (https://github.com/ethereum/execution-specs/blob/master/network-upgrades/mainnet-upgrades/petersburg.md)</span><br><span class="line">INFO [11-07|16:14:23.766]  - Istanbul:                    &lt;nil&gt; (https://github.com/ethereum/execution-specs/blob/master/network-upgrades/mainnet-upgrades/istanbul.md)</span><br><span class="line">INFO [11-07|16:14:23.766]  - Berlin:                      &lt;nil&gt; (https://github.com/ethereum/execution-specs/blob/master/network-upgrades/mainnet-upgrades/berlin.md)</span><br><span class="line">INFO [11-07|16:14:23.766]  - London:                      &lt;nil&gt; (https://github.com/ethereum/execution-specs/blob/master/network-upgrades/mainnet-upgrades/london.md)</span><br><span class="line">INFO [11-07|16:14:23.766]</span><br><span class="line">INFO [11-07|16:14:23.766] The Merge is not yet available for this network!</span><br><span class="line">INFO [11-07|16:14:23.766]  - Hard-fork specification: https://github.com/ethereum/execution-specs/blob/master/network-upgrades/mainnet-upgrades/paris.md</span><br><span class="line">INFO [11-07|16:14:23.766] ---------------------------------------------------------------------------------------------------------------------------------------------------------</span><br><span class="line">INFO [11-07|16:14:23.766]</span><br><span class="line">INFO [11-07|16:14:23.768] Disk storage enabled for ethash caches   dir=/root/eth-data/geth/ethash count=3</span><br><span class="line">INFO [11-07|16:14:23.768] Disk storage enabled for ethash DAGs     dir=/root/.ethash              count=2</span><br><span class="line">INFO [11-07|16:14:23.769] Initialising Ethereum protocol           network=1337 dbversion=8</span><br><span class="line">INFO [11-07|16:14:23.779] Loaded most recent local header          number=0 hash=a697c6..9bf39b td=0 age=53y7mo1w</span><br><span class="line">INFO [11-07|16:14:23.780] Loaded most recent local full block      number=0 hash=a697c6..9bf39b td=0 age=53y7mo1w</span><br><span class="line">INFO [11-07|16:14:23.780] Loaded most recent local fast block      number=0 hash=a697c6..9bf39b td=0 age=53y7mo1w</span><br><span class="line">INFO [11-07|16:14:23.786] Loaded local transaction journal         transactions=0 dropped=0</span><br><span class="line">INFO [11-07|16:14:23.786] Regenerated local transaction journal    transactions=0 accounts=0</span><br><span class="line">INFO [11-07|16:14:23.791] Gasprice oracle is ignoring threshold set threshold=2</span><br><span class="line">WARN [11-07|16:14:23.798] Engine API enabled                       protocol=eth</span><br><span class="line">WARN [11-07|16:14:23.798] Engine API started but chain not configured for merge yet</span><br><span class="line">INFO [11-07|16:14:23.802] Starting peer-to-peer node               instance=Geth/v1.10.26-stable-e5eb32ac/linux-amd64/go1.18.5</span><br><span class="line">WARN [11-07|16:14:23.802] P2P server will be useless, neither dialing nor listening</span><br><span class="line">INFO [11-07|16:14:23.843] New local node record                    seq=1,667,808,816,313 id=321fce2047223769 ip=127.0.0.1 udp=0 tcp=0</span><br><span class="line">INFO [11-07|16:14:23.844] Started P2P networking                   self=enode://2d0246c1dd51623d6d8a8581095c033542366037b1e20ff815ad045af396de50df60f4aa9556148c2f4a89673bad5cab5c2ab22f3075d5bacba1b2fbebaf72e5@127.0.0.1:0</span><br><span class="line">INFO [11-07|16:14:23.848] IPC endpoint opened                      url=/root/eth-data/geth.ipc</span><br><span class="line">INFO [11-07|16:14:23.852] Loaded JWT secret file                   path=/root/eth-data/geth/jwtsecret crc32=0xef39c4cb</span><br><span class="line">INFO [11-07|16:14:23.856] HTTP server started                      endpoint=172.17.0.2:8545 auth=false prefix= cors= vhosts=localhost</span><br><span class="line">INFO [11-07|16:14:23.862] WebSocket enabled                        url=ws://127.0.0.1:8551</span><br><span class="line">INFO [11-07|16:14:23.862] HTTP server started                      endpoint=127.0.0.1:8551    auth=true  prefix= cors=localhost vhosts=localhost</span><br><span class="line">INFO [11-07|16:14:23.868] Transaction pool price threshold updated price=0</span><br><span class="line">INFO [11-07|16:14:23.868] Updated mining threads                   threads=0</span><br><span class="line">INFO [11-07|16:14:23.868] Transaction pool price threshold updated price=1</span><br><span class="line">INFO [11-07|16:14:23.868] Etherbase automatically configured       address=0xA9CB6DB62D6673ae5CD79D0d29796Dd9DF1d1A5e</span><br><span class="line">INFO [11-07|16:14:23.875] Commit new sealing work                  number=1 sealhash=6ca53b..19dc17 uncles=0 txs=0 gas=0 fees=0 elapsed=6.285ms</span><br><span class="line">INFO [11-07|16:14:23.877] Commit new sealing work                  number=1 sealhash=6ca53b..19dc17 uncles=0 txs=0 gas=0 fees=0 elapsed=8.056ms</span><br></pre></td></tr></table></figure>
+<h3 id="networkid"><a href="#networkid" class="headerlink" title="networkid"></a>networkid</h3><p><code>--networkid</code>参数需要与<code>genesis.json</code>配置文件中的<code>chainId</code>值一致。</p>
+<h3 id="http-api"><a href="#http-api" class="headerlink" title="http.api"></a>http.api</h3><p>若<code>--http.api</code>设置错误会出现如下错误<br><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ERROR[11-07|16:13:36.346] Unavailable modules in HTTP API list     unavailable=[db] available="[admin debug web3 eth txpool personal ethash miner net]"</span><br></pre></td></tr></table></figure></p>
+<p>需要按照<code>available</code>中规定的内容进行配置<code>--http.api</code>参数。</p>
+<h2 id="attach交互"><a href="#attach交互" class="headerlink" title="attach交互"></a>attach交互</h2><p>接下来需要attach到以太坊节点，在geth节点启动过程中有这样一条日志<br><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">INFO [11-07|16:14:23.848] IPC endpoint opened                      url=/root/eth-data/geth.ipc</span><br></pre></td></tr></table></figure></p>
+<p>没错，你猜对了，就是要用这个endpoint进行attach</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> geth attach ipc:/root/eth-data/geth.ipc</span></span><br><span class="line">Welcome to the Geth JavaScript console!</span><br><span class="line"></span><br><span class="line">instance: Geth/v1.10.26-stable-e5eb32ac/linux-amd64/go1.18.5</span><br><span class="line">coinbase: 0xa9cb6db62d6673ae5cd79d0d29796dd9df1d1a5e</span><br><span class="line">at block: 0 (Thu Jan 01 1970 08:00:00 GMT+0800 (CST))</span><br><span class="line"> datadir: /root/eth-data</span><br><span class="line"> modules: admin:1.0 debug:1.0 engine:1.0 eth:1.0 ethash:1.0 miner:1.0 net:1.0 personal:1.0 rpc:1.0 txpool:1.0 web3:1.0</span><br><span class="line"></span><br><span class="line">To exit, press ctrl-d or type exit</span><br><span class="line"><span class="meta">&gt;</span></span><br></pre></td></tr></table></figure>
+<p>接下来的<code>创建用户</code>、<code>挖矿</code>等操作都需要在attach状态下进行。</p>
+<h2 id="创建用户"><a href="#创建用户" class="headerlink" title="创建用户"></a>创建用户</h2><p>使用<code>personal.newAccout</code>创建用户，然后可以使用<code>eth.accounts</code>查看用户列表。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;</span><span class="bash"> eth.accounts</span></span><br><span class="line"><span class="meta">&gt;</span><span class="bash"> [<span class="string">"0xa9cb6db62d6673ae5cd79d0d29796dd9df1d1a5e"</span>]</span></span><br><span class="line"><span class="meta">&gt;</span><span class="bash"> personal.newAccount()</span></span><br><span class="line"><span class="meta">&gt;</span><span class="bash"> Passphrase:</span></span><br><span class="line"><span class="meta">&gt;</span><span class="bash"> Repeat passphrase:</span></span><br><span class="line"><span class="meta">&gt;</span><span class="bash"> <span class="string">"0x00e70f2bd5a644cdf4432f886bf25473cbe620ac"</span></span></span><br><span class="line"><span class="meta">&gt;</span><span class="bash"> eth.accounts</span></span><br><span class="line"><span class="meta">&gt;</span><span class="bash"> [<span class="string">"0xa9cb6db62d6673ae5cd79d0d29796dd9df1d1a5e"</span>, <span class="string">"0x00e70f2bd5a644cdf4432f886bf25473cbe620ac"</span>]</span></span><br></pre></td></tr></table></figure>
+<p>若不解锁用户，部署会提示错误<code>creation of HelloWorld errored: authentication needed: password or unlock</code>。解锁用户</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;</span><span class="bash"> personal.unlockAccount(eth.accounts[1])</span></span><br><span class="line"><span class="meta">&gt;</span><span class="bash"> Unlock account 0x00e70f2bd5a644cdf4432f886bf25473cbe620ac</span></span><br><span class="line"><span class="meta">&gt;</span><span class="bash"> Passphrase:</span></span><br><span class="line"><span class="meta">&gt;</span><span class="bash"> <span class="literal">true</span></span></span><br></pre></td></tr></table></figure>
+<h2 id="挖矿"><a href="#挖矿" class="headerlink" title="挖矿"></a>挖矿</h2><p>使用<code>miner.start()</code>开始挖矿；使用<code>miner.stop()</code>停止挖矿。</p>
+<p>开始挖矿后，当出现如下日志信息时，说明挖到了。<br><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">INFO [11-07|17:59:54.021] Successfully sealed new block            number=1 sealhash=84eaaa..f4d2c5 hash=925c9a..d8cb75 elapsed=1h30m51.894s</span><br><span class="line">INFO [11-07|17:59:54.022] 🔨 mined potential block                  number=1 hash=925c9a..d8cb75</span><br><span class="line">INFO [11-07|17:59:54.026] Commit new sealing work                  number=2 sealhash=865003..0e32da uncles=0 txs=0 gas=0 fees=0 elapsed=1.991ms</span><br><span class="line">INFO [11-07|17:59:54.027] Commit new sealing work                  number=2 sealhash=865003..0e32da uncles=0 txs=0 gas=0 fees=0 elapsed=3.070ms</span><br><span class="line">INFO [11-07|17:59:54.428] Generating DAG in progress               epoch=1 percentage=0  elapsed=3.563s</span><br><span class="line">INFO [11-07|17:59:56.581] Successfully sealed new block            number=2 sealhash=865003..0e32da hash=f1224d..9dc4b8 elapsed=2.554s</span><br><span class="line">INFO [11-07|17:59:56.582] 🔨 mined potential block                  number=2 hash=f1224d..9dc4b8</span><br><span class="line">INFO [11-07|17:59:56.584] Commit new sealing work                  number=3 sealhash=8de6d6..c8886e uncles=0 txs=0 gas=0 fees=0 elapsed="906.417µs"</span><br><span class="line">INFO [11-07|17:59:56.585] Commit new sealing work                  number=3 sealhash=8de6d6..c8886e uncles=0 txs=0 gas=0 fees=0 elapsed=2.271ms</span><br><span class="line">INFO [11-07|17:59:57.730] Successfully sealed new block            number=3 sealhash=8de6d6..c8886e hash=42a018..4e7ef3 elapsed=1.146s</span><br><span class="line">INFO [11-07|17:59:57.731] 🔨 mined potential block                  number=3 hash=42a018..4e7ef3</span><br><span class="line">INFO [11-07|17:59:57.733] Commit new sealing work                  number=4 sealhash=26af07..609e57 uncles=0 txs=0 gas=0 fees=0 elapsed=1.165ms</span><br></pre></td></tr></table></figure></p>
+<p>此时使用<code>eth.blockNumber</code>可以查看到当前区块数量，使用<code>eth.getBalance(eth.accounts[0])</code>查看默认用户余额，同理使用<code>eth.getBalance(eth.accounts[1])</code>查看我们创建的用户的余额。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;</span><span class="bash"> eth.getBalance(eth.accounts[0])</span></span><br><span class="line"><span class="meta">&gt;</span><span class="bash"> 25000000000000000000</span></span><br><span class="line"><span class="meta">&gt;</span><span class="bash"> eth.getBalance(eth.accounts[1])</span></span><br><span class="line"><span class="meta">&gt;</span><span class="bash"> 0</span></span><br></pre></td></tr></table></figure>
+<p>挖到的奖励都进了默认账户了，我们新建的账户里木有哦。来给我转账吧，嘿嘿嘿….</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;</span><span class="bash"> eth.sendTransaction(&#123;from:eth.accounts[0],to:eth.accounts[1],value:web3.toWei(10,<span class="string">'ether'</span>)&#125;)</span></span><br><span class="line"><span class="meta">&gt;</span><span class="bash"> <span class="string">"0x244da771baf2bd65e5e040c33ee3047b57a2492b85d271564bc90ccd7cb4fa46"</span></span></span><br><span class="line"><span class="meta">&gt;</span><span class="bash"> eth.getBalance(eth.accounts[1])</span></span><br><span class="line"><span class="meta">&gt;</span><span class="bash"> 5000000000000000000</span></span><br><span class="line"><span class="meta">&gt;</span><span class="bash"> &gt; eth.getBalance(eth.accounts[0])</span></span><br><span class="line"><span class="meta">&gt;</span><span class="bash"> 1.535e+21</span></span><br></pre></td></tr></table></figure>
+<p>哇哦，又挖到矿了。</p>
+<h1 id="智能合约"><a href="#智能合约" class="headerlink" title="智能合约"></a>智能合约</h1><p>环境搭建好了，现在开始编写智能合约。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">// compiler version must be greater than or equal to 0.8.13 and less than 0.9.0</span><br><span class="line">// SPDX-License-Identifier: MIT</span><br><span class="line">pragma solidity 0.8.13;</span><br><span class="line">contract HelloWorld &#123;</span><br><span class="line">    function sayHelloWorld() public returns (string memory) &#123;</span><br><span class="line">        return &quot;Hello World&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="Remix"><a href="#Remix" class="headerlink" title="Remix"></a>Remix</h2><p>在这里获<a href="https://remix-project.org" target="_blank" rel="noopener">Remix</a></p>
+<h3 id="编译"><a href="#编译" class="headerlink" title="编译"></a>编译</h3><p><img src="/images/blockchain/solidity_remix_compile.jpg" alt="solidity_remix_compile"></p>
+<h3 id="部署"><a href="#部署" class="headerlink" title="部署"></a>部署</h3><p>点击部署，然后选择外部http provider，并配置我们搭建好的ethereum服务。</p>
+<p><img src="/images/blockchain/solidity_remix_deploy_setting_1.jpg" alt="solidity_remix_deploy_setting_1.jpg"></p>
+<p><img src="/images/blockchain/solidity_remix_deploy_setting_2.jpg" alt="solidity_remix_deploy_setting_2.jpg"></p>
+<p>接下中，选择我们创建好的账户，然后进行部署。</p>
+<p><img src="/images/blockchain/solidity_remix_deploy.jpg" alt="solidity_remix_deploy.jpg"></p>
+<p><img src="/images/blockchain/solidity_remix_deploy_log.jpg" alt="solidity_remix_deploy_log.jpg"></p>
+<h2 id="执行智能合约"><a href="#执行智能合约" class="headerlink" title="执行智能合约"></a>执行智能合约</h2><p>执行智能合约可以选择在Remix中执行，也可选择attach到eth_server控制台执行。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;</span><span class="bash"> abi =[&#123;<span class="string">"inputs"</span>:[],<span class="string">"name"</span>:<span class="string">"sayHelloWorld"</span>,<span class="string">"outputs"</span>:[&#123;<span class="string">"internalType"</span>:<span class="string">"string"</span>,<span class="string">"name"</span>:<span class="string">""</span>,<span class="string">"type"</span>:<span class="string">"string"</span>&#125;],<span class="string">"stateMutability"</span>:<span class="string">"nonpayable"</span>,<span class="string">"type"</span>:<span class="string">"function"</span>&#125;]</span></span><br><span class="line">[&#123;</span><br><span class="line">    inputs: [],</span><br><span class="line">    name: "sayHelloWorld",</span><br><span class="line">    outputs: [&#123;</span><br><span class="line">        internalType: "string",</span><br><span class="line">        name: "",</span><br><span class="line">        type: "string"</span><br><span class="line">    &#125;],</span><br><span class="line">    stateMutability: "nonpayable",</span><br><span class="line">    type: "function"</span><br><span class="line">&#125;]</span><br><span class="line"><span class="meta">&gt;</span><span class="bash"> hello=eth.contract(abi).at(<span class="string">'0xCB1B01B40CD752F5d42f5b8dCeE4BE2A637CaAf2'</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">  abi: [&#123;</span><br><span class="line">      inputs: [],</span><br><span class="line">      name: "sayHelloWorld",</span><br><span class="line">      outputs: [&#123;...&#125;],</span><br><span class="line">      stateMutability: "nonpayable",</span><br><span class="line">      type: "function"</span><br><span class="line">  &#125;],</span><br><span class="line">  address: "0xCB1B01B40CD752F5d42f5b8dCeE4BE2A637CaAf2",</span><br><span class="line">  transactionHash: null,</span><br><span class="line">  allEvents: function bound(),</span><br><span class="line">  sayHelloWorld: function bound()</span><br><span class="line">&#125;</span><br><span class="line"><span class="meta">&gt;</span><span class="bash"> hello.sayHelloWorld.call()</span></span><br><span class="line">"Hello World"</span><br></pre></td></tr></table></figure>
+<h1 id="参加-amp-鸣谢"><a href="#参加-amp-鸣谢" class="headerlink" title="参加&amp;鸣谢"></a>参加&amp;鸣谢</h1><ul>
+<li><a href="https://www.jianshu.com/p/6e739550a349" target="_blank" rel="noopener">智能合约 hello world</a></li>
+<li><a href="https://haofly.net/geth/" target="_blank" rel="noopener">Geth 搭建私链 private blockchain</a></li>
+<li><a href="https://blog.csdn.net/weixin_42822207/article/details/120620731" target="_blank" rel="noopener">【geth】Go语言调用智能合约 | 一起来学区块链</a></li>
+</ul>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div></div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechatpay.png" alt="博 微信支付">
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/images/alipay.jpeg" alt="博 支付宝">
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/ethereum/" rel="tag"># ethereum</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2021/12/18/storage/ceph/ceph-encode-decode/" rel="next" title="encode和decode">
+                <i class="fa fa-chevron-left"></i> encode和decode
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+    </div>
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">博</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">137</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">21</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">117</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#部署Ethereum环境"><span class="nav-number">1.</span> <span class="nav-text">部署Ethereum环境</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#安装Ethereum"><span class="nav-number">1.1.</span> <span class="nav-text">安装Ethereum</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#初始化"><span class="nav-number">1.2.</span> <span class="nav-text">初始化</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#创建配置文件"><span class="nav-number">1.2.1.</span> <span class="nav-text">创建配置文件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#初始化Ethereum数据"><span class="nav-number">1.2.2.</span> <span class="nav-text">初始化Ethereum数据</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#启动节点"><span class="nav-number">1.3.</span> <span class="nav-text">启动节点</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#networkid"><span class="nav-number">1.3.1.</span> <span class="nav-text">networkid</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#http-api"><span class="nav-number">1.3.2.</span> <span class="nav-text">http.api</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#attach交互"><span class="nav-number">1.4.</span> <span class="nav-text">attach交互</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#创建用户"><span class="nav-number">1.5.</span> <span class="nav-text">创建用户</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#挖矿"><span class="nav-number">1.6.</span> <span class="nav-text">挖矿</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#智能合约"><span class="nav-number">2.</span> <span class="nav-text">智能合约</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Remix"><span class="nav-number">2.1.</span> <span class="nav-text">Remix</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#编译"><span class="nav-number">2.1.1.</span> <span class="nav-text">编译</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#部署"><span class="nav-number">2.1.2.</span> <span class="nav-text">部署</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#执行智能合约"><span class="nav-number">2.2.</span> <span class="nav-text">执行智能合约</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#参加-amp-鸣谢"><span class="nav-number">3.</span> <span class="nav-text">参加&amp;鸣谢</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">博</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Gemini</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//unpkg.com/valine/dist/Valine.min.js"></script>
+  
+  <script type="text/javascript">
+    var GUEST = ['nick','mail','link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item=>{
+      return GUEST.indexOf(item)>-1;
+    });
+    new Valine({
+        el: '#comments' ,
+        verify: false,
+        notify: false,
+        appId: 'PrJuolBVUJouwFAAIeEFAN7Q-gzGzoHsz',
+        appKey: 'C2Jc1LswoSpNO3opFC5K6Yd7',
+        placeholder: 'Just go go',
+        avatar:'mm',
+        guest_info:guest,
+        pageSize:'10' || 10,
+    });
+  </script>
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
