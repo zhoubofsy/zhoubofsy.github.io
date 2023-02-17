@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="drbd,">
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="简介DRBD（Distributed Replicated Block Device，分布式复制块设备)是一个用软件实现的、无共享的、服务器之间镜像块设备内容的存储复制解决方案。DRBD是镜像块设备，是按数据位镜像成一样的数据块。 安装ubuntu环境准备两个ubuntu系统，一个作为源端ubu1，一个作为目的端ubu2。12345678bob@ubu1:~$ lsb_release -aNo L">
+<meta name="keywords" content="drbd">
+<meta property="og:type" content="article">
+<meta property="og:title" content="认识DRBD">
+<meta property="og:url" content="http://yoursite.com/2023/02/16/storage/linux-drbd-usage/index.html">
+<meta property="og:site_name" content="Bolog">
+<meta property="og:description" content="简介DRBD（Distributed Replicated Block Device，分布式复制块设备)是一个用软件实现的、无共享的、服务器之间镜像块设备内容的存储复制解决方案。DRBD是镜像块设备，是按数据位镜像成一样的数据块。 安装ubuntu环境准备两个ubuntu系统，一个作为源端ubu1，一个作为目的端ubu2。12345678bob@ubu1:~$ lsb_release -aNo L">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2023-02-17T07:03:52.246Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="认识DRBD">
+<meta name="twitter:description" content="简介DRBD（Distributed Replicated Block Device，分布式复制块设备)是一个用软件实现的、无共享的、服务器之间镜像块设备内容的存储复制解决方案。DRBD是镜像块设备，是按数据位镜像成一样的数据块。 安装ubuntu环境准备两个ubuntu系统，一个作为源端ubu1，一个作为目的端ubu2。12345678bob@ubu1:~$ lsb_release -aNo L">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: 'ea19d365600df16c1e8ef4c09ccb9bea',
+      indexName: 'bolog',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2023/02/16/storage/linux-drbd-usage/">
+
+
+
+
+
+<script data-ad-client="ca-pub-7938886583915179" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+
+  <title>认识DRBD | Bolog</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Bolog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br>
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off" placeholder="搜索..." spellcheck="false" type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2023/02/16/storage/linux-drbd-usage/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">认识DRBD</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2023-02-16T15:52:32+08:00">
+                2023-02-16
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index">
+                    <span itemprop="name">storage</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2023/02/16/storage/linux-drbd-usage/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count valine-comment-count" data-xid="/2023/02/16/storage/linux-drbd-usage/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h1><p>DRBD（Distributed Replicated Block Device，分布式复制块设备)是一个用软件实现的、无共享的、服务器之间镜像块设备内容的存储复制解决方案。DRBD是镜像块设备，是按数据位镜像成一样的数据块。</p>
+<h1 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h1><h2 id="ubuntu环境"><a href="#ubuntu环境" class="headerlink" title="ubuntu环境"></a>ubuntu环境</h2><p>准备两个ubuntu系统，一个作为源端ubu1，一个作为目的端ubu2。<br><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">bob@ubu1:~$ lsb_release -a</span><br><span class="line">No LSB modules are available.</span><br><span class="line">Distributor ID: Ubuntu</span><br><span class="line">Description:    Ubuntu 20.04.5 LTS</span><br><span class="line">Release:    20.04</span><br><span class="line">Codename:   focal</span><br><span class="line">bob@ubu1:~$ uname -a</span><br><span class="line">Linux ubu1 5.4.0-139-generic #156-Ubuntu SMP Sat Jan 21 13:46:46 UTC 2023 aarch64 aarch64 aarch64 GNU/Linux</span><br></pre></td></tr></table></figure></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">bob@ubu2:~$ lsb_release -a</span><br><span class="line">No LSB modules are available.</span><br><span class="line">Distributor ID: Ubuntu</span><br><span class="line">Description:    Ubuntu 20.04.5 LTS</span><br><span class="line">Release:    20.04</span><br><span class="line">Codename:   focal</span><br><span class="line">bob@ubu2:~$ uname -a</span><br><span class="line">Linux ubu2 5.4.0-139-generic #156-Ubuntu SMP Sat Jan 21 13:46:46 UTC 2023 aarch64 aarch64 aarch64 GNU/Linux</span><br></pre></td></tr></table></figure>
+<p><code>brbd.ko</code>为linux内核自带，不需要另行安装</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br></pre></td><td class="code"><pre><span class="line">bob@ubu1:~$ lsmod | grep drbd</span><br><span class="line">drbd                  434176  3</span><br><span class="line">lru_cache              20480  1 drbd</span><br><span class="line">libcrc32c              16384  4 btrfs,xfs,drbd,raid456</span><br><span class="line">bob@ubu1:~$ modinfo drbd</span><br><span class="line">filename:       /lib/modules/5.4.0-139-generic/kernel/drivers/block/drbd/drbd.ko</span><br><span class="line">alias:          block-major-147-*</span><br><span class="line">license:        GPL</span><br><span class="line">version:        8.4.11</span><br><span class="line">description:    drbd - Distributed Replicated Block Device v8.4.11</span><br><span class="line">author:         Philipp Reisner &lt;phil@linbit.com&gt;, Lars Ellenberg &lt;lars@linbit.com&gt;</span><br><span class="line">srcversion:     B438804C5AE8C84C95D0411</span><br><span class="line">depends:        lru_cache,libcrc32c</span><br><span class="line">intree:         Y</span><br><span class="line">name:           drbd</span><br><span class="line">vermagic:       5.4.0-139-generic SMP mod_unload modversions aarch64</span><br><span class="line">sig_id:         PKCS#7</span><br><span class="line">signer:         Build time autogenerated kernel key</span><br><span class="line">sig_key:        43:64:51:B8:71:C1:53:C3:AE:29:64:EC:5F:B2:A3:30:54:25:F9:B5</span><br><span class="line">sig_hashalgo:   sha512</span><br><span class="line">signature:      0F:16:6D:12:54:0F:95:51:A5:18:4A:0A:A9:7C:72:F6:2D:31:21:39:</span><br><span class="line">                44:D9:71:C8:1B:7C:3F:1B:4B:66:53:08:1A:63:92:C3:CE:19:19:F0:</span><br><span class="line">                13:9F:9D:D6:7B:0B:27:F8:54:19:D3:44:F9:CC:8F:6E:E1:82:07:7A:</span><br><span class="line">                30:B1:37:28:5E:60:92:5B:C9:26:B0:25:DD:50:9D:A5:2E:76:96:A8:</span><br><span class="line">                E2:58:A1:36:DC:AA:84:D2:40:EF:66:F1:82:E5:2B:51:D7:F8:49:62:</span><br><span class="line">                9A:62:22:DC:42:A9:01:EC:6B:DC:9F:C6:8E:DD:9D:4A:CD:93:9B:F9:</span><br><span class="line">                3B:E4:4A:B4:34:BD:12:1A:89:C0:2C:2B:96:4D:86:27:D5:93:3A:51:</span><br><span class="line">                D4:DD:C7:34:9D:2D:A0:6C:BC:57:D1:9F:54:C2:55:56:B2:60:4D:FB:</span><br><span class="line">                86:55:18:09:9C:A5:C1:80:54:F5:F5:35:97:7E:32:36:A9:9B:F9:B2:</span><br><span class="line">                69:5B:BD:83:A3:41:89:9B:4F:7D:BA:A9:F1:E2:28:6A:FD:D4:7A:94:</span><br><span class="line">                67:34:D1:3C:8D:39:18:F7:43:A7:5F:67:71:B6:3B:63:3C:10:16:B7:</span><br><span class="line">                44:EA:D2:D4:52:19:28:F3:60:31:35:69:6B:EA:25:3B:35:FC:32:05:</span><br><span class="line">                B9:5A:99:7E:61:27:59:52:A8:55:8C:B6:15:8E:77:26:0F:DC:61:93:</span><br><span class="line">                F9:10:EA:8F:FD:E1:E0:DF:60:2D:83:92:9E:33:D7:99:10:93:AF:03:</span><br><span class="line">                44:8B:A0:6A:E8:E7:08:71:77:1C:CC:35:96:8C:94:DB:62:CA:ED:64:</span><br><span class="line">                B8:17:43:24:FD:BF:FC:3B:D7:D7:03:1C:83:06:0E:B5:D3:82:2A:4B:</span><br><span class="line">                E4:A7:F9:C4:07:9C:0F:2B:3E:D4:EA:48:FF:6E:BD:79:2E:85:FB:EE:</span><br><span class="line">                2D:A2:70:96:38:77:9C:29:58:5C:45:B1:8A:29:D2:7A:87:55:A6:A3:</span><br><span class="line">                32:A2:FC:F5:A2:4F:9C:20:85:F0:55:E6:A6:01:D2:76:EE:27:2F:A0:</span><br><span class="line">                BC:67:F2:B9:9B:A4:5D:2D:3D:6F:E9:46:C0:EF:4A:0C:01:15:19:E7:</span><br><span class="line">                9C:61:A9:00:E8:1A:D3:7D:2E:86:81:FD:BA:53:44:85:17:19:D9:B3:</span><br><span class="line">                B8:E2:7B:39:01:28:3E:F3:DF:87:3C:C5:E4:37:89:C1:67:16:B0:2C:</span><br><span class="line">                C7:4D:C8:6F:71:97:55:19:24:63:7B:D6:08:A2:EC:EB:C3:AA:71:91:</span><br><span class="line">                35:B4:C6:47:B5:EA:2B:DF:E4:AC:9C:06:77:73:1B:33:F5:AF:EE:58:</span><br><span class="line">                AC:F2:C4:A0:C9:00:58:AB:3F:62:1B:E5:E5:C3:E1:39:98:5B:2A:C9:</span><br><span class="line">                BD:10:6B:AF:FC:44:B0:7D:57:07:B0:5B</span><br><span class="line">parm:           allow_oos:DONT USE! (bool)</span><br><span class="line">parm:           disable_sendpage:bool</span><br><span class="line">parm:           proc_details:int</span><br><span class="line">parm:           minor_count:Approximate number of drbd devices (1-255) (uint)</span><br><span class="line">parm:           usermode_helper:string</span><br></pre></td></tr></table></figure>
+<p>至于使用drbd的工具还是要安装的</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">bob@ubu1:~$ sudo apt-cache show drbd-utils</span><br><span class="line">Package: drbd-utils</span><br><span class="line">Architecture: arm64</span><br><span class="line">Version: 9.11.0-1build1</span><br><span class="line">Priority: extra</span><br><span class="line">Section: admin</span><br><span class="line">Origin: Ubuntu</span><br><span class="line">Maintainer: Ubuntu Developers &lt;ubuntu-devel-discuss@lists.ubuntu.com&gt;</span><br><span class="line">Original-Maintainer: Debian DRBD Maintainers &lt;debian-ha-maintainers@lists.alioth.debian.org&gt;</span><br><span class="line">Bugs: https://bugs.launchpad.net/ubuntu/+filebug</span><br><span class="line">Installed-Size: 2062</span><br><span class="line">Depends: lsb-base (&gt;= 3.0-6), libc6 (&gt;= 2.28), libgcc-s1 (&gt;= 3.0), libstdc++6 (&gt;= 5.2), init-system-helpers (&gt;= 1.51)</span><br><span class="line">Recommends: heirloom-mailx | mailx</span><br><span class="line">Suggests: heartbeat</span><br><span class="line">Breaks: drbd8-utils (&lt;&lt; 2:8.9.0)</span><br><span class="line">Replaces: drbd8-utils (&lt;&lt; 2:8.9.0)</span><br><span class="line">Filename: pool/main/d/drbd-utils/drbd-utils_9.11.0-1build1_arm64.deb</span><br><span class="line">Size: 654128</span><br><span class="line">MD5sum: 45a8962e941c9a87c7de423de34f616b</span><br><span class="line">SHA1: 3734ee6c0611348c5b8c080feb713c05f9d84c4c</span><br><span class="line">SHA256: ae63aa90d145faab00551f151c10588bafebe2673e64b137c980cce7c299bccf</span><br><span class="line">Homepage: https://www.drbd.org/</span><br><span class="line">Description-en: RAID 1 over TCP/IP for Linux (user utilities)</span><br><span class="line"> Drbd is a block device which is designed to build high availability</span><br><span class="line"> clusters by providing a virtual shared device which keeps disks in</span><br><span class="line"> nodes synchronised using TCP/IP. This simulates RAID 1 but avoiding</span><br><span class="line"> the use of uncommon hardware (shared SCSI buses or Fibre Channel).</span><br><span class="line"> It is currently limited to fail-over HA clusters.</span><br><span class="line"> .</span><br><span class="line"> This package contains the programs that will control the drbd kernel</span><br><span class="line"> module provided in the Linux kernel.</span><br><span class="line">Description-md5: 7da3dade742b03d1a9c08b339123f93b</span><br><span class="line"></span><br><span class="line">bob@ubu1:~$ apt install drbd-utils</span><br></pre></td></tr></table></figure>
+<p>两个节点ubu1和ubu2都需要安装这个<code>drbd-utils</code>包</p>
+<h1 id="常规用法"><a href="#常规用法" class="headerlink" title="常规用法"></a>常规用法</h1><h2 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h2><h3 id="配置-etc-drbd-d-global-common-conf"><a href="#配置-etc-drbd-d-global-common-conf" class="headerlink" title="配置/etc/drbd.d/global_common.conf"></a>配置<code>/etc/drbd.d/global_common.conf</code></h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">global &#123;</span><br><span class="line">    usage-count yes;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">common &#123;</span><br><span class="line">    net &#123;</span><br><span class="line">        protocol C;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>DRBD系统向虚拟块的镜像中写入数据时，支持三种协议</p>
+<ul>
+<li><code>protocol A</code> 数据一旦写入磁盘并发送到网络中就认为完成了写入操作</li>
+<li><code>protocol B</code> 收到接收确认就认为完成了写入操作</li>
+<li><code>protocol C</code> 收到写入确认就认为完成了写入操作</li>
+</ul>
+<p>基于安全考虑我们一般选择<code>protocol C</code></p>
+<h3 id="配置DRBD资源-etc-drbd-d-r0-res"><a href="#配置DRBD资源-etc-drbd-d-r0-res" class="headerlink" title="配置DRBD资源/etc/drbd.d/r0.res"></a>配置DRBD资源<code>/etc/drbd.d/r0.res</code></h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">resource r0 &#123;</span><br><span class="line">  on ubu1 &#123;</span><br><span class="line">      device    /dev/drbd1;</span><br><span class="line">      disk  /dev/sda;</span><br><span class="line">      address   192.168.64.2:7789;</span><br><span class="line">      meta-disk internal;</span><br><span class="line">  &#125;</span><br><span class="line">  on ubu2 &#123;</span><br><span class="line">      device    /dev/drbd1;</span><br><span class="line">      disk  /dev/sda;</span><br><span class="line">      address   192.168.64.4:7789;</span><br><span class="line">      meta-disk internal;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>device</code>指drbd映射出来的快设备名称，<code>disk</code>指用于存放数据的硬盘。</p>
+<h2 id="启动"><a href="#启动" class="headerlink" title="启动"></a>启动</h2><p>分别在<code>ubu1</code>和<code>ubu2</code>上创建DRBD资源元数据</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bob@ubu1:~$ sudo drbdadm create-md r0</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bob@ubu2:~$ sudo drbdadm create-md r0</span><br></pre></td></tr></table></figure>
+<p>然后再启动<code>ubu1</code>和<code>ubu2</code>上的DRBD服务</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bob@ubu1:~$ sudo systemctl start drbd</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bob@ubu2:~$ sudo systemctl start drbd</span><br></pre></td></tr></table></figure>
+<p>启动<code>r0</code>资源，并设置<code>ubu1</code>为主设备</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">bob@ubu1:~$ sudo drbdadm up r0</span><br><span class="line">bob@ubu1:~$ sudo drbdadm primary --force r0</span><br></pre></td></tr></table></figure>
+<p>可以使用<code>drbdadm status r0</code>查看状态，也可以用<code>cat /proc/drbd</code>查看同步进度。<br>当<code>peer-disk</code>状态为<code>UpToDate</code>表示数据已经同步到最新状态。</p>
+<p>eg:<br><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">bob@ubu1:~$ sudo drbdadm status r0</span><br><span class="line">r0 role:Primary</span><br><span class="line">  disk:UpToDate</span><br><span class="line">  peer role:Secondary</span><br><span class="line">    replication:Established peer-disk:UpToDate</span><br></pre></td></tr></table></figure></p>
+<p>如需查询服务状态详细信息可以通过命令<code>drbdsetup status r0 --verbose --statistics</code>查询</p>
+<h2 id="文件系统常规使用"><a href="#文件系统常规使用" class="headerlink" title="文件系统常规使用"></a>文件系统常规使用</h2><p>首先通过<code>lsblk</code>查看<code>drbd1</code>快设备是否存在，然后格式化成xfs文件系统，并挂载到<code>/mnt</code>目录上<br><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">bob@ubu1:~$ lsblk</span><br><span class="line">NAME                      MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT</span><br><span class="line">loop1                       7:1    0 49.1M  1 loop /snap/core18/2681</span><br><span class="line">loop2                       7:2    0 59.1M  1 loop /snap/core20/1826</span><br><span class="line">loop3                       7:3    0 60.7M  1 loop /snap/lxd/21843</span><br><span class="line">loop4                       7:4    0 43.2M  1 loop /snap/snapd/17954</span><br><span class="line">loop5                       7:5    0 91.9M  1 loop /snap/lxd/24065</span><br><span class="line">loop6                       7:6    0 57.5M  1 loop /snap/core20/1332</span><br><span class="line">loop7                       7:7    0 43.2M  1 loop /snap/snapd/18363</span><br><span class="line">loop8                       7:8    0 49.1M  1 loop /snap/core18/2701</span><br><span class="line">sda                         8:0    0   20G  0 disk</span><br><span class="line">└─drbd1                   147:1    0   20G  1 disk</span><br><span class="line">sr0                        11:0    1  1.1G  0 rom</span><br><span class="line">vda                       252:0    0  100G  0 disk</span><br><span class="line">├─vda1                    252:1    0  512M  0 part /boot/efi</span><br><span class="line">├─vda2                    252:2    0    1G  0 part /boot</span><br><span class="line">└─vda3                    252:3    0 98.5G  0 part</span><br><span class="line">  └─ubuntu--vg-ubuntu--lv 253:0    0 49.3G  0 lvm  /</span><br><span class="line">bob@ubu1:~$ mkfs.xfs /dev/drbd1</span><br><span class="line">...</span><br><span class="line">bob@ubu1:~$ mount /dev/drbd1 /mnt</span><br><span class="line">bob@ubu1:~$ touch /mnt/hello</span><br></pre></td></tr></table></figure></p>
+<h2 id="切换"><a href="#切换" class="headerlink" title="切换"></a>切换</h2><p>切换操作，可以认为是切换primary节点操作。需要先将ubu1(primary节点)设置成<code>secondary</code>，再将ubu2(secondary节点)设置成<code>primary</code>，然后ubu2节点就可以挂载<code>drbd1</code>快设备了。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bob@ubu1:~$ sudo drbdadm secondary r0</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">bob@ubu2:~$ sudo drbdadm primary r0</span><br><span class="line">bob@ubu2:~$ sudo mount /dev/drbd1 /mnt/</span><br><span class="line">bob@ubu2:~$ df -h</span><br><span class="line">Filesystem                         Size  Used Avail Use% Mounted on</span><br><span class="line">udev                               1.9G     0  1.9G   0% /dev</span><br><span class="line">tmpfs                              392M  1.4M  391M   1% /run</span><br><span class="line">/dev/mapper/ubuntu--vg-ubuntu--lv   49G  7.3G   39G  16% /</span><br><span class="line">tmpfs                              2.0G     0  2.0G   0% /dev/shm</span><br><span class="line">tmpfs                              5.0M     0  5.0M   0% /run/lock</span><br><span class="line">tmpfs                              2.0G     0  2.0G   0% /sys/fs/cgroup</span><br><span class="line">/dev/vda2                          974M  206M  701M  23% /boot</span><br><span class="line">/dev/vda1                          511M  5.3M  506M   2% /boot/efi</span><br><span class="line">/dev/loop3                          60M   60M     0 100% /snap/core20/1826</span><br><span class="line">/dev/loop1                          50M   50M     0 100% /snap/core18/2681</span><br><span class="line">/dev/loop2                          58M   58M     0 100% /snap/core20/1332</span><br><span class="line">/dev/loop5                          92M   92M     0 100% /snap/lxd/24065</span><br><span class="line">/dev/loop4                          61M   61M     0 100% /snap/lxd/21843</span><br><span class="line">/dev/loop6                          44M   44M     0 100% /snap/snapd/17954</span><br><span class="line">tmpfs                              392M     0  392M   0% /run/user/1000</span><br><span class="line">/dev/drbd1                          20G  175M   20G   1% /mnt</span><br></pre></td></tr></table></figure>
+<p>在将ubu1节点从primary状态设置成secondary状态时可能会遇到如下错误</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">bob@ubu1:~$ sudo drbdadm secondary r0</span><br><span class="line">1: State change failed: (-12) Device is held open by someone</span><br><span class="line">env: python: No such file or directory</span><br></pre></td></tr></table></figure>
+<p>这说明当前块设备<code>brbd1</code>正在被挂载或者被其他应用使用，可以使用<code>lsof</code>命令查看改设备的使用情况，并终止使用后再设置节点状态为<code>secondary</code>。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div></div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechatpay.png" alt="博 微信支付">
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/images/alipay.jpeg" alt="博 支付宝">
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/drbd/" rel="tag"># drbd</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2022/11/07/blockchain/ethereum/eth-helloworld/" rel="next" title="Hello Ethereum">
+                <i class="fa fa-chevron-left"></i> Hello Ethereum
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+    <div class="comments" id="comments">
+    </div>
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">博</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">138</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">21</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">118</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#简介"><span class="nav-number">1.</span> <span class="nav-text">简介</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#安装"><span class="nav-number">2.</span> <span class="nav-text">安装</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#ubuntu环境"><span class="nav-number">2.1.</span> <span class="nav-text">ubuntu环境</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#常规用法"><span class="nav-number">3.</span> <span class="nav-text">常规用法</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#配置"><span class="nav-number">3.1.</span> <span class="nav-text">配置</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#配置-etc-drbd-d-global-common-conf"><span class="nav-number">3.1.1.</span> <span class="nav-text">配置/etc/drbd.d/global_common.conf</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#配置DRBD资源-etc-drbd-d-r0-res"><span class="nav-number">3.1.2.</span> <span class="nav-text">配置DRBD资源/etc/drbd.d/r0.res</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#启动"><span class="nav-number">3.2.</span> <span class="nav-text">启动</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#文件系统常规使用"><span class="nav-number">3.3.</span> <span class="nav-text">文件系统常规使用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#切换"><span class="nav-number">3.4.</span> <span class="nav-text">切换</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">博</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Gemini</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//unpkg.com/valine/dist/Valine.min.js"></script>
+  
+  <script type="text/javascript">
+    var GUEST = ['nick','mail','link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item=>{
+      return GUEST.indexOf(item)>-1;
+    });
+    new Valine({
+        el: '#comments' ,
+        verify: false,
+        notify: false,
+        appId: 'PrJuolBVUJouwFAAIeEFAN7Q-gzGzoHsz',
+        appKey: 'C2Jc1LswoSpNO3opFC5K6Yd7',
+        placeholder: 'Just go go',
+        avatar:'mm',
+        guest_info:guest,
+        pageSize:'10' || 10,
+    });
+  </script>
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
