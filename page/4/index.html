@@ -2037,11 +2037,11 @@
 <h1 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h1><p><strong> OS </strong></p>
 <p>ubuntu 16.04.5 LTS</p>
 <p><strong> Kernel </strong></p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> uname -a</span><br><span class="line">Linux ubuntu-linux 4.4.0-138-generic #164-Ubuntu SMP Tue Oct 2 17:16:02 UTC 2018 x86_64 x86_64 x86_64 GNU/Linux</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> uname -a</span></span><br><span class="line">Linux ubuntu-linux 4.4.0-138-generic #164-Ubuntu SMP Tue Oct 2 17:16:02 UTC 2018 x86_64 x86_64 x86_64 GNU/Linux</span><br></pre></td></tr></table></figure>
 <h2 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h2><p>perf的安装可以分成两种，一种是package安装法；</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt install linux-tools-common linux-tools-4.4.0-138-generic</span><br></pre></td></tr></table></figure>
 <p>另一种安装方法是源码安装，这种方法需要先下载当前内核对应的源代码，</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span> 下载 4.4.0-138 源码</span><br><span class="line">sudo apt-get install linux-source=4.4.0.138.144</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 下载 4.4.0-138 源码</span></span><br><span class="line">sudo apt-get install linux-source=4.4.0.138.144</span><br></pre></td></tr></table></figure>
 <p>然后进入<code>/usr/src</code>目录中的源代码目录下，找到<code>tools/perf</code>目录，并在该目录下执行<code>make</code>编译perf源码，再执行<code>make install</code>安装perf</p>
 <h1 id="perf使用姿势"><a href="#perf使用姿势" class="headerlink" title="perf使用姿势"></a>perf使用姿势</h1><h2 id="姿势一"><a href="#姿势一" class="headerlink" title="姿势一"></a>姿势一</h2><h3 id="选择分析的事件"><a href="#选择分析的事件" class="headerlink" title="选择分析的事件"></a>选择分析的事件</h3><p>通过<code>perf list</code>列出可以选择的分析事件</p>
 <h3 id="概要分析数据"><a href="#概要分析数据" class="headerlink" title="概要分析数据"></a>概要分析数据</h3><p>使用<code>perf top</code>和<code>perf stat</code>进行该要分析系统性能，<code>perf top</code>类似于linux的<code>top</code>命令，按进程显示分析数据，可以使用<code>-e</code>参数指定分析事件，通过<code>perf top</code>找出系统中的问题进程。（更多关于<code>perf top</code>的使用精请见<code>perf top -h</code>）</p>
@@ -2445,7 +2445,7 @@
               
                 <a href="/archives/">
               
-                  <span class="site-state-item-count">138</span>
+                  <span class="site-state-item-count">137</span>
                   <span class="site-state-item-name">日志</span>
                 </a>
               </div>
