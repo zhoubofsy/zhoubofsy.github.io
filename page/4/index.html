@@ -293,6 +293,192 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/08/04/storage/ceph/s3-authorization-v2/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/08/04/storage/ceph/s3-authorization-v2/" itemprop="url">s3 authorization v2</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-08-04T14:20:20+08:00">
+                2019-08-04
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index">
+                    <span itemprop="name">storage</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2019/08/04/storage/ceph/s3-authorization-v2/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count valine-comment-count" data-xid="/2019/08/04/storage/ceph/s3-authorization-v2/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>s3 authorization v2</p>
+<h2 id="参数传递"><a href="#参数传递" class="headerlink" title="参数传递"></a>参数传递</h2><h3 id="通过Authorization请求头"><a href="#通过Authorization请求头" class="headerlink" title="通过Authorization请求头"></a>通过<code>Authorization</code>请求头</h3><figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">Authorization</span>: AWS AWSAccessKeyId:Signature</span><br></pre></td></tr></table></figure>
+<ul>
+<li><code>AWSAccessKeyId</code>: 你的<code>AccessKey</code></li>
+<li><code>Signature</code>: 计算得到的签名</li>
+</ul>
+<p>eg:<br><figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">Authorization</span>: AWS ziw5dp1alvty9n47qksu:frJIUN8DYpKDtOLCwo//yllqDzg=</span><br></pre></td></tr></table></figure></p>
+<h3 id="通过请求参数"><a href="#通过请求参数" class="headerlink" title="通过请求参数"></a>通过请求参数</h3><p>HTTP请求中的参数：</p>
+<ul>
+<li><code>AWSAccessKeyId</code>: 你的<code>AccessKey</code></li>
+<li><code>Signature</code>: 计算得到的签名</li>
+<li><code>Expires</code>: 签名的过期时间</li>
+</ul>
+<p>eg:<br><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">GET /yourbucket/yourkey?AWSAccessKeyId=ziw5dp1alvty9n47qksu&amp;Expires=1141889120&amp;Signature=vjbyPxybdZaNmGa%2ByT272YEAiv4%3D</span><br></pre></td></tr></table></figure></p>
+<h2 id="签名计算"><a href="#签名计算" class="headerlink" title="签名计算"></a>签名计算</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Signature = Base64(HMAC-SHA1(YourSecretKey, UTF-<span class="number">8</span>-Encoding-Of(StringToSign)))</span><br></pre></td></tr></table></figure>
+<ul>
+<li>YourSecretKey: 你的<code>SecretKey</code></li>
+<li>StringToSign</li>
+</ul>
+<h3 id="StringToSign"><a href="#StringToSign" class="headerlink" title="StringToSign"></a>StringToSign</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">StringToSign =  HTTP-Verb + <span class="string">"\n"</span> +</span><br><span class="line">                Content-MD5 + <span class="string">"\n"</span> +</span><br><span class="line">                Content-Type + <span class="string">"\n"</span> +</span><br><span class="line">                Date|Expires + <span class="string">"\n"</span> +</span><br><span class="line">                CanonicalizedAmzHeaders +</span><br><span class="line">                CanonicalizedResource</span><br></pre></td></tr></table></figure>
+<ul>
+<li>HTTP-Verb: 请求的方法，如：<code>PUT</code>，<code>GET</code>，<code>DELETE</code>，<code>POST</code> </li>
+<li>Content-MD5: 请求头Content-MD5的内容，如果没有这个头，由空字符串代替</li>
+<li>Content-Type: 请求头Content-Type的内容，如果没有这个头，由空字符串代替</li>
+<li>Date|Expires: 如果使用Authorization头携带签名信息，为Date头的内容，如果没有Date头，由空字符串代替；如果使用请求参数携带签名信息，为参数Expires的内容</li>
+<li><p>CanonicalizedAmzHeaders: 请求中所有以x-amz-开始的头所组成的字符串,如果没有这样的头，由空字符串代替<br>  eg:</p>
+  <figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">原始请求头：</span><br><span class="line"><span class="attribute">Date</span>: Tue, 27 Mar 2007 19:36:42 +0000</span><br><span class="line"><span class="attribute">X-Amz-b</span>:   Bar</span><br><span class="line"><span class="attribute">x-amz-a</span>: foob</span><br><span class="line"><span class="attribute">x-Amz-a</span>:   fooa</span><br><span class="line"><span class="attribute">Host</span>: johnsmith.s3.amazonaws.com</span><br><span class="line"></span><br><span class="line">对应的CanonicalizedAmzHeaders为：</span><br><span class="line"><span class="attribute">x-amz-a:fooa,foob</span></span><br><span class="line"><span class="attribute">x-amz-b:Bar</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>CanonicalizedResource: 请求所对应的资源<br>  eg:</p>
+  <figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">GET /?foo=bar</span><br><span class="line">GET /yourbucket/yourkey?foo=bar</span><br><span class="line">GET /yourbucket/yourkey?acl&amp;foo=bar</span><br><span class="line"></span><br><span class="line">对应的nicalizedResource分别为：</span><br><span class="line"></span><br><span class="line">／</span><br><span class="line">/yourbucket/yourkey</span><br><span class="line">/yourbucket/yourkey?acl</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a href="https://doc.bscstorage.com/doc/s2/signature/signature.html" target="_blank" rel="noopener">签名算法</a></li>
+</ul>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/08/04/storage/ceph/s3-authorization-v4/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -436,192 +622,6 @@
 <li>CanonicalHeaders 需要加入签名计算的头排序后组成的字符串</li>
 <li>SignedHeaders 加入到签名计算的头的名字的列表，各个名字之间用逗号分隔</li>
 <li>HexEncode(Hash(RequestPayload)) 请求body的hash的16进制编码,如果通过请求参数携带签名，此处应由字符串<code>UNSIGNED-PAYLOAD</code>代替</li>
-</ul>
-<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a href="https://doc.bscstorage.com/doc/s2/signature/signature.html" target="_blank" rel="noopener">签名算法</a></li>
-</ul>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/08/04/storage/ceph/s3-authorization-v2/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content>
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2019/08/04/storage/ceph/s3-authorization-v2/" itemprop="url">s3 authorization v2</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-08-04T14:20:20+08:00">
-                2019-08-04
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/storage/" itemprop="url" rel="index">
-                    <span itemprop="name">storage</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-              <span class="post-comments-count">
-                <span class="post-meta-divider">|</span>
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-comment-o"></i>
-                </span>
-                <a href="/2019/08/04/storage/ceph/s3-authorization-v2/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count valine-comment-count" data-xid="/2019/08/04/storage/ceph/s3-authorization-v2/" itemprop="commentCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>s3 authorization v2</p>
-<h2 id="参数传递"><a href="#参数传递" class="headerlink" title="参数传递"></a>参数传递</h2><h3 id="通过Authorization请求头"><a href="#通过Authorization请求头" class="headerlink" title="通过Authorization请求头"></a>通过<code>Authorization</code>请求头</h3><figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">Authorization</span>: AWS AWSAccessKeyId:Signature</span><br></pre></td></tr></table></figure>
-<ul>
-<li><code>AWSAccessKeyId</code>: 你的<code>AccessKey</code></li>
-<li><code>Signature</code>: 计算得到的签名</li>
-</ul>
-<p>eg:<br><figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">Authorization</span>: AWS ziw5dp1alvty9n47qksu:frJIUN8DYpKDtOLCwo//yllqDzg=</span><br></pre></td></tr></table></figure></p>
-<h3 id="通过请求参数"><a href="#通过请求参数" class="headerlink" title="通过请求参数"></a>通过请求参数</h3><p>HTTP请求中的参数：</p>
-<ul>
-<li><code>AWSAccessKeyId</code>: 你的<code>AccessKey</code></li>
-<li><code>Signature</code>: 计算得到的签名</li>
-<li><code>Expires</code>: 签名的过期时间</li>
-</ul>
-<p>eg:<br><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">GET /yourbucket/yourkey?AWSAccessKeyId=ziw5dp1alvty9n47qksu&amp;Expires=1141889120&amp;Signature=vjbyPxybdZaNmGa%2ByT272YEAiv4%3D</span><br></pre></td></tr></table></figure></p>
-<h2 id="签名计算"><a href="#签名计算" class="headerlink" title="签名计算"></a>签名计算</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Signature = Base64(HMAC-SHA1(YourSecretKey, UTF-<span class="number">8</span>-Encoding-Of(StringToSign)))</span><br></pre></td></tr></table></figure>
-<ul>
-<li>YourSecretKey: 你的<code>SecretKey</code></li>
-<li>StringToSign</li>
-</ul>
-<h3 id="StringToSign"><a href="#StringToSign" class="headerlink" title="StringToSign"></a>StringToSign</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">StringToSign =  HTTP-Verb + <span class="string">"\n"</span> +</span><br><span class="line">                Content-MD5 + <span class="string">"\n"</span> +</span><br><span class="line">                Content-Type + <span class="string">"\n"</span> +</span><br><span class="line">                Date|Expires + <span class="string">"\n"</span> +</span><br><span class="line">                CanonicalizedAmzHeaders +</span><br><span class="line">                CanonicalizedResource</span><br></pre></td></tr></table></figure>
-<ul>
-<li>HTTP-Verb: 请求的方法，如：<code>PUT</code>，<code>GET</code>，<code>DELETE</code>，<code>POST</code> </li>
-<li>Content-MD5: 请求头Content-MD5的内容，如果没有这个头，由空字符串代替</li>
-<li>Content-Type: 请求头Content-Type的内容，如果没有这个头，由空字符串代替</li>
-<li>Date|Expires: 如果使用Authorization头携带签名信息，为Date头的内容，如果没有Date头，由空字符串代替；如果使用请求参数携带签名信息，为参数Expires的内容</li>
-<li><p>CanonicalizedAmzHeaders: 请求中所有以x-amz-开始的头所组成的字符串,如果没有这样的头，由空字符串代替<br>  eg:</p>
-  <figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">原始请求头：</span><br><span class="line"><span class="attribute">Date</span>: Tue, 27 Mar 2007 19:36:42 +0000</span><br><span class="line"><span class="attribute">X-Amz-b</span>:   Bar</span><br><span class="line"><span class="attribute">x-amz-a</span>: foob</span><br><span class="line"><span class="attribute">x-Amz-a</span>:   fooa</span><br><span class="line"><span class="attribute">Host</span>: johnsmith.s3.amazonaws.com</span><br><span class="line"></span><br><span class="line">对应的CanonicalizedAmzHeaders为：</span><br><span class="line"><span class="attribute">x-amz-a:fooa,foob</span></span><br><span class="line"><span class="attribute">x-amz-b:Bar</span></span><br></pre></td></tr></table></figure>
-</li>
-<li><p>CanonicalizedResource: 请求所对应的资源<br>  eg:</p>
-  <figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">GET /?foo=bar</span><br><span class="line">GET /yourbucket/yourkey?foo=bar</span><br><span class="line">GET /yourbucket/yourkey?acl&amp;foo=bar</span><br><span class="line"></span><br><span class="line">对应的nicalizedResource分别为：</span><br><span class="line"></span><br><span class="line">／</span><br><span class="line">/yourbucket/yourkey</span><br><span class="line">/yourbucket/yourkey?acl</span><br></pre></td></tr></table></figure>
-</li>
 </ul>
 <h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
 <li><a href="https://doc.bscstorage.com/doc/s2/signature/signature.html" target="_blank" rel="noopener">签名算法</a></li>
