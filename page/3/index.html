@@ -293,6 +293,177 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/10/16/storage/ceph/rgw-placement-usage/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/10/16/storage/ceph/rgw-placement-usage/" itemprop="url">RGW zongroup/zone placement 和 compression 用法</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-10-16T18:17:58+08:00">
+                2019-10-16
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index">
+                    <span itemprop="name">storage</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2019/10/16/storage/ceph/rgw-placement-usage/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count valine-comment-count" data-xid="/2019/10/16/storage/ceph/rgw-placement-usage/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>书接上文，上回书咱们了解了multisite的配置，最重要的是知道了zonegroup、zone是个什么东西，该怎么用。</p>
+<p>那么今天我们来看看zonegroup和zone中的placement，顾名思义，用于告诉zone使用这个placement会将bucket、object要放到哪个里。</p>
+<p>关于single rgw的模式，可以参考官网的<a href="https://docs.ceph.com/docs/mimic/radosgw/placement/" target="_blank" rel="noopener">使用配置</a>，这里不做赘述了。下面介绍一下Multisite上的配置方法。</p>
+<h2 id="Placement"><a href="#Placement" class="headerlink" title="Placement"></a>Placement</h2><ol>
+<li>在master zone和非master zone上分别创建同名placement</li>
+<li>使用的时候可以在用户信息中指定placement，也可以在创建bucket的s3请求中指定placement。</li>
+</ol>
+<h3 id="master-zone"><a href="#master-zone" class="headerlink" title="master zone"></a>master zone</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> radosgw-admin zonegroup placement add \</span></span><br><span class="line">        --rgw-zonegroup default \</span><br><span class="line">        --placement-id cold-placement</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash"> radosgw-admin zone placement add \</span></span><br><span class="line">        --rgw-zone exter \</span><br><span class="line">        --placement-id cold-placement \</span><br><span class="line">        --data-pool exter.rgw.cold.data \</span><br><span class="line">        --index-pool exter.rgw.cold.index \</span><br><span class="line">        --data-extra-pool exter.rgw.cold.non-ec \</span><br><span class="line">        --compression zlib</span><br></pre></td></tr></table></figure>
+<p>看一下配置完的zone（此处忽略zonegroup配置完的接口）<br><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> radosgw-admin zone get</span></span><br><span class="line">&#123;</span><br><span class="line">    "id": "69234f1d-8f48-4431-b45f-912087431a47",</span><br><span class="line">    "name": "exter",</span><br><span class="line">    "domain_root": "exter.rgw.meta:root",</span><br><span class="line">    "control_pool": "exter.rgw.control",</span><br><span class="line">    "gc_pool": "exter.rgw.log:gc",</span><br><span class="line">    "lc_pool": "exter.rgw.log:lc",</span><br><span class="line">    "log_pool": "exter.rgw.log",</span><br><span class="line">    "intent_log_pool": "exter.rgw.log:intent",</span><br><span class="line">    "usage_log_pool": "exter.rgw.log:usage",</span><br><span class="line">    "reshard_pool": "exter.rgw.log:reshard",</span><br><span class="line">    "user_keys_pool": "exter.rgw.meta:users.keys",</span><br><span class="line">    "user_email_pool": "exter.rgw.meta:users.email",</span><br><span class="line">    "user_swift_pool": "exter.rgw.meta:users.swift",</span><br><span class="line">    "user_uid_pool": "exter.rgw.meta:users.uid",</span><br><span class="line">    "otp_pool": "exter.rgw.otp",</span><br><span class="line">    "system_key": &#123;</span><br><span class="line">        "access_key": "85ZFW53VCKBZR7DQ7GS8",</span><br><span class="line">        "secret_key": "MfyuJECq3Et2kktmf3T077rYwXQMEiIGYRlwKBnq"</span><br><span class="line">    &#125;,</span><br><span class="line">    "placement_pools": [</span><br><span class="line">        &#123;</span><br><span class="line">            "key": "cold-placement",</span><br><span class="line">            "val": &#123;</span><br><span class="line">                "index_pool": "exter.rgw.cold.index",</span><br><span class="line">                "data_pool": "exter.rgw.cold.data",</span><br><span class="line">                "data_extra_pool": "exter.rgw.cold.non-ec",</span><br><span class="line">                "index_type": 0,</span><br><span class="line">                "compression": "zlib"</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            "key": "default-placement",</span><br><span class="line">            "val": &#123;</span><br><span class="line">                "index_pool": "exter.rgw.buckets.index",</span><br><span class="line">                "data_pool": "exter.rgw.buckets.data",</span><br><span class="line">                "data_extra_pool": "exter.rgw.buckets.non-ec",</span><br><span class="line">                "index_type": 0,</span><br><span class="line">                "compression": ""</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    ],</span><br><span class="line">    "metadata_heap": "",</span><br><span class="line">    "realm_id": ""</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>让上述配置生效需要<code>radosgw-admin period update --commit</code>一下。</p>
+<h3 id="非master-zone"><a href="#非master-zone" class="headerlink" title="非master zone"></a>非master zone</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> radosgw-admin zonegroup placement add \</span></span><br><span class="line">        --rgw-zonegroup default \</span><br><span class="line">        --placement-id cold-placement</span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash"> radosgw-admin zone placement add \</span></span><br><span class="line">        --rgw-zone backup \</span><br><span class="line">        --placement-id cold-placement \</span><br><span class="line">        --data-pool backup.rgw.cold.data \</span><br><span class="line">        --index-pool backup.rgw.cold.index \</span><br><span class="line">        --data-extra-pool backup.rgw.cold.non-ec \</span><br><span class="line">        --compression lz4</span><br></pre></td></tr></table></figure>
+<p><strong><em> 此处用的压缩算法与之前master zone使用的不一致，不影响使用。放心。</em></strong>rgw会在每个对象上记录一个压缩类型，所以即使你这一刻使用的压缩算法和之前使用的不一致也不影响解压工作。</p>
+<p>看一下配置完的zone（此处忽略zonegroup配置完的接口）<br><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> radosgw-admin zone get</span></span><br><span class="line">&#123;</span><br><span class="line">    "id": "a6621518-6f80-41f5-a736-fb5d1814e036",</span><br><span class="line">    "name": "backup",</span><br><span class="line">    "domain_root": "backup.rgw.meta:root",</span><br><span class="line">    "control_pool": "backup.rgw.control",</span><br><span class="line">    "gc_pool": "backup.rgw.log:gc",</span><br><span class="line">    "lc_pool": "backup.rgw.log:lc",</span><br><span class="line">    "log_pool": "backup.rgw.log",</span><br><span class="line">    "intent_log_pool": "backup.rgw.log:intent",</span><br><span class="line">    "usage_log_pool": "backup.rgw.log:usage",</span><br><span class="line">    "reshard_pool": "backup.rgw.log:reshard",</span><br><span class="line">    "user_keys_pool": "backup.rgw.meta:users.keys",</span><br><span class="line">    "user_email_pool": "backup.rgw.meta:users.email",</span><br><span class="line">    "user_swift_pool": "backup.rgw.meta:users.swift",</span><br><span class="line">    "user_uid_pool": "backup.rgw.meta:users.uid",</span><br><span class="line">    "otp_pool": "backup.rgw.otp",</span><br><span class="line">    "system_key": &#123;</span><br><span class="line">        "access_key": "85ZFW53VCKBZR7DQ7GS8",</span><br><span class="line">        "secret_key": "MfyuJECq3Et2kktmf3T077rYwXQMEiIGYRlwKBnq"</span><br><span class="line">    &#125;,</span><br><span class="line">    "placement_pools": [</span><br><span class="line">        &#123;</span><br><span class="line">            "key": "cold-placement",</span><br><span class="line">            "val": &#123;</span><br><span class="line">                "index_pool": "backup.rgw.cold.index",</span><br><span class="line">                "data_pool": "backup.rgw.cold.data",</span><br><span class="line">                "data_extra_pool": "backkup.rgw.cold.non-ec",</span><br><span class="line">                "index_type": 0,</span><br><span class="line">                "compression": "lz4"</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            "key": "default-placement",</span><br><span class="line">            "val": &#123;</span><br><span class="line">                "index_pool": "backup.rgw.buckets.index",</span><br><span class="line">                "data_pool": "backup.rgw.buckets.data",</span><br><span class="line">                "data_extra_pool": "backup.rgw.buckets.non-ec",</span><br><span class="line">                "index_type": 0,</span><br><span class="line">                "compression": ""</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    ],</span><br><span class="line">    "metadata_heap": "",</span><br><span class="line">    "realm_id": "f334e6c2-c2b4-4c04-b541-f64d96c10c07"</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>同样为了上诉修改生效也需要执行一下<code>radosgw-admin period update --commit</code></p>
+<h2 id="User中使用Placement"><a href="#User中使用Placement" class="headerlink" title="User中使用Placement"></a>User中使用Placement</h2><p>要想在User中配置Placement，首先得创建一个User。由于我们是在Multisite模式中创建的User，所以创建的动作必须在master zone上操作，如果在非master zone上操作用户不能同步到master zone上。具体原因请见<a href="https://zhoubofsy.github.io/2019/10/14/storage/ceph/multi-site-in-a-cluster-md/" target="_blank" rel="noopener">Deploy multisite in 同一个集群</a></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> radosgw-admin user create --uid colder --display-name colder</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash"> radosgw-admin user info --uid colder</span></span><br><span class="line">&#123;</span><br><span class="line">    "user_id": "colder",</span><br><span class="line">    "display_name": "colder",</span><br><span class="line">    "email": "",</span><br><span class="line">    "suspended": 0,</span><br><span class="line">    "max_buckets": 1000,</span><br><span class="line">    "auid": 0,</span><br><span class="line">    "subusers": [],</span><br><span class="line">    "keys": [</span><br><span class="line">        &#123;</span><br><span class="line">            "user": "colder",</span><br><span class="line">            "access_key": "WGCQOD46GA92J7CIGXIY",</span><br><span class="line">            "secret_key": "8yZw0FkYojiLdebWEF61HHTGhUvBrCel6ZzvGQRu"</span><br><span class="line">        &#125;</span><br><span class="line">    ],</span><br><span class="line">    "swift_keys": [],</span><br><span class="line">    "caps": [],</span><br><span class="line">    "op_mask": "read, write, delete",</span><br><span class="line">    "default_placement": "",</span><br><span class="line">    "placement_tags": [],</span><br><span class="line">    "bucket_quota": &#123;</span><br><span class="line">        "enabled": false,</span><br><span class="line">        "check_on_raw": false,</span><br><span class="line">        "max_size": -1,</span><br><span class="line">        "max_size_kb": 0,</span><br><span class="line">        "max_objects": -1</span><br><span class="line">    &#125;,</span><br><span class="line">    "user_quota": &#123;</span><br><span class="line">        "enabled": false,</span><br><span class="line">        "check_on_raw": false,</span><br><span class="line">        "max_size": -1,</span><br><span class="line">        "max_size_kb": 0,</span><br><span class="line">        "max_objects": -1</span><br><span class="line">    &#125;,</span><br><span class="line">    "temp_url_keys": [],</span><br><span class="line">    "type": "rgw",</span><br><span class="line">    "mfa_ids": []</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其中<code>default_placement</code>为空，此时会使用默认的placement也就是<code>default-placement</code>。所以需要配置这个选项。但是<code>radosgw-admin</code>中没有直接配置这个项目的参数，所以需要采用导出导入metadata的方式来修改该项目。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> radosgw-admin metadata get user:colder &gt; colder.json</span></span><br></pre></td></tr></table></figure>
+<p>将user <code>colder</code>的配置导出到<code>coder.json</code>中，然后编辑其中的<code>&quot;default_placement&quot;: &quot;cold-placement&quot;,</code>，然后再将<code>colder.json</code>导入回去。<br><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> radosgw-admin metadata put user:colder &lt; colder.json</span></span><br></pre></td></tr></table></figure></p>
+<p>接下来可以使用该用户的access-key和secret-key去创建bucket并上传对象了。</p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/10/14/storage/ceph/multi-site-in-a-cluster-md/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -2044,166 +2215,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/08/04/storage/ceph/s3-authorization/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content>
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2019/08/04/storage/ceph/s3-authorization/" itemprop="url">s3 authorization</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-08-04T15:41:23+08:00">
-                2019-08-04
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/storage/" itemprop="url" rel="index">
-                    <span itemprop="name">storage</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-              <span class="post-comments-count">
-                <span class="post-meta-divider">|</span>
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-comment-o"></i>
-                </span>
-                <a href="/2019/08/04/storage/ceph/s3-authorization/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count valine-comment-count" data-xid="/2019/08/04/storage/ceph/s3-authorization/" itemprop="commentCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <ol>
-<li>如果http请求中没有携带身份信息（AccessKey），则改该请求为匿名请求，会被认为是来自匿名用户的访问。</li>
-<li>如果http请求中携带了身份信息（AccessKey），则认为访问来自该AccessKey所对应的用户。由于AccessKey是可以被他人获取到的， 为了防止其他人冒用您的AccessKey来访问服务，请求中还必须携带您的签名。在申请帐号以后，您将得到AccessKey和SecretKey， SecretKey是需要保密的。签名是由此次http请求的相关信息和您的SecretKey计算得到的，其他人因为不知道您的SecretKey，将不能 计算出正确的签名。</li>
-<li>身份信息与签名可以放到请求头（Authorization）中，也可以放到请求参数中。</li>
-<li>签名的方式与Amazon S3的签名方式兼容，支持<a href="https://zhoubofsy.github.io/2019/08/04/storage/ceph/s3-authorization-v2/" target="_blank" rel="noopener">signature version 2</a> 和 <a href="https://zhoubofsy.github.io/2019/08/04/storage/ceph/s3-authorization-v4/" target="_blank" rel="noopener">signature version 4</a>。</li>
-</ol>
-<h1 id="参考-amp-鸣谢"><a href="#参考-amp-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a href="https://doc.bscstorage.com/doc/s2/signature/signature.html" target="_blank" rel="noopener">签名算法</a></li>
-</ul>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2254,7 +2265,7 @@
               
                 <a href="/archives/">
               
-                  <span class="site-state-item-count">137</span>
+                  <span class="site-state-item-count">138</span>
                   <span class="site-state-item-name">日志</span>
                 </a>
               </div>
@@ -2276,7 +2287,7 @@
               
               <div class="site-state-item site-state-tags">
                 <a href="/tags/index.html">
-                  <span class="site-state-item-count">118</span>
+                  <span class="site-state-item-count">119</span>
                   <span class="site-state-item-name">标签</span>
                 </a>
               </div>
