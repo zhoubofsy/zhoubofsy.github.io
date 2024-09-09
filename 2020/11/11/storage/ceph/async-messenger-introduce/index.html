@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zhoubofsy.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="说到Ceph的通讯一定绕不开Messenger，无论是客户端到OSD，还是OSD到MON，或者OSD到OSD，都需要Messenger来协助完成各个模块间消息的发送、接收。Messenger有三种实现，分别是SimpleMessenger、AsyncMessenger、XioMessenger，本文以AsyncMessenger为例简单介绍一下其工作原理。 原理  processors线程数量由c">
+<meta property="og:type" content="article">
+<meta property="og:title" content="AsyncMessenger介绍">
+<meta property="og:url" content="http://zhoubofsy.github.io/2020/11/11/storage/ceph/async-messenger-introduce/index.html">
+<meta property="og:site_name" content="Bolog">
+<meta property="og:description" content="说到Ceph的通讯一定绕不开Messenger，无论是客户端到OSD，还是OSD到MON，或者OSD到OSD，都需要Messenger来协助完成各个模块间消息的发送、接收。Messenger有三种实现，分别是SimpleMessenger、AsyncMessenger、XioMessenger，本文以AsyncMessenger为例简单介绍一下其工作原理。 原理  processors线程数量由c">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://zhoubofsy.github.io/images/asyncmessenger/ceph-AsyncMessenger.png">
+<meta property="og:image" content="http://zhoubofsy.github.io/images/asyncmessenger/ceph-message_format.png">
+<meta property="article:published_time" content="2020-11-11T07:05:40.000Z">
+<meta property="article:modified_time" content="2024-09-09T07:57:18.585Z">
+<meta property="article:author" content="博">
+<meta property="article:tag" content="cepsager">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://zhoubofsy.github.io/images/asyncmessenger/ceph-AsyncMessenger.png">
+
+<link rel="canonical" href="http://zhoubofsy.github.io/2020/11/11/storage/ceph/async-messenger-introduce/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>AsyncMessenger介绍 | Bolog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Bolog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2020/11/11/storage/ceph/async-messenger-introduce/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          AsyncMessenger介绍
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-11-11 15:05:40" itemprop="dateCreated datePublished" datetime="2020-11-11T15:05:40+08:00">2020-11-11</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>说到Ceph的通讯一定绕不开Messenger，无论是客户端到OSD，还是OSD到MON，或者OSD到OSD，都需要Messenger来协助完成各个模块间消息的发送、接收。Messenger有三种实现，分别是SimpleMessenger、AsyncMessenger、XioMessenger，本文以AsyncMessenger为例简单介绍一下其工作原理。</p>
+<h1 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h1><p><img src="/images/asyncmessenger/ceph-AsyncMessenger.png" alt="asyncmessenger"></p>
+<ul>
+<li><code>processors</code>线程数量由<code>cct-&gt;_conf-&gt;ms_async_op_threads</code>决定</li>
+<li><code>NetworkStack</code>中<code>workers</code>与<code>processors</code>一一对应。</li>
+<li><code>processors</code>收到请求会调创建<code>AsyncConnection</code>，并存入调用<code>AsyncConnection</code>实例的<code>accept</code>方法，<code>accept</code>通过<code>EventCenter</code>将由<code>NetworkStack</code>的<code>workers</code>调用<code>AsyncConnection</code>实例的<code>process</code>方法。(哈哈哈，绕吧，有点儿晕了吧～～～)</li>
+<li><code>processors</code>处理完accept请求后，将<code>AsyncConnection</code>实例存入<code>accepting_conns</code>，等待<code>NetworkStack</code>处理完成。</li>
+<li><code>AsyncConnection</code>的<code>process</code>被<code>NetworkStack</code>的<code>workers</code>线程调用，并构建<code>Message</code>消息通过<code>dispatch_queue</code>或<code>ms_fast_dispatch</code>发送到<code>fast_dispatchers</code>。</li>
+</ul>
+<h1 id="Message-格式"><a href="#Message-格式" class="headerlink" title="Message 格式"></a>Message 格式</h1><h2 id="CEPH-MSGR-TAG-MSG"><a href="#CEPH-MSGR-TAG-MSG" class="headerlink" title="CEPH_MSGR_TAG_MSG"></a>CEPH_MSGR_TAG_MSG</h2><p><img src="/images/asyncmessenger/ceph-message_format.png" alt="message_format"></p>
+<ul>
+<li>tag  <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> CEPH_MSGR_TAG_READY         1  <span class="comment">/* server-&gt;client: ready for messages */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CEPH_MSGR_TAG_RESETSESSION  2  <span class="comment">/* server-&gt;client: reset, try again */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CEPH_MSGR_TAG_WAIT          3  <span class="comment">/* server-&gt;client: wait for racing incoming connection */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CEPH_MSGR_TAG_RETRY_SESSION 4  <span class="comment">/* server-&gt;client + cseq: try again with higher cseq */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CEPH_MSGR_TAG_RETRY_GLOBAL  5  <span class="comment">/* server-&gt;client + gseq: try again with higher gseq */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CEPH_MSGR_TAG_CLOSE         6  <span class="comment">/* closing pipe */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CEPH_MSGR_TAG_MSG           7  <span class="comment">/* message */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CEPH_MSGR_TAG_ACK           8  <span class="comment">/* message ack */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CEPH_MSGR_TAG_KEEPALIVE     9  <span class="comment">/* just a keepalive byte! */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CEPH_MSGR_TAG_BADPROTOVER  10  <span class="comment">/* bad protocol version */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CEPH_MSGR_TAG_BADAUTHORIZER 11 <span class="comment">/* bad authorizer */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CEPH_MSGR_TAG_FEATURES      12 <span class="comment">/* insufficient features */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CEPH_MSGR_TAG_SEQ           13 <span class="comment">/* 64-bit int follows with seen seq number */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CEPH_MSGR_TAG_KEEPALIVE2     14</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CEPH_MSGR_TAG_KEEPALIVE2_ACK 15  <span class="comment">/* keepalive reply */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CEPH_MSGR_TAG_CHALLENGE_AUTHORIZER 16  <span class="comment">/* ceph v2 doing server challenge */</span></span></span><br></pre></td></tr></table></figure>
+  ** 我觉得注释处的说明写的很清楚了，此处不做过多说明了。 **</li>
+<li>header  <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">ceph_msg_header</span> &#123;</span><br><span class="line">    __le64 seq;       <span class="comment">/* message seq# for this session */</span></span><br><span class="line">    __le64 tid;       <span class="comment">/* transaction id */</span></span><br><span class="line">    __le16 type;      <span class="comment">/* message type */</span></span><br><span class="line">    __le16 priority;  <span class="comment">/* priority.  higher value == higher priority */</span></span><br><span class="line">    __le16 version;   <span class="comment">/* version of message encoding */</span></span><br><span class="line"></span><br><span class="line">    __le32 front_len; <span class="comment">/* bytes in main payload */</span></span><br><span class="line">    __le32 middle_len;<span class="comment">/* bytes in middle payload */</span></span><br><span class="line">    __le32 data_len;  <span class="comment">/* bytes of data payload */</span></span><br><span class="line">    __le16 data_off;  <span class="comment">/* sender: include full offset;</span></span><br><span class="line"><span class="comment">                 receiver: mask against ~PAGE_MASK */</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">ceph_entity_name</span> src;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* oldest code we think can decode this.  unknown if zero. */</span></span><br><span class="line">    __le16 compat_version;</span><br><span class="line">    __le16 reserved;</span><br><span class="line">    __le32 crc;       <span class="comment">/* header crc32c */</span></span><br><span class="line">&#125; __attribute__ ((packed));</span><br></pre></td></tr></table></figure></li>
+<li>payload<br>  *** 未知 ***</li>
+<li>middle<br>  *** 未知 ***</li>
+<li>data<br>  具体传递的数据内容，数据大小由<code>header</code>中的<code>data_len</code>决定。</li>
+<li>footer&#x2F;old_footer  <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> * follows data payload</span></span><br><span class="line"><span class="comment"> * ceph_msg_footer_old does not support digital signatures on messages PLR</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">ceph_msg_footer_old</span> &#123;</span><br><span class="line">    __le32 front_crc, middle_crc, data_crc;</span><br><span class="line">    __u8 flags;</span><br><span class="line">&#125; __attribute__ ((packed));</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">ceph_msg_footer</span> &#123;</span><br><span class="line">    __le32 front_crc, middle_crc, data_crc;</span><br><span class="line">    <span class="comment">// sig holds the 64 bits of the digital signature for the message PLR</span></span><br><span class="line">    __le64  sig;</span><br><span class="line">    __u8 flags;</span><br><span class="line">&#125; __attribute__ ((packed));</span><br></pre></td></tr></table></figure>
+  <code>footer</code>与<code>old_footer</code>之差一个签名<code>sig</code></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/cepsager/" rel="tag"># cepsager</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/11/08/algorithm/raft/" rel="prev" title="Raft">
+      <i class="fa fa-chevron-left"></i> Raft
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/11/17/storage/spdk-introduce/" rel="next" title="SPDK简介">
+      SPDK简介 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8E%9F%E7%90%86"><span class="nav-number">1.</span> <span class="nav-text">原理</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Message-%E6%A0%BC%E5%BC%8F"><span class="nav-number">2.</span> <span class="nav-text">Message 格式</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#CEPH-MSGR-TAG-MSG"><span class="nav-number">2.1.</span> <span class="nav-text">CEPH_MSGR_TAG_MSG</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">博</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">138</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">119</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">博</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

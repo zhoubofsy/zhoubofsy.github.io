@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zhoubofsy.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="概依托现有虚拟化资源引入docker容器机制   scheduler  根据VM宿主机的负载或其他情况，决定容器运行在哪个VM上。 monitor  监控VM宿主机和容器健康情况，当有容器或宿主机宕掉时，报告想过情况，其他模块根据monitor的报告做出相应的响应。 controller  控制容器的启动停止、迁移、扩展等操作 docker engine  …… pipework  管理容器网络，">
+<meta property="og:type" content="article">
+<meta property="og:title" content="XenServer中Docker容器实施方案（Preview）">
+<meta property="og:url" content="http://zhoubofsy.github.io/2017/05/11/works/docker-over-xenserver-plans/index.html">
+<meta property="og:site_name" content="Bolog">
+<meta property="og:description" content="概依托现有虚拟化资源引入docker容器机制   scheduler  根据VM宿主机的负载或其他情况，决定容器运行在哪个VM上。 monitor  监控VM宿主机和容器健康情况，当有容器或宿主机宕掉时，报告想过情况，其他模块根据monitor的报告做出相应的响应。 controller  控制容器的启动停止、迁移、扩展等操作 docker engine  …… pipework  管理容器网络，">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://zhoubofsy.github.io/images/work/xen_container_plan.png">
+<meta property="og:image" content="http://zhoubofsy.github.io/images/work/xen_container_network_plan.png">
+<meta property="og:image" content="http://zhoubofsy.github.io/images/work/xen_container_flow.png">
+<meta property="article:published_time" content="2017-05-11T06:51:41.000Z">
+<meta property="article:modified_time" content="2024-09-09T07:57:18.597Z">
+<meta property="article:author" content="博">
+<meta property="article:tag" content="docker">
+<meta property="article:tag" content="plan">
+<meta property="article:tag" content="xenserver">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://zhoubofsy.github.io/images/work/xen_container_plan.png">
+
+<link rel="canonical" href="http://zhoubofsy.github.io/2017/05/11/works/docker-over-xenserver-plans/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>XenServer中Docker容器实施方案（Preview） | Bolog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Bolog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/05/11/works/docker-over-xenserver-plans/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          XenServer中Docker容器实施方案（Preview）
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2017-05-11 14:51:41" itemprop="dateCreated datePublished" datetime="2017-05-11T14:51:41+08:00">2017-05-11</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/works/" itemprop="url" rel="index"><span itemprop="name">works</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="概"><a href="#概" class="headerlink" title="概"></a>概</h1><p>依托现有虚拟化资源引入docker容器机制</p>
+<p><img src="/images/work/xen_container_plan.png" alt="xen_container_plan.png"></p>
+<ul>
+<li>scheduler<br>  根据VM宿主机的负载或其他情况，决定容器运行在哪个VM上。</li>
+<li>monitor<br>  监控VM宿主机和容器健康情况，当有容器或宿主机宕掉时，报告想过情况，其他模块根据monitor的报告做出相应的响应。</li>
+<li>controller<br>  控制容器的启动停止、迁移、扩展等操作</li>
+<li>docker engine<br>  ……</li>
+<li>pipework<br>  管理容器网络，目前pipework支持手动配置容器ip，网关及路由；对DHCP支持存在问题；（考虑将pipework以plugin方式加入docker engine）</li>
+<li>xe-daemon<br>  采集容器监控数据，并通过xenbus将数据发给xenserver</li>
+</ul>
+<h1 id="方案"><a href="#方案" class="headerlink" title="方案"></a>方案</h1><h2 id="网络"><a href="#网络" class="headerlink" title="网络"></a>网络</h2><p><img src="/images/work/xen_container_network_plan.png" alt="xen_container_network_plan.png"></p>
+<ul>
+<li>宿主机有两个网络，一个管理网，一个数据网，宿主机内的所有容器使用数据网络</li>
+<li>利用linux自带的bridge将宿主机的数据网与容器的veth pair相连，由此二层网络联通</li>
+<li>宿主机开通ip_forward，实现三层转发</li>
+<li>容器通过<code>pipework</code>脚本完成ip地址、路由、网关的配置</li>
+</ul>
+<h3 id="网络操作流程"><a href="#网络操作流程" class="headerlink" title="网络操作流程"></a>网络操作流程</h3><ol>
+<li>根据网段创建bridge<br> 使用<code>docker network create --gateway &#123;宿主机IP&#125; --subnet &#123;宿主机子网&#125; -d bridge -o com.docker.network.bridge.name=&quot;&#123;网桥设备名称&#125;&quot; &#123;DockerNetwork名称&#125;</code>创建bridge。<br> eg： <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker network create --gateway 10.37.129.4 --subnet 10.37.129.0/24 -d bridge -o com.docker.network.bridge.name=<span class="string">&quot;xennet0&quot;</span> xennet</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">brctl show</span></span><br><span class="line">bridge name bridge id       STP enabled interfaces</span><br><span class="line">docker0     8000.0242df249633   no</span><br><span class="line">xennet0     8000.0242688f16c2   no </span><br></pre></td></tr></table></figure></li>
+<li>桥接出口网卡<br> 使用<code>brctl addif &#123;bridge名称&#125; &#123;网卡名称&#125;</code>将出口网卡添加到指定网桥中，此处应根据xscontainer使用用户的权限决定是否需要增加<code>sudo</code>操作<br> eg: <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> brctl addif xennet0 enp0s6</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">brctl show</span></span><br><span class="line">bridge name bridge id       STP enabled interfaces</span><br><span class="line">docker0     8000.0242df249633   no</span><br><span class="line">xennet0     8000.0242688f16c2   no      enp0s6</span><br></pre></td></tr></table></figure></li>
+<li>创建固定IP容器<br> 创建容器需要分配固定IP，该IP需要业务层分配，并与bridge同网段。<br> eg: <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker run -d --name c1 --network xennet --ip 10.37.129.100 centos:7.3.1611 /usr/sbin/init</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker run -d --name c2 --network xennet --ip 10.37.129.200 centos:7.3.1611 /usr/sbin/init</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">brctl show</span></span><br><span class="line">bridge name bridge id       STP enabled interfaces</span><br><span class="line">docker0     8000.0242df249633   no</span><br><span class="line">xennet0     8000.0242688f16c2   no      enp0s6</span><br><span class="line">                                        veth990ee82</span><br><span class="line">                                        vethf1f6fcb</span><br></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="宿主机重启流程"><a href="#宿主机重启流程" class="headerlink" title="宿主机重启流程"></a>宿主机重启流程</h3><p>*** 由于宿主机重启会导致bridge中记录的桥接出口网卡信息丢失，所以在宿主机重启后需要重新桥接出口网卡 ***</p>
+<ol>
+<li>桥接出口网卡<br> 同上</li>
+<li>恢复原有容器<br> 使用<code>docker run</code> or <code>docker start</code>恢复容器</li>
+</ol>
+<h2 id="共享存储"><a href="#共享存储" class="headerlink" title="共享存储"></a>共享存储</h2><h2 id="通过虚拟机挂载共享存储"><a href="#通过虚拟机挂载共享存储" class="headerlink" title="通过虚拟机挂载共享存储"></a>通过虚拟机挂载共享存储</h2><ul>
+<li>需要记录虚机挂载共享存储与容器的对应关系</li>
+<li>在创建、迁移、删除容器时，需要对相关存储资源进行分配或回收</li>
+</ul>
+<h2 id="容器直接挂载共享存储"><a href="#容器直接挂载共享存储" class="headerlink" title="容器直接挂载共享存储"></a>容器直接挂载共享存储</h2><ul>
+<li>一般容器<br>  使用RBD／NBD-RBD块设备存储，或NFS存储。对于RBD／NBD-RBD方式需要添加驱动；对于NFS方式docker原生支持。</li>
+<li>Registry容<br>  使用RGW对象存储（S3&#x2F;Swift），测试中。。。</li>
+</ul>
+<h2 id="监控"><a href="#监控" class="headerlink" title="监控"></a>监控</h2><p>XenContainer</p>
+<h2 id="调度"><a href="#调度" class="headerlink" title="调度"></a>调度</h2><h1 id="接口"><a href="#接口" class="headerlink" title="接口"></a>接口</h1><h1 id="流"><a href="#流" class="headerlink" title="流"></a>流</h1><p>服务发现（DNS）、负载均衡、容器镜像库均已容器形式提供服务。</p>
+<p><img src="/images/work/xen_container_flow.png" alt="xen_container_flow.png"></p>
+<h1 id="注"><a href="#注" class="headerlink" title="注"></a>注</h1><ul>
+<li>scheduler、monitor、controller 从头写吧</li>
+<li>docker engine 需要修改一些api接口</li>
+<li>pipework 需要从shell改成golang，以plugin方式加入docker engine</li>
+<li>xe-daemon 需要增加ip地址采集</li>
+<li>DNS Container 从头写吧</li>
+</ul>
+<p>*** 技术相关调研，请见下节“参” ***</p>
+<h1 id="参"><a href="#参" class="headerlink" title="参"></a>参</h1><ul>
+<li><a href="https://zhoubofsy.github.io/2017/05/08/container/docker/docker-network-pipework/">Docker网络管理——PIPEWORK</a></li>
+<li><a href="https://zhoubofsy.github.io/2017/04/27/container/k8s/k8s-analyze-service-discovery/">K8s服务发现分析</a></li>
+<li><a href="https://zhoubofsy.github.io/2017/03/29/container/k8s/k8s-service-expose/">k8s service expose</a></li>
+<li><a href="https://zhoubofsy.github.io/2017/03/03/container/docker/docker-network/">Docker网络技术(Bridge)</a></li>
+<li><a href="https://zhoubofsy.github.io/2017/03/01/container/rancher/rancher-dns-and-metadata/">Rancher服务发现分析</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/docker/" rel="tag"># docker</a>
+              <a href="/tags/plan/" rel="tag"># plan</a>
+              <a href="/tags/xenserver/" rel="tag"># xenserver</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2017/05/08/container/docker/docker-network-pipework/" rel="prev" title="Docker网络管理——PIPEWORK">
+      <i class="fa fa-chevron-left"></i> Docker网络管理——PIPEWORK
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2017/05/12/network/iptables-introduce/" rel="next" title="iptables">
+      iptables <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%A6%82"><span class="nav-number">1.</span> <span class="nav-text">概</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%96%B9%E6%A1%88"><span class="nav-number">2.</span> <span class="nav-text">方案</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BD%91%E7%BB%9C"><span class="nav-number">2.1.</span> <span class="nav-text">网络</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BD%91%E7%BB%9C%E6%93%8D%E4%BD%9C%E6%B5%81%E7%A8%8B"><span class="nav-number">2.1.1.</span> <span class="nav-text">网络操作流程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%BF%E4%B8%BB%E6%9C%BA%E9%87%8D%E5%90%AF%E6%B5%81%E7%A8%8B"><span class="nav-number">2.1.2.</span> <span class="nav-text">宿主机重启流程</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%B1%E4%BA%AB%E5%AD%98%E5%82%A8"><span class="nav-number">2.2.</span> <span class="nav-text">共享存储</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%80%9A%E8%BF%87%E8%99%9A%E6%8B%9F%E6%9C%BA%E6%8C%82%E8%BD%BD%E5%85%B1%E4%BA%AB%E5%AD%98%E5%82%A8"><span class="nav-number">2.3.</span> <span class="nav-text">通过虚拟机挂载共享存储</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%B9%E5%99%A8%E7%9B%B4%E6%8E%A5%E6%8C%82%E8%BD%BD%E5%85%B1%E4%BA%AB%E5%AD%98%E5%82%A8"><span class="nav-number">2.4.</span> <span class="nav-text">容器直接挂载共享存储</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9B%91%E6%8E%A7"><span class="nav-number">2.5.</span> <span class="nav-text">监控</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%B0%83%E5%BA%A6"><span class="nav-number">2.6.</span> <span class="nav-text">调度</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%8E%A5%E5%8F%A3"><span class="nav-number">3.</span> <span class="nav-text">接口</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%B5%81"><span class="nav-number">4.</span> <span class="nav-text">流</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%B3%A8"><span class="nav-number">5.</span> <span class="nav-text">注</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%82"><span class="nav-number">6.</span> <span class="nav-text">参</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">博</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">138</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">119</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">博</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

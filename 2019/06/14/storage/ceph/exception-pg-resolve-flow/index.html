@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zhoubofsy.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="PG的全称为Placement Group（放置组），放置顾名思义放置Object的载体。PG的创建是在创建Pool的时候根据指定的数量进行创建。PG的数量与副本数也有关系，比如是3副本的则会有3个相同的pg存在于3个不同的osd上，以filestore为例pg其实在osd的存在形式就是一个目录。其目录的命名规则为 &#123;pool-id&#125;.&#123;pg-id&#125;_hea">
+<meta property="og:type" content="article">
+<meta property="og:title" content="异常PG处理套路">
+<meta property="og:url" content="http://zhoubofsy.github.io/2019/06/14/storage/ceph/exception-pg-resolve-flow/index.html">
+<meta property="og:site_name" content="Bolog">
+<meta property="og:description" content="PG的全称为Placement Group（放置组），放置顾名思义放置Object的载体。PG的创建是在创建Pool的时候根据指定的数量进行创建。PG的数量与副本数也有关系，比如是3副本的则会有3个相同的pg存在于3个不同的osd上，以filestore为例pg其实在osd的存在形式就是一个目录。其目录的命名规则为 &#123;pool-id&#125;.&#123;pg-id&#125;_hea">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2019-06-14T06:18:54.000Z">
+<meta property="article:modified_time" content="2024-09-09T07:57:18.590Z">
+<meta property="article:author" content="博">
+<meta property="article:tag" content="ceph">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://zhoubofsy.github.io/2019/06/14/storage/ceph/exception-pg-resolve-flow/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>异常PG处理套路 | Bolog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Bolog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2019/06/14/storage/ceph/exception-pg-resolve-flow/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          异常PG处理套路
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2019-06-14 14:18:54" itemprop="dateCreated datePublished" datetime="2019-06-14T14:18:54+08:00">2019-06-14</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>PG的全称为Placement Group（放置组），放置顾名思义放置Object的载体。PG的创建是在创建Pool的时候根据指定的数量进行创建。PG的数量与副本数也有关系，比如是3副本的则会有3个相同的pg存在于3个不同的osd上，以filestore为例pg其实在osd的存在形式就是一个目录。其目录的命名规则为 <code>&#123;pool-id&#125;.&#123;pg-id&#125;_head</code> 和 <code>&#123;pool-id&#125;.&#123;pg-id&#125;.TEMP</code>。如果你想找出一个pg对应哪些个osd，可以使用<code>ceph pg map &#123;pgid&#125;</code>的命令。</p>
+<p>eg：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[root@ceph71 ~]# ceph pg map 1.5f</span><br><span class="line">osdmap e30 pg 1.5f (1.5f) -&gt; up [2,0,1] acting [2,0,1]</span><br></pre></td></tr></table></figure>
+
+<p>背景就是介绍这么多吧，接下来说说PG状态。</p>
+<h1 id="状态"><a href="#状态" class="headerlink" title="状态"></a>状态</h1><table>
+<thead>
+<tr>
+<th align="right">状态</th>
+<th align="left">描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="right">active</td>
+<td align="left">当前拥有最新状态数据的pg正在工作中，能正常处理来自客户端的读写请求。</td>
+</tr>
+<tr>
+<td align="right">inactive</td>
+<td align="left">正在等待具有最新数据的OSD出现，即当前具有最新数据的pg不在工作中，不能正常处理来自客户端的读写请求。</td>
+</tr>
+<tr>
+<td align="right">activating</td>
+<td align="left">Peering 已经完成，PG 正在等待所有 PG 实例同步并固化 Peering 的结果 (Info、Log 等)</td>
+</tr>
+<tr>
+<td align="right">clean</td>
+<td align="left">pg所包含的object达到指定的副本数量，即object副本数量正常</td>
+</tr>
+<tr>
+<td align="right">unclean</td>
+<td align="left">PG所包含的object没有达到指定的副本数量，比如一个PG没在工作，另一个PG在工作，object没有复制到另外一个PG中。</td>
+</tr>
+<tr>
+<td align="right">peering</td>
+<td align="left">PG所在的OSD对PG中的对象的状态达成一个共识（维持对象一致性）</td>
+</tr>
+<tr>
+<td align="right">peered</td>
+<td align="left">peering已经完成，但pg当前acting set规模小于存储池规定的最小副本数（min_size）</td>
+</tr>
+<tr>
+<td align="right">degraded</td>
+<td align="left">主osd没有收到副osd的写完成应答，比如某个osd处于down状态</td>
+</tr>
+<tr>
+<td align="right">stale</td>
+<td align="left">主osd未在规定时间内向mon报告其pg状态，或者其它osd向mon报告该主osd无法通信</td>
+</tr>
+<tr>
+<td align="right">inconsistent</td>
+<td align="left">PG中存在某些对象的各个副本的数据不一致，原因可能是数据被修改</td>
+</tr>
+<tr>
+<td align="right">incomplete</td>
+<td align="left">peering过程中，由于无法选出权威日志，通过choose_acting选出的acting set不足以完成数据修复，导致peering无法正常完成</td>
+</tr>
+<tr>
+<td align="right">repair</td>
+<td align="left">pg在scrub过程中发现某些对象不一致，尝试自动修复</td>
+</tr>
+<tr>
+<td align="right">undersized</td>
+<td align="left">pg的副本数少于pg所在池所指定的副本数量，一般是由于osd down的缘故</td>
+</tr>
+<tr>
+<td align="right">scrubbing</td>
+<td align="left">pg对对象meta的一致性进行扫描</td>
+</tr>
+<tr>
+<td align="right">deep</td>
+<td align="left">pg对对象数据的一致性进行扫描</td>
+</tr>
+<tr>
+<td align="right">creating</td>
+<td align="left">pg正在被创建</td>
+</tr>
+<tr>
+<td align="right">recovering</td>
+<td align="left">pg间peering完成后，对pg中不一致的对象执行同步或修复，一般是osd down了或新加入了osd</td>
+</tr>
+<tr>
+<td align="right">recovering-wait</td>
+<td align="left">等待 Recovery 资源预留</td>
+</tr>
+<tr>
+<td align="right">backfilling</td>
+<td align="left">一般是当新的osd加入或移除掉了某个osd后，pg进行迁移或进行全量同步</td>
+</tr>
+<tr>
+<td align="right">down</td>
+<td align="left">包含必备数据的副本挂了，pg此时处理离线状态，不能正常处理来自客户端的读写请求</td>
+</tr>
+<tr>
+<td align="right">remapped</td>
+<td align="left">重新映射态。PG 活动集任何的一个改变，数据发生从老活动集到新活动集的迁移。在迁移期间还是用老的活动集中的主 OSD 处理客户端请求，一旦迁移完成新活动集中的主 OSD 开始处理</td>
+</tr>
+<tr>
+<td align="right">misplaced</td>
+<td align="left">有一些回填的场景：PG被临时映射到一个OSD上。而这种情况实际上不应太久，PG可能仍然处于临时位置而不是正确的位置。这种情况下个PG就是misplaced。这是因为正确的副本数存在但是有个别副本保存在错误的位置上。</td>
+</tr>
+</tbody></table>
+<h1 id="异常"><a href="#异常" class="headerlink" title="异常"></a>异常</h1><h2 id="active-undersized-degraded"><a href="#active-undersized-degraded" class="headerlink" title="active+undersized+degraded"></a>active+undersized+degraded</h2><p>若发现有osd挂掉，先尝试将osd重新拉起来，拉起来后集群会自动重新恢复健康状态。<br>但是也有可能出现这个osd再也起不来了，比如硬盘损坏了，这时多副本就发挥作用了，因为还有其它副本在其它osd上，这时我们可以通过均衡数据的方法来将集群恢复并将该osd踢出集群。</p>
+<p>** 解决 **</p>
+<ol>
+<li>将osd reweight权重置0，将数据分散到其他osd上 <code>ceph osd reweight &#123;osd-id&#125; 0</code></li>
+<li>待集群rebalance后，开始删除osd</li>
+</ol>
+<h2 id="unfound-objects"><a href="#unfound-objects" class="headerlink" title="unfound objects"></a>unfound objects</h2><p>ceph集群知道该对象存在，但无法定位该object在哪时会报这个错误。</p>
+<p>** 解决 **</p>
+<ol>
+<li>尝试让失败的osd起来，如果起来后集群恢复正常，则结束</li>
+<li>试将该pg的unfound对象回滚到上一个版本，<code>ceph pg &#123;pgid&#125; mark_unfound_lost revert</code>如果恢复正常，则结束</li>
+<li>如果还是不行，那只有将该object删除掉了，注意这会导致丢失数据，执行<code>ceph pg &#123;pgid&#125; mark_unfound_lost delete</code>删除unfound对象</li>
+</ol>
+<h2 id="inconsistent-objects"><a href="#inconsistent-objects" class="headerlink" title="inconsistent objects"></a>inconsistent objects</h2><p>pg中保存的object中有些副本数据不一致，有些事伴随着scrub errors错误</p>
+<p>** 解决 **</p>
+<ol>
+<li><code>ceph health detail</code>找出问题pg</li>
+<li>尝试<code>ceph pg repair &#123;pgid&#125;</code>，若成功，则结束；不成功进行如下操作。</li>
+<li>使用<code>ceph pg map &#123;pgid&#125;</code>找出主osd，打开日志查看哪个object不一致</li>
+<li>找出所有该objects所有副本存放的位置，用摘要算法(md5sum,sha256)等计算出其hash值，如果是3副本，删除与其他副本不一致的；如果是2副本，则可能会误删。</li>
+<li>再次执行<code>ceph pg repair &#123;pgid&#125;</code></li>
+</ol>
+<h2 id="stale-pg"><a href="#stale-pg" class="headerlink" title="stale pg"></a>stale pg</h2><p>pg出现stale状态，也就是pg处于僵死状态，该状态是无法处理新的请求了的，新的请求过来只会block，这种情况一般是由于所有副本pg的osd都挂了。<br>Ceph使用心跳来确保主机和进程都在运行，OSD进程如果不能周期性的发送心跳包，那么PG就会变成stuck状态。默认情况下，OSD每半秒钟汇汇报一次PG，up thru,boot, failure statistics等信息，要比心跳包更会频繁一点。如果主OSD不能汇报给MON或者其他OSD汇报主OSD挂了，Monitor会将主OSD上的PG标记为stale。当启动集群后，直到peer过程完成，PG都会处于stale状态。而当集群运行了一段时间后，如果PG卡在stale状态，说明主OSD上的PG挂了或者不能给MON发送信息。</p>
+<p>要模拟其实也很简单，比如设置2副本，然后将2个不同故障域的osd挂掉即可出现，最好的恢复方法当然是重新拉起这两个osd，但有时可能出现这样的情况，两个osd永远也拉不起来了，然后你把这两个osd清理出去了，清理完后这些pg当然就是stale的状态，这时的恢复方法只能是丢掉这个pg里的数据了，重新创建pg。</p>
+<p>** 解决 **</p>
+<ol>
+<li>使用命令<code>ceph pg dump |grep stale</code>找出所有的stale的pg，也可以<code>ceph health detail | grep stale</code></li>
+<li>执行<code>ceph pg force_create_pg &#123;pgid&#125;</code>命令强制重新创建pg，会看到pg转为creating状态</li>
+<li>重启ceph中所有osd服务</li>
+</ol>
+<h2 id="Peered"><a href="#Peered" class="headerlink" title="Peered"></a>Peered</h2><p>Peering 已经完成，但是 PG 当前 Acting Set 规模小于存储池规定的最小副本数 (min_size)。<br>如果pool的副本数为3、min_size&#x3D;2，停掉两个副本所在的osd，此时访问集群的客户端处于blocked状态。</p>
+<p>** 解决 **</p>
+<ol>
+<li>先尝试将down掉的两个osd恢复，或至少恢复一个。</li>
+<li>若不能正常恢复，可修改<code>min_size=1</code>，解除客户端blocked状态</li>
+</ol>
+<h1 id="鸣谢-参考"><a href="#鸣谢-参考" class="headerlink" title="鸣谢&amp;参考"></a>鸣谢&amp;参考</h1><ul>
+<li><a target="_blank" rel="noopener" href="https://www.cnblogs.com/luohaixian/p/9693978.html">Ceph PG介绍及故障状态和修复</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.infoq.cn/article/4N2whf1y1lH_Hd5QYOkW">分布式存储系统 Ceph 之 PG 状态详解</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.xuxiaopang.com/2016/11/11/doc-ceph-table/">Ceph常用表格汇总</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/ceph/" rel="tag"># ceph</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2019/05/13/storage/ceph/backfill_recovery_config/" rel="prev" title="Backfill & Recovery 恢复优化">
+      <i class="fa fa-chevron-left"></i> Backfill & Recovery 恢复优化
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2019/08/04/storage/ceph/s3-authorization-v4/" rel="next" title="s3 authorization v4">
+      s3 authorization v4 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%8A%B6%E6%80%81"><span class="nav-number">1.</span> <span class="nav-text">状态</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%BC%82%E5%B8%B8"><span class="nav-number">2.</span> <span class="nav-text">异常</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#active-undersized-degraded"><span class="nav-number">2.1.</span> <span class="nav-text">active+undersized+degraded</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#unfound-objects"><span class="nav-number">2.2.</span> <span class="nav-text">unfound objects</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#inconsistent-objects"><span class="nav-number">2.3.</span> <span class="nav-text">inconsistent objects</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#stale-pg"><span class="nav-number">2.4.</span> <span class="nav-text">stale pg</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Peered"><span class="nav-number">2.5.</span> <span class="nav-text">Peered</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%B8%A3%E8%B0%A2-%E5%8F%82%E8%80%83"><span class="nav-number">3.</span> <span class="nav-text">鸣谢&amp;参考</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">博</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">138</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">119</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">博</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

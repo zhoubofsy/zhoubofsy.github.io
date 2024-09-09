@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zhoubofsy.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="背景介绍ceph 版本分类包括“开发版”、“稳定版（Stable）”、“长期支持版（LTS）”；  开发版，增加修改功能而产生的版本 稳定版本，短期维护的版本，周期不固定 长期支持版本，长期维护的版本，周期为10个月左右(或更长)  以下列出稳定版和长期支持版本及对应的版本号：    版本名称 分类 版本号    argonaut Stable v0.48 ~ v0.48.3   bobtail">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ceph &amp; OS 版本选择">
+<meta property="og:url" content="http://zhoubofsy.github.io/2016/04/12/works/ceph_stable_select/index.html">
+<meta property="og:site_name" content="Bolog">
+<meta property="og:description" content="背景介绍ceph 版本分类包括“开发版”、“稳定版（Stable）”、“长期支持版（LTS）”；  开发版，增加修改功能而产生的版本 稳定版本，短期维护的版本，周期不固定 长期支持版本，长期维护的版本，周期为10个月左右(或更长)  以下列出稳定版和长期支持版本及对应的版本号：    版本名称 分类 版本号    argonaut Stable v0.48 ~ v0.48.3   bobtail">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2016-04-12T00:00:00.000Z">
+<meta property="article:modified_time" content="2024-09-09T07:57:18.597Z">
+<meta property="article:author" content="博">
+<meta property="article:tag" content="ceph">
+<meta property="article:tag" content="plan">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://zhoubofsy.github.io/2016/04/12/works/ceph_stable_select/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>ceph & OS 版本选择 | Bolog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Bolog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2016/04/12/works/ceph_stable_select/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          ceph & OS 版本选择
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2016-04-12 08:00:00" itemprop="dateCreated datePublished" datetime="2016-04-12T08:00:00+08:00">2016-04-12</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/works/" itemprop="url" rel="index"><span itemprop="name">works</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="背景介绍"><a href="#背景介绍" class="headerlink" title="背景介绍"></a>背景介绍</h1><p>ceph 版本分类包括“开发版”、“稳定版（Stable）”、“长期支持版（LTS）”；</p>
+<ul>
+<li>开发版，增加修改功能而产生的版本</li>
+<li>稳定版本，短期维护的版本，周期不固定</li>
+<li>长期支持版本，长期维护的版本，周期为10个月左右(或更长)</li>
+</ul>
+<p>以下列出稳定版和长期支持版本及对应的版本号：</p>
+<table>
+<thead>
+<tr>
+<th>版本名称</th>
+<th align="center">分类</th>
+<th align="right">版本号</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>argonaut</td>
+<td align="center">Stable</td>
+<td align="right">v0.48 ~ v0.48.3</td>
+</tr>
+<tr>
+<td>bobtail</td>
+<td align="center">Stable</td>
+<td align="right">v0.56 ~ v0.56.7</td>
+</tr>
+<tr>
+<td>Cuttlefish</td>
+<td align="center">Stable</td>
+<td align="right">v0.61 ~ v0.61.9</td>
+</tr>
+<tr>
+<td>Dumpling</td>
+<td align="center">LTS</td>
+<td align="right">v0.67 ~ v0.67.12</td>
+</tr>
+<tr>
+<td>Emperor</td>
+<td align="center">Stable</td>
+<td align="right">v0.72 ~ v0.72.3</td>
+</tr>
+<tr>
+<td>Firefly</td>
+<td align="center">LTS</td>
+<td align="right">v0.80 ~ v0.80.11</td>
+</tr>
+<tr>
+<td>Giant</td>
+<td align="center">Stable</td>
+<td align="right">v0.87 ~ v0.87.2</td>
+</tr>
+<tr>
+<td>Hammer</td>
+<td align="center">LTS</td>
+<td align="right">v0.94 ~ v0.94.6</td>
+</tr>
+<tr>
+<td>Infernalis</td>
+<td align="center">Stable</td>
+<td align="right">v9.2.0 ~ v9.2.1</td>
+</tr>
+<tr>
+<td>Jewel</td>
+<td align="center">Stable or LTS</td>
+<td align="right">v10.2.0（未发布）</td>
+</tr>
+</tbody></table>
+<h1 id="稳定性-功能完整性"><a href="#稳定性-功能完整性" class="headerlink" title="稳定性&amp;功能完整性"></a>稳定性&amp;功能完整性</h1><ul>
+<li>ceph 的“Stable版”和“LTS版”稳定性相对可靠，但LTS版本由社区维护更新，稳定性更佳；</li>
+<li>ceph 的功能在开发版中开发，然后合并到稳定版中维护修改bug，新版本涵盖旧版本功能；</li>
+<li>ceph 只有一条产品路线，所以各个版本中发现的bug，最终都会合并到主线版本上，导致在Stable（或LTS）版本中发现的问题，会在下一个Stable（或LTS）版本中得到修复；</li>
+</ul>
+<p>综上所述，可供选择的版本有Hammer 、 Infernalis 和 Jewel</p>
+<h1 id="性能最优"><a href="#性能最优" class="headerlink" title="性能最优"></a>性能最优</h1><ul>
+<li>BlueStore 提供更优的后端存储性能<br>  Hammer及以前版本后端存储采用的是XFS文件系统，这样延长了数据落盘的路径；<br>  在Jewel版本中ceph增加了一种存储方式BlueStore，BlueStore可以直接在裸设备上进行读写操作，缩短落盘路径，性能更优；</li>
+<li>纠删码（EC）性能优化<br>  ceph 对数据保护采用的是多副本（三副本）的方式，这种方式简单稳定性能好，但存储成本较贵，由此ceph推出了EC，但其EC性能较差，只能配合cache tier使用，才能发挥功效；<br>  为此在 Infernalis 及以后版本中对EC性能和稳定性进行了优化；</li>
+</ul>
+<h1 id="环境依赖"><a href="#环境依赖" class="headerlink" title="环境依赖"></a>环境依赖</h1><p>ceph的运行平台众多，包括：CentOS（RHEL）、Debian、Ubuntu、Fedora</p>
+<p>CentOS（RHEL）</p>
+<ul>
+<li>Hammer 及以前版本对应平台 CentOS 6</li>
+<li>Infernalis 及以后版本对应平台 CentOS 7 或更高版本</li>
+</ul>
+<h1 id="Stable-LTS时效性"><a href="#Stable-LTS时效性" class="headerlink" title="Stable &amp; LTS时效性"></a>Stable &amp; LTS时效性</h1><table>
+<thead>
+<tr>
+<th></th>
+<th align="center">Hammer</th>
+<th align="right">Infernalis</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>启始日期</td>
+<td align="center">2015.04</td>
+<td align="right">2015.11</td>
+</tr>
+<tr>
+<td>终止日期</td>
+<td align="center">2016.11</td>
+<td align="right">2016.06</td>
+</tr>
+</tbody></table>
+<h1 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h1><ol>
+<li>ceph 建议采用 Infernalis 版本（若实施前Jewel Stable or LTS版本发出，可直接选择Jewel）</li>
+<li>OS 建议采用 CentOS 7</li>
+</ol>
+<p>原因：</p>
+<ul>
+<li>从稳定性和功能完整性角度来说，目前可以选择Hammer或者Infernalis</li>
+<li>从性能最优角度说，最理想的选择是Jewel</li>
+<li>考虑到日后升级维护，Infernalis的下一个LTS版本（可能是Jewel）会是最好的选择</li>
+<li>若选择Hammer，日后想升级到Jewel，需要先升级OS，然后再升级ceph版本，改动太大，风险不可控制</li>
+<li>若选择Infernalis，日后升级，可直接升级ceph版本即可</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/ceph/" rel="tag"># ceph</a>
+              <a href="/tags/plan/" rel="tag"># plan</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2015/12/19/storage/pc_start/" rel="prev" title="x86计算机启动过程">
+      <i class="fa fa-chevron-left"></i> x86计算机启动过程
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2016/04/13/linux/rhel/yum-rpm-usage-md/" rel="next" title="yum 和 rpm 使用方法总结">
+      yum 和 rpm 使用方法总结 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%83%8C%E6%99%AF%E4%BB%8B%E7%BB%8D"><span class="nav-number">1.</span> <span class="nav-text">背景介绍</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%A8%B3%E5%AE%9A%E6%80%A7-%E5%8A%9F%E8%83%BD%E5%AE%8C%E6%95%B4%E6%80%A7"><span class="nav-number">2.</span> <span class="nav-text">稳定性&amp;功能完整性</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%80%A7%E8%83%BD%E6%9C%80%E4%BC%98"><span class="nav-number">3.</span> <span class="nav-text">性能最优</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%8E%AF%E5%A2%83%E4%BE%9D%E8%B5%96"><span class="nav-number">4.</span> <span class="nav-text">环境依赖</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Stable-LTS%E6%97%B6%E6%95%88%E6%80%A7"><span class="nav-number">5.</span> <span class="nav-text">Stable &amp; LTS时效性</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%BB%93%E8%AE%BA"><span class="nav-number">6.</span> <span class="nav-text">结论</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">博</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">138</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">119</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">博</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

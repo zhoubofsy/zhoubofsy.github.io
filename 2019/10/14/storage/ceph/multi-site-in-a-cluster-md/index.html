@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zhoubofsy.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="在一个Ceph集群里部署一个multisite RGW环境。有什么意义吗？没有，存属个人折腾。由于资源有限，所以只能在一个集群里委屈了。 限盐少许，直接开整。 版本14.2.3 (0f776cf838a1ae3130b2b73dc26be9c95c6ccc39) nautilus (stable) RGW配置部署一个Site的部署修改.rgw.rootPool修改&#x2F;etc&#x2F;ceph&#x2F;ceph.co">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Deploy multisite in 同一个集群">
+<meta property="og:url" content="http://zhoubofsy.github.io/2019/10/14/storage/ceph/multi-site-in-a-cluster-md/index.html">
+<meta property="og:site_name" content="Bolog">
+<meta property="og:description" content="在一个Ceph集群里部署一个multisite RGW环境。有什么意义吗？没有，存属个人折腾。由于资源有限，所以只能在一个集群里委屈了。 限盐少许，直接开整。 版本14.2.3 (0f776cf838a1ae3130b2b73dc26be9c95c6ccc39) nautilus (stable) RGW配置部署一个Site的部署修改.rgw.rootPool修改&#x2F;etc&#x2F;ceph&#x2F;ceph.co">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2019-10-14T10:17:55.000Z">
+<meta property="article:modified_time" content="2024-09-09T07:57:18.585Z">
+<meta property="article:author" content="博">
+<meta property="article:tag" content="ceph">
+<meta property="article:tag" content="rgw">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://zhoubofsy.github.io/2019/10/14/storage/ceph/multi-site-in-a-cluster-md/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Deploy multisite in 同一个集群 | Bolog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Bolog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2019/10/14/storage/ceph/multi-site-in-a-cluster-md/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Deploy multisite in 同一个集群
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2019-10-14 18:17:55" itemprop="dateCreated datePublished" datetime="2019-10-14T18:17:55+08:00">2019-10-14</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>在一个Ceph集群里部署一个multisite RGW环境。有什么意义吗？没有，存属个人折腾。由于资源有限，所以只能在一个集群里委屈了。</p>
+<p>限盐少许，直接开整。</p>
+<h1 id="版本"><a href="#版本" class="headerlink" title="版本"></a>版本</h1><p>14.2.3 (0f776cf838a1ae3130b2b73dc26be9c95c6ccc39) nautilus (stable)</p>
+<h1 id="RGW配置部署"><a href="#RGW配置部署" class="headerlink" title="RGW配置部署"></a>RGW配置部署</h1><h2 id="一个Site的部署"><a href="#一个Site的部署" class="headerlink" title="一个Site的部署"></a>一个Site的部署</h2><h3 id="修改-rgw-rootPool"><a href="#修改-rgw-rootPool" class="headerlink" title="修改.rgw.rootPool"></a>修改<code>.rgw.root</code>Pool</h3><p>修改<code>/etc/ceph/ceph.conf</code>中使用到<code>.rgw.root</code>pool的所有配置项，将其改为<code>exter.rgw.root</code>。<code>ceph.conf</code>中没有显示的配置，所以建议查找一下源代码中的配置<code>options.cc</code>。<br>之后再创建<code>realm</code>、<code>zonegroup</code>、<code>zone</code>等信息都会记录到<code>exter.rgw.root</code>中。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">rgw_zone_root_pool = exter.rgw.root</span><br><span class="line">rgw_region_root_pool = exter.rgw.root</span><br><span class="line">rgw_zonegroup_root_pool = exter.rgw.root</span><br><span class="line">rgw_realm_root_pool = exter.rgw.root</span><br><span class="line">rgw_period_root_pool = exter.rgw.root</span><br></pre></td></tr></table></figure>
+
+<p>配置完成后，启动RGW。本人将RGW安装到了容器中，所以下面给出容器的启动命令</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run -d --net=host --name rgw -v /etc/ceph/:/etc/ceph/ -v /var/lib/ceph/:/var/lib/ceph/ ceph/daemon:latest-nautilus rgw</span><br></pre></td></tr></table></figure>
+<p>运行后记得用<code>docker logs -f rgw</code>看一下rgw日志，确保其正常运行。</p>
+<p>然后使用<code>ceph df</code>看一下，当前RGW创建了哪些Pools</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">ceph <span class="built_in">df</span></span></span><br><span class="line">GLOBAL:</span><br><span class="line">    SIZE       AVAIL      RAW USED     %RAW USED</span><br><span class="line">    57 GiB     56 GiB      654 MiB          1.12</span><br><span class="line">POOLS:</span><br><span class="line">    NAME                        ID     USED        %USED     MAX AVAIL     OBJECTS</span><br><span class="line">    exter.rgw.root              18     1.2 KiB         0        27 GiB           4</span><br><span class="line">    default.rgw.control         19         0 B         0        27 GiB           8</span><br><span class="line">    default.rgw.meta            20         0 B         0        27 GiB           0</span><br><span class="line">    default.rgw.log             21         0 B         0        27 GiB          33</span><br></pre></td></tr></table></figure>
+
+<h3 id="创建Realm"><a href="#创建Realm" class="headerlink" title="创建Realm"></a>创建Realm</h3><p>创建一个 realm ，若不创建，后续在设置自定义的zone为default时会报无效参数的错误。此问题，可以看<code>rgw_admin.cc</code>的源码。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">4438</span>     <span class="keyword">case</span> OPT_ZONE_DEFAULT:</span><br><span class="line"><span class="number">4439</span>       &#123;</span><br><span class="line"><span class="number">4440</span>         RGWZoneGroup <span class="title function_">zonegroup</span><span class="params">(zonegroup_id,zonegroup_name)</span>;</span><br><span class="line"><span class="number">4441</span>         <span class="type">int</span> ret = zonegroup.init(g_ceph_context, store-&gt;svc()-&gt;sysobj);</span><br><span class="line"><span class="number">4442</span>         <span class="keyword">if</span> (ret &lt; <span class="number">0</span>) &#123;</span><br><span class="line"><span class="number">4443</span>           <span class="built_in">cerr</span> &lt;&lt; <span class="string">&quot;WARNING: failed to initialize zonegroup &quot;</span> &lt;&lt; zonegroup_name &lt;&lt; <span class="built_in">std</span>::<span class="built_in">endl</span>;</span><br><span class="line"><span class="number">4444</span>         &#125;</span><br><span class="line"><span class="number">4445</span>         <span class="keyword">if</span> (zone_id.empty() &amp;&amp; zone_name.empty()) &#123;</span><br><span class="line"><span class="number">4446</span>           <span class="built_in">cerr</span> &lt;&lt; <span class="string">&quot;no zone name or id provided&quot;</span> &lt;&lt; <span class="built_in">std</span>::<span class="built_in">endl</span>;</span><br><span class="line"><span class="number">4447</span>           <span class="keyword">return</span> EINVAL;</span><br><span class="line"><span class="number">4448</span>         &#125;</span><br><span class="line"><span class="number">4449</span>         RGWZoneParams <span class="title function_">zone</span><span class="params">(zone_id, zone_name)</span>;</span><br><span class="line"><span class="number">4450</span>         ret = zone.init(g_ceph_context, store-&gt;svc()-&gt;sysobj);</span><br><span class="line"><span class="number">4451</span>         <span class="keyword">if</span> (ret &lt; <span class="number">0</span>) &#123;</span><br><span class="line"><span class="number">4452</span>           <span class="built_in">cerr</span> &lt;&lt; <span class="string">&quot;unable to initialize zone: &quot;</span> &lt;&lt; cpp_strerror(-ret) &lt;&lt; <span class="built_in">std</span>::<span class="built_in">endl</span>;</span><br><span class="line"><span class="number">4453</span>           <span class="keyword">return</span> -ret;</span><br><span class="line"><span class="number">4454</span>         &#125;</span><br><span class="line"><span class="number">4455</span>         ret = zone.set_as_default();</span><br><span class="line"><span class="number">4456</span>         <span class="keyword">if</span> (ret &lt; <span class="number">0</span>) &#123;</span><br><span class="line"><span class="number">4457</span>           <span class="built_in">cerr</span> &lt;&lt; <span class="string">&quot;failed to set zone as default: &quot;</span> &lt;&lt; cpp_strerror(-ret) &lt;&lt; <span class="built_in">std</span>::<span class="built_in">endl</span>;</span><br><span class="line"><span class="number">4458</span>           <span class="keyword">return</span> -ret;</span><br><span class="line"><span class="number">4459</span>         &#125;</span><br><span class="line"><span class="number">4460</span>       &#125;</span><br><span class="line"><span class="number">4461</span>       <span class="keyword">break</span>;</span><br></pre></td></tr></table></figure>
+<p>在<code>failed to set zone as default</code>这个位置报错。</p>
+<p>所以先配置一个realm吧</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">[root@master ~]# radosgw-admin realm list</span><br><span class="line">&#123;</span><br><span class="line">    &quot;default_info&quot;: &quot;&quot;,</span><br><span class="line">    &quot;realms&quot;: []</span><br><span class="line">&#125;</span><br><span class="line">[root@master ~]# radosgw-admin realm create --rgw-realm=default --default</span><br><span class="line">&#123;</span><br><span class="line">    &quot;id&quot;: &quot;f334e6c2-c2b4-4c04-b541-f64d96c10c07&quot;,</span><br><span class="line">    &quot;name&quot;: &quot;default&quot;,</span><br><span class="line">    &quot;current_period&quot;: &quot;40775bd3-d592-46c0-98c7-33171915825b&quot;,</span><br><span class="line">    &quot;epoch&quot;: 1</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="设置zonegroup的default-info"><a href="#设置zonegroup的default-info" class="headerlink" title="设置zonegroup的default info"></a>设置zonegroup的default info</h3><p>此时zonegroup的default info缺失了</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">[root@master ~]# radosgw-admin zonegroup list</span><br><span class="line">&#123;</span><br><span class="line">    &quot;default_info&quot;: &quot;&quot;,</span><br><span class="line">    &quot;zonegroups&quot;: [</span><br><span class="line">        &quot;default&quot;</span><br><span class="line">    ]</span><br><span class="line">&#125;</span><br><span class="line">[root@master ~]# radosgw-admin zonegroup get</span><br><span class="line">failed to init zonegroup: (2) No such file or directory</span><br></pre></td></tr></table></figure>
+<p>使用 <code>zonegroup default</code>重新设置default info</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">[root@master ~]# radosgw-admin zonegroup default --rgw-zonegroup=default</span><br><span class="line">[root@master ~]# radosgw-admin zonegroup list</span><br><span class="line">&#123;</span><br><span class="line">    &quot;default_info&quot;: &quot;57b6eaac-63da-42dd-b69d-f7e871ce74c9&quot;,</span><br><span class="line">    &quot;zonegroups&quot;: [</span><br><span class="line">        &quot;default&quot;</span><br><span class="line">    ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="创建Zone"><a href="#创建Zone" class="headerlink" title="创建Zone"></a>创建Zone</h3><p>接下来，创建我们需要的zone, 并设置其为default</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line">[root@master ~]# radosgw-admin zone list</span><br><span class="line">&#123;</span><br><span class="line">    &quot;default_info&quot;: &quot;&quot;,</span><br><span class="line">    &quot;zones&quot;: [</span><br><span class="line">        &quot;default&quot;</span><br><span class="line">    ]</span><br><span class="line">&#125;</span><br><span class="line">[root@master ~]# radosgw-admin zone create --rgw-zonegroup=default --rgw-zone=exter --master --default</span><br><span class="line">2019-10-14 19:00:50.322 7f3698ef7240  0 NOTICE: overriding master zone: f2a55476-fb68-4ea7-af97-251b91e94747</span><br><span class="line">&#123;</span><br><span class="line">    &quot;id&quot;: &quot;69234f1d-8f48-4431-b45f-912087431a47&quot;,</span><br><span class="line">    &quot;name&quot;: &quot;exter&quot;,</span><br><span class="line">    &quot;domain_root&quot;: &quot;exter.rgw.meta:root&quot;,</span><br><span class="line">    &quot;control_pool&quot;: &quot;exter.rgw.control&quot;,</span><br><span class="line">    &quot;gc_pool&quot;: &quot;exter.rgw.log:gc&quot;,</span><br><span class="line">    &quot;lc_pool&quot;: &quot;exter.rgw.log:lc&quot;,</span><br><span class="line">    &quot;log_pool&quot;: &quot;exter.rgw.log&quot;,</span><br><span class="line">    &quot;intent_log_pool&quot;: &quot;exter.rgw.log:intent&quot;,</span><br><span class="line">    &quot;usage_log_pool&quot;: &quot;exter.rgw.log:usage&quot;,</span><br><span class="line">    &quot;reshard_pool&quot;: &quot;exter.rgw.log:reshard&quot;,</span><br><span class="line">    &quot;user_keys_pool&quot;: &quot;exter.rgw.meta:users.keys&quot;,</span><br><span class="line">    &quot;user_email_pool&quot;: &quot;exter.rgw.meta:users.email&quot;,</span><br><span class="line">    &quot;user_swift_pool&quot;: &quot;exter.rgw.meta:users.swift&quot;,</span><br><span class="line">    &quot;user_uid_pool&quot;: &quot;exter.rgw.meta:users.uid&quot;,</span><br><span class="line">    &quot;otp_pool&quot;: &quot;exter.rgw.otp&quot;,</span><br><span class="line">    &quot;system_key&quot;: &#123;</span><br><span class="line">        &quot;access_key&quot;: &quot;&quot;,</span><br><span class="line">        &quot;secret_key&quot;: &quot;&quot;</span><br><span class="line">    &#125;,</span><br><span class="line">    &quot;placement_pools&quot;: [</span><br><span class="line">        &#123;</span><br><span class="line">            &quot;key&quot;: &quot;default-placement&quot;,</span><br><span class="line">            &quot;val&quot;: &#123;</span><br><span class="line">                &quot;index_pool&quot;: &quot;exter.rgw.buckets.index&quot;,</span><br><span class="line">                &quot;data_pool&quot;: &quot;exter.rgw.buckets.data&quot;,</span><br><span class="line">                &quot;data_extra_pool&quot;: &quot;exter.rgw.buckets.non-ec&quot;,</span><br><span class="line">                &quot;index_type&quot;: 0,</span><br><span class="line">                &quot;compression&quot;: &quot;&quot;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    ],</span><br><span class="line">    &quot;metadata_heap&quot;: &quot;&quot;,</span><br><span class="line">    &quot;realm_id&quot;: &quot;f334e6c2-c2b4-4c04-b541-f64d96c10c07&quot;</span><br><span class="line">&#125;</span><br><span class="line">[root@master ~]# radosgw-admin zone list</span><br><span class="line">&#123;</span><br><span class="line">    &quot;default_info&quot;: &quot;69234f1d-8f48-4431-b45f-912087431a47&quot;,</span><br><span class="line">    &quot;zones&quot;: [</span><br><span class="line">        &quot;exter&quot;,</span><br><span class="line">        &quot;default&quot;</span><br><span class="line">    ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="删除default-zone"><a href="#删除default-zone" class="headerlink" title="删除default zone"></a>删除default zone</h3><p>现在你会发现有两个zone了，一个是我们新建的，另一个是default，这个default没用了，我们把它删掉。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">radosgw-admin zone delete --rgw-zone=default --default</span><br></pre></td></tr></table></figure>
+
+<p>细心的朋友可能会发现radosgw-admin命令中没有<code>zone delete</code>这个命令啊，<code>-h</code>中显示的是<code>zone rm</code>啊。这是Bug，嘿嘿嘿～～～</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">[root@master ~]# radosgw-admin -h | grep -i zone | grep -i rm</span><br><span class="line">  zonegroup rm               remove a zone group info</span><br><span class="line">  zonegroup rm               remove a zone from a zonegroup</span><br><span class="line">  zonegroup placement rm     remove a placement target from a zonegroup</span><br><span class="line">  zone rm                    remove a zone</span><br><span class="line">  zone placement rm          remove a zone placement target</span><br><span class="line">   --tags-rm=&lt;list&gt;          list of tags to remove for zonegroup placement modify command</span><br><span class="line">   --sync-from-rm=[zone-name][,...]</span><br><span class="line">[root@master ~]# radosgw-admin -h | grep -i delete</span><br><span class="line">                               replica mdlog get/delete</span><br><span class="line">                               replica datalog get/delete</span><br><span class="line">                             (NOTE: required to delete a non-empty bucket)</span><br></pre></td></tr></table></figure>
+
+<h3 id="重启RGW服务"><a href="#重启RGW服务" class="headerlink" title="重启RGW服务"></a>重启RGW服务</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[root@master ~]# docker stop rgw</span><br><span class="line">[root@master ~]# docker start rgw</span><br></pre></td></tr></table></figure>
+
+<h3 id="删除default相关的Pools"><a href="#删除default相关的Pools" class="headerlink" title="删除default相关的Pools"></a>删除default相关的Pools</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">[root@master ~]# ceph df</span><br><span class="line">GLOBAL:</span><br><span class="line">    SIZE       AVAIL      RAW USED     %RAW USED</span><br><span class="line">    57 GiB     56 GiB      657 MiB          1.13</span><br><span class="line">POOLS:</span><br><span class="line">    NAME                        ID     USED        %USED     MAX AVAIL     OBJECTS</span><br><span class="line">    exter.rgw.root              18     1.7 KiB         0        27 GiB          13</span><br><span class="line">    default.rgw.control         19         0 B         0        27 GiB           8</span><br><span class="line">    default.rgw.meta            20         0 B         0        27 GiB           0</span><br><span class="line">    default.rgw.log             21         0 B         0        27 GiB         175</span><br><span class="line">    exter.rgw.control           22         0 B         0        27 GiB           8</span><br><span class="line">    exter.rgw.meta              23         0 B         0        27 GiB           0</span><br><span class="line">    exter.rgw.log               24         0 B         0        27 GiB         159</span><br></pre></td></tr></table></figure>
+<p>重启RGW服务后，发现多了三个Pool <code>exter.rgw.control</code>、<code>exter.rgw.meta</code>、<code>exter.rgw.log</code>。而default开头的pool就没用了，可以删除了。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">[root@master ~]# ceph osd pool rm default.rgw.control default.rgw.control --yes-i-really-really-mean-it</span><br><span class="line">pool &#x27;default.rgw.control&#x27; removed</span><br><span class="line">[root@master ~]# ceph osd pool rm default.rgw.meta default.rgw.meta --yes-i-really-really-mean-it</span><br><span class="line">pool &#x27;default.rgw.meta&#x27; removed</span><br><span class="line">[root@master ~]# ceph osd pool rm default.rgw.log default.rgw.log --yes-i-really-really-mean-it</span><br><span class="line">pool &#x27;default.rgw.log&#x27; removed</span><br></pre></td></tr></table></figure>
+
+<h2 id="另一个Site的部署"><a href="#另一个Site的部署" class="headerlink" title="另一个Site的部署"></a>另一个Site的部署</h2><p>*** 参考<code>一个Site的部署方法</code>吧 ***</p>
+<h2 id="Zone之间的数据同步"><a href="#Zone之间的数据同步" class="headerlink" title="Zone之间的数据同步"></a>Zone之间的数据同步</h2><p>如果上述的部署方法你都清楚了，相信配置一个Zone之间同步数据的Multisite应该不在话下了。下面说说数据同步的几点注意事项吧。</p>
+<ol>
+<li>数据同步必须是在不同zone之间进行的，但zone必须在同一zonegroup之下。</li>
+<li>每一个zonegroup内都有一个master zone；一个realm中有多个zonegroup，但master zonegroup只有一个，realm命名空间全局唯一；</li>
+<li>数据分为 period 数据、user数据、bucket数据、object数据。<br> period数据需要用户手动配置，不能自动同步；<br> user数据只能从master zone写入，然后非master zone同步；<br> bucket数据可以从任意一个zone写入，但最后都会转发给master zone，待master 写入成功后，其它zone同步数据，若master失败，其它zone亦失败；<br> object数据可以从任意一个zone写入，若master zone写入失败，不影响其它zone写入情况。</li>
+<li>每个zone的<code>endpoints</code>需要配置，否则zone之间无法正常访问</li>
+<li>zone上配置的<code>access key</code>和<code>secret</code>要与master zone一致</li>
+</ol>
+<p>补个图吧：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">                                          +--- master zone</span><br><span class="line">                                          |</span><br><span class="line">                                          +--- secondary zone 1</span><br><span class="line">                                          |</span><br><span class="line">         +---------- master zonegroup ----+--- ......</span><br><span class="line">         |                                |</span><br><span class="line">         |                                +--- secondary zone n</span><br><span class="line">         |</span><br><span class="line">realm ---+---------- secondary zonegroup 1 --+--- master zone</span><br><span class="line">         |                                   |</span><br><span class="line">         |                                   +--- secondary zone 1</span><br><span class="line">         +---------- ......                  |</span><br><span class="line">         |                                   +--- ......</span><br><span class="line">         |</span><br><span class="line">         +---------- secondary zonegropu n</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/ceph/" rel="tag"># ceph</a>
+              <a href="/tags/rgw/" rel="tag"># rgw</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2019/09/28/storage/ceph/ceph-ansible-usage/" rel="prev" title="ceph-ansible 使用">
+      <i class="fa fa-chevron-left"></i> ceph-ansible 使用
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2019/10/16/storage/ceph/rgw-placement-usage/" rel="next" title="RGW zongroup/zone placement 和 compression 用法">
+      RGW zongroup/zone placement 和 compression 用法 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%89%88%E6%9C%AC"><span class="nav-number">1.</span> <span class="nav-text">版本</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#RGW%E9%85%8D%E7%BD%AE%E9%83%A8%E7%BD%B2"><span class="nav-number">2.</span> <span class="nav-text">RGW配置部署</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E4%B8%AASite%E7%9A%84%E9%83%A8%E7%BD%B2"><span class="nav-number">2.1.</span> <span class="nav-text">一个Site的部署</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BF%AE%E6%94%B9-rgw-rootPool"><span class="nav-number">2.1.1.</span> <span class="nav-text">修改.rgw.rootPool</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%9B%E5%BB%BARealm"><span class="nav-number">2.1.2.</span> <span class="nav-text">创建Realm</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AE%BE%E7%BD%AEzonegroup%E7%9A%84default-info"><span class="nav-number">2.1.3.</span> <span class="nav-text">设置zonegroup的default info</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%9B%E5%BB%BAZone"><span class="nav-number">2.1.4.</span> <span class="nav-text">创建Zone</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%A0%E9%99%A4default-zone"><span class="nav-number">2.1.5.</span> <span class="nav-text">删除default zone</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%87%8D%E5%90%AFRGW%E6%9C%8D%E5%8A%A1"><span class="nav-number">2.1.6.</span> <span class="nav-text">重启RGW服务</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%A0%E9%99%A4default%E7%9B%B8%E5%85%B3%E7%9A%84Pools"><span class="nav-number">2.1.7.</span> <span class="nav-text">删除default相关的Pools</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%A6%E4%B8%80%E4%B8%AASite%E7%9A%84%E9%83%A8%E7%BD%B2"><span class="nav-number">2.2.</span> <span class="nav-text">另一个Site的部署</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Zone%E4%B9%8B%E9%97%B4%E7%9A%84%E6%95%B0%E6%8D%AE%E5%90%8C%E6%AD%A5"><span class="nav-number">2.3.</span> <span class="nav-text">Zone之间的数据同步</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">博</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">138</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">119</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">博</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

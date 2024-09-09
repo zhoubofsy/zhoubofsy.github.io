@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zhoubofsy.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="环境12345678# lsb_release -aNo LSB modules are available.Distributor ID:	UbuntuDescription:	Ubuntu 22.04.4 LTSRelease:	22.04Codename:	jammy# uname -aLinux ubu22 5.15.0-100-generic #110-Ubuntu SMP Wed Fe">
+<meta property="og:type" content="article">
+<meta property="og:title" content="eBPF开发环境搭建及示例">
+<meta property="og:url" content="http://zhoubofsy.github.io/2024/05/24/linux/ebpf-deploy-sample/index.html">
+<meta property="og:site_name" content="Bolog">
+<meta property="og:description" content="环境12345678# lsb_release -aNo LSB modules are available.Distributor ID:	UbuntuDescription:	Ubuntu 22.04.4 LTSRelease:	22.04Codename:	jammy# uname -aLinux ubu22 5.15.0-100-generic #110-Ubuntu SMP Wed Fe">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2024-05-24T06:10:59.000Z">
+<meta property="article:modified_time" content="2024-09-09T07:57:18.600Z">
+<meta property="article:author" content="博">
+<meta property="article:tag" content="ebpf">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://zhoubofsy.github.io/2024/05/24/linux/ebpf-deploy-sample/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>eBPF开发环境搭建及示例 | Bolog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Bolog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2024/05/24/linux/ebpf-deploy-sample/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          eBPF开发环境搭建及示例
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2024-05-24 14:10:59" itemprop="dateCreated datePublished" datetime="2024-05-24T14:10:59+08:00">2024-05-24</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/linux/" itemprop="url" rel="index"><span itemprop="name">linux</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h1><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># lsb_release -a</span></span><br><span class="line">No LSB modules are available.</span><br><span class="line">Distributor ID:	Ubuntu</span><br><span class="line">Description:	Ubuntu 22.04.4 LTS</span><br><span class="line">Release:	22.04</span><br><span class="line">Codename:	jammy</span><br><span class="line"><span class="comment"># uname -a</span></span><br><span class="line">Linux ubu22 5.15.0-100-generic <span class="comment">#110-Ubuntu SMP Wed Feb 7 13:28:04 UTC 2024 aarch64 aarch64 aarch64 GNU/Linux</span></span><br></pre></td></tr></table></figure>
+
+<h1 id="包安装"><a href="#包安装" class="headerlink" title="包安装"></a>包安装</h1><p><em>安装软件包</em></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">apt install -y bison flex build-essential git cmake make libelf-dev strace tar libfl-dev libssl-dev libedit-dev zlib1g-dev  python  python3-distutils libcap-dev llvm clang</span><br></pre></td></tr></table></figure>
+
+<h2 id="安装-bcc"><a href="#安装-bcc" class="headerlink" title="安装 bcc"></a>安装 bcc</h2><p><code>bcc</code> 是一组用于 <code>eBPF</code> 开发的工具，它包括了一组用于编写和调试 <code>eBPF</code> 程序的库和命令行工具。使用 <code>bcc</code>，可以更加方便地开发和调试 <code>eBPF</code> 程序，提高开发效率和代码质量。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">apt install bpfcc-tools</span><br></pre></td></tr></table></figure>
+
+<h2 id="安装-bpftool"><a href="#安装-bpftool" class="headerlink" title="安装 bpftool"></a>安装 bpftool</h2><p><code>bpftool</code> 是一个用于管理和调试 <code>eBPF</code> 代码的命令行工具。它允许你查看和分析系统中运行的 <code>eBPF</code> 程序和映射，以及与内核中的 <code>eBPF</code> 子系统进行交互。更多内容可以查看 <a target="_blank" rel="noopener" href="https://github.com/libbpf/bpftool">bpftool Github</a></p>
+<p>使用 <code>bpftool</code>，你可以执行以下操作：</p>
+<ul>
+<li>列出当前系统中所有加载的 <code>eBPF</code> 程序和映射</li>
+<li>查看指定 <code>eBPF</code> 程序或映射的详细信息，例如指令集、内存布局等</li>
+<li>修改 <code>eBPF</code> 程序或映射的属性，例如禁用一个程序或清空一个映射</li>
+<li>将一个 <code>eBPF</code> 程序或映射导出到文件中，以便在其他系统上重新导入</li>
+<li>调试 <code>eBPF</code> 程序，例如跟踪程序的控制流、访问内存等</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">apt install -y linux-tools-$(<span class="built_in">uname</span> -r)</span><br></pre></td></tr></table></figure>
+
+<p>默认情况下 <code>bpftool</code> 命令会安装到&#x2F;<code>usr/local/sbin/</code> 下</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># bpftool version -p</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="string">&quot;version&quot;</span>: <span class="string">&quot;5.15.143&quot;</span>,</span><br><span class="line">    <span class="string">&quot;features&quot;</span>: &#123;</span><br><span class="line">        <span class="string">&quot;libbfd&quot;</span>: <span class="literal">false</span>,</span><br><span class="line">        <span class="string">&quot;skeletons&quot;</span>: <span class="literal">false</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="安装linux源码"><a href="#安装linux源码" class="headerlink" title="安装linux源码"></a>安装linux源码</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">apt install linux-source-5.15.0</span><br></pre></td></tr></table></figure>
+
+<h1 id="编译bpf-sample"><a href="#编译bpf-sample" class="headerlink" title="编译bpf sample"></a>编译bpf sample</h1><p><em>解压缩</em></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> /usr/src/linux-source-5.15.0/debian</span><br><span class="line">tar -jxvf linux-source-5.15.0.tar.bz2</span><br></pre></td></tr></table></figure>
+
+<p><em>Copy config文件</em></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> linux-source-5.15.0</span><br><span class="line"><span class="built_in">cp</span> -v /boot/config-$(<span class="built_in">uname</span> -r) .config</span><br><span class="line">make oldconfig &amp;&amp; make prepare</span><br></pre></td></tr></table></figure>
+
+
+<p><em>编译Samples</em></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">make -C samples/bpf</span><br></pre></td></tr></table></figure>
+
+<p>若遇到如下错误</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">......</span><br><span class="line">  CC      /usr/src/linux-source-5.15.0/samples/bpf/bpftool/prog.o</span><br><span class="line">  LINK    /usr/src/linux-source-5.15.0/samples/bpf/bpftool/bpftool</span><br><span class="line">/usr/src/linux-source-5.15.0/samples/bpf/Makefile:369: *** Cannot find a vmlinux <span class="keyword">for</span> VMLINUX_BTF at any of <span class="string">&quot;  /usr/src/linux-source-5.15.0/vmlinux&quot;</span>, build the kernel or <span class="built_in">set</span> VMLINUX_BTF or VMLINUX_H variable.  Stop.</span><br><span class="line">make[1]: *** [Makefile:1911: /usr/src/linux-source-5.15.0/samples/bpf] Error 2</span><br><span class="line">make[1]: Leaving directory <span class="string">&#x27;/usr/src/linux-source-5.15.0&#x27;</span></span><br><span class="line">make: *** [Makefile:275: all] Error 2</span><br><span class="line">make: Leaving directory <span class="string">&#x27;/usr/src/linux-source-5.15.0/samples/bpf&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p>说明需要 vmlinux，可以指定vmlinux再进行编译</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">make VMLINUX_BTF=/sys/kernel/btf/vmlinux -C samples/bpf</span><br></pre></td></tr></table></figure>
+
+<p>or</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">make VMLINUX_BTF=/sys/kernel/btf/vmlinux M=samples/bpf</span><br></pre></td></tr></table></figure>
+
+<h1 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h1><p>示例需要在 <code>usr/src/linux-source-5.15.0/samples/bpf</code>目录下进行编译。<code>samples/bpf</code> 下的程序一般组成方式是 xxx_user.c 和 xxx_kern.c</p>
+<ul>
+<li>xxx_user.c：为用户空间的程序用于设置 BPF 程序的相关配置、加载 BPF 程序至内核、设置 BPF 程序中的 map 值和读取 BPF 程序运行过程中发送至用户空间的消息等。</li>
+<li>xxx_kern.c：为 BPF 程序代码，通过 clang 编译成字节码加载至内核中，在对应事件触发的时候运行，可以接受用户空间程序发送的各种数据，并将运行时产生的数据发送至用户空间程序。</li>
+</ul>
+<p>新建两个文件：<code>bob_user.c</code>和<code>bob_kern.c</code></p>
+<p><em>bob_kern.c</em></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;uapi/linux/bpf.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;linux/version.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;bpf/bpf_helpers.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;bpf/bpf_tracing.h&gt;</span></span></span><br><span class="line"></span><br><span class="line">SEC(<span class="string">&quot;tracepoint/syscalls/sys_enter_execve&quot;</span>)</span><br><span class="line"><span class="type">int</span> <span class="title function_">bpf_prog</span><span class="params">(<span class="keyword">struct</span> pt_regs *ctx)</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="type">char</span> fmt[] = <span class="string">&quot;bob %s !\n&quot;</span>;</span><br><span class="line">	<span class="type">char</span> comm[<span class="number">16</span>];</span><br><span class="line">	bpf_get_current_comm(&amp;comm, <span class="keyword">sizeof</span>(comm));</span><br><span class="line">	bpf_trace_printk(fmt, <span class="keyword">sizeof</span>(fmt), comm);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">char</span> _license[] SEC(<span class="string">&quot;license&quot;</span>) = <span class="string">&quot;GPL&quot;</span>;</span><br><span class="line">u32 _version <span class="title function_">SEC</span><span class="params">(<span class="string">&quot;version&quot;</span>)</span> = LINUX_VERSION_CODE;</span><br></pre></td></tr></table></figure>
+
+<p><em>bob_user.c</em></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;bpf/libbpf.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;trace_helpers.h&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">(<span class="type">int</span> ac, <span class="type">char</span> **argv)</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">bpf_link</span> *<span class="title">link</span> =</span> <span class="literal">NULL</span>;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">bpf_program</span> *<span class="title">prog</span>;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">bpf_object</span> *<span class="title">obj</span>;</span></span><br><span class="line">	<span class="type">char</span> filename[<span class="number">256</span>];</span><br><span class="line"></span><br><span class="line">	<span class="built_in">snprintf</span>(filename, <span class="keyword">sizeof</span>(filename), <span class="string">&quot;%s_kern.o&quot;</span>, argv[<span class="number">0</span>]);</span><br><span class="line">	obj = bpf_object__open_file(filename, <span class="literal">NULL</span>);</span><br><span class="line">	<span class="keyword">if</span> (libbpf_get_error(obj)) &#123;</span><br><span class="line">		<span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;ERROR: opening BPF object file failed\n&quot;</span>);</span><br><span class="line">		<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	prog = bpf_object__find_program_by_name(obj, <span class="string">&quot;bpf_prog&quot;</span>);</span><br><span class="line">	<span class="keyword">if</span> (!prog) &#123;</span><br><span class="line">		<span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;ERROR: finding a prog in obj file failed\n&quot;</span>);</span><br><span class="line">		<span class="keyword">goto</span> cleanup;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/* load BPF program */</span></span><br><span class="line">	<span class="keyword">if</span> (bpf_object__load(obj)) &#123;</span><br><span class="line">		<span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;ERROR: loading BPF object file failed\n&quot;</span>);</span><br><span class="line">		<span class="keyword">goto</span> cleanup;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	link = bpf_program__attach(prog);</span><br><span class="line">	<span class="keyword">if</span> (libbpf_get_error(link)) &#123;</span><br><span class="line">		<span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;ERROR: bpf_program__attach failed\n&quot;</span>);</span><br><span class="line">		link = <span class="literal">NULL</span>;</span><br><span class="line">		<span class="keyword">goto</span> cleanup;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	read_trace_pipe();</span><br><span class="line"></span><br><span class="line">cleanup:</span><br><span class="line">	bpf_link__destroy(link);</span><br><span class="line">	bpf_object__close(obj);</span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>修改 <code>samples/bpf/Makefile</code></p>
+<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">...</span><br><span class="line">tprogs-y += xdp_sample_pkts</span><br><span class="line">tprogs-y += ibumad</span><br><span class="line">tprogs-y += hbm</span><br><span class="line"><span class="comment"># 增加 user programs</span></span><br><span class="line">tprogs-y += bob</span><br><span class="line">...</span><br><span class="line">ibumad-objs := ibumad_user.o</span><br><span class="line">hbm-objs := hbm.o <span class="variable">$(CGROUP_HELPERS)</span></span><br><span class="line"><span class="comment"># 增加 objs</span></span><br><span class="line">bob-objs := bob_user.o <span class="variable">$(TRACE_HELPERS)</span></span><br><span class="line">...</span><br><span class="line">always-y += hbm_edt_kern.o</span><br><span class="line">always-y += xdpsock_kern.o</span><br><span class="line"><span class="comment"># 增加 kernel programs</span></span><br><span class="line">always-y += bob_kern.o</span><br></pre></td></tr></table></figure>
+
+<p>编译</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">make VMLINUX_BTF=/sys/kernel/btf/vmlinux M=samples/bpf</span><br></pre></td></tr></table></figure>
+
+
+<p>运行</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># cd samples/bpf</span></span><br><span class="line"><span class="comment"># ./bob</span></span><br><span class="line">libbpf: elf: skipping unrecognized data section(4) .rodata.str1.1</span><br><span class="line">           &lt;...&gt;-3622529 [001] d...1 1751426.283602: bpf_trace_printk: bob sshd !</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">            sshd-3622530 [001] d...1 1751426.288591: bpf_trace_printk: bob sshd !</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">            sshd-3622531 [001] d...1 1751430.924951: bpf_trace_printk: bob sshd !</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">           &lt;...&gt;-3622532 [000] d...1 1751430.929273: bpf_trace_printk: bob sshd !</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">            bash-3622532 [000] d...1 1751430.930114: bpf_trace_printk: bob bash !</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">           &lt;...&gt;-3622533 [001] d...1 1751430.934470: bpf_trace_printk: bob sshd !</span><br></pre></td></tr></table></figure>
+
+
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/lizhijun_buaa/article/details/131644323">eBPF开发环境搭建</a></li>
+<li><a target="_blank" rel="noopener" href="https://yaoyao.io/posts/how-to-setup-ebpf-env-on-ubuntu#linux-tools">如何在 Ubuntu 上配置 eBPF 开发环境</a></li>
+<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/baidu_29900103/article/details/131188347">基于ubuntu22.04-深入浅出 eBPF</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/ebpf/" rel="tag"># ebpf</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/02/16/storage/linux-drbd-usage/" rel="prev" title="DRBD">
+      <i class="fa fa-chevron-left"></i> DRBD
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%8E%AF%E5%A2%83"><span class="nav-number">1.</span> <span class="nav-text">环境</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8C%85%E5%AE%89%E8%A3%85"><span class="nav-number">2.</span> <span class="nav-text">包安装</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%89%E8%A3%85-bcc"><span class="nav-number">2.1.</span> <span class="nav-text">安装 bcc</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%89%E8%A3%85-bpftool"><span class="nav-number">2.2.</span> <span class="nav-text">安装 bpftool</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%89%E8%A3%85linux%E6%BA%90%E7%A0%81"><span class="nav-number">2.3.</span> <span class="nav-text">安装linux源码</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%BC%96%E8%AF%91bpf-sample"><span class="nav-number">3.</span> <span class="nav-text">编译bpf sample</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B"><span class="nav-number">4.</span> <span class="nav-text">示例</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%82%E8%80%83-%E9%B8%A3%E8%B0%A2"><span class="nav-number">5.</span> <span class="nav-text">参考&amp;鸣谢</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">博</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">138</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">119</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">博</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

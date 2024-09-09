@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zhoubofsy.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="s3 authorization v4 参数传递通过Authorization请求头eg: 1Authorization: AWS4-HMAC-SHA256 Credential&#x3D;ziw5dp1alvty9n47qksu&#x2F;20160830&#x2F;us-east-1&#x2F;s3&#x2F;aws4_request, SignedHeaders&#x3D;content-type;host;x-amz-date, Signature">
+<meta property="og:type" content="article">
+<meta property="og:title" content="s3 authorization v4">
+<meta property="og:url" content="http://zhoubofsy.github.io/2019/08/04/storage/ceph/s3-authorization-v4/index.html">
+<meta property="og:site_name" content="Bolog">
+<meta property="og:description" content="s3 authorization v4 参数传递通过Authorization请求头eg: 1Authorization: AWS4-HMAC-SHA256 Credential&#x3D;ziw5dp1alvty9n47qksu&#x2F;20160830&#x2F;us-east-1&#x2F;s3&#x2F;aws4_request, SignedHeaders&#x3D;content-type;host;x-amz-date, Signature">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2019-08-04T06:20:20.000Z">
+<meta property="article:modified_time" content="2024-09-09T07:57:18.589Z">
+<meta property="article:author" content="博">
+<meta property="article:tag" content="ceph">
+<meta property="article:tag" content="rgw">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://zhoubofsy.github.io/2019/08/04/storage/ceph/s3-authorization-v4/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>s3 authorization v4 | Bolog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Bolog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2019/08/04/storage/ceph/s3-authorization-v4/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          s3 authorization v4
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2019-08-04 14:20:20" itemprop="dateCreated datePublished" datetime="2019-08-04T14:20:20+08:00">2019-08-04</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>s3 authorization v4</p>
+<h2 id="参数传递"><a href="#参数传递" class="headerlink" title="参数传递"></a>参数传递</h2><h3 id="通过Authorization请求头"><a href="#通过Authorization请求头" class="headerlink" title="通过Authorization请求头"></a>通过<code>Authorization</code>请求头</h3><p>eg:</p>
+<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">Authorization</span><span class="punctuation">: </span>AWS4-HMAC-SHA256 Credential=ziw5dp1alvty9n47qksu/20160830/us-east-1/s3/aws4_request, SignedHeaders=content-type;host;x-amz-date, Signature=5d672d79c15b13162d9279b0855cfba6789a8edb4c82c400e06b5924a6f2b5d7</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><code>Credential</code> 由AccessKey，请求的日期，region，服务名，aws4_request五部分组成，各部分之间用斜线分隔</li>
+<li><code>SignedHeaders</code> 表示那些头参与了签名的计算，未包含在这里的头不会影响到签名的生成</li>
+<li><code>Signature</code> 计算得到的签名</li>
+</ul>
+<h3 id="通过请求参数"><a href="#通过请求参数" class="headerlink" title="通过请求参数"></a>通过请求参数</h3><p>eg:</p>
+<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">GET /yourbucket/test.mp4??X-Amz-Algorithm=AWS4-HMAC-SHA256&amp;&amp;X-Amz-Credential=ziw5dp1alvty9n47qksu/20160830/us-east-1/s3/aws4_request&amp;X-Amz-Date=20160830T201207Z&amp;X-Amz-Expires=86400&amp;X-Amz-SignedHeaders=host&amp;X-Amz-Signature=5d672d79c15b13162d9279b0855cfba6789a8edb4c82c400e06b5924a6f2b5d7</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><code>X-Amz-Algorithm</code> 计算签名时使用的Hash算法，指定为<code>AWS4-HMAC-SHA256</code></li>
+<li><code>X-Amz-Credential</code> 包含了AccessKey，日期，region，服务名的信息</li>
+<li><code>X-Amz-Date</code> 请求的时间</li>
+<li><code>X-Amz-Expires</code> 指定签名在多长时间内有效</li>
+<li><code>X-Amz-SignedHeaders</code> 计算签名时用到的头</li>
+<li><code>X-Amz-Signature</code> 计算得的到签名</li>
+</ul>
+<h2 id="签名计算"><a href="#签名计算" class="headerlink" title="签名计算"></a>签名计算</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">signature = HexEncode(HMAC-SHA256(kSigning, StringToSign))</span><br></pre></td></tr></table></figure>
+
+<h3 id="kSigning"><a href="#kSigning" class="headerlink" title="kSigning"></a>kSigning</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">kSecret = <span class="type">YourSecretKey</span></span><br><span class="line"><span class="variable">kDate</span> <span class="operator">=</span> HMAC(<span class="string">&quot;AWS4&quot;</span> + kSecret, Date)</span><br><span class="line">kRegion = HMAC(kDate, Region)</span><br><span class="line">kService = HMAC(kRegion, Service)</span><br><span class="line">kSigning = HMAC(kService, <span class="string">&quot;aws4_request&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>YourSecretKey 你的<code>SecretKey</code></li>
+<li>Date 8位数的日期，应与Credentail中的Date部分一样</li>
+<li>Region 应与Credential中的region部分一样</li>
+<li>Service 应与Credential中的服务名部分一样</li>
+<li>kSigning 为用于计算签名的signing key</li>
+</ul>
+<h3 id="StringToSign"><a href="#StringToSign" class="headerlink" title="StringToSign"></a>StringToSign</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">StringToSign  =</span><br><span class="line">    Algorithm + <span class="string">&#x27;\n&#x27;</span> +</span><br><span class="line">    RequestDate + <span class="string">&#x27;\n&#x27;</span> +</span><br><span class="line">    CredentialScope + <span class="string">&#x27;\n&#x27;</span> +</span><br><span class="line">    HashedCanonicalRequest</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>Algorithm 指定为<code>AWS4-HMAC-SHA256</code></li>
+<li>RequestDate ISO8601 basic 格式的请求时间，如：<code>20160830T123600Z</code></li>
+<li>CredentialScope 日期，region，服务名等组成的字符串， 如：<code>20160830/us-east-1/s3/aws4_request</code></li>
+<li>HashedCanonicalRequest Hex(SHA256Hash(CanonicalRequest)),即CanonicalRequest的hash的16进制编码</li>
+</ul>
+<h3 id="CanonicalRequest"><a href="#CanonicalRequest" class="headerlink" title="CanonicalRequest"></a>CanonicalRequest</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">CanonicalRequest =</span><br><span class="line">    HTTPRequestMethod + <span class="string">&#x27;\n&#x27;</span> +</span><br><span class="line">    CanonicalURI + <span class="string">&#x27;\n&#x27;</span> +</span><br><span class="line">    CanonicalQueryString + <span class="string">&#x27;\n&#x27;</span> +</span><br><span class="line">    CanonicalHeaders + <span class="string">&#x27;\n&#x27;</span> +</span><br><span class="line">    SignedHeaders + <span class="string">&#x27;\n&#x27;</span> +</span><br><span class="line">    HexEncode(Hash(RequestPayload))</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>HTTPRequestMethod 如: <code>PUT</code>, <code>GET</code>, <code>DELETE</code>, <code>POST</code></li>
+<li>CanonicalURI 请求的uri</li>
+<li>CanonicalQueryString 请求参数排序后组成的字符串</li>
+<li>CanonicalHeaders 需要加入签名计算的头排序后组成的字符串</li>
+<li>SignedHeaders 加入到签名计算的头的名字的列表，各个名字之间用逗号分隔</li>
+<li>HexEncode(Hash(RequestPayload)) 请求body的hash的16进制编码,如果通过请求参数携带签名，此处应由字符串<code>UNSIGNED-PAYLOAD</code>代替</li>
+</ul>
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="https://doc.bscstorage.com/doc/s2/signature/signature.html">签名算法</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/ceph/" rel="tag"># ceph</a>
+              <a href="/tags/rgw/" rel="tag"># rgw</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2019/06/14/storage/ceph/exception-pg-resolve-flow/" rel="prev" title="异常PG处理套路">
+      <i class="fa fa-chevron-left"></i> 异常PG处理套路
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2019/08/04/storage/ceph/s3-authorization-v2/" rel="next" title="s3 authorization v2">
+      s3 authorization v2 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E6%95%B0%E4%BC%A0%E9%80%92"><span class="nav-number">1.</span> <span class="nav-text">参数传递</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%80%9A%E8%BF%87Authorization%E8%AF%B7%E6%B1%82%E5%A4%B4"><span class="nav-number">1.1.</span> <span class="nav-text">通过Authorization请求头</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%80%9A%E8%BF%87%E8%AF%B7%E6%B1%82%E5%8F%82%E6%95%B0"><span class="nav-number">1.2.</span> <span class="nav-text">通过请求参数</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AD%BE%E5%90%8D%E8%AE%A1%E7%AE%97"><span class="nav-number">2.</span> <span class="nav-text">签名计算</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#kSigning"><span class="nav-number">2.1.</span> <span class="nav-text">kSigning</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#StringToSign"><span class="nav-number">2.2.</span> <span class="nav-text">StringToSign</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#CanonicalRequest"><span class="nav-number">2.3.</span> <span class="nav-text">CanonicalRequest</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%82%E8%80%83-%E9%B8%A3%E8%B0%A2"><span class="nav-number"></span> <span class="nav-text">参考&amp;鸣谢</span></a></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">博</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">138</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">119</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">博</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

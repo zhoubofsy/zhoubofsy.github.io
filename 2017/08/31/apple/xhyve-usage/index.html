@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zhoubofsy.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="FreeBSD 下的虚拟技术 bhyve (The BSD Hypervisor) 是去年1月份正式发布的，包含在了 FreeBSD 10.0 发行版中。今天要玩的这个 xhyve 是基于 bhyve 的 Mac OS X 移植版本，也就是说我们想在 Mac 上运行 Linux 的话除了 VirtualBox, VMware Fusion 外，现在有了第三种选择。 xhyve is a ligh">
+<meta property="og:type" content="article">
+<meta property="og:title" content="xhyve使用">
+<meta property="og:url" content="http://zhoubofsy.github.io/2017/08/31/apple/xhyve-usage/index.html">
+<meta property="og:site_name" content="Bolog">
+<meta property="og:description" content="FreeBSD 下的虚拟技术 bhyve (The BSD Hypervisor) 是去年1月份正式发布的，包含在了 FreeBSD 10.0 发行版中。今天要玩的这个 xhyve 是基于 bhyve 的 Mac OS X 移植版本，也就是说我们想在 Mac 上运行 Linux 的话除了 VirtualBox, VMware Fusion 外，现在有了第三种选择。 xhyve is a ligh">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://zhoubofsy.github.io/images/xhyve/xhyve_logo.png">
+<meta property="og:image" content="http://zhoubofsy.github.io/images/xhyve/xhyve_vm_run.png">
+<meta property="og:image" content="http://zhoubofsy.github.io/images/xhyve/xhyve_vm_run2.png">
+<meta property="article:published_time" content="2017-08-31T02:38:30.000Z">
+<meta property="article:modified_time" content="2024-09-09T07:57:18.571Z">
+<meta property="article:author" content="博">
+<meta property="article:tag" content="mac">
+<meta property="article:tag" content="vm">
+<meta property="article:tag" content="xhyve">
+<meta property="article:tag" content="docker">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://zhoubofsy.github.io/images/xhyve/xhyve_logo.png">
+
+<link rel="canonical" href="http://zhoubofsy.github.io/2017/08/31/apple/xhyve-usage/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>xhyve使用 | Bolog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Bolog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/08/31/apple/xhyve-usage/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          xhyve使用
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2017-08-31 10:38:30" itemprop="dateCreated datePublished" datetime="2017-08-31T10:38:30+08:00">2017-08-31</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/apple/" itemprop="url" rel="index"><span itemprop="name">apple</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p><img src="/images/xhyve/xhyve_logo.png" alt="xhyve_logo"></p>
+<p>FreeBSD 下的虚拟技术 bhyve (The BSD Hypervisor) 是去年1月份正式发布的，包含在了 FreeBSD 10.0 发行版中。今天要玩的这个 xhyve 是基于 bhyve 的 Mac OS X 移植版本，也就是说我们想在 Mac 上运行 Linux 的话除了 VirtualBox, VMware Fusion 外，现在有了第三种选择。</p>
+<p>xhyve is a lightweight virtualization solution for OS X that is capable of running Linux. It is a port of FreeBSD’s bhyve, a KVM+QEMU alternative written by Peter Grehan and Neel Natu.</p>
+<p>特点：</p>
+<ul>
+<li>super lightweight, only 230 KB in size</li>
+<li>completely standalone, no dependencies</li>
+<li>the only BSD-licensed virtualizer on OS X</li>
+<li>does not require a kernel extension (bhyve’s kernel code was ported to user mode code calling into Hypervisor.framework)</li>
+<li>multi-CPU support</li>
+<li>networking support</li>
+<li>can run off-the-shelf Linux distributions (and could be extended to run other operating systems)</li>
+</ul>
+<p>xhyve may make a good solution for running Docker on your Mac, for instance.</p>
+<h1 id="install"><a href="#install" class="headerlink" title="install"></a>install</h1><p>search xhyver:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">brew info xhyve</span></span><br><span class="line">xhyve: stable 0.2.0 (bottled), HEAD</span><br><span class="line">xhyve, lightweight macOS virtualization solution based on FreeBSD&#x27;s bhyve</span><br><span class="line">https://github.com/mist64/xhyve</span><br><span class="line">/usr/local/Cellar/xhyve/HEAD-1f1dbe3 (11 files, 11.2MB) *</span><br><span class="line">  Built from source on 2017-08-24 at 12:12:21</span><br><span class="line">From: https://github.com/Homebrew/homebrew-core/blob/master/Formula/xhyve.rb</span><br><span class="line">==&gt; Requirements</span><br><span class="line">Required: macOS &gt;= 10.10 ✔</span><br></pre></td></tr></table></figure>
+
+<p>install:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">brew install xhyve</span></span><br></pre></td></tr></table></figure>
+
+<h1 id="Ubuntu-16-04-VM"><a href="#Ubuntu-16-04-VM" class="headerlink" title="Ubuntu 16.04 VM"></a>Ubuntu 16.04 VM</h1><p>下载<code>ubuntu-16.04.1-server-amd64.iso</code>，装载该iso，然后将其中的<code>vmlinuz</code>和<code>initrd.gz</code>复制出来，以供xhyve使用。</p>
+<p>在mac系统下直接装载ubuntu的iso会出错</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">hdiutil attach ./ubuntu-16.04.1-server-amd64.iso</span></span><br><span class="line">hdiutil: attach failed - 无可装载的文件系统</span><br></pre></td></tr></table></figure>
+<p>所以需要制作一个新的iso，新的iso文件前预留<code>2KB</code>的空间</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">dd</span> <span class="keyword">if</span>=/dev/zero bs=2k count=1 of=./tmp.iso</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">dd</span> <span class="keyword">if</span>=./ubuntu-16.04.1-server-amd64.iso bs=2k skip=1 &gt;&gt; ./tmp.iso</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">hdiutil attach ./tmp.iso</span></span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cp</span> /Volumes/Ubuntu-Server\ 16/install/vmlinuz .</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cp</span> /Volumes/Ubuntu-Server\ 16/install/initrd.gz .</span></span><br></pre></td></tr></table></figure>
+
+<p>创建一个磁盘映像文件<code>hdd.img</code>，当作虚拟机的虚拟硬盘</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">dd</span> <span class="keyword">if</span>=/dev/zero of=hdd.img bs=1g count=8</span></span><br></pre></td></tr></table></figure>
+
+<p>编写VM创建脚本<code>mk_xhyve.sh</code></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">!/bin/bash</span></span><br><span class="line"></span><br><span class="line">KERNEL=&quot;vmlinuz&quot;</span><br><span class="line">INITRD=&quot;initrd.gz&quot;</span><br><span class="line">CMDLINE=&quot;earlyprintk=serial console=ttyS0 acpi=off&quot;</span><br><span class="line"></span><br><span class="line">MEM=&quot;-m 1G&quot;</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">SMP=<span class="string">&quot;-c 2&quot;</span></span></span><br><span class="line">NET=&quot;-s 2:0,virtio-net&quot;</span><br><span class="line">IMG_CD=&quot;-s 3,ahci-cd,./ubuntu-16.04.1-server-amd64.iso&quot;</span><br><span class="line">IMG_HDD=&quot;-s 4,virtio-blk,./hdd.img&quot;</span><br><span class="line">PCI_DEV=&quot;-s 0:0,hostbridge -s 31,lpc&quot;</span><br><span class="line">LPC_DEV=&quot;-l com1,stdio&quot;</span><br><span class="line"></span><br><span class="line">xhyve $MEM $SMP $PCI_DEV $LPC_DEV $NET $IMG_CD $IMG_HDD -f kexec,$KERNEL,$INITRD,&quot;$CMDLINE&quot;</span><br></pre></td></tr></table></figure>
+
+<p>运行VM创建脚本<code>sudo sh ./mk_xhyve.sh</code>创建ubuntu虚拟机</p>
+<p><img src="/images/xhyve/xhyve_vm_run.png" alt="xhyve_vm_run"></p>
+<p>按正常系统安装方法安装。。。<br>待成功安装完成后选择<code>&lt;Go Back&gt;</code> &#x3D;&gt; <code>Execute a shell</code>，进入iso的shell界面，然后需要将已经安装好的<code>hdd.img</code>也就是系统中的<code>/dev/vda</code>中的boot目录copy出来，因为要用里面的<code>vmlinuz-4.4.0-31-generic</code>和<code>initrd.img-4.4.0-31-generic</code></p>
+<p>进入shell后先查看一下ip地址</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">BusyBox v1.22.1 (Ubuntu 1:1.22.0-15ubuntu1) built-in shell (ash)</span><br><span class="line">Enter &#x27;help&#x27; for a list of built-in commands.</span><br><span class="line"></span><br><span class="line">~ # ip a</span><br><span class="line">1: lo: &lt;LOOPBACK&gt; mtu 65536 qdisc noop qlen 1</span><br><span class="line">    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00</span><br><span class="line">2: enp0s2: &lt;BROADCAST,MULTICAST&gt; mtu 1500 qdisc noop qlen 1000</span><br><span class="line">    link/ether 82:62:9e:40:cf:32 brd ff:ff:ff:ff:ff:ff</span><br><span class="line">~ #</span><br></pre></td></tr></table></figure>
+<p>发现没有获取到ip地址，此时shell用的是busybox，是没有<code>dhclient</code>的，不过busybox提供<code>udhcpc -i &lt;interface&gt;</code>。<br>获取到ip地址后，vm可以通过<code>tar c ./boot | nc -l -p 1234</code>将boot目录发送给宿主机，宿主机用<code>nc &lt;vm ip&gt; 1234 | tar x</code>接受boot目录。</p>
+<p>获得到boot目录后取出其中的<code>vmlinuz-4.4.0-31-generic</code>和<code>initrd.img-4.4.0-31-generic</code>，然后修改VM创建脚本</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">!/bin/bash</span></span><br><span class="line"></span><br><span class="line">KERNEL=&quot;vmlinuz-4.4.0-31-generic&quot;</span><br><span class="line">INITRD=&quot;initrd.img-4.4.0-31-generic&quot;</span><br><span class="line">CMDLINE=&quot;earlyprintk=serial console=ttyS0 acpi=off root=/dev/vda1&quot;</span><br><span class="line"></span><br><span class="line">MEM=&quot;-m 1G&quot;</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">SMP=<span class="string">&quot;-c 2&quot;</span></span></span><br><span class="line">NET=&quot;-s 2:0,virtio-net&quot;</span><br><span class="line">IMG_CD=&quot;-s 3,ahci-cd,./ubuntu-16.04.1-server-amd64.iso&quot;</span><br><span class="line">IMG_HDD=&quot;-s 4,virtio-blk,./hdd.img&quot;</span><br><span class="line">PCI_DEV=&quot;-s 0:0,hostbridge -s 31,lpc&quot;</span><br><span class="line">LPC_DEV=&quot;-l com1,stdio&quot;</span><br><span class="line"></span><br><span class="line">xhyve $MEM $SMP $PCI_DEV $LPC_DEV $NET $IMG_CD $IMG_HDD -f kexec,$KERNEL,$INITRD,&quot;$CMDLINE&quot;</span><br></pre></td></tr></table></figure>
+<p>并执行<code>sudo sh ./mk_xhyve.sh</code></p>
+<p><img src="/images/xhyve/xhyve_vm_run2.png" alt="xhyve_vm_run2"></p>
+<p>ubuntu 16.04 正常启动了，over！</p>
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="https://github.com/mist64/xhyve">xhyve.org</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.pagetable.com/?p=831">xhyve – Lightweight Virtualization on OS X Based on bhyve</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.vpsee.com/2015/06/mac-os-x-hypervisor-xhyve-based-on-bhyve/">Mac OS X 上基于 FreeBSD&#x2F;bhyve 的虚拟技术 xhyve</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.v2ex.com/t/359038">在 Mac OS 的 Xhyve 引擎之上启动 LinuxKit 的玩法</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/mac/" rel="tag"># mac</a>
+              <a href="/tags/vm/" rel="tag"># vm</a>
+              <a href="/tags/xhyve/" rel="tag"># xhyve</a>
+              <a href="/tags/docker/" rel="tag"># docker</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2017/08/29/bigdata/zeppelin-usage/" rel="prev" title="Zeppelin 搭建配置及使用">
+      <i class="fa fa-chevron-left"></i> Zeppelin 搭建配置及使用
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2017/09/04/bigdata/hadoop/hive-load-from-hbase/" rel="next" title="从hbase向hive导入数据">
+      从hbase向hive导入数据 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#install"><span class="nav-number">1.</span> <span class="nav-text">install</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Ubuntu-16-04-VM"><span class="nav-number">2.</span> <span class="nav-text">Ubuntu 16.04 VM</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%82%E8%80%83-%E9%B8%A3%E8%B0%A2"><span class="nav-number">3.</span> <span class="nav-text">参考&amp;鸣谢</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">博</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">138</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">119</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">博</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

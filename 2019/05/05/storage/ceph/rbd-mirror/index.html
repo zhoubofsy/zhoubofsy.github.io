@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zhoubofsy.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="原理Todo… 问题 增加了RBD Journal的写入操作，是否会产生写放大现象。 Ceph-RBD-Mirror回放日志的的时间间隔 RBD Journal的容量大小如何配置 RBD Journal存储介质是否可以优化  使用环境要求 Ceph版本必须为Jewel及之后版本  RBD-Mirror功能从Jewel版本引入，之前版本不支持该feature。本文以jewel版本为例进行演示。 RB">
+<meta property="og:type" content="article">
+<meta property="og:title" content="rbd-mirror 跨集群备份">
+<meta property="og:url" content="http://zhoubofsy.github.io/2019/05/05/storage/ceph/rbd-mirror/index.html">
+<meta property="og:site_name" content="Bolog">
+<meta property="og:description" content="原理Todo… 问题 增加了RBD Journal的写入操作，是否会产生写放大现象。 Ceph-RBD-Mirror回放日志的的时间间隔 RBD Journal的容量大小如何配置 RBD Journal存储介质是否可以优化  使用环境要求 Ceph版本必须为Jewel及之后版本  RBD-Mirror功能从Jewel版本引入，之前版本不支持该feature。本文以jewel版本为例进行演示。 RB">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2019-05-05T01:30:42.000Z">
+<meta property="article:modified_time" content="2024-09-09T07:57:18.588Z">
+<meta property="article:author" content="博">
+<meta property="article:tag" content="ceph">
+<meta property="article:tag" content="rbd">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://zhoubofsy.github.io/2019/05/05/storage/ceph/rbd-mirror/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>rbd-mirror 跨集群备份 | Bolog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Bolog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2019/05/05/storage/ceph/rbd-mirror/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          rbd-mirror 跨集群备份
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2019-05-05 09:30:42" itemprop="dateCreated datePublished" datetime="2019-05-05T09:30:42+08:00">2019-05-05</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h1><p>Todo…</p>
+<h3 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h3><ul>
+<li>增加了RBD Journal的写入操作，是否会产生写放大现象。</li>
+<li>Ceph-RBD-Mirror回放日志的的时间间隔</li>
+<li>RBD Journal的容量大小如何配置</li>
+<li>RBD Journal存储介质是否可以优化</li>
+</ul>
+<h1 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h1><h2 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h2><h4 id="要求"><a href="#要求" class="headerlink" title="要求"></a>要求</h4><ul>
+<li>Ceph版本必须为Jewel及之后版本<br>  RBD-Mirror功能从Jewel版本引入，之前版本不支持该feature。本文以jewel版本为例进行演示。</li>
+<li>RBD feature必须包含<code>journaling</code><br>  RBD-Mirror依赖journal完成工作，类似Mysql的主从同步机制。使用日志回放方法备份数据。</li>
+</ul>
+<h4 id="准备"><a href="#准备" class="headerlink" title="准备"></a>准备</h4><ul>
+<li><p>准备两个集群分别为cls17和cls26<br>  cls17为primary集群，cls26为non-primary集群，将cls17内的RBD数据备份到cls26集群内</p>
+</li>
+<li><p>在这两个集群中创建同名pool——<code>rmp</code>（RBD Mirror Pool）</p>
+</li>
+</ul>
+<h4 id="ceph-rbd-mirror服务"><a href="#ceph-rbd-mirror服务" class="headerlink" title="ceph-rbd-mirror服务"></a>ceph-rbd-mirror服务</h4><p>根据RBD-Mirror的原理，需要在non-primery集群上启动<code>ceph-rbd-mirror</code>服务</p>
+<p>** 安装 **</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">yum install -y rbd-mirror</span></span><br></pre></td></tr></table></figure>
+
+<p>** 启动 **</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">systemctl <span class="built_in">enable</span> ceph-rbd-mirror@admin.service</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">systemctl start ceph-rbd-mirror@admin.service</span></span><br></pre></td></tr></table></figure>
+
+<p><code>@admin</code>是ceph中的<code>client.admin</code>用户，只是这里省略了<code>client.</code>。关于Ceph用户管理相关操作可以使用<code>ceph auth</code>命令。</p>
+<h4 id="Copy-Config-keyring"><a href="#Copy-Config-keyring" class="headerlink" title="Copy Config &amp; keyring"></a>Copy Config &amp; keyring</h4><p>将cls17集群中的<code>ceph.conf</code>和<code>ceph.client.admin.keyring</code>copy到cls26集群的<code>/etc/ceph</code>目录中，并重命名成<code>cls17.conf</code>和<code>cls17.client.admin.keyring</code>。然后在cls26集群中可通过指定<code>--cluster cls17</code>来指定访问集群。</p>
+<h2 id="备份Pool中所有RBD"><a href="#备份Pool中所有RBD" class="headerlink" title="备份Pool中所有RBD"></a>备份Pool中所有RBD</h2><h3 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h3><h4 id="Pool-Mirror-Mode"><a href="#Pool-Mirror-Mode" class="headerlink" title="Pool Mirror Mode"></a>Pool Mirror Mode</h4><p>需要将两个集群的的<code>rmp</code>pool的mirror mode设置成<code>pool</code>。</p>
+<p>集群cls26</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd mirror pool <span class="built_in">enable</span> rmp pool</span></span><br></pre></td></tr></table></figure>
+
+<p>集群cls17</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd mirror pool <span class="built_in">enable</span> rmp pool --cluster cls17</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="Add-Peer"><a href="#Add-Peer" class="headerlink" title="Add Peer"></a>Add Peer</h4><p>将Primary集群信息加入到<code>rmp</code>pool中。</p>
+<p>集群cls26</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd mirror pool peer add rmp client.admin@cls17</span></span><br></pre></td></tr></table></figure>
+<p>查看两个集群的peer信息</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd mirror pool info rmp</span></span><br><span class="line">Mode: pool</span><br><span class="line">Peers:</span><br><span class="line">  UUID                                 NAME  CLIENT</span><br><span class="line">  2c2c1293-0e97-4c57-9bf1-e5f934274758 cls17 client.admin</span><br><span class="line"><span class="meta prompt_">$</span><span class="language-bash"></span></span><br><span class="line"><span class="language-bash">$ rbd mirror pool info rmp --cluster cls17</span></span><br><span class="line">Mode: pool</span><br><span class="line">Peers: none</span><br></pre></td></tr></table></figure>
+
+<p>至此备份Pool中所有RBD的配置操作已经完成，接下来进行验证操作。</p>
+<h3 id="测试"><a href="#测试" class="headerlink" title="测试"></a>测试</h3><p>在集群cls17中<code>rmp</code>pool创建RBD，并查看集群cls26中<code>rmp</code>pool是否有回放操作（RBD是否备份到cls26集群）。由于整个RBD-Mirror依赖于<code>journaling</code>feature，所以创建RBD时需要指定该feature。若对当前<code>rmp</code>pool中存在RBD进行备份，需要先增加<code>jouranling</code>feature，使用<code>rbd feature enable rmp/rd1 journaling</code>命令。</p>
+<p>集群cls17</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd create -p rmp --image-format 2 --image-feature layering,exclusive-lock,object-map,fast-diff,deep-flatten,journaling -s 1G rd1</span></span><br></pre></td></tr></table></figure>
+
+<p>集群cls26</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd -p rmp <span class="built_in">ls</span></span></span><br><span class="line">rd1</span><br></pre></td></tr></table></figure>
+
+<h2 id="备份单个RBD"><a href="#备份单个RBD" class="headerlink" title="备份单个RBD"></a>备份单个RBD</h2><h3 id="配置-1"><a href="#配置-1" class="headerlink" title="配置"></a>配置</h3><h4 id="Pool-Mirror-Mode-1"><a href="#Pool-Mirror-Mode-1" class="headerlink" title="Pool Mirror Mode"></a>Pool Mirror Mode</h4><p>将两个集群的<code>rbd</code>pool的mirror mode设置成<code>image</code>。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd mirror pool <span class="built_in">enable</span> rbd image</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="Add-Peer-1"><a href="#Add-Peer-1" class="headerlink" title="Add Peer"></a>Add Peer</h4><p>将Primary集群信息加入到<code>rbd</code>pool中。具体操作方法，同上。</p>
+<h4 id="Enable-Image-Mirror"><a href="#Enable-Image-Mirror" class="headerlink" title="Enable Image Mirror"></a>Enable Image Mirror</h4><p>集群cls17</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd info rd1</span></span><br><span class="line">rbd image &#x27;rd1&#x27;:</span><br><span class="line">    size 1024 MB in 256 objects</span><br><span class="line">    order 22 (4096 kB objects)</span><br><span class="line">    block_name_prefix: rbd_data.ad616b8b4567</span><br><span class="line">    format: 2</span><br><span class="line">    features: exclusive-lock, journaling</span><br><span class="line">    flags:</span><br><span class="line">    journal: ad616b8b4567</span><br><span class="line">    mirroring state: disabled</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd mirror image <span class="built_in">enable</span> rbd/rd1</span></span><br><span class="line">Mirroring enabled</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd info rd1</span></span><br><span class="line">    rbd image &#x27;rd1&#x27;:</span><br><span class="line">    size 1024 MB in 256 objects</span><br><span class="line">    order 22 (4096 kB objects)</span><br><span class="line">    block_name_prefix: rbd_data.ad616b8b4567</span><br><span class="line">    format: 2</span><br><span class="line">    features: exclusive-lock, journaling</span><br><span class="line">    flags:</span><br><span class="line">    journal: ad616b8b4567</span><br><span class="line">    mirroring state: enabled</span><br><span class="line">    mirroring global id: f0c9972d-7585-4bda-a486-baa9a6f96eb5</span><br><span class="line">    mirroring primary: true</span><br></pre></td></tr></table></figure>
+
+<p>集群cls26</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd info rd1</span></span><br><span class="line">rbd image &#x27;rd1&#x27;:</span><br><span class="line">    size 1024 MB in 256 objects</span><br><span class="line">    order 22 (4096 kB objects)</span><br><span class="line">    block_name_prefix: rbd_data.8587327b23c6</span><br><span class="line">    format: 2</span><br><span class="line">    features: exclusive-lock, journaling</span><br><span class="line">    flags:</span><br><span class="line">    journal: 8587327b23c6</span><br><span class="line">    mirroring state: enabled</span><br><span class="line">    mirroring global id: f0c9972d-7585-4bda-a486-baa9a6f96eb5</span><br><span class="line">    mirroring primary: false</span><br></pre></td></tr></table></figure>
+
+<h3 id="测试-1"><a href="#测试-1" class="headerlink" title="测试"></a>测试</h3><p>(同上)</p>
+<p>*** 无论是全Pool备份，还是单个RBD备份，只要建立mirror关系，只有primary rbd才能处理读写操作 ***</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/ceph/" rel="tag"># ceph</a>
+              <a href="/tags/rbd/" rel="tag"># rbd</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2019/04/28/storage/ceph/rbd-export-import/" rel="prev" title="RBD备份">
+      <i class="fa fa-chevron-left"></i> RBD备份
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2019/05/13/storage/ceph/backfill_recovery_config/" rel="next" title="Backfill & Recovery 恢复优化">
+      Backfill & Recovery 恢复优化 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8E%9F%E7%90%86"><span class="nav-number">1.</span> <span class="nav-text">原理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%97%AE%E9%A2%98"><span class="nav-number">1.0.1.</span> <span class="nav-text">问题</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8"><span class="nav-number">2.</span> <span class="nav-text">使用</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%8E%AF%E5%A2%83"><span class="nav-number">2.1.</span> <span class="nav-text">环境</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%A6%81%E6%B1%82"><span class="nav-number">2.1.0.1.</span> <span class="nav-text">要求</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%87%86%E5%A4%87"><span class="nav-number">2.1.0.2.</span> <span class="nav-text">准备</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#ceph-rbd-mirror%E6%9C%8D%E5%8A%A1"><span class="nav-number">2.1.0.3.</span> <span class="nav-text">ceph-rbd-mirror服务</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Copy-Config-keyring"><span class="nav-number">2.1.0.4.</span> <span class="nav-text">Copy Config &amp; keyring</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A4%87%E4%BB%BDPool%E4%B8%AD%E6%89%80%E6%9C%89RBD"><span class="nav-number">2.2.</span> <span class="nav-text">备份Pool中所有RBD</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE"><span class="nav-number">2.2.1.</span> <span class="nav-text">配置</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Pool-Mirror-Mode"><span class="nav-number">2.2.1.1.</span> <span class="nav-text">Pool Mirror Mode</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Add-Peer"><span class="nav-number">2.2.1.2.</span> <span class="nav-text">Add Peer</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B5%8B%E8%AF%95"><span class="nav-number">2.2.2.</span> <span class="nav-text">测试</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A4%87%E4%BB%BD%E5%8D%95%E4%B8%AARBD"><span class="nav-number">2.3.</span> <span class="nav-text">备份单个RBD</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE-1"><span class="nav-number">2.3.1.</span> <span class="nav-text">配置</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Pool-Mirror-Mode-1"><span class="nav-number">2.3.1.1.</span> <span class="nav-text">Pool Mirror Mode</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Add-Peer-1"><span class="nav-number">2.3.1.2.</span> <span class="nav-text">Add Peer</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Enable-Image-Mirror"><span class="nav-number">2.3.1.3.</span> <span class="nav-text">Enable Image Mirror</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B5%8B%E8%AF%95-1"><span class="nav-number">2.3.2.</span> <span class="nav-text">测试</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">博</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">138</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">119</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">博</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

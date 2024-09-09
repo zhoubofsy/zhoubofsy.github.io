@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zhoubofsy.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="简介DRBD（Distributed Replicated Block Device，分布式复制块设备)是一个用软件实现的、无共享的、服务器之间镜像块设备内容的存储复制解决方案。DRBD是镜像块设备，是按数据位镜像成一样的数据块。 安装ubuntu环境准备两个ubuntu系统，一个作为源端ubu1，一个作为目的端ubu2。 12345678bob@ubu1:~$ lsb_release -aNo">
+<meta property="og:type" content="article">
+<meta property="og:title" content="DRBD">
+<meta property="og:url" content="http://zhoubofsy.github.io/2023/02/16/storage/linux-drbd-usage/index.html">
+<meta property="og:site_name" content="Bolog">
+<meta property="og:description" content="简介DRBD（Distributed Replicated Block Device，分布式复制块设备)是一个用软件实现的、无共享的、服务器之间镜像块设备内容的存储复制解决方案。DRBD是镜像块设备，是按数据位镜像成一样的数据块。 安装ubuntu环境准备两个ubuntu系统，一个作为源端ubu1，一个作为目的端ubu2。 12345678bob@ubu1:~$ lsb_release -aNo">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://zhoubofsy.github.io/images/drbd/drbd-in-kernel.png">
+<meta property="og:image" content="http://zhoubofsy.github.io/images/drbd/gi-changes-newgen.png">
+<meta property="og:image" content="http://zhoubofsy.github.io/images/drbd/gi-changes-syncstart.png">
+<meta property="og:image" content="http://zhoubofsy.github.io/images/drbd/gi-changes-synccomplete.png">
+<meta property="og:image" content="http://zhoubofsy.github.io/images/drbd/al-extents.png">
+<meta property="article:published_time" content="2023-02-16T07:52:32.000Z">
+<meta property="article:modified_time" content="2024-09-09T07:57:18.591Z">
+<meta property="article:author" content="博">
+<meta property="article:tag" content="drbd">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://zhoubofsy.github.io/images/drbd/drbd-in-kernel.png">
+
+<link rel="canonical" href="http://zhoubofsy.github.io/2023/02/16/storage/linux-drbd-usage/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>DRBD | Bolog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Bolog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2023/02/16/storage/linux-drbd-usage/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          DRBD
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2023-02-16 15:52:32" itemprop="dateCreated datePublished" datetime="2023-02-16T15:52:32+08:00">2023-02-16</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h1><p>DRBD（Distributed Replicated Block Device，分布式复制块设备)是一个用软件实现的、无共享的、服务器之间镜像块设备内容的存储复制解决方案。DRBD是镜像块设备，是按数据位镜像成一样的数据块。</p>
+<h1 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h1><h2 id="ubuntu环境"><a href="#ubuntu环境" class="headerlink" title="ubuntu环境"></a>ubuntu环境</h2><p>准备两个ubuntu系统，一个作为源端ubu1，一个作为目的端ubu2。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">bob@ubu1:~$ lsb_release -a</span><br><span class="line">No LSB modules are available.</span><br><span class="line">Distributor ID: Ubuntu</span><br><span class="line">Description:    Ubuntu 20.04.5 LTS</span><br><span class="line">Release:    20.04</span><br><span class="line">Codename:   focal</span><br><span class="line">bob@ubu1:~$ uname -a</span><br><span class="line">Linux ubu1 5.4.0-139-generic #156-Ubuntu SMP Sat Jan 21 13:46:46 UTC 2023 aarch64 aarch64 aarch64 GNU/Linux</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">bob@ubu2:~$ lsb_release -a</span><br><span class="line">No LSB modules are available.</span><br><span class="line">Distributor ID: Ubuntu</span><br><span class="line">Description:    Ubuntu 20.04.5 LTS</span><br><span class="line">Release:    20.04</span><br><span class="line">Codename:   focal</span><br><span class="line">bob@ubu2:~$ uname -a</span><br><span class="line">Linux ubu2 5.4.0-139-generic #156-Ubuntu SMP Sat Jan 21 13:46:46 UTC 2023 aarch64 aarch64 aarch64 GNU/Linux</span><br></pre></td></tr></table></figure>
+
+<p><code>brbd.ko</code>为linux内核自带，不需要另行安装</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br></pre></td><td class="code"><pre><span class="line">bob@ubu1:~$ lsmod | grep drbd</span><br><span class="line">drbd                  434176  3</span><br><span class="line">lru_cache              20480  1 drbd</span><br><span class="line">libcrc32c              16384  4 btrfs,xfs,drbd,raid456</span><br><span class="line">bob@ubu1:~$ modinfo drbd</span><br><span class="line">filename:       /lib/modules/5.4.0-139-generic/kernel/drivers/block/drbd/drbd.ko</span><br><span class="line">alias:          block-major-147-*</span><br><span class="line">license:        GPL</span><br><span class="line">version:        8.4.11</span><br><span class="line">description:    drbd - Distributed Replicated Block Device v8.4.11</span><br><span class="line">author:         Philipp Reisner &lt;phil@linbit.com&gt;, Lars Ellenberg &lt;lars@linbit.com&gt;</span><br><span class="line">srcversion:     B438804C5AE8C84C95D0411</span><br><span class="line">depends:        lru_cache,libcrc32c</span><br><span class="line">intree:         Y</span><br><span class="line">name:           drbd</span><br><span class="line">vermagic:       5.4.0-139-generic SMP mod_unload modversions aarch64</span><br><span class="line">sig_id:         PKCS#7</span><br><span class="line">signer:         Build time autogenerated kernel key</span><br><span class="line">sig_key:        43:64:51:B8:71:C1:53:C3:AE:29:64:EC:5F:B2:A3:30:54:25:F9:B5</span><br><span class="line">sig_hashalgo:   sha512</span><br><span class="line">signature:      0F:16:6D:12:54:0F:95:51:A5:18:4A:0A:A9:7C:72:F6:2D:31:21:39:</span><br><span class="line">                44:D9:71:C8:1B:7C:3F:1B:4B:66:53:08:1A:63:92:C3:CE:19:19:F0:</span><br><span class="line">                13:9F:9D:D6:7B:0B:27:F8:54:19:D3:44:F9:CC:8F:6E:E1:82:07:7A:</span><br><span class="line">                30:B1:37:28:5E:60:92:5B:C9:26:B0:25:DD:50:9D:A5:2E:76:96:A8:</span><br><span class="line">                E2:58:A1:36:DC:AA:84:D2:40:EF:66:F1:82:E5:2B:51:D7:F8:49:62:</span><br><span class="line">                9A:62:22:DC:42:A9:01:EC:6B:DC:9F:C6:8E:DD:9D:4A:CD:93:9B:F9:</span><br><span class="line">                3B:E4:4A:B4:34:BD:12:1A:89:C0:2C:2B:96:4D:86:27:D5:93:3A:51:</span><br><span class="line">                D4:DD:C7:34:9D:2D:A0:6C:BC:57:D1:9F:54:C2:55:56:B2:60:4D:FB:</span><br><span class="line">                86:55:18:09:9C:A5:C1:80:54:F5:F5:35:97:7E:32:36:A9:9B:F9:B2:</span><br><span class="line">                69:5B:BD:83:A3:41:89:9B:4F:7D:BA:A9:F1:E2:28:6A:FD:D4:7A:94:</span><br><span class="line">                67:34:D1:3C:8D:39:18:F7:43:A7:5F:67:71:B6:3B:63:3C:10:16:B7:</span><br><span class="line">                44:EA:D2:D4:52:19:28:F3:60:31:35:69:6B:EA:25:3B:35:FC:32:05:</span><br><span class="line">                B9:5A:99:7E:61:27:59:52:A8:55:8C:B6:15:8E:77:26:0F:DC:61:93:</span><br><span class="line">                F9:10:EA:8F:FD:E1:E0:DF:60:2D:83:92:9E:33:D7:99:10:93:AF:03:</span><br><span class="line">                44:8B:A0:6A:E8:E7:08:71:77:1C:CC:35:96:8C:94:DB:62:CA:ED:64:</span><br><span class="line">                B8:17:43:24:FD:BF:FC:3B:D7:D7:03:1C:83:06:0E:B5:D3:82:2A:4B:</span><br><span class="line">                E4:A7:F9:C4:07:9C:0F:2B:3E:D4:EA:48:FF:6E:BD:79:2E:85:FB:EE:</span><br><span class="line">                2D:A2:70:96:38:77:9C:29:58:5C:45:B1:8A:29:D2:7A:87:55:A6:A3:</span><br><span class="line">                32:A2:FC:F5:A2:4F:9C:20:85:F0:55:E6:A6:01:D2:76:EE:27:2F:A0:</span><br><span class="line">                BC:67:F2:B9:9B:A4:5D:2D:3D:6F:E9:46:C0:EF:4A:0C:01:15:19:E7:</span><br><span class="line">                9C:61:A9:00:E8:1A:D3:7D:2E:86:81:FD:BA:53:44:85:17:19:D9:B3:</span><br><span class="line">                B8:E2:7B:39:01:28:3E:F3:DF:87:3C:C5:E4:37:89:C1:67:16:B0:2C:</span><br><span class="line">                C7:4D:C8:6F:71:97:55:19:24:63:7B:D6:08:A2:EC:EB:C3:AA:71:91:</span><br><span class="line">                35:B4:C6:47:B5:EA:2B:DF:E4:AC:9C:06:77:73:1B:33:F5:AF:EE:58:</span><br><span class="line">                AC:F2:C4:A0:C9:00:58:AB:3F:62:1B:E5:E5:C3:E1:39:98:5B:2A:C9:</span><br><span class="line">                BD:10:6B:AF:FC:44:B0:7D:57:07:B0:5B</span><br><span class="line">parm:           allow_oos:DONT USE! (bool)</span><br><span class="line">parm:           disable_sendpage:bool</span><br><span class="line">parm:           proc_details:int</span><br><span class="line">parm:           minor_count:Approximate number of drbd devices (1-255) (uint)</span><br><span class="line">parm:           usermode_helper:string</span><br></pre></td></tr></table></figure>
+
+<p>至于使用drbd的工具还是要安装的</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">bob@ubu1:~$ sudo apt-cache show drbd-utils</span><br><span class="line">Package: drbd-utils</span><br><span class="line">Architecture: arm64</span><br><span class="line">Version: 9.11.0-1build1</span><br><span class="line">Priority: extra</span><br><span class="line">Section: admin</span><br><span class="line">Origin: Ubuntu</span><br><span class="line">Maintainer: Ubuntu Developers &lt;ubuntu-devel-discuss@lists.ubuntu.com&gt;</span><br><span class="line">Original-Maintainer: Debian DRBD Maintainers &lt;debian-ha-maintainers@lists.alioth.debian.org&gt;</span><br><span class="line">Bugs: https://bugs.launchpad.net/ubuntu/+filebug</span><br><span class="line">Installed-Size: 2062</span><br><span class="line">Depends: lsb-base (&gt;= 3.0-6), libc6 (&gt;= 2.28), libgcc-s1 (&gt;= 3.0), libstdc++6 (&gt;= 5.2), init-system-helpers (&gt;= 1.51)</span><br><span class="line">Recommends: heirloom-mailx | mailx</span><br><span class="line">Suggests: heartbeat</span><br><span class="line">Breaks: drbd8-utils (&lt;&lt; 2:8.9.0)</span><br><span class="line">Replaces: drbd8-utils (&lt;&lt; 2:8.9.0)</span><br><span class="line">Filename: pool/main/d/drbd-utils/drbd-utils_9.11.0-1build1_arm64.deb</span><br><span class="line">Size: 654128</span><br><span class="line">MD5sum: 45a8962e941c9a87c7de423de34f616b</span><br><span class="line">SHA1: 3734ee6c0611348c5b8c080feb713c05f9d84c4c</span><br><span class="line">SHA256: ae63aa90d145faab00551f151c10588bafebe2673e64b137c980cce7c299bccf</span><br><span class="line">Homepage: https://www.drbd.org/</span><br><span class="line">Description-en: RAID 1 over TCP/IP for Linux (user utilities)</span><br><span class="line"> Drbd is a block device which is designed to build high availability</span><br><span class="line"> clusters by providing a virtual shared device which keeps disks in</span><br><span class="line"> nodes synchronised using TCP/IP. This simulates RAID 1 but avoiding</span><br><span class="line"> the use of uncommon hardware (shared SCSI buses or Fibre Channel).</span><br><span class="line"> It is currently limited to fail-over HA clusters.</span><br><span class="line"> .</span><br><span class="line"> This package contains the programs that will control the drbd kernel</span><br><span class="line"> module provided in the Linux kernel.</span><br><span class="line">Description-md5: 7da3dade742b03d1a9c08b339123f93b</span><br><span class="line"></span><br><span class="line">bob@ubu1:~$ apt install drbd-utils</span><br></pre></td></tr></table></figure>
+
+<p>两个节点ubu1和ubu2都需要安装这个<code>drbd-utils</code>包</p>
+<h1 id="常规用法"><a href="#常规用法" class="headerlink" title="常规用法"></a>常规用法</h1><h2 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h2><h3 id="配置-etc-drbd-d-global-common-conf"><a href="#配置-etc-drbd-d-global-common-conf" class="headerlink" title="配置/etc/drbd.d/global_common.conf"></a>配置<code>/etc/drbd.d/global_common.conf</code></h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">global &#123;</span><br><span class="line">    usage-count yes;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">common &#123;</span><br><span class="line">    net &#123;</span><br><span class="line">        protocol C;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>DRBD系统向虚拟块的镜像中写入数据时，支持三种协议</p>
+<ul>
+<li><code>protocol A</code> 数据一旦写入磁盘并发送到网络中就认为完成了写入操作</li>
+<li><code>protocol B</code> 收到接收确认就认为完成了写入操作</li>
+<li><code>protocol C</code> 收到写入确认就认为完成了写入操作</li>
+</ul>
+<p>基于安全考虑我们一般选择<code>protocol C</code></p>
+<h3 id="配置DRBD资源-etc-drbd-d-r0-res"><a href="#配置DRBD资源-etc-drbd-d-r0-res" class="headerlink" title="配置DRBD资源/etc/drbd.d/r0.res"></a>配置DRBD资源<code>/etc/drbd.d/r0.res</code></h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">resource r0 &#123;</span><br><span class="line">  on ubu1 &#123;</span><br><span class="line">      device    /dev/drbd1;</span><br><span class="line">      disk  /dev/sda;</span><br><span class="line">      address   192.168.64.2:7789;</span><br><span class="line">      meta-disk internal;</span><br><span class="line">  &#125;</span><br><span class="line">  on ubu2 &#123;</span><br><span class="line">      device    /dev/drbd1;</span><br><span class="line">      disk  /dev/sda;</span><br><span class="line">      address   192.168.64.4:7789;</span><br><span class="line">      meta-disk internal;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>device</code>指drbd映射出来的快设备名称，<code>disk</code>指用于存放数据的硬盘。</p>
+<h2 id="启动"><a href="#启动" class="headerlink" title="启动"></a>启动</h2><p>分别在<code>ubu1</code>和<code>ubu2</code>上创建DRBD资源元数据</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bob@ubu1:~$ sudo drbdadm create-md r0</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bob@ubu2:~$ sudo drbdadm create-md r0</span><br></pre></td></tr></table></figure>
+
+<p>然后再启动<code>ubu1</code>和<code>ubu2</code>上的DRBD服务</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bob@ubu1:~$ sudo systemctl start drbd</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bob@ubu2:~$ sudo systemctl start drbd</span><br></pre></td></tr></table></figure>
+
+<p>启动<code>r0</code>资源，并设置<code>ubu1</code>为主设备</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">bob@ubu1:~$ sudo drbdadm up r0</span><br><span class="line">bob@ubu1:~$ sudo drbdadm primary --force r0</span><br></pre></td></tr></table></figure>
+
+<p>可以使用<code>drbdadm status r0</code>查看状态，也可以用<code>cat /proc/drbd</code>查看同步进度。<br>当<code>peer-disk</code>状态为<code>UpToDate</code>表示数据已经同步到最新状态。</p>
+<p>eg:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">bob@ubu1:~$ sudo drbdadm status r0</span><br><span class="line">r0 role:Primary</span><br><span class="line">  disk:UpToDate</span><br><span class="line">  peer role:Secondary</span><br><span class="line">    replication:Established peer-disk:UpToDate</span><br></pre></td></tr></table></figure>
+
+<p>如需查询服务状态详细信息可以通过命令<code>drbdsetup status r0 --verbose --statistics</code>查询</p>
+<h2 id="文件系统常规使用"><a href="#文件系统常规使用" class="headerlink" title="文件系统常规使用"></a>文件系统常规使用</h2><p>首先通过<code>lsblk</code>查看<code>drbd1</code>快设备是否存在，然后格式化成xfs文件系统，并挂载到<code>/mnt</code>目录上</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">bob@ubu1:~$ lsblk</span><br><span class="line">NAME                      MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT</span><br><span class="line">loop1                       7:1    0 49.1M  1 loop /snap/core18/2681</span><br><span class="line">loop2                       7:2    0 59.1M  1 loop /snap/core20/1826</span><br><span class="line">loop3                       7:3    0 60.7M  1 loop /snap/lxd/21843</span><br><span class="line">loop4                       7:4    0 43.2M  1 loop /snap/snapd/17954</span><br><span class="line">loop5                       7:5    0 91.9M  1 loop /snap/lxd/24065</span><br><span class="line">loop6                       7:6    0 57.5M  1 loop /snap/core20/1332</span><br><span class="line">loop7                       7:7    0 43.2M  1 loop /snap/snapd/18363</span><br><span class="line">loop8                       7:8    0 49.1M  1 loop /snap/core18/2701</span><br><span class="line">sda                         8:0    0   20G  0 disk</span><br><span class="line">└─drbd1                   147:1    0   20G  1 disk</span><br><span class="line">sr0                        11:0    1  1.1G  0 rom</span><br><span class="line">vda                       252:0    0  100G  0 disk</span><br><span class="line">├─vda1                    252:1    0  512M  0 part /boot/efi</span><br><span class="line">├─vda2                    252:2    0    1G  0 part /boot</span><br><span class="line">└─vda3                    252:3    0 98.5G  0 part</span><br><span class="line">  └─ubuntu--vg-ubuntu--lv 253:0    0 49.3G  0 lvm  /</span><br><span class="line">bob@ubu1:~$ mkfs.xfs /dev/drbd1</span><br><span class="line">...</span><br><span class="line">bob@ubu1:~$ mount /dev/drbd1 /mnt</span><br><span class="line">bob@ubu1:~$ touch /mnt/hello</span><br></pre></td></tr></table></figure>
+
+<h2 id="切换"><a href="#切换" class="headerlink" title="切换"></a>切换</h2><p>切换操作，可以认为是切换primary节点操作。需要先将ubu1(primary节点)设置成<code>secondary</code>，再将ubu2(secondary节点)设置成<code>primary</code>，然后ubu2节点就可以挂载<code>drbd1</code>快设备了。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bob@ubu1:~$ sudo drbdadm secondary r0</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">bob@ubu2:~$ sudo drbdadm primary r0</span><br><span class="line">bob@ubu2:~$ sudo mount /dev/drbd1 /mnt/</span><br><span class="line">bob@ubu2:~$ df -h</span><br><span class="line">Filesystem                         Size  Used Avail Use% Mounted on</span><br><span class="line">udev                               1.9G     0  1.9G   0% /dev</span><br><span class="line">tmpfs                              392M  1.4M  391M   1% /run</span><br><span class="line">/dev/mapper/ubuntu--vg-ubuntu--lv   49G  7.3G   39G  16% /</span><br><span class="line">tmpfs                              2.0G     0  2.0G   0% /dev/shm</span><br><span class="line">tmpfs                              5.0M     0  5.0M   0% /run/lock</span><br><span class="line">tmpfs                              2.0G     0  2.0G   0% /sys/fs/cgroup</span><br><span class="line">/dev/vda2                          974M  206M  701M  23% /boot</span><br><span class="line">/dev/vda1                          511M  5.3M  506M   2% /boot/efi</span><br><span class="line">/dev/loop3                          60M   60M     0 100% /snap/core20/1826</span><br><span class="line">/dev/loop1                          50M   50M     0 100% /snap/core18/2681</span><br><span class="line">/dev/loop2                          58M   58M     0 100% /snap/core20/1332</span><br><span class="line">/dev/loop5                          92M   92M     0 100% /snap/lxd/24065</span><br><span class="line">/dev/loop4                          61M   61M     0 100% /snap/lxd/21843</span><br><span class="line">/dev/loop6                          44M   44M     0 100% /snap/snapd/17954</span><br><span class="line">tmpfs                              392M     0  392M   0% /run/user/1000</span><br><span class="line">/dev/drbd1                          20G  175M   20G   1% /mnt</span><br></pre></td></tr></table></figure>
+
+<p>在将ubu1节点从primary状态设置成secondary状态时可能会遇到如下错误</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">bob@ubu1:~$ sudo drbdadm secondary r0</span><br><span class="line">1: State change failed: (-12) Device is held open by someone</span><br><span class="line">env: python: No such file or directory</span><br></pre></td></tr></table></figure>
+<p>这说明当前块设备<code>brbd1</code>正在被挂载或者被其他应用使用，可以使用<code>lsof</code>命令查看改设备的使用情况，并终止使用后再设置节点状态为<code>secondary</code>。</p>
+<h1 id="硬盘容量大小不一致情况"><a href="#硬盘容量大小不一致情况" class="headerlink" title="硬盘容量大小不一致情况"></a>硬盘容量大小不一致情况</h1><p>当源和备硬盘容量大小不一致时，取最小容量做为drbd块设备对外提供的存储空间大小。</p>
+<p>ubu1:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br></pre></td><td class="code"><pre><span class="line">bob@ubu1:~$ lsblk</span><br><span class="line">NAME                      MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT</span><br><span class="line">loop0                       7:0    0 49.1M  1 loop /snap/core18/2681</span><br><span class="line">loop1                       7:1    0 49.1M  1 loop /snap/core18/2701</span><br><span class="line">loop2                       7:2    0 43.2M  1 loop /snap/snapd/17954</span><br><span class="line">loop3                       7:3    0 57.5M  1 loop /snap/core20/1332</span><br><span class="line">loop4                       7:4    0 43.2M  1 loop /snap/snapd/18363</span><br><span class="line">loop5                       7:5    0 60.7M  1 loop /snap/lxd/21843</span><br><span class="line">loop6                       7:6    0 91.9M  1 loop /snap/lxd/24065</span><br><span class="line">loop7                       7:7    0 59.1M  1 loop /snap/core20/1826</span><br><span class="line">sda                         8:0    0   20G  0 disk</span><br><span class="line">└─drbd1                   147:1    0   20G  1 disk</span><br><span class="line">sdb                         8:16   0   21G  0 disk</span><br><span class="line">└─drbd2                   147:2    0   21G  0 disk</span><br><span class="line">sdc                         8:32   0   31G  0 disk</span><br><span class="line">└─drbd3                   147:3    0   22G  0 disk</span><br><span class="line">sr0                        11:0    1  1.1G  0 rom</span><br><span class="line">vda                       252:0    0  100G  0 disk</span><br><span class="line">├─vda1                    252:1    0  512M  0 part /boot/efi</span><br><span class="line">├─vda2                    252:2    0    1G  0 part /boot</span><br><span class="line">└─vda3                    252:3    0 98.5G  0 part</span><br><span class="line">  └─ubuntu--vg-ubuntu--lv 253:0    0 49.3G  0 lvm  /</span><br><span class="line">bob@ubu1:~$ cat /etc/drbd.d/r1.res</span><br><span class="line">resource r1 &#123;</span><br><span class="line">  on ubu1 &#123;</span><br><span class="line">    device    /dev/drbd2;</span><br><span class="line">    disk  /dev/sdb;</span><br><span class="line">    address   192.168.64.2:7792;</span><br><span class="line">    meta-disk internal;</span><br><span class="line">  &#125;</span><br><span class="line">  on ubu2 &#123;</span><br><span class="line">    device    /dev/drbd2;</span><br><span class="line">    disk  /dev/sdb;</span><br><span class="line">    address   192.168.64.4:7792;</span><br><span class="line">    meta-disk internal;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line">bob@ubu1:~$ cat /etc/drbd.d/r2.res</span><br><span class="line">resource r2 &#123;</span><br><span class="line">  on ubu1 &#123;</span><br><span class="line">    device    /dev/drbd3;</span><br><span class="line">    disk  /dev/sdc;</span><br><span class="line">    address   192.168.64.2:7793;</span><br><span class="line">    meta-disk internal;</span><br><span class="line">  &#125;</span><br><span class="line">  on ubu2 &#123;</span><br><span class="line">    device    /dev/drbd3;</span><br><span class="line">    disk  /dev/sdc;</span><br><span class="line">    address   192.168.64.4:7793;</span><br><span class="line">    meta-disk internal;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line">bob@ubu1:~$ cat /proc/drbd</span><br><span class="line">version: 8.4.11 (api:1/proto:86-101)</span><br><span class="line">srcversion: B438804C5AE8C84C95D0411</span><br><span class="line"></span><br><span class="line"> 1: cs:Connected ro:Secondary/Secondary ds:UpToDate/UpToDate C r-----</span><br><span class="line">    ns:0 nr:0 dw:0 dr:0 al:0 bm:0 lo:0 pe:0 ua:0 ap:0 ep:1 wo:f oos:0</span><br><span class="line"> 2: cs:Connected ro:Primary/Secondary ds:UpToDate/UpToDate C r-----</span><br><span class="line">    ns:22019388 nr:0 dw:0 dr:22021500 al:0 bm:0 lo:0 pe:0 ua:0 ap:0 ep:1 wo:f oos:0</span><br><span class="line"> 3: cs:Connected ro:Primary/Secondary ds:UpToDate/UpToDate C r-----</span><br><span class="line">    ns:23067932 nr:0 dw:0 dr:23070036 al:8 bm:0 lo:0 pe:0 ua:0 ap:0 ep:1 wo:f oos:0</span><br></pre></td></tr></table></figure>
+
+<p>ubu2:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">bob@ubu2:~$ lsblk</span><br><span class="line">NAME                      MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT</span><br><span class="line">loop0                       7:0    0 49.1M  1 loop /snap/core18/2681</span><br><span class="line">loop1                       7:1    0 49.1M  1 loop /snap/core18/2701</span><br><span class="line">loop2                       7:2    0 57.5M  1 loop /snap/core20/1332</span><br><span class="line">loop3                       7:3    0 59.1M  1 loop /snap/core20/1826</span><br><span class="line">loop4                       7:4    0 60.7M  1 loop /snap/lxd/21843</span><br><span class="line">loop5                       7:5    0 43.2M  1 loop /snap/snapd/18363</span><br><span class="line">loop6                       7:6    0 43.2M  1 loop /snap/snapd/17954</span><br><span class="line">loop7                       7:7    0 91.9M  1 loop /snap/lxd/24065</span><br><span class="line">sda                         8:0    0   20G  0 disk</span><br><span class="line">└─drbd1                   147:1    0   20G  1 disk</span><br><span class="line">sdb                         8:16   0   32G  0 disk</span><br><span class="line">└─drbd2                   147:2    0   21G  1 disk</span><br><span class="line">sdc                         8:32   0   22G  0 disk</span><br><span class="line">└─drbd3                   147:3    0   22G  1 disk</span><br><span class="line">sr0                        11:0    1  1.1G  0 rom</span><br><span class="line">vda                       252:0    0  100G  0 disk</span><br><span class="line">├─vda1                    252:1    0  512M  0 part /boot/efi</span><br><span class="line">├─vda2                    252:2    0    1G  0 part /boot</span><br><span class="line">└─vda3                    252:3    0 98.5G  0 part</span><br><span class="line">  └─ubuntu--vg-ubuntu--lv 253:0    0 49.3G  0 lvm  /</span><br></pre></td></tr></table></figure>
+
+<h1 id="硬盘扩容情况"><a href="#硬盘扩容情况" class="headerlink" title="硬盘扩容情况"></a>硬盘扩容情况</h1><p>在ubu1上使用lvm构建底层硬盘存储数据，方便后续进行扩容操作。先创建一个20G的lv，然后创建drbd块设备，待同步完数据后对lv进行扩容10G操作，最后再对drbd进行扩容操作。(此间省略lvm相关操作)</p>
+<p>ubu2上使用一个30G的scsi设备，不配置lvm，与ubu1上的lvm块设备构成一个异构环境。</p>
+<p>ubu1:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line">bob@ubu1:~/drbd_res$ cat /etc/drbd.d/r1.res</span><br><span class="line">resource r1 &#123;</span><br><span class="line">  on ubu1 &#123;</span><br><span class="line">    device    /dev/drbd2;</span><br><span class="line">    disk  /dev/drbd-vg/drbdlv1;</span><br><span class="line">    address   192.168.64.2:7792;</span><br><span class="line">    meta-disk internal;</span><br><span class="line">  &#125;</span><br><span class="line">  on ubu2 &#123;</span><br><span class="line">    device    /dev/drbd2;</span><br><span class="line">    disk  /dev/sdb;</span><br><span class="line">    address   192.168.64.4:7792;</span><br><span class="line">    meta-disk internal;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line">bob@ubu1:~/drbd_res$ sudo drbdadm create-md r1</span><br><span class="line">initializing activity log</span><br><span class="line">initializing bitmap (640 KB) to all zero</span><br><span class="line">Writing meta data...</span><br><span class="line">New drbd meta data block successfully created.</span><br><span class="line">success</span><br><span class="line">bob@ubu1:~/drbd_res$ lsblk</span><br><span class="line">NAME                      MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT</span><br><span class="line">loop0                       7:0    0 49.1M  1 loop /snap/core18/2681</span><br><span class="line">loop1                       7:1    0 49.1M  1 loop /snap/core18/2701</span><br><span class="line">loop2                       7:2    0 43.2M  1 loop /snap/snapd/17954</span><br><span class="line">loop3                       7:3    0 57.5M  1 loop /snap/core20/1332</span><br><span class="line">loop4                       7:4    0 43.2M  1 loop /snap/snapd/18363</span><br><span class="line">loop5                       7:5    0 60.7M  1 loop /snap/lxd/21843</span><br><span class="line">loop6                       7:6    0 91.9M  1 loop /snap/lxd/24065</span><br><span class="line">loop7                       7:7    0 59.1M  1 loop /snap/core20/1826</span><br><span class="line">sda                         8:0    0   20G  0 disk</span><br><span class="line">└─drbd1                   147:1    0   20G  1 disk</span><br><span class="line">sdb                         8:16   0   21G  0 disk</span><br><span class="line">└─drbd--vg-drbdlv1        253:1    0   20G  0 lvm</span><br><span class="line">sdc                         8:32   0   31G  0 disk</span><br><span class="line">sr0                        11:0    1  1.1G  0 rom</span><br><span class="line">vda                       252:0    0  100G  0 disk</span><br><span class="line">├─vda1                    252:1    0  512M  0 part /boot/efi</span><br><span class="line">├─vda2                    252:2    0    1G  0 part /boot</span><br><span class="line">└─vda3                    252:3    0 98.5G  0 part</span><br><span class="line">  └─ubuntu--vg-ubuntu--lv 253:0    0 49.3G  0 lvm  /</span><br><span class="line">bob@ubu1:~/drbd_res$ sudo drbdadm up r1</span><br><span class="line">bob@ubu1:~/drbd_res$ sudo drbdadm primary --force r1</span><br><span class="line">bob@ubu1:~/drbd_res$ cat /proc/drbd</span><br><span class="line">version: 8.4.11 (api:1/proto:86-101)</span><br><span class="line">srcversion: B438804C5AE8C84C95D0411</span><br><span class="line"></span><br><span class="line"> 1: cs:Connected ro:Secondary/Secondary ds:UpToDate/UpToDate C r-----</span><br><span class="line">    ns:0 nr:0 dw:0 dr:0 al:0 bm:0 lo:0 pe:0 ua:0 ap:0 ep:1 wo:f oos:0</span><br><span class="line"> 2: cs:SyncSource ro:Primary/Secondary ds:UpToDate/Inconsistent C r-----</span><br><span class="line">    ns:14496 nr:0 dw:0 dr:16616 al:8 bm:0 lo:0 pe:0 ua:0 ap:0 ep:1 wo:f oos:20956348</span><br><span class="line">        [&gt;....................] sync&#x27;ed:  0.1% (20464/20476)M</span><br><span class="line">        finish: 2:21:35 speed: 2,416 (2,416) K/sec</span><br></pre></td></tr></table></figure>
+
+<p>ubu2:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">bob@ubu2:~$ lsblk</span><br><span class="line">NAME                      MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT</span><br><span class="line">loop0                       7:0    0 49.1M  1 loop /snap/core18/2681</span><br><span class="line">loop1                       7:1    0 49.1M  1 loop /snap/core18/2701</span><br><span class="line">loop2                       7:2    0 60.7M  1 loop /snap/lxd/21843</span><br><span class="line">loop3                       7:3    0 91.9M  1 loop /snap/lxd/24065</span><br><span class="line">loop4                       7:4    0 57.5M  1 loop /snap/core20/1332</span><br><span class="line">loop5                       7:5    0 59.1M  1 loop /snap/core20/1826</span><br><span class="line">loop6                       7:6    0 43.2M  1 loop /snap/snapd/17954</span><br><span class="line">loop7                       7:7    0 43.2M  1 loop /snap/snapd/18363</span><br><span class="line">sda                         8:0    0   20G  0 disk</span><br><span class="line">└─drbd1                   147:1    0   20G  1 disk</span><br><span class="line">sdb                         8:16   0   32G  0 disk</span><br><span class="line">└─drbd2                   147:2    0   20G  1 disk</span><br><span class="line">sdc                         8:32   0   22G  0 disk</span><br><span class="line">sr0                        11:0    1  1.1G  0 rom</span><br><span class="line">vda                       252:0    0  100G  0 disk</span><br><span class="line">├─vda1                    252:1    0  512M  0 part /boot/efi</span><br><span class="line">├─vda2                    252:2    0    1G  0 part /boot</span><br><span class="line">└─vda3                    252:3    0 98.5G  0 part</span><br><span class="line">  └─ubuntu--vg-ubuntu--lv 253:0    0 49.3G  0 lvm  /</span><br></pre></td></tr></table></figure>
+
+<p>目前drbd2对外提供的是一个20G的硬盘，接下来在不停drbd复制链接的情况下对其扩容10G（同样，省略lvm相关操作）</p>
+<p>ubu1:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line">bob@ubu1:~/drbd_res$ lsblk</span><br><span class="line">NAME                      MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT</span><br><span class="line">loop0                       7:0    0 49.1M  1 loop /snap/core18/2681</span><br><span class="line">loop1                       7:1    0 49.1M  1 loop /snap/core18/2701</span><br><span class="line">loop2                       7:2    0 43.2M  1 loop /snap/snapd/17954</span><br><span class="line">loop3                       7:3    0 57.5M  1 loop /snap/core20/1332</span><br><span class="line">loop4                       7:4    0 43.2M  1 loop /snap/snapd/18363</span><br><span class="line">loop5                       7:5    0 60.7M  1 loop /snap/lxd/21843</span><br><span class="line">loop6                       7:6    0 91.9M  1 loop /snap/lxd/24065</span><br><span class="line">loop7                       7:7    0 59.1M  1 loop /snap/core20/1826</span><br><span class="line">sda                         8:0    0   20G  0 disk</span><br><span class="line">└─drbd1                   147:1    0   20G  1 disk</span><br><span class="line">sdb                         8:16   0   21G  0 disk</span><br><span class="line">└─drbd--vg-drbdlv1        253:1    0   30G  0 lvm</span><br><span class="line">  └─drbd2                 147:2    0   20G  0 disk</span><br><span class="line">sdc                         8:32   0   31G  0 disk</span><br><span class="line">└─drbd--vg-drbdlv1        253:1    0   30G  0 lvm</span><br><span class="line">  └─drbd2                 147:2    0   20G  0 disk</span><br><span class="line">sr0                        11:0    1  1.1G  0 rom</span><br><span class="line">vda                       252:0    0  100G  0 disk</span><br><span class="line">├─vda1                    252:1    0  512M  0 part /boot/efi</span><br><span class="line">├─vda2                    252:2    0    1G  0 part /boot</span><br><span class="line">└─vda3                    252:3    0 98.5G  0 part</span><br><span class="line">  └─ubuntu--vg-ubuntu--lv 253:0    0 49.3G  0 lvm  /</span><br><span class="line">bob@ubu1:~/drbd_res$ sudo drbdadm status r1</span><br><span class="line">r1 role:Primary</span><br><span class="line">  disk:UpToDate</span><br><span class="line">  peer role:Secondary</span><br><span class="line">    replication:SyncSource peer-disk:Inconsistent done:88.51</span><br><span class="line">bob@ubu1:~/drbd_res$ sudo drbdadm resize r1</span><br><span class="line">bob@ubu1:~/drbd_res$ lsblk</span><br><span class="line">NAME                      MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT</span><br><span class="line">loop0                       7:0    0 49.1M  1 loop /snap/core18/2681</span><br><span class="line">loop1                       7:1    0 49.1M  1 loop /snap/core18/2701</span><br><span class="line">loop2                       7:2    0 43.2M  1 loop /snap/snapd/17954</span><br><span class="line">loop3                       7:3    0 57.5M  1 loop /snap/core20/1332</span><br><span class="line">loop4                       7:4    0 43.2M  1 loop /snap/snapd/18363</span><br><span class="line">loop5                       7:5    0 60.7M  1 loop /snap/lxd/21843</span><br><span class="line">loop6                       7:6    0 91.9M  1 loop /snap/lxd/24065</span><br><span class="line">loop7                       7:7    0 59.1M  1 loop /snap/core20/1826</span><br><span class="line">sda                         8:0    0   20G  0 disk</span><br><span class="line">└─drbd1                   147:1    0   20G  1 disk</span><br><span class="line">sdb                         8:16   0   21G  0 disk</span><br><span class="line">└─drbd--vg-drbdlv1        253:1    0   30G  0 lvm</span><br><span class="line">  └─drbd2                 147:2    0   30G  0 disk</span><br><span class="line">sdc                         8:32   0   31G  0 disk</span><br><span class="line">└─drbd--vg-drbdlv1        253:1    0   30G  0 lvm</span><br><span class="line">  └─drbd2                 147:2    0   30G  0 disk</span><br><span class="line">sr0                        11:0    1  1.1G  0 rom</span><br><span class="line">vda                       252:0    0  100G  0 disk</span><br><span class="line">├─vda1                    252:1    0  512M  0 part /boot/efi</span><br><span class="line">├─vda2                    252:2    0    1G  0 part /boot</span><br><span class="line">└─vda3                    252:3    0 98.5G  0 part</span><br><span class="line">  └─ubuntu--vg-ubuntu--lv 253:0    0 49.3G  0 lvm  /</span><br></pre></td></tr></table></figure>
+
+<p>ubu2:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">bob@ubu2:~$ lsblk</span><br><span class="line">NAME                      MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT</span><br><span class="line">loop0                       7:0    0 49.1M  1 loop /snap/core18/2681</span><br><span class="line">loop1                       7:1    0 49.1M  1 loop /snap/core18/2701</span><br><span class="line">loop2                       7:2    0 60.7M  1 loop /snap/lxd/21843</span><br><span class="line">loop3                       7:3    0 91.9M  1 loop /snap/lxd/24065</span><br><span class="line">loop4                       7:4    0 57.5M  1 loop /snap/core20/1332</span><br><span class="line">loop5                       7:5    0 59.1M  1 loop /snap/core20/1826</span><br><span class="line">loop6                       7:6    0 43.2M  1 loop /snap/snapd/17954</span><br><span class="line">loop7                       7:7    0 43.2M  1 loop /snap/snapd/18363</span><br><span class="line">sda                         8:0    0   20G  0 disk</span><br><span class="line">└─drbd1                   147:1    0   20G  1 disk</span><br><span class="line">sdb                         8:16   0   32G  0 disk</span><br><span class="line">└─drbd2                   147:2    0   30G  1 disk</span><br><span class="line">sdc                         8:32   0   22G  0 disk</span><br><span class="line">sr0                        11:0    1  1.1G  0 rom</span><br><span class="line">vda                       252:0    0  100G  0 disk</span><br><span class="line">├─vda1                    252:1    0  512M  0 part /boot/efi</span><br><span class="line">├─vda2                    252:2    0    1G  0 part /boot</span><br><span class="line">└─vda3                    252:3    0 98.5G  0 part</span><br><span class="line">  └─ubuntu--vg-ubuntu--lv 253:0    0 49.3G  0 lvm  /</span><br></pre></td></tr></table></figure>
+
+<p>使用<code>drbdadm resize r1</code>完成对<code>r1</code>资源的扩容操作。</p>
+<h1 id="硬盘存在有效数据情况"><a href="#硬盘存在有效数据情况" class="headerlink" title="硬盘存在有效数据情况"></a>硬盘存在有效数据情况</h1><p>ubu1和ubu2上分别创建了两个硬盘，一个20G存drbd的meta-data，一个30G用于存drbd的数据。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">bob@ubu1:~/drbd_res$ cat r2.res</span><br><span class="line">resource r2 &#123;</span><br><span class="line">  on ubu1 &#123;</span><br><span class="line">    device    /dev/drbd3;</span><br><span class="line">    disk  /dev/sdc;</span><br><span class="line">    address   192.168.64.2:7793;</span><br><span class="line">    meta-disk /dev/sdb;</span><br><span class="line">  &#125;</span><br><span class="line">  on ubu2 &#123;</span><br><span class="line">    device    /dev/drbd3;</span><br><span class="line">    disk  /dev/sdb;</span><br><span class="line">    address   192.168.64.4:7793;</span><br><span class="line">    meta-disk /dev/sdc;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>先对ubu1上的数据盘<code>sdc</code>创建文件系统，并写入数据。然后再做drbd pair。</p>
+<p>ubu1:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line">bob@ubu1:~/drbd_res$ sudo mkfs.ext4 /dev/sdc</span><br><span class="line">mke2fs 1.45.5 (07-Jan-2020)</span><br><span class="line">Discarding device blocks: done</span><br><span class="line">Creating filesystem with 8126464 4k blocks and 2031616 inodes</span><br><span class="line">Filesystem UUID: 656f1b08-77a2-4488-acb1-f25ff616b257</span><br><span class="line">Superblock backups stored on blocks:</span><br><span class="line">    32768, 98304, 163840, 229376, 294912, 819200, 884736, 1605632, 2654208,</span><br><span class="line">    4096000, 7962624</span><br><span class="line"></span><br><span class="line">Allocating group tables: done</span><br><span class="line">Writing inode tables: done</span><br><span class="line">Creating journal (32768 blocks): done</span><br><span class="line">Writing superblocks and filesystem accounting information: done</span><br><span class="line"></span><br><span class="line">bob@ubu1:~/drbd_res$ sudo mount /dev/sdc /mnt/</span><br><span class="line">bob@ubu1:~/drbd_res$ echo &quot;Hi, bob&quot; &gt; /mnt/bob.txt</span><br><span class="line">bob@ubu1:~/drbd_res$ sudo umount /mnt</span><br><span class="line">bob@ubu1:~/drbd_res$ sudo drbdadm create-md r2</span><br><span class="line">md_offset 0</span><br><span class="line">al_offset 4096</span><br><span class="line">bm_offset 36864</span><br><span class="line"></span><br><span class="line">Found some data</span><br><span class="line"></span><br><span class="line"> ==&gt; This might destroy existing data! &lt;==</span><br><span class="line"></span><br><span class="line">Do you want to proceed?</span><br><span class="line">[need to type &#x27;yes&#x27; to confirm] yes</span><br><span class="line"></span><br><span class="line">initializing activity log</span><br><span class="line">initializing bitmap (672 KB) to all zero</span><br><span class="line">Writing meta data...</span><br><span class="line">New drbd meta data block successfully created.</span><br><span class="line">success</span><br><span class="line">bob@ubu1:~/drbd_res$ sudo drbdadm up r2</span><br><span class="line">bob@ubu1:~/drbd_res$ sudo drbdadm primary --force r2</span><br><span class="line">bob@ubu1:~/drbd_res$ cat /proc/drbd</span><br><span class="line">version: 8.4.11 (api:1/proto:86-101)</span><br><span class="line">srcversion: B438804C5AE8C84C95D0411</span><br><span class="line"></span><br><span class="line"> 1: cs:Connected ro:Secondary/Secondary ds:UpToDate/UpToDate C r-----</span><br><span class="line">    ns:0 nr:0 dw:0 dr:0 al:0 bm:0 lo:0 pe:0 ua:0 ap:0 ep:1 wo:f oos:0</span><br><span class="line"></span><br><span class="line"> 3: cs:SyncSource ro:Primary/Secondary ds:UpToDate/Inconsistent C r-----</span><br><span class="line">    ns:130656 nr:0 dw:0 dr:131328 al:8 bm:0 lo:0 pe:4 ua:0 ap:0 ep:1 wo:f oos:32376640</span><br><span class="line">        [&gt;....................] sync&#x27;ed:  0.5% (31616/31744)M</span><br><span class="line">        finish: 1:14:56 speed: 7,176 (7,176) K/sec</span><br></pre></td></tr></table></figure>
+
+<p>ubu2:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">bob@ubu2:~$ sudo drbdadm create-md r2</span><br><span class="line">initializing activity log</span><br><span class="line">initializing bitmap (704 KB) to all zero</span><br><span class="line">Writing meta data...</span><br><span class="line">New drbd meta data block successfully created.</span><br><span class="line">success</span><br></pre></td></tr></table></figure>
+
+<p>此时drbd pair已经创建好了，<code>drbd3</code>也已经创建完成，直接挂载<code>drbd3</code>查看数据是否依然还在</p>
+<p>ubu1:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">bob@ubu1:~/drbd_res$ lsblk</span><br><span class="line">NAME                      MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT</span><br><span class="line">loop0                       7:0    0 49.1M  1 loop /snap/core18/2681</span><br><span class="line">loop1                       7:1    0 49.1M  1 loop /snap/core18/2701</span><br><span class="line">loop2                       7:2    0 43.2M  1 loop /snap/snapd/17954</span><br><span class="line">loop3                       7:3    0 57.5M  1 loop /snap/core20/1332</span><br><span class="line">loop4                       7:4    0 43.2M  1 loop /snap/snapd/18363</span><br><span class="line">loop5                       7:5    0 60.7M  1 loop /snap/lxd/21843</span><br><span class="line">loop6                       7:6    0 91.9M  1 loop /snap/lxd/24065</span><br><span class="line">loop7                       7:7    0 59.1M  1 loop /snap/core20/1826</span><br><span class="line">sda                         8:0    0   20G  0 disk</span><br><span class="line">└─drbd1                   147:1    0   20G  1 disk</span><br><span class="line">sdb                         8:16   0   21G  0 disk</span><br><span class="line">└─drbd3                   147:3    0   31G  0 disk</span><br><span class="line">sdc                         8:32   0   31G  0 disk</span><br><span class="line">└─drbd3                   147:3    0   31G  0 disk</span><br><span class="line">sr0                        11:0    1  1.1G  0 rom</span><br><span class="line">vda                       252:0    0  100G  0 disk</span><br><span class="line">├─vda1                    252:1    0  512M  0 part /boot/efi</span><br><span class="line">├─vda2                    252:2    0    1G  0 part /boot</span><br><span class="line">└─vda3                    252:3    0 98.5G  0 part</span><br><span class="line">  └─ubuntu--vg-ubuntu--lv 253:0    0 49.3G  0 lvm  /</span><br><span class="line">bob@ubu1:~/drbd_res$ sudo mount /dev/drbd3 /mnt/</span><br><span class="line">bob@ubu1:~/drbd_res$ ls /mnt/</span><br><span class="line">bob.txt  lost+found</span><br><span class="line">bob@ubu1:~/drbd_res$ cat /mnt/bob.txt</span><br><span class="line">Hi, Bob</span><br></pre></td></tr></table></figure>
+
+<h1 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h1><p>DRBD（Distributed Replicated Block Device）是一个基于内核模块的高可用性（HA）软件，它在两个或多个节点之间复制块设备数据，使得在其中一个节点发生故障时，其他节点可以接管工作并保持服务可用性。</p>
+<p><img src="/images/drbd/drbd-in-kernel.png" alt="drbd-in-kernel.png"></p>
+<p>DRBD的工作原理：</p>
+<ol>
+<li>DRBD将每个块设备划分为数据和元数据两个区域。元数据包含块设备的状态信息和同步状态，而数据包含实际的用户数据。</li>
+<li>DRBD使用一个专用的网络通信通道（通常是TCP &#x2F; IP）来在节点之间传输数据。当发生写操作时，数据被写入本地节点的数据区域，并通过网络传输到远程节点，然后在远程节点上写入远程节点的数据区域。</li>
+<li>DRBD还使用一种名为“生成标识符”（Generation Identifiers）的机制来检测节点间的数据同步状态。每个生成标识符对应一个生成版本，节点在进行数据同步时，使用生成标识符来判断版本是否相同。</li>
+<li>DRBD提供了多种数据同步策略，例如全同步，增量同步和快速同步，以便在不同的应用场景下获得最佳的性能和数据完整性。</li>
+<li>DRBD支持不同的工作模式，如协议A和协议C，用于适应不同的应用需求。协议A用于异步复制，适用于数据传输速度较慢的场景，而协议C则用于同步复制，适用于对数据完整性有较高要求的场景。</li>
+</ol>
+<h2 id="DRBD-Metadata"><a href="#DRBD-Metadata" class="headerlink" title="DRBD Metadata"></a>DRBD Metadata</h2><p>DRBD元数据包括：</p>
+<ul>
+<li>DRBD容量</li>
+<li>GI(Generation Identifiers)</li>
+<li>Activity Log</li>
+<li>Quick-sync Bitmap</li>
+</ul>
+<h3 id="Internal-meta-data"><a href="#Internal-meta-data" class="headerlink" title="Internal meta data"></a>Internal meta data</h3><p>资源配置成<code>internal</code>方式存储元数据，这意味着元数据将与底层实际存储的数据放在一起。它通过在设备末尾设置一个区域来专门存储元数据。</p>
+<ul>
+<li><p>优点<br>  由于元数据与实际数据密不可分，因此在硬盘发生故障时，管理员不需要采取任何特殊措施。元数据将随着实际数据丢失，并与实际数据一起恢复。</p>
+</li>
+<li><p>缺点<br>  如果底层设备是单个物理硬盘（而不是 RAID 集），则内部元数据可能会对写入吞吐量产生负面影响。应用程序发起的写请求的性能可能会触发 DRBD 中元数据的更新。如果元数据存储在同一磁盘上，则写操作可能会导致硬盘的写入&#x2F;读取头产生两次额外的移动。</p>
+</li>
+</ul>
+<p>如果您计划将内部元数据与已经有需要保留的数据的现有底层设备一起使用，您必须考虑 DRBD 元数据所需的空间。另外，在创建 DRBD 资源时，新创建的元数据可能会覆盖底层设备末尾的数据，从而可能破坏现有的文件。<br>为了避免这种情况发生，有三种解决方法：</p>
+<ol>
+<li>扩容底层硬盘，保证其有足够的容量存储元数据。</li>
+<li>缩小已存在于底层硬盘的数据的大小，这需要文件系统的支持。</li>
+<li>使用external meta data 替代。</li>
+</ol>
+<h3 id="External-meta-data"><a href="#External-meta-data" class="headerlink" title="External meta data"></a>External meta data</h3><p>External meta data 只是简单地存储在一个与包含生产数据的设备不同的、专用的块设备中。</p>
+<ul>
+<li><p>优势<br>  对于某些写操作，使用外部元数据可以产生略微改善的延迟行为。</p>
+</li>
+<li><p>缺点<br>  元数据与实际生产数据并不密不可分。这意味着，在硬件故障仅破坏生产数据（但不破坏 DRBD 元数据）的情况下，需要手动干预，以实现从存活的节点对新替换磁盘的全面数据同步。</p>
+</li>
+</ul>
+<p>如果满足以下所有条件，使用外部元数据也是唯一可行的选择，您正在使用 DRBD 复制一个已经包含您希望保留的数据的现有设备，且该现有设备不支持扩大容量，且该设备上的现有文件系统不支持缩小容量。</p>
+<h2 id="Generation-Identifiers"><a href="#Generation-Identifiers" class="headerlink" title="Generation Identifiers"></a>Generation Identifiers</h2><p>DRBD 使用Generation Identifiers（GIs）来标识“复制数据代”。数据同步是基于GI实现的。GI是一个递增的整数，每个DRBD设备都有自己的GI计数器，用于记录本地和远程节点上最新的GI。当DRBD设备从远程节点读取数据时，它会比较本地和远程节点上的GI值。如果本地GI值低于远程节点上的GI值，那么DRBD设备会自动启动数据同步，将远程节点上的数据复制到本地节点上。</p>
+<p>该GI在DRBD的内部机制如下：</p>
+<ul>
+<li>确定这两个节点是否实际上是同一集群的成员（而不是意外连接的两个节点）</li>
+<li>确定后台重新同步的方向（如果有必要）</li>
+<li>确定是否需要进行完全重新同步或是否仅需要进行部分重新同步</li>
+<li>标识脑裂</li>
+</ul>
+<p>分裂大脑是指当DRBD设备与另一个节点失去联系时发生的问题。在这种情况下，每个节点都可能认为自己是唯一的“活动”节点，并开始独立地写入数据。当两个节点再次连接时，它们可能会发现它们的数据不同步。GI用于解决这个问题。当两个节点重新连接时，它们比较彼此的GI值。如果GI值相同，则两个节点处于相同的“代”，可以继续同步数据。如果GI值不同，则两个节点处于不同的“代”，需要手动解决分裂大脑问题，通常需要将其中一个节点上的数据进行回滚。</p>
+<h3 id="数据代-Data-generations"><a href="#数据代-Data-generations" class="headerlink" title="数据代(Data generations)"></a>数据代(Data generations)</h3><p>以下情况下标记新的数据生成开始：</p>
+<ol>
+<li>初始设备全量同步时</li>
+<li>断开的资源切换到主要角色时</li>
+<li>资源在主要角色下线时</li>
+</ol>
+<p>因此，我们可以总结出，每当资源处于已连接的连接状态，并且两个节点的磁盘状态都为UpToDate时，两个节点上的当前数据生成相同。<br>反之亦然。请注意，当前实现使用最低位来编码节点的角色（主&#x2F;辅）。因此，即使被认为具有相同的数据生成，不同节点上的最低位也可能不同。</p>
+<p>每个新的数据生成由8字节的通用唯一标识符（UUID）标识。</p>
+<h3 id="GI元组-The-generation-identifier-tuple"><a href="#GI元组-The-generation-identifier-tuple" class="headerlink" title="GI元组(The generation identifier tuple)"></a>GI元组(The generation identifier tuple)</h3><p>BD在本地资源元数据中保存了有关当前和历史数据生成的四个信息：</p>
+<ol>
+<li>当前UUID (Current UUID)<br> 这是从本地节点的视角看到的当前数据生成的生成标识符。当资源已连接并且同步完成时，当前UUID在节点之间是相同的。</li>
+<li>位图UUID (Bitmap UUID)<br> 这是用于跟踪在断开连接模式下磁盘同步位图中的更改的生成的UUID。与磁盘同步位图本身一样，该标识符仅在断开连接模式下才相关。如果资源已连接，则此UUID始终为空（零）。</li>
+<li>两个历史UUID (Historical UUIDs)<br> 它们是当前数据生成之前的两个数据生成的标识符。</li>
+</ol>
+<h3 id="GI如何变化"><a href="#GI如何变化" class="headerlink" title="GI如何变化"></a>GI如何变化</h3><h4 id="Start-of-a-new-data-generation"><a href="#Start-of-a-new-data-generation" class="headerlink" title="Start of a new data generation"></a>Start of a new data generation</h4><p><img src="/images/drbd/gi-changes-newgen.png" alt="gi-changes-newgen.png"></p>
+<p>当一个节点（无论是由于网络故障还是手动干预）失去与其对等节点的连接时，DRBD 以下方式修改其本地生成GI：</p>
+<ol>
+<li>为新的数据生成创建一个新的 UUID。这成为主节点的新的 current UUID。</li>
+<li>用之前的current UUID替换现在的Bitmap UUID，因此它成为主节点的新的Bitmap UUID。</li>
+<li>在次要节点上，GI元组保持不变</li>
+</ol>
+<h4 id="Start-of-re-synchronization"><a href="#Start-of-re-synchronization" class="headerlink" title="Start of re-synchronization"></a>Start of re-synchronization</h4><p><img src="/images/drbd/gi-changes-syncstart.png" alt="gi-changes-syncstart.png"></p>
+<p>在重新同步初始化时，DRBD在本地GI执行这些修改：</p>
+<ol>
+<li>同步源上的Current UUID保持不变。</li>
+<li>同步源上的Bitmap UUID轮换到第一个历史UUID。</li>
+<li>在同步源上生成一个新的Bitmap UUID。</li>
+<li>此UUID成为同步目标上的新Current UUID。</li>
+<li>同步目标上的Bitmap UUID和历史UUID保持不变。</li>
+</ol>
+<h4 id="Completion-of-re-synchronization"><a href="#Completion-of-re-synchronization" class="headerlink" title="Completion of re-synchronization"></a>Completion of re-synchronization</h4><p><img src="/images/drbd/gi-changes-synccomplete.png" alt="gi-changes-synccomplete.png"></p>
+<p>当重新同步完成，需要执行如下步骤：</p>
+<ol>
+<li>同步源上的Current UUID保持不变</li>
+<li>同步源上的Bitmap UUID轮转到第一个历史UUID，第一历史UUID替换第二历史UUID（任何已存在的第二历史UUID将被丢弃）</li>
+<li>同步源上的Bitmap UUID将被清空（清零）</li>
+<li>同步目标采用来自同步源的整个GI元组</li>
+</ol>
+<h3 id="DRBD如何使用GI"><a href="#DRBD如何使用GI" class="headerlink" title="DRBD如何使用GI"></a>DRBD如何使用GI</h3><p>当两个节点之间建立连接时，它们会交换当前可用的生成标识符，并相应地进行操作。可能有许多可能的结果：</p>
+<ul>
+<li>两个节点的Current UUID都为空<br>  本地节点检测到它自己和对等节点的当前UUID都为空。这是刚刚配置好的资源的正常情况，尚未启动初始完全同步。不会进行同步，必须手动启动。</li>
+<li>一个节点的Current UUID为空<br>  本地节点检测到对等节点的Current UUID为空，而自己的不为空。这是刚刚配置好的资源的正常情况，初始全同步刚刚启动，本地节点被选为初始同步源。DRBD现在设置磁盘上同步位图中的所有位（意味着它认为整个设备不同步），并作为同步源开始同步。在相反的情况下（本地Current UUID为空，对等节点不为空），DRBD执行相同的步骤，只是本地节点变成同步目标。</li>
+<li>Current UUID相等<br>  本地节点检测到其Current UUID和对等节点的Current UUID都不为空且相等。这是在资源处于从属角色时进入断开连接模式的资源的正常情况，且在断开连接期间没有在任一节点上进行晋升。不会进行同步，因为不需要同步。</li>
+<li>Bitmap UUID与对等节点的Current UUID匹配<br>  本地节点检测到它的Bitmap UUID与对等节点的Current UUID匹配，而对等节点的Bitmap UUID为空。这是从属节点故障后的正常预期情况，本地节点处于主角色。这意味着对等节点在此期间从未变为主节点，并一直使用相同的数据生成基础。现在，DRBD会启动正常的后台重新同步，本地节点成为同步源。反之，如果本地节点检测到它的Bitmap UUID为空，并且对等节点的位图与本地节点的Current UUID匹配，那么这是本地节点故障后的正常预期情况。同样，DRBD现在启动正常的后台重新同步，本地节点成为同步目标。</li>
+<li>Current UUID与对等节点的历史UUID匹配<br>  本地节点检测到它的Current UUID与对等节点的历史UUID之一匹配。这意味着尽管两个数据集共享一个共同的祖先，并且对等节点具有最新的数据，但在对等节点的位图中保留的信息已经过时且无法使用。因此，正常同步是不足够的。DRBD现在将整个设备标记为不同步，并启动完全后台重新同步，本地节点成为同步目标。在相反的情况（本地节点的历史 UUID 与对等节点的Current UUID匹配），DRBD 执行相同的步骤，只是本地节点成为同步源。</li>
+<li>Bitmap UUID匹配，但Current UUID不匹配<br>  本地节点检测到其Current UUID与对等节点的Current UUID不同，但Bitmap UUID匹配。这是脑裂的情况，但数据生成具有相同的父级。这意味着如果已配置，DRBD 将调用脑裂自动恢复策略。否则，DRBD将断开连接并等待手动脑裂解决。</li>
+<li>Current UUID 和Bitmap UUID 都不匹配<br>  本地节点检测到其Current UUID与对等节点的Current UUID不同，且Bitmap UUID也不匹配。这是不相关祖先代的脑裂，因此即使配置了自动恢复策略，也是无用的。DRBD断开连接并等待手动脑裂解决。</li>
+<li>没有 UUID 匹配<br>  如果DRBD未能在两个节点的GI元组中检测到任何匹配的元素，它会记录关于不相关数据的警告并断开连接。这是DRBD防止意外连接两个之前从未听说过对方的集群节点的安全保障。</li>
+</ul>
+<h2 id="Activity-Log"><a href="#Activity-Log" class="headerlink" title="Activity Log"></a>Activity Log</h2><p>在一个写操作期间，DRBD将写操作转发到本地后备块设备，但也通过网络发送数据块。这两个操作实际上都是同时进行的。随机的时序行为可能会导致这样一种情况：写操作已经完成，但网络传输尚未完成。如果此时活动节点失败并启动故障转移，则这个数据块在节点之间是不同步的——在崩溃之前已在失败的节点上写入，但复制尚未完成。因此，当节点最终恢复时，这个块必须在随后的同步期间从数据集中删除。否则，崩溃的节点将“领先于”存活的节点，这将违反复制存储的“全部或无”的原则。这不仅是DRBD所特有的问题，在实际上所有的复制存储配置中都存在这个问题。许多其他存储解决方案（就像DRBD本身在0.7版本之前）要求在活动节点失败后，该节点必须在恢复后进行完全同步。</p>
+<p>DRBD自0.7版本之后。在元数据区域存储活动日志（Activity Log）跟踪了“最近”已经写入的那些块。俗称，这些区域被称为热区段。如果一个临时失败的处于活动模式的节点进行同步，只有在AL中突出显示的那些热区段需要进行同步，而不需要同步整个设备。这大大减少了在活动节点崩溃后进行同步所需的时间。</p>
+<h3 id="Activity-extents"><a href="#Activity-extents" class="headerlink" title="Activity extents"></a>Activity extents</h3><p>Activity Log由多个Activity extents组成。可通过资源配置文件中的<code>activity-log-size</code>参数进行配置，该参数表示Active extents数量，必须是2的幂，且范围通常在16到4096之间。每个Activity extents大小为4MiB。</p>
+<p>保持大的活动日志可以提高写入吞吐量。每次激活新的扩展时，一个旧的扩展将被重置为非活动状态。这种转换需要向元数据区域写入一个操作。如果活动扩展数很高，旧的活动扩展很少被交换出，从而减少了元数据写操作，从而提高了性能。</p>
+<p>保持小的活动日志可以缩短在主节点失败和随后的恢复后的同步时间。</p>
+<h3 id="选择一个合适Activity-Log-Size"><a href="#选择一个合适Activity-Log-Size" class="headerlink" title="选择一个合适Activity Log Size"></a>选择一个合适Activity Log Size</h3><p><img src="/images/drbd/al-extents.png" alt="al-extents.png"></p>
+<ul>
+<li><code>R</code>是同步速度（单位：MB&#x2F;s）</li>
+<li><code>tsync</code>是同步时间（单位：s）</li>
+<li><code>E</code>是Active extents数量</li>
+</ul>
+<p>DRBD是可以控制同步带宽的，使用<code>net</code>配置选项来控制DRBD在网络上使用的带宽。这个选项可以在DRBD配置文件中的全局段中设置，也可以在资源段中设置。</p>
+<p>eg:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">global &#123;</span><br><span class="line">    ...</span><br><span class="line">    net &#123;</span><br><span class="line">        max-rate 1G;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>max-rate</code>选项将同步带宽限制为1Gbit&#x2F;s。您可以将该选项设置为所需的速率，以控制DRBD在网络上使用的带宽。</p>
+<h2 id="Quick-sync-Bitmap"><a href="#Quick-sync-Bitmap" class="headerlink" title="Quick-sync Bitmap"></a>Quick-sync Bitmap</h2><p>Quick-sync Bitmap是 DRBD 在每个资源上使用的内部数据结构，用于跟踪块是否同步（在两个节点上相同）或不同步。它仅在资源处于断开模式时才相关。在Quick-sync Bitmap中，一个比特表示一个 4KiB 的磁盘数据块。如果该位被清除，则意味着相应的块仍与对等节点同步。这意味着该块自断开连接以来尚未被写入。相反，如果该位被设置，则意味着该块已被修改，并且在连接再次可用时需要重新同步。</p>
+<p>当 DRBD 检测到断开的设备上的写 I&#x2F;O 时，因此开始在Quick-sync Bitmap中设置位，它在 RAM 中执行此操作，从而避免了昂贵的同步元数据 I&#x2F;O 操作。只有当相应的块变得“冷”（从活动日志中过期）时，DRBD 才会在Quick-sync Bitmap的磁盘表示中进行适当的修改。同样，如果在断开连接的同时手动关闭了剩余节点上的资源，则 DRBD 将完整的Quick-sync Bitmap刷新到持久存储中。当对等节点恢复或重新建立连接时，DRBD 将结合两个节点的位图信息，确定必须重新同步的总数据集。同时，DRBD 检查生成标识符以确定同步方向。</p>
+<p>充当同步源的节点然后将协商好的块传输到对等节点，在同步目标确认修改时清除同步位。如果重新同步现在被中断（例如，由于另一个网络故障），然后继续恢复，它将在离开时继续进行 - 当然，同时修改的任何其他块都将添加到重新同步数据集中。</p>
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="https://www.cnblogs.com/linuxprobe/p/5381538.html">一张图让你学会LVM</a></li>
+<li><a target="_blank" rel="noopener" href="https://linbit.com/drbd-user-guide/users-guide-drbd-8-4/#ch-internals">linbit</a></li>
+<li><a target="_blank" rel="noopener" href="https://chat.openai.com/">chatgpt</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/drbd/" rel="tag"># drbd</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/11/07/blockchain/ethereum/eth-helloworld/" rel="prev" title="Hello Ethereum">
+      <i class="fa fa-chevron-left"></i> Hello Ethereum
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2024/05/24/linux/ebpf-deploy-sample/" rel="next" title="eBPF开发环境搭建及示例">
+      eBPF开发环境搭建及示例 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%AE%80%E4%BB%8B"><span class="nav-number">1.</span> <span class="nav-text">简介</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AE%89%E8%A3%85"><span class="nav-number">2.</span> <span class="nav-text">安装</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#ubuntu%E7%8E%AF%E5%A2%83"><span class="nav-number">2.1.</span> <span class="nav-text">ubuntu环境</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%B8%B8%E8%A7%84%E7%94%A8%E6%B3%95"><span class="nav-number">3.</span> <span class="nav-text">常规用法</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE"><span class="nav-number">3.1.</span> <span class="nav-text">配置</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE-etc-drbd-d-global-common-conf"><span class="nav-number">3.1.1.</span> <span class="nav-text">配置&#x2F;etc&#x2F;drbd.d&#x2F;global_common.conf</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%85%8D%E7%BD%AEDRBD%E8%B5%84%E6%BA%90-etc-drbd-d-r0-res"><span class="nav-number">3.1.2.</span> <span class="nav-text">配置DRBD资源&#x2F;etc&#x2F;drbd.d&#x2F;r0.res</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%90%AF%E5%8A%A8"><span class="nav-number">3.2.</span> <span class="nav-text">启动</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F%E5%B8%B8%E8%A7%84%E4%BD%BF%E7%94%A8"><span class="nav-number">3.3.</span> <span class="nav-text">文件系统常规使用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%87%E6%8D%A2"><span class="nav-number">3.4.</span> <span class="nav-text">切换</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%A1%AC%E7%9B%98%E5%AE%B9%E9%87%8F%E5%A4%A7%E5%B0%8F%E4%B8%8D%E4%B8%80%E8%87%B4%E6%83%85%E5%86%B5"><span class="nav-number">4.</span> <span class="nav-text">硬盘容量大小不一致情况</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%A1%AC%E7%9B%98%E6%89%A9%E5%AE%B9%E6%83%85%E5%86%B5"><span class="nav-number">5.</span> <span class="nav-text">硬盘扩容情况</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%A1%AC%E7%9B%98%E5%AD%98%E5%9C%A8%E6%9C%89%E6%95%88%E6%95%B0%E6%8D%AE%E6%83%85%E5%86%B5"><span class="nav-number">6.</span> <span class="nav-text">硬盘存在有效数据情况</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8E%9F%E7%90%86"><span class="nav-number">7.</span> <span class="nav-text">原理</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#DRBD-Metadata"><span class="nav-number">7.1.</span> <span class="nav-text">DRBD Metadata</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Internal-meta-data"><span class="nav-number">7.1.1.</span> <span class="nav-text">Internal meta data</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#External-meta-data"><span class="nav-number">7.1.2.</span> <span class="nav-text">External meta data</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Generation-Identifiers"><span class="nav-number">7.2.</span> <span class="nav-text">Generation Identifiers</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E4%BB%A3-Data-generations"><span class="nav-number">7.2.1.</span> <span class="nav-text">数据代(Data generations)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#GI%E5%85%83%E7%BB%84-The-generation-identifier-tuple"><span class="nav-number">7.2.2.</span> <span class="nav-text">GI元组(The generation identifier tuple)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#GI%E5%A6%82%E4%BD%95%E5%8F%98%E5%8C%96"><span class="nav-number">7.2.3.</span> <span class="nav-text">GI如何变化</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Start-of-a-new-data-generation"><span class="nav-number">7.2.3.1.</span> <span class="nav-text">Start of a new data generation</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Start-of-re-synchronization"><span class="nav-number">7.2.3.2.</span> <span class="nav-text">Start of re-synchronization</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Completion-of-re-synchronization"><span class="nav-number">7.2.3.3.</span> <span class="nav-text">Completion of re-synchronization</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#DRBD%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8GI"><span class="nav-number">7.2.4.</span> <span class="nav-text">DRBD如何使用GI</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Activity-Log"><span class="nav-number">7.3.</span> <span class="nav-text">Activity Log</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Activity-extents"><span class="nav-number">7.3.1.</span> <span class="nav-text">Activity extents</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%80%89%E6%8B%A9%E4%B8%80%E4%B8%AA%E5%90%88%E9%80%82Activity-Log-Size"><span class="nav-number">7.3.2.</span> <span class="nav-text">选择一个合适Activity Log Size</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Quick-sync-Bitmap"><span class="nav-number">7.4.</span> <span class="nav-text">Quick-sync Bitmap</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%82%E8%80%83-%E9%B8%A3%E8%B0%A2"><span class="nav-number">8.</span> <span class="nav-text">参考&amp;鸣谢</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">博</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">138</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">119</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">博</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

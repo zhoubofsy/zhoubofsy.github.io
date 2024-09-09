@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zhoubofsy.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="背景OpenStack（以下简称OPS）是一个很庞大的系统，想要部署一个OPS需要部署很多组件。想必部署之路也是坑坑奇多。所以为了方便使用OPS，需要部署一个“all-in-one”环境的OPS 环境 CPU  2U X86_64 Memory  4G及以上，如果内存过小，会出现各种问题。（整个devstack-Openstack-Ocata + CentOS7.3 1611需要占用3.4G内存）">
+<meta property="og:type" content="article">
+<meta property="og:title" content="devstack部署">
+<meta property="og:url" content="http://zhoubofsy.github.io/2017/07/21/devstack-deploy/index.html">
+<meta property="og:site_name" content="Bolog">
+<meta property="og:description" content="背景OpenStack（以下简称OPS）是一个很庞大的系统，想要部署一个OPS需要部署很多组件。想必部署之路也是坑坑奇多。所以为了方便使用OPS，需要部署一个“all-in-one”环境的OPS 环境 CPU  2U X86_64 Memory  4G及以上，如果内存过小，会出现各种问题。（整个devstack-Openstack-Ocata + CentOS7.3 1611需要占用3.4G内存）">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://zhoubofsy.github.io/images/devstack/horizon_login.png">
+<meta property="article:published_time" content="2017-07-21T07:56:02.000Z">
+<meta property="article:modified_time" content="2024-09-09T07:57:18.604Z">
+<meta property="article:author" content="博">
+<meta property="article:tag" content="devstack">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://zhoubofsy.github.io/images/devstack/horizon_login.png">
+
+<link rel="canonical" href="http://zhoubofsy.github.io/2017/07/21/devstack-deploy/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>devstack部署 | Bolog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Bolog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/07/21/devstack-deploy/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          devstack部署
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2017-07-21 15:56:02" itemprop="dateCreated datePublished" datetime="2017-07-21T15:56:02+08:00">2017-07-21</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/other/" itemprop="url" rel="index"><span itemprop="name">other</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>OpenStack（以下简称OPS）是一个很庞大的系统，想要部署一个OPS需要部署很多组件。想必部署之路也是坑坑奇多。所以为了方便使用OPS，需要部署一个“all-in-one”环境的OPS</p>
+<h1 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h1><ul>
+<li>CPU<br>  2U X86_64</li>
+<li>Memory<br>  4G及以上，如果内存过小，会出现各种问题。（整个devstack-Openstack-Ocata + CentOS7.3 1611需要占用3.4G内存）</li>
+<li>OS<br>  CentOS 7.3 1611</li>
+<li>NET<br>  建议创建两个网络，一个用于连接外网用于做管理性工作；一个供neutron使用</li>
+<li>OpenStack版本<br>  Ocata</li>
+</ul>
+<h1 id="部署"><a href="#部署" class="headerlink" title="部署"></a>部署</h1><h2 id="准备"><a href="#准备" class="headerlink" title="准备"></a>准备</h2><h3 id="关闭防火墙"><a href="#关闭防火墙" class="headerlink" title="关闭防火墙"></a>关闭防火墙</h3><h4 id="关闭selinux"><a href="#关闭selinux" class="headerlink" title="关闭selinux"></a>关闭selinux</h4><p>编辑<code>/etc/selinux/config</code>将<code>SELINUX=enforcing</code>改为<code>SELINUX=disabled</code></p>
+<h4 id="关闭iptables"><a href="#关闭iptables" class="headerlink" title="关闭iptables"></a>关闭iptables</h4><p>执行命令<code>sudo systemctl disable iptables</code>，关闭iptables服务</p>
+<p>上诉两处修改若想生效需要重启系统。</p>
+<h3 id="安装依赖软件"><a href="#安装依赖软件" class="headerlink" title="安装依赖软件"></a>安装依赖软件</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo yum install -y epel-release git net-tools</span><br></pre></td></tr></table></figure>
+
+<h3 id="下载Devstack"><a href="#下载Devstack" class="headerlink" title="下载Devstack"></a>下载Devstack</h3><p>从github上下载devstack<code>git clone https://github.com/openstack-dev/devstack.git</code>，然后切换版本到Ocata <code>git checkout stable/ocata</code>，可使用<code>git branch -av</code>查看devstack所处分支</p>
+<h2 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h2><h3 id="创建stack用户"><a href="#创建stack用户" class="headerlink" title="创建stack用户"></a>创建stack用户</h3><ol>
+<li>进入devstack目录 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cd devstack</span><br></pre></td></tr></table></figure></li>
+<li>创建stack用户 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo ./tools/create-stack-user.sh</span><br></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="切换用户"><a href="#切换用户" class="headerlink" title="切换用户"></a>切换用户</h3><ol>
+<li>修改目录owner <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo chown -R stack:stack ./devstack</span><br></pre></td></tr></table></figure></li>
+<li>修改<code>/opt/stack</code>目录访问权限 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo chmod 777 /opt/stack -R</span><br><span class="line">sudo mv ./devstack /opt/stack/</span><br></pre></td></tr></table></figure></li>
+<li>切换用户 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo su - stack</span><br></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="撰写local-conf"><a href="#撰写local-conf" class="headerlink" title="撰写local.conf"></a>撰写local.conf</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br></pre></td><td class="code"><pre><span class="line">[[local|localrc]]</span><br><span class="line"></span><br><span class="line">DEST=/opt/stack/ocata</span><br><span class="line"># use TryStack git mirror</span><br><span class="line">GIT_BASE=http://git.trystack.cn</span><br><span class="line">NOVNC_REPO=http://git.trystack.cn/kanaka/noVNC.git</span><br><span class="line">SPICE_REPO=http://git.trystack.cn/git/spice/spice-html5.git</span><br><span class="line"></span><br><span class="line">#OFFLINE=True</span><br><span class="line">RECLONE=False</span><br><span class="line"></span><br><span class="line"># Define images to be automatically downloaded during the DevStack built process.</span><br><span class="line">DOWNLOAD_DEFAULT_IMAGES=False</span><br><span class="line">IMAGE_URLS=&quot;,https://launchpad.net/cirros/trunk/0.3.0/+download/cirros-0.3.0-x86_64-disk.img&quot;</span><br><span class="line"></span><br><span class="line">HOST_IP=127.0.0.1</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"># Credentials</span><br><span class="line">DATABASE_PASSWORD=pass</span><br><span class="line">ADMIN_PASSWORD=pass</span><br><span class="line">SERVICE_PASSWORD=pass</span><br><span class="line">SERVICE_TOKEN=pass</span><br><span class="line">RABBIT_PASSWORD=pass</span><br><span class="line"></span><br><span class="line">HORIZON_BRANCH=stable/ocata</span><br><span class="line">KEYSTONE_BRANCH=stable/ocata</span><br><span class="line">NOVA_BRANCH=stable/ocata</span><br><span class="line">NEUTRON_BRANCH=stable/ocata</span><br><span class="line">GLANCE_BRANCH=stable/ocata</span><br><span class="line">CINDER_BRANCH=stable/ocata</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">#keystone</span><br><span class="line">KEYSTONE_TOKEN_FORMAT=UUID</span><br><span class="line"></span><br><span class="line">##Heat</span><br><span class="line">HEAT_BRANCH=stable/ocata</span><br><span class="line">enable_service h-eng h-api h-api-cfn h-api-cw</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">## Swift</span><br><span class="line">SWIFT_BRANCH=stable/ocata</span><br><span class="line">ENABLED_SERVICES+=,s-proxy,s-object,s-container,s-account</span><br><span class="line">SWIFT_REPLICAS=1</span><br><span class="line">SWIFT_HASH=011688b44136573e209e</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"># Enabling Neutron (network) Service</span><br><span class="line">disable_service n-net</span><br><span class="line">enable_service q-svc</span><br><span class="line">enable_service q-agt</span><br><span class="line">enable_service q-dhcp</span><br><span class="line">enable_service q-l3</span><br><span class="line">enable_service q-meta</span><br><span class="line">enable_service q-metering</span><br><span class="line">enable_service neutron</span><br><span class="line"></span><br><span class="line">## Neutron options</span><br><span class="line">Q_USE_SECGROUP=True</span><br><span class="line">FLOATING_RANGE=&quot;192.168.36.0/24&quot;</span><br><span class="line">FIXED_RANGE=&quot;10.0.0.0/24&quot;</span><br><span class="line">Q_FLOATING_ALLOCATION_POOL=start=192.168.36.55,end=192.168.36.100</span><br><span class="line">PUBLIC_NETWORK_GATEWAY=&quot;192.168.36.1&quot;</span><br><span class="line">Q_L3_ENABLED=True</span><br><span class="line">PUBLIC_INTERFACE=eth1</span><br><span class="line">Q_USE_PROVIDERNET_FOR_PUBLIC=True</span><br><span class="line">OVS_PHYSICAL_BRIDGE=br-ex</span><br><span class="line">PUBLIC_BRIDGE=br-ex</span><br><span class="line">OVS_BRIDGE_MAPPINGS=public:br-ex</span><br><span class="line"></span><br><span class="line"># #VLAN configuration.</span><br><span class="line">Q_PLUGIN=ml2</span><br><span class="line">ENABLE_TENANT_VLANS=True</span><br><span class="line"></span><br><span class="line"># Logging</span><br><span class="line">LOGFILE=/opt/stack/logs/stack.sh.log</span><br><span class="line">VERBOSE=True</span><br><span class="line">LOG_COLOR=True</span><br><span class="line">SCREEN_LOGDIR=/opt/stack/logs</span><br></pre></td></tr></table></figure>
+<h3 id="安装OPS（all-in-one）"><a href="#安装OPS（all-in-one）" class="headerlink" title="安装OPS（all-in-one）"></a>安装OPS（all-in-one）</h3><p>安装使用<code>stack.sh</code>脚本，卸载使用<code>unstack.sh</code>脚本</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">./stack.sh</span></span><br><span class="line">...</span><br><span class="line"></span><br><span class="line">=========================</span><br><span class="line">DevStack Component Timing</span><br><span class="line">=========================</span><br><span class="line">Total runtime         1254</span><br><span class="line"></span><br><span class="line">run_process            83</span><br><span class="line">test_with_retry         4</span><br><span class="line">pip_install           127</span><br><span class="line">restart_apache_server  29</span><br><span class="line">wait_for_service       19</span><br><span class="line">yum_install            50</span><br><span class="line">=========================</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">This is your host IP address: 127.0.0.1</span><br><span class="line">This is your host IPv6 address: ::1</span><br><span class="line">Horizon is now available at http://127.0.0.1/dashboard</span><br><span class="line">Keystone is serving at http://127.0.0.1/identity/</span><br><span class="line">The default users are: admin and demo</span><br><span class="line">The password: pass</span><br></pre></td></tr></table></figure>
+<p>安装时遇到问题可从两个角度考虑，一个网络不通，一个内存不足。这里再次重申，内存一定要&gt;&#x3D;4G，如果网络不通或延时太大，建议使用国内镜像。</p>
+<p>例如<code>/opt/stack/.pip/pip.conf</code>:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">[global]</span><br><span class="line"></span><br><span class="line">timeout = 6000</span><br><span class="line">index-url = http://pypi.douban.com/simple</span><br><span class="line">trusted-host = pypi.douban.com</span><br></pre></td></tr></table></figure>
+
+<h2 id="horizon"><a href="#horizon" class="headerlink" title="horizon"></a>horizon</h2><p>安装成功后，访问<code>http://x.x.x.x/dashboard</code>, 用户民密码见<code>local.conf</code></p>
+<p><img src="/images/devstack/horizon_login.png" alt="horizon_login"></p>
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/lyjshen/article/details/69467444">Virtuabox中Centos 7.3安装devstack后记</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.fx114.net/qa-7-155510.aspx">Centos7下搭建带有Ceilometer的devstack（mitaka版本）</a></li>
+<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/scucscheng/article/details/51884613">centos 7 devstack 安装 openstack Mitaka</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.chenshake.com/devstack-installation-and-testing/">devstack安装和测试</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/devstack/" rel="tag"># devstack</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2017/07/12/storage/cosbench-usage/" rel="prev" title="COSBench搭建及使用">
+      <i class="fa fa-chevron-left"></i> COSBench搭建及使用
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2017/08/03/storage/gluster/gluster-hello-world/" rel="next" title="初尝GlusterFS">
+      初尝GlusterFS <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%83%8C%E6%99%AF"><span class="nav-number">1.</span> <span class="nav-text">背景</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%8E%AF%E5%A2%83"><span class="nav-number">2.</span> <span class="nav-text">环境</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%83%A8%E7%BD%B2"><span class="nav-number">3.</span> <span class="nav-text">部署</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%87%86%E5%A4%87"><span class="nav-number">3.1.</span> <span class="nav-text">准备</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B3%E9%97%AD%E9%98%B2%E7%81%AB%E5%A2%99"><span class="nav-number">3.1.1.</span> <span class="nav-text">关闭防火墙</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%85%B3%E9%97%ADselinux"><span class="nav-number">3.1.1.1.</span> <span class="nav-text">关闭selinux</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%85%B3%E9%97%ADiptables"><span class="nav-number">3.1.1.2.</span> <span class="nav-text">关闭iptables</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%89%E8%A3%85%E4%BE%9D%E8%B5%96%E8%BD%AF%E4%BB%B6"><span class="nav-number">3.1.2.</span> <span class="nav-text">安装依赖软件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%8B%E8%BD%BDDevstack"><span class="nav-number">3.1.3.</span> <span class="nav-text">下载Devstack</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%89%E8%A3%85"><span class="nav-number">3.2.</span> <span class="nav-text">安装</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%9B%E5%BB%BAstack%E7%94%A8%E6%88%B7"><span class="nav-number">3.2.1.</span> <span class="nav-text">创建stack用户</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%87%E6%8D%A2%E7%94%A8%E6%88%B7"><span class="nav-number">3.2.2.</span> <span class="nav-text">切换用户</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%92%B0%E5%86%99local-conf"><span class="nav-number">3.2.3.</span> <span class="nav-text">撰写local.conf</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%89%E8%A3%85OPS%EF%BC%88all-in-one%EF%BC%89"><span class="nav-number">3.2.4.</span> <span class="nav-text">安装OPS（all-in-one）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#horizon"><span class="nav-number">3.3.</span> <span class="nav-text">horizon</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%82%E8%80%83-%E9%B8%A3%E8%B0%A2"><span class="nav-number">4.</span> <span class="nav-text">参考&amp;鸣谢</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">博</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">138</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">119</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">博</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

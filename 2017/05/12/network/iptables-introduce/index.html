@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zhoubofsy.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="iptables是一个配置Linux内核防火墙的命令行工具，是netfilter项目的一部分。术语iptables也经常代指该内核级防火墙。iptables用于ipv4，ip6tables用于ipv6。( nftables已经包含在Linux kernel 3.13中，以后会取代iptables成为主要的Linux防火墙工具。 ) 版本iptables v1.4.21 介绍理解 iptables">
+<meta property="og:type" content="article">
+<meta property="og:title" content="iptables">
+<meta property="og:url" content="http://zhoubofsy.github.io/2017/05/12/network/iptables-introduce/index.html">
+<meta property="og:site_name" content="Bolog">
+<meta property="og:description" content="iptables是一个配置Linux内核防火墙的命令行工具，是netfilter项目的一部分。术语iptables也经常代指该内核级防火墙。iptables用于ipv4，ip6tables用于ipv6。( nftables已经包含在Linux kernel 3.13中，以后会取代iptables成为主要的Linux防火墙工具。 ) 版本iptables v1.4.21 介绍理解 iptables">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://zhoubofsy.github.io/images/iptables/iptables_traverse.jpg">
+<meta property="og:image" content="http://zhoubofsy.github.io/images/iptables/iptables_user_kernel_traverse.png">
+<meta property="og:image" content="http://zhoubofsy.github.io/images/iptables/iptables_usage_main.jpg">
+<meta property="og:image" content="http://zhoubofsy.github.io/images/iptables/iptables_usage_param.jpg">
+<meta property="article:published_time" content="2017-05-12T01:21:14.000Z">
+<meta property="article:modified_time" content="2024-09-09T07:57:18.578Z">
+<meta property="article:author" content="博">
+<meta property="article:tag" content="firewall">
+<meta property="article:tag" content="iptables">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://zhoubofsy.github.io/images/iptables/iptables_traverse.jpg">
+
+<link rel="canonical" href="http://zhoubofsy.github.io/2017/05/12/network/iptables-introduce/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>iptables | Bolog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Bolog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/05/12/network/iptables-introduce/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          iptables
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2017-05-12 09:21:14" itemprop="dateCreated datePublished" datetime="2017-05-12T09:21:14+08:00">2017-05-12</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/network/" itemprop="url" rel="index"><span itemprop="name">network</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>iptables是一个配置Linux内核防火墙的命令行工具，是netfilter项目的一部分。术语iptables也经常代指该内核级防火墙。iptables用于ipv4，ip6tables用于ipv6。<br>( nftables已经包含在Linux kernel 3.13中，以后会取代iptables成为主要的Linux防火墙工具。 )</p>
+<h1 id="版本"><a href="#版本" class="headerlink" title="版本"></a>版本</h1><p>iptables v1.4.21</p>
+<h1 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h1><p>理解 iptables 如何工作的关键是下面这张图。图中在上面的小写字母代表”表”，在下面的大写字母代表”链”。从任何网络端口进来的每一个 IP 数据包都要从上到下的穿过这张图。一种常见的困扰是认为 iptables 对从内部端口进入的数据包和从面向互联网端口进入的数据包采取不同的处理方式，相反，iptabales 对从任何端口进入的数据包都会采取相同的处理方式。可以定义规则使 iptables 采取不同的方式对待从不同端口进入的数据包。当然一些数据包是用于本地进程的，因此在图中表现为从顶端进入，到<code>Local Process</code>停止，而另一些数据包是由本地进程生成的，因此在图中表现为从<code>Local Process</code>发出，一直向下穿过该流程图。</p>
+<p><img src="/images/iptables/iptables_traverse.jpg" alt="iptables_traverse.jpg"></p>
+<ol>
+<li>数据包到达网络接口，比如 eth0</li>
+<li>进入 raw 表的 PREROUTING 链，这个链的作用是赶在连接跟踪之前处理数据包</li>
+<li>如果进行了连接跟踪，在此处理</li>
+<li>进入 mangle 表的 PREROUTING 链，在此可以修改数据包，比如 TOS 等</li>
+<li>进入 nat 表的 PREROUTING 链，可以在此做DNAT，但不要做过滤</li>
+<li>决定路由，看是交给本地主机还是转发给其它主机<br>一种情况是，数据包就是发给本地主机的:</li>
+<li>进入 mangle 表的 INPUT 链，这里是在路由之后，交由本地主机之前，我们也可以进行一些相应的修改</li>
+<li>进入 filter 表的 INPUT 链，在这里我们可以对流入的所有数据包进行过滤，无论它来自哪个网络接口</li>
+<li>交给本地主机的应用程序进行处理</li>
+<li>处理完毕后进行路由决定，看该往那里发出</li>
+<li>进入 raw 表的 OUTPUT 链，这里是在连接跟踪处理本地的数据包之前</li>
+<li>连接跟踪对本地的数据包进行处理</li>
+<li>进入 mangle 表的 OUTPUT 链，在这里我们可以修改数据包，但不要做过滤</li>
+<li>进入 nat 表的 OUTPUT 链，可以对防火墙自己发出的数据做 NAT</li>
+<li>再次进行路由决定</li>
+<li>进入 filter 表的 OUTPUT 链，可以对本地出去的数据包进行过滤</li>
+<li>进入 mangle 表的 POSTROUTING 链，到这里已经做完了所有的路由决定，但数据包仍然在本地主机，我们还可以进行某些修改<br>注意，这里不光对经过防火墙的数据包进行处理，还对防火墙自己产生的数据包进行处理</li>
+<li>进入 nat 表的 POSTROUTING 链，在这里一般都是用来做 SNAT ，不要在这里进行过滤</li>
+<li>进入出去的网络接口<br>一种情况是，数据包要转发给其它主机:</li>
+<li>进入 mangle 表的 FORWARD 链，这里也比较特殊，这是在第一次路由决定之后，在进行最后的路由决定之前，我们仍然可以对数据包进行某些修改</li>
+<li>进入 filter 表的 FORWARD 链，在这里我们可以对所有转发的数据包进行过滤。需要注意的是：经过这里的数据包是转发的，方向是双向的</li>
+<li>进入 mangle 表的 POSTROUTING 链，到这里已经做完了所有的路由决定，但数据包仍然在本地主机，我们还可以进行某些修改</li>
+<li>进入 nat 表的 POSTROUTING 链，在这里一般都是用来做 SNAT ，不要在这里进行过滤</li>
+<li>进入出去的网络接口</li>
+</ol>
+<p>该流程图描述链了在任何接口上收到的网络数据包是按照怎样的顺序穿过表的交通管制链。第一个路由策略包括决定数据包的目的地是本地主机（这种情况下，数据包穿过 INPUT 链），还是其他主机（数据包穿过 FORWARD 链）；中间的路由策略包括决定给传出的数据包使用那个源地址、分配哪个接口；最后一个路由策略存在是因为先前的 mangle 与 nat 链可能会改变数据包的路由信息。数据包通过路径上的每一条链时，链中的每一条规则按顺序匹配；无论何时匹配了一条规则，相应的 target&#x2F;jump 动作将会执行。最常用的3个 target 是 ACCEPT, DROP ,或者 jump 到用户自定义的链。内置的链有默认的策略，但是用户自定义的链没有默认的策略。在 jump 到的链中，若每一条规则都不能提供完全匹配，那么数据包像这张图片描述的一样返回到调用链。在任何时候，若 DROP target 的规则实现完全匹配，那么被匹配的数据包会被丢弃，不会进行进一步处理。如果一个数据包在链中被 ACCEPT，那么它也会被所有的父链 ACCEPT，并且不再遍历其他父链。然而，要注意的是，数据包还会以正常的方式继续遍历其他表中的其他链。</p>
+<p><img src="/images/iptables/iptables_user_kernel_traverse.png" alt="iptables_user_kernel_traverse.png"></p>
+<h2 id="表-Tables"><a href="#表-Tables" class="headerlink" title="表(Tables)"></a>表(Tables)</h2><ul>
+<li>raw 用于配置数据包，raw 中的数据包不会被系统跟踪。<br>  作用：决定数据包是否被状态跟踪机制处理，优先级最高，设置raw时一般是为了不再让iptables做数据包的链接跟踪处理，提高性能<br>  内核模块：iptable_raw<br>  chains：OUTPUT, PREROUTING</li>
+<li>filter 是用于存放所有与防火墙相关操作的默认表。<br>  作用：过滤数据包<br>  内核模块：iptables_filter<br>  chains：INPUT, FORWARD, OUTPUT</li>
+<li>nat 用于网络地址转换（例如：端口转发）。<br>  作用：网络地址转换<br>  内核模块：iptables_nat<br>  chains：PREROUTING, POSTROUTING, OUTPUT</li>
+<li>mangle 用于对特定数据包的修改。<br>  作用：修改数据包的服务类型、TTL、并且可以配置路由实现QOS<br>  内核模块：iptable_mangle<br>  chains：PREROUTING, POSTROUTING, INPUT, OUTPUT, FORWARD</li>
+<li>security 用于强制访问控制网络规则。<br>  Todo…</li>
+</ul>
+<p>表之间的顺序：raw –&gt; mangle –&gt; nat –&gt; filter</p>
+<h2 id="链-Chains"><a href="#链-Chains" class="headerlink" title="链(Chains)"></a>链(Chains)</h2><ul>
+<li>表由链组成，链是一些按顺序排列的规则的列表。<br>  默认的<code>filter</code>表包含<code>INPUT</code>，<code>OUTPUT</code>和<code>FORWARD</code>3条内建的链，这3条链作用于数据包过滤过程中的不同时间点，<code>nat</code>表包含<code>PREROUTING</code>，<code>POSTROUTING</code>和<code>OUTPUT</code>链。</li>
+<li>默认情况下，任何链中都没有规则，可以向链中添加自己想用的规则<br>  链的默认规则通常设置为<code>ACCEPT</code>，如果想确保任何包都不能通过规则集，那么可以重置为<code>DROP</code>。默认的规则总是在一条链的最后生效，所以在默认规则生效前数据包需要通过所有存在的规则。</li>
+<li>用户可以加入自己定义的链，从而使规则集更有效并且易于修改。</li>
+</ul>
+<h2 id="规则-Rules"><a href="#规则-Rules" class="headerlink" title="规则(Rules)"></a>规则(Rules)</h2><p>数据包的过滤基于 规则。规则由一个目标（数据包包匹配所有条件后的动作）和很多匹配（导致该规则可以应用的数据包所满足的条件）指定。一个规则的典型匹配事项是数据包进入的端口（例如：eth0 或者 eth1）、数据包的类型（ICMP, TCP, 或者 UDP）和数据包的目的端口。</p>
+<p>目标使用<code>-j</code>或者<code>--jump</code>选项指定。目标可以是用户定义的链（例如，如果条件匹配，跳转到之后的用户定义的链，继续处理）、一个内置的特定目标或者是一个目标扩展。内置目标是 ACCEPT， DROP， QUEUE 和 RETURN，目标扩展是 REJECT and LOG。如果目标是内置目标，数据包的命运会立刻被决定并且在当前表的数据包的处理过程会停止。如果目标是用户定义的链，并且数据包成功穿过第二条链，目标将移动到原始链中的下一个规则。目标扩展可以被终止（像内置目标一样）或者不终止（像用户定义链一样）。</p>
+<h2 id="策略-police"><a href="#策略-police" class="headerlink" title="策略(police)"></a>策略(police)</h2><h1 id="Usage"><a href="#Usage" class="headerlink" title="Usage"></a>Usage</h1><p><img src="/images/iptables/iptables_usage_main.jpg" alt="iptables_usage_main.jpg"></p>
+<p><img src="/images/iptables/iptables_usage_param.jpg" alt="iptables_usage_param.jpg"></p>
+<h1 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h1><p>Todo…</p>
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="https://wiki.archlinux.org/index.php/Iptables_(%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87)">Iptables (简体中文)</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.ha97.com/4093.html">iptables的基本概念和数据包流程图</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.cnblogs.com/ggjucheng/archive/2012/08/19/2646466.html">linux平台下防火墙iptables原理(转)</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.linuxidc.com/Linux/2012-08/67505.htm">iptables四个表与五个链间的处理关系</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/firewall/" rel="tag"># firewall</a>
+              <a href="/tags/iptables/" rel="tag"># iptables</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2017/05/11/works/docker-over-xenserver-plans/" rel="prev" title="XenServer中Docker容器实施方案（Preview）">
+      <i class="fa fa-chevron-left"></i> XenServer中Docker容器实施方案（Preview）
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2017/05/18/container/coreos/coreos-build/" rel="next" title="CoreOS镜像制作">
+      CoreOS镜像制作 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%89%88%E6%9C%AC"><span class="nav-number">1.</span> <span class="nav-text">版本</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BB%8B%E7%BB%8D"><span class="nav-number">2.</span> <span class="nav-text">介绍</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A1%A8-Tables"><span class="nav-number">2.1.</span> <span class="nav-text">表(Tables)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%93%BE-Chains"><span class="nav-number">2.2.</span> <span class="nav-text">链(Chains)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A7%84%E5%88%99-Rules"><span class="nav-number">2.3.</span> <span class="nav-text">规则(Rules)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AD%96%E7%95%A5-police"><span class="nav-number">2.4.</span> <span class="nav-text">策略(police)</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Usage"><span class="nav-number">3.</span> <span class="nav-text">Usage</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%A4%BA%E4%BE%8B"><span class="nav-number">4.</span> <span class="nav-text">示例</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%82%E8%80%83-%E9%B8%A3%E8%B0%A2"><span class="nav-number">5.</span> <span class="nav-text">参考&amp;鸣谢</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">博</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">138</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">119</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">博</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

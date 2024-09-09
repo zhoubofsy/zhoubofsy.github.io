@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zhoubofsy.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="SPDK（Storage Performance Development Kit）是Intel发布的存储性能开发工具集 用户使用现在的固态设备，比如Intel® SSD DC P3700 Series Non-Volatile Memory Express（NVMe）驱动，面临一个主要的挑战：因为吞吐量和延迟性能比传统的磁盘好太多，现在总的处理时间中，存储软件占用了更大的比例。换句话说，存储软件栈">
+<meta property="og:type" content="article">
+<meta property="og:title" content="SPDK简介">
+<meta property="og:url" content="http://zhoubofsy.github.io/2020/11/17/storage/spdk-introduce/index.html">
+<meta property="og:site_name" content="Bolog">
+<meta property="og:description" content="SPDK（Storage Performance Development Kit）是Intel发布的存储性能开发工具集 用户使用现在的固态设备，比如Intel® SSD DC P3700 Series Non-Volatile Memory Express（NVMe）驱动，面临一个主要的挑战：因为吞吐量和延迟性能比传统的磁盘好太多，现在总的处理时间中，存储软件占用了更大的比例。换句话说，存储软件栈">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://zhoubofsy.github.io/images/spdk/introduction-to-the-storage-performance-development-kit-spdk-fig2.png">
+<meta property="og:image" content="http://zhoubofsy.github.io/images/spdk/spdk_component.png">
+<meta property="article:published_time" content="2020-11-17T02:17:29.000Z">
+<meta property="article:modified_time" content="2024-09-09T07:57:18.583Z">
+<meta property="article:author" content="博">
+<meta property="article:tag" content="spdk">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://zhoubofsy.github.io/images/spdk/introduction-to-the-storage-performance-development-kit-spdk-fig2.png">
+
+<link rel="canonical" href="http://zhoubofsy.github.io/2020/11/17/storage/spdk-introduce/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>SPDK简介 | Bolog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Bolog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2020/11/17/storage/spdk-introduce/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          SPDK简介
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-11-17 10:17:29" itemprop="dateCreated datePublished" datetime="2020-11-17T10:17:29+08:00">2020-11-17</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>SPDK（Storage Performance Development Kit）是Intel发布的存储性能开发工具集</p>
+<p>用户使用现在的固态设备，比如Intel® SSD DC P3700 Series Non-Volatile Memory Express（NVMe）驱动，面临一个主要的挑战：因为吞吐量和延迟性能比传统的磁盘好太多，现在总的处理时间中，存储软件占用了更大的比例。换句话说，存储软件栈的性能和效率在整个存储系统中越来越重要。随着存储设备继续发展，它将面临远远超过正在使用的软件体系结构的风险（即存储设备受制于相关软件的不足而不能发挥全部性能）</p>
+<h1 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h1><ul>
+<li>用户态运行<br>  避免内核上下文切换和中断将会节省大量的处理开销，允许更多的时钟周期被用来做实际的数据存储。无论存储算法（去冗，加密，压缩，空白块存储）多么复杂，浪费更少的时钟周期总是意味着更好的性能和延迟。这并不是说内核增加了不必要的开销；相反，内核增加了那些可能不适用于专用存储堆栈的通用计算用例的相关开销。SPDK的指导原则是通过消除每一处额外的软件开销来提供最少的延迟和最高的效率。</li>
+<li>轮询模式取代中断模式（Polled Mode Drivers, PMDs）<br>  在传统的I&#x2F;O模型中，应用程序提交读写请求后睡眠，一旦I&#x2F;O完成，中断就会将其唤醒。PMDs的工作方式不同，应用程序提交读写请求后继续执行其他工作，以一定的时间间隔回头检查I&#x2F;O是否已经完成。这种方式避免了中断带来的延迟和开销，并使得应用程序提高了I&#x2F;O的效率。<br>  在机械盘时代，中断开销只占整个I&#x2F;O时间的一个很小的百分比，因此给系统带来了巨大的效率提升。然而，在固态设备的时代，持续引入更低延迟的持久化设备，中断开销成为了整个I&#x2F;O时间中不能被忽视的部分。这个问题在更低延迟的设备上只会越来越严重。系统已经能够每秒处理数百万个I&#x2F;O，所以消除数百万个事务的这种开销，能够快速地复制到多个内核中。数据包和数据块被立即分发，等待时间减小到最少，使得延迟更低，一致性延迟更多（抖动更少），吞吐量也得到提高。</li>
+<li>无锁机制<br>  在IO路径上避免采用任何锁机制进行同步，降低时延并提升吞吐量</li>
+</ul>
+<h1 id="架构"><a href="#架构" class="headerlink" title="架构"></a>架构</h1><p><img src="/images/spdk/introduction-to-the-storage-performance-development-kit-spdk-fig2.png" alt="introduction-to-the-storage-performance-development-kit-spdk-fig2"></p>
+<h3 id="Hardware-Drivers"><a href="#Hardware-Drivers" class="headerlink" title="Hardware Drivers"></a>Hardware Drivers</h3><h4 id="NVMe-Driver"><a href="#NVMe-Driver" class="headerlink" title="NVMe Driver"></a>NVMe Driver</h4><p>SPDK的基础组件，这个高优化无锁的驱动提供了高扩展性，高效性和高性能。</p>
+<h4 id="Inter-QuickData-Technology"><a href="#Inter-QuickData-Technology" class="headerlink" title="Inter QuickData Technology"></a>Inter QuickData Technology</h4><p>Intel I&#x2F;O Acceleration Technology（Inter IOAT，英特尔I&#x2F;O加速技术），这是一种基于Xeon处理器平台上的copy offload引擎。通过提供用户空间访问，减少了DMA数据移动的阈值，允许对小尺寸I&#x2F;O或NTB的更好利用。</p>
+<h3 id="Back-end-Block-Devices"><a href="#Back-end-Block-Devices" class="headerlink" title="Back-end Block Devices"></a>Back-end Block Devices</h3><h4 id="NVMe-oF-Initiator"><a href="#NVMe-oF-Initiator" class="headerlink" title="NVMe-oF Initiator"></a>NVMe-oF Initiator</h4><p>本地SPDK NVMe驱动和NVMe-oF启动器共享一套共同的API命令。这意味着，比如本地&#x2F;远程复制非常容易实现。</p>
+<h4 id="Ceph-RADOS-Block-Device"><a href="#Ceph-RADOS-Block-Device" class="headerlink" title="Ceph RADOS Block Device"></a>Ceph RADOS Block Device</h4><p>Ceph RBD 成为SPDK的后端设备</p>
+<h4 id="Blobstore-Block-Device"><a href="#Blobstore-Block-Device" class="headerlink" title="Blobstore Block Device"></a>Blobstore Block Device</h4><p>由SPDK Blobstore分配的块设备，是虚拟机或数据库可以与之交互的虚拟设备。这些设备得到SPDK基础架构的优势，意味着零拷贝和令人难以置信的可扩展性。</p>
+<h4 id="Linux-AIO"><a href="#Linux-AIO" class="headerlink" title="Linux AIO"></a>Linux AIO</h4><p>允许SPDK与内核设备（比如机械硬盘）交互。</p>
+<h3 id="Storage-Services"><a href="#Storage-Services" class="headerlink" title="Storage Services"></a>Storage Services</h3><h4 id="Block-Device-Abstration-Layer"><a href="#Block-Device-Abstration-Layer" class="headerlink" title="Block Device Abstration Layer"></a>Block Device Abstration Layer</h4><p>这种通用的块设备抽象是连接到各种不同设备驱动和块设备的存储协议的粘合剂。还在块层中提供灵活的API用于额外的用户功能（磁盘阵列，压缩，去冗等等）。</p>
+<h4 id="Blobstore"><a href="#Blobstore" class="headerlink" title="Blobstore"></a>Blobstore</h4><p>为SPDK实现一个高精简的文件式语义（非POSIX）。这可以为数据库，容器，虚拟机或其他不依赖于大部分POSIX文件系统功能集（比如用户访问控制）的工作负载提供高性能基础。</p>
+<h3 id="Storage-Protocols"><a href="#Storage-Protocols" class="headerlink" title="Storage Protocols"></a>Storage Protocols</h3><h4 id="iSCSI-Target"><a href="#iSCSI-Target" class="headerlink" title="iSCSI Target"></a>iSCSI Target</h4><p>建立了通过以太网的块流量规范，大约是内核LIO效率的两倍。现在的版本默认使用内核TCP&#x2F;IP协议栈。</p>
+<h4 id="vhost-scsi-target"><a href="#vhost-scsi-target" class="headerlink" title="vhost-scsi target"></a>vhost-scsi target</h4><p>KVM&#x2F;QEMU的功能利用了SPDK NVMe驱动，使得访客虚拟机访问存储设备时延迟更低，使得I&#x2F;O密集型工作负载的整体CPU负载减低。</p>
+<h4 id="NVMe-oF-Target"><a href="#NVMe-oF-Target" class="headerlink" title="NVMe-oF Target"></a>NVMe-oF Target</h4><p>实现了NVMe-oF规范。虽然这取决于RDMA硬件，NVMe-oF的目标可以为每个CPU核提供高达40Gbps的流量。</p>
+<h1 id="应用方案"><a href="#应用方案" class="headerlink" title="应用方案"></a>应用方案</h1><p><img src="/images/spdk/spdk_component.png" alt="spdk_component"></p>
+<h3 id="网络前端"><a href="#网络前端" class="headerlink" title="网络前端"></a>网络前端</h3><p>网络前端子组件包括DPDK网卡驱动和用户态网络服务UNS（这是一个Linux内核TCP&#x2F;IP协议栈的替代品，能够突破通用TCP&#x2F;IP协议栈的种种性能限制瓶颈）。DPDK在网卡侧提供了一个高性能的发包收包处理框架，在数据从网卡到操作系统用户态之间提供了一条快速通道。</p>
+<h3 id="处理框架"><a href="#处理框架" class="headerlink" title="处理框架"></a>处理框架</h3><p>拿到了数据包内容，将iSCSI命令转换为SCSI块级命令。然而，在它将这些命令发到“后端”驱动之前，SPDK提供了一套API框架，让厂商能够插入自己定义的处理逻辑(架构图中绿色的方框)。通过这种机制，存储厂商可在这里实现例如缓存、去重、压缩、加密、RAID计算，或擦除码(Erasure Coding)计算等功能，使这些功能包含在SPDK的处理流程中。</p>
+<h3 id="后端"><a href="#后端" class="headerlink" title="后端"></a>后端</h3><p>SPDK和物理块设备交互(读和写操作)。如前所述，SPDK提供了用户态的PMD，支持NVMe设备、Linux AIO设备(传统机械硬盘)、RAMDISK设备，以及利用到英特尔I&#x2F;O加速技术的新设备(CBDMA)。这一系列后端设备驱动涵盖了不同性能的存储分层，保证SPDK几乎与每种存储应用形成关联。</p>
+<h1 id="使用及编译"><a href="#使用及编译" class="headerlink" title="使用及编译"></a>使用及编译</h1><h2 id="编译安装"><a href="#编译安装" class="headerlink" title="编译安装"></a>编译安装</h2><p>SPDK使用了DPDK中的一些功能，编译SPDK需要依赖DPDK，所以需要先编译安装DPDK</p>
+<p>编译DPDK</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">make config T=x86_64-native-linuxapp-gcc</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">make</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">make install</span></span><br></pre></td></tr></table></figure>
+<p>默认DPDK会安装到<code>/usr/local</code>目录下</p>
+<p>编译SPDK</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">./configure --with-dpdk=/usr/local</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">make</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h2><p>nvme设备插入主机会被系统自动识别。若想使用spdk访问该设备必须现将nvme unbind。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">lsblk</span></span><br><span class="line">NAME    MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT</span><br><span class="line">sda       8:0    0  7.3T  0 disk</span><br><span class="line">└─sda1    8:1    0  7.3T  0 part /</span><br><span class="line">sdb       8:16   0  7.3T  0 disk</span><br><span class="line">sdc       8:32   0  7.3T  0 disk</span><br><span class="line">sdd       8:48   0  3.8G  0 disk</span><br><span class="line">└─sdd1    8:49   0  3.8G  0 part /boot</span><br><span class="line">nvme0n1 259:0    0  1.5T  0 disk</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash"><span class="built_in">cd</span> &lt;spdk_dir&gt;/scripts</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">sh setup.sh</span></span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">lsblk</span></span><br><span class="line">NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT</span><br><span class="line">sda      8:0    0  7.3T  0 disk</span><br><span class="line">└─sda1   8:1    0  7.3T  0 part /</span><br><span class="line">sdb      8:16   0  7.3T  0 disk</span><br><span class="line">sdc      8:32   0  7.3T  0 disk</span><br><span class="line">sdd      8:48   0  3.8G  0 disk</span><br><span class="line">└─sdd1   8:49   0  3.8G  0 part /boot</span><br></pre></td></tr></table></figure>
+
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="https://www.cnblogs.com/whl320124/articles/9969395.html">SPDK简介</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/6892df050b5a">使用fio测试SPDK</a></li>
+<li><a target="_blank" rel="noopener" href="https://rootw.github.io/2018/05/SPDK-all/">【SPDK】一、概述</a></li>
+<li><a target="_blank" rel="noopener" href="https://software.intel.com/content/www/us/en/develop/articles/introduction-to-the-storage-performance-development-kit-spdk.html">Introduction to the Storage Performance Development Kit (SPDK)</a></li>
+<li><a target="_blank" rel="noopener" href="https://tonydeng.github.io/sdn-handbook/dpdk/spdk.html">SPDK</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/spdk/" rel="tag"># spdk</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/11/11/storage/ceph/async-messenger-introduce/" rel="prev" title="AsyncMessenger介绍">
+      <i class="fa fa-chevron-left"></i> AsyncMessenger介绍
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2021/09/10/design/pattern/design-pattern-creating/" rel="next" title="设计模式——创建型模式">
+      设计模式——创建型模式 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8E%9F%E7%90%86"><span class="nav-number">1.</span> <span class="nav-text">原理</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%9E%B6%E6%9E%84"><span class="nav-number">2.</span> <span class="nav-text">架构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Hardware-Drivers"><span class="nav-number">2.0.1.</span> <span class="nav-text">Hardware Drivers</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#NVMe-Driver"><span class="nav-number">2.0.1.1.</span> <span class="nav-text">NVMe Driver</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Inter-QuickData-Technology"><span class="nav-number">2.0.1.2.</span> <span class="nav-text">Inter QuickData Technology</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Back-end-Block-Devices"><span class="nav-number">2.0.2.</span> <span class="nav-text">Back-end Block Devices</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#NVMe-oF-Initiator"><span class="nav-number">2.0.2.1.</span> <span class="nav-text">NVMe-oF Initiator</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Ceph-RADOS-Block-Device"><span class="nav-number">2.0.2.2.</span> <span class="nav-text">Ceph RADOS Block Device</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Blobstore-Block-Device"><span class="nav-number">2.0.2.3.</span> <span class="nav-text">Blobstore Block Device</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Linux-AIO"><span class="nav-number">2.0.2.4.</span> <span class="nav-text">Linux AIO</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Storage-Services"><span class="nav-number">2.0.3.</span> <span class="nav-text">Storage Services</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Block-Device-Abstration-Layer"><span class="nav-number">2.0.3.1.</span> <span class="nav-text">Block Device Abstration Layer</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Blobstore"><span class="nav-number">2.0.3.2.</span> <span class="nav-text">Blobstore</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Storage-Protocols"><span class="nav-number">2.0.4.</span> <span class="nav-text">Storage Protocols</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#iSCSI-Target"><span class="nav-number">2.0.4.1.</span> <span class="nav-text">iSCSI Target</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#vhost-scsi-target"><span class="nav-number">2.0.4.2.</span> <span class="nav-text">vhost-scsi target</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#NVMe-oF-Target"><span class="nav-number">2.0.4.3.</span> <span class="nav-text">NVMe-oF Target</span></a></li></ol></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%BA%94%E7%94%A8%E6%96%B9%E6%A1%88"><span class="nav-number">3.</span> <span class="nav-text">应用方案</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BD%91%E7%BB%9C%E5%89%8D%E7%AB%AF"><span class="nav-number">3.0.1.</span> <span class="nav-text">网络前端</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A4%84%E7%90%86%E6%A1%86%E6%9E%B6"><span class="nav-number">3.0.2.</span> <span class="nav-text">处理框架</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%90%8E%E7%AB%AF"><span class="nav-number">3.0.3.</span> <span class="nav-text">后端</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8%E5%8F%8A%E7%BC%96%E8%AF%91"><span class="nav-number">4.</span> <span class="nav-text">使用及编译</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E8%AF%91%E5%AE%89%E8%A3%85"><span class="nav-number">4.1.</span> <span class="nav-text">编译安装</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8"><span class="nav-number">4.2.</span> <span class="nav-text">使用</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%82%E8%80%83-%E9%B8%A3%E8%B0%A2"><span class="nav-number">5.</span> <span class="nav-text">参考&amp;鸣谢</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">博</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">138</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">119</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">博</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zhoubofsy.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="容器化、容器化、容器化。。。都说重要的事情说三遍，那么Ceph部署有必要容器化吗？ 有必要，非常有必要。容器化以后，不仅不会损失性能，而且对以后更新、回退都很方便。而且一个物理机（或虚拟机）上可以跑多个Ceph集群。对于一个开发人员，修改调试都实在是太方便了～～～～～！ 闲言碎语不要讲，先拉个集群起来看看吧。 mimic镜像ceph&#x2F;daemon:latest-mimic 网络使用docker b">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Ceph容器部署">
+<meta property="og:url" content="http://zhoubofsy.github.io/2019/09/23/storage/ceph/ceph-deploy-indocker/index.html">
+<meta property="og:site_name" content="Bolog">
+<meta property="og:description" content="容器化、容器化、容器化。。。都说重要的事情说三遍，那么Ceph部署有必要容器化吗？ 有必要，非常有必要。容器化以后，不仅不会损失性能，而且对以后更新、回退都很方便。而且一个物理机（或虚拟机）上可以跑多个Ceph集群。对于一个开发人员，修改调试都实在是太方便了～～～～～！ 闲言碎语不要讲，先拉个集群起来看看吧。 mimic镜像ceph&#x2F;daemon:latest-mimic 网络使用docker b">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2019-09-23T08:23:53.000Z">
+<meta property="article:modified_time" content="2024-09-09T07:57:18.591Z">
+<meta property="article:author" content="博">
+<meta property="article:tag" content="docker">
+<meta property="article:tag" content="ceph">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://zhoubofsy.github.io/2019/09/23/storage/ceph/ceph-deploy-indocker/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Ceph容器部署 | Bolog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Bolog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2019/09/23/storage/ceph/ceph-deploy-indocker/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Ceph容器部署
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2019-09-23 16:23:53" itemprop="dateCreated datePublished" datetime="2019-09-23T16:23:53+08:00">2019-09-23</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>容器化、容器化、容器化。。。都说重要的事情说三遍，那么Ceph部署有必要容器化吗？</p>
+<p>有必要，非常有必要。容器化以后，不仅不会损失性能，而且对以后更新、回退都很方便。而且一个物理机（或虚拟机）上可以跑多个Ceph集群。对于一个开发人员，修改调试都实在是太方便了～～～～～！</p>
+<p>闲言碎语不要讲，先拉个集群起来看看吧。</p>
+<h1 id="mimic"><a href="#mimic" class="headerlink" title="mimic"></a>mimic</h1><h2 id="镜像"><a href="#镜像" class="headerlink" title="镜像"></a>镜像</h2><p><a target="_blank" rel="noopener" href="https://hub.docker.com/r/ceph/daemon"><code>ceph/daemon:latest-mimic</code></a></p>
+<h2 id="网络"><a href="#网络" class="headerlink" title="网络"></a>网络</h2><p>使用docker bridge网络，每个容器指定静态IP。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker network create --subnet 192.168.44.0/24 cephnet</span><br></pre></td></tr></table></figure>
+
+<h2 id="拉起Ceph集群"><a href="#拉起Ceph集群" class="headerlink" title="拉起Ceph集群"></a>拉起Ceph集群</h2><h3 id="MON"><a href="#MON" class="headerlink" title="MON"></a>MON</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run -d --net cephnet --ip 192.168.44.11 -v /Users/zhoub/temp/etc_ceph/:/etc/ceph -v /Users/zhoub/temp/var_lib_ceph/:/var/lib/ceph -e MON_IP=192.168.44.11 -e CEPH_PUBLIC_NETWORK=192.168.44.0/24 --name mon --hostname mon  ceph/daemon:latest-mimic mon</span><br></pre></td></tr></table></figure>
+
+<h3 id="MGR"><a href="#MGR" class="headerlink" title="MGR"></a>MGR</h3><p>MGR节点很重要，如果没有MGR节点，你就看不到OSD的使用量了。现在的MON真是翻身农奴把歌唱啊，一心只做心跳了。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run -d --net cephnet --ip 192.168.44.12 -v /Users/zhoub/temp/etc_ceph/:/etc/ceph -v /Users/zhoub/temp/var_lib_ceph/:/var/lib/ceph --name mgr --hostname mgr ceph/daemon:latest-mimic mgr</span><br></pre></td></tr></table></figure>
+
+<h3 id="OSD"><a href="#OSD" class="headerlink" title="OSD"></a>OSD</h3><p>OSD有两种部署方式，一种是将硬盘部署；另一种是目录部署。由于本人使用mac版本docker，所以在映射硬盘过程不太方便，所以使用目录部署。后面会给出硬盘部署的方式。</p>
+<h4 id="目录"><a href="#目录" class="headerlink" title="目录"></a>目录</h4><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run -d --net cephnet --ip 192.168.44.13 -v /Users/zhoub/temp/etc_ceph/:/etc/ceph -v /Users/zhoub/temp/var_lib_ceph/:/var/lib/ceph --name osd --hostname osd -e OSD_TYPE=directory ceph/daemon:latest-mimic osd</span><br></pre></td></tr></table></figure>
+
+<p>由于mac上的docker是运行在一个虚拟机中的，目前不太清楚该虚拟机使用的文件系统是什么，所以osd会暴如下错误：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker logs -f osd</span></span><br><span class="line">2019-09-23 10:59:14  /opt/ceph-container/bin/entrypoint.sh: static: does not generate config</span><br><span class="line">2019-09-23 10:59:14  /opt/ceph-container/bin/entrypoint.sh: Creating osd</span><br><span class="line">2019-09-23 10:59:14  /opt/ceph-container/bin/entrypoint.sh: OSD created with ID: 0</span><br><span class="line">2019-09-23 10:59:14  /opt/ceph-container/bin/entrypoint.sh: created folder /var/lib/ceph/osd/ceph-0/</span><br><span class="line">creating /var/lib/ceph/osd/ceph-0//keyring</span><br><span class="line">added entity osd.0 auth auth(auid = 18446744073709551615 key=AQCCpYhdbE1EGxAAxX2Av3Gzez/5j8sijQg1jQ== with 0 caps)</span><br><span class="line">2019-09-23 10:59:15.014 7f255136fd80 -1 filestore(/var/lib/ceph/osd/ceph-0) WARNING: max attr value size (1024) is smaller than osd_max_object_name_len (2048).  Your backend filesystem appears to not support attrs large enough to handle the configured max rados name size.  You may get unexpected ENAMETOOLONG errors on rados operations or buggy behavior</span><br><span class="line">2019-09-23 10:59:15.084 7f255136fd80 -1 filestore(/var/lib/ceph/osd/ceph-0) mkjournal(1101): error creating journal on /var/lib/ceph/osd/ceph-0//journal: (22) Invalid argument</span><br><span class="line">2019-09-23 10:59:15.084 7f255136fd80 -1 OSD::mkfs: ObjectStore::mkfs failed with error (22) Invalid argument</span><br><span class="line">2019-09-23 10:59:15.084 7f255136fd80 -1  ** ERROR: error creating empty object store in /var/lib/ceph/osd/ceph-0: (22) Invalid argument</span><br></pre></td></tr></table></figure>
+
+<h4 id="硬盘"><a href="#硬盘" class="headerlink" title="硬盘"></a>硬盘</h4><p>在硬盘部署以前，需要先对硬盘进行格式化</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run -d --privileged=true --rm -v /dev/:/dev/ -e OSD_DEVICE=/dev/sdb ceph/daemon:latest-mimic zap_device</span><br></pre></td></tr></table></figure>
+
+<p>格式化后再启动容器</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run -d --net cephnet --ip 192.168.44.13 --hostname osd --name=osd --privileged  -v /Users/zhoub/temp/etc_ceph/:/etc/ceph -v /Users/zhoub/temp/var_lib_ceph/:/var/lib/ceph -v /dev/:/dev/ -e OSD_DEVICE=/dev/sdb ceph/daemon:latest-mimic osd</span><br></pre></td></tr></table></figure>
+
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>集群除OSD服务外其它服务均可以正常容器化</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">[root@mon /]# ceph -s</span><br><span class="line">  cluster:</span><br><span class="line">    id:     61a4f9d8-fdc7-4883-8b71-7f93c2017f86</span><br><span class="line">    health: HEALTH_OK</span><br><span class="line"></span><br><span class="line">  services:</span><br><span class="line">    mon: 1 daemons, quorum mon</span><br><span class="line">    mgr: mgr(active)</span><br><span class="line">    osd: 1 osds: 0 up, 0 in</span><br><span class="line"></span><br><span class="line">  data:</span><br><span class="line">    pools:   0 pools, 0 pgs</span><br><span class="line">    objects: 0  objects, 0 B</span><br><span class="line">    usage:   0 B used, 0 B / 0 B avail</span><br><span class="line">    pgs:</span><br></pre></td></tr></table></figure>
+<p>OSD目录部署不能正常提供服务主要是因为宿主机的文件系统类型未知，若宿主机可正常登录操作，此问题可解；<br>OSD硬盘部署不能正常提供服务主要是因为宿主机不能增加硬盘设备，若宿主机可以添加硬盘，此问题可解。</p>
+<p>综上所述，问题根本在于对宿主机的操作了解不够清晰。</p>
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/ff3be28a1015">使用Docker快速部署Ceph集群</a></li>
+<li><a target="_blank" rel="noopener" href="https://hub.docker.com/r/ceph/daemon">ceph&#x2F;daemon</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/docker/" rel="tag"># docker</a>
+              <a href="/tags/ceph/" rel="tag"># ceph</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2019/09/20/linux/linux-env-variable/" rel="prev" title="Linux环境变量">
+      <i class="fa fa-chevron-left"></i> Linux环境变量
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2019/09/24/linux/gdb-in-docker/" rel="next" title="Docker中使用GDB调试">
+      Docker中使用GDB调试 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#mimic"><span class="nav-number">1.</span> <span class="nav-text">mimic</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%95%9C%E5%83%8F"><span class="nav-number">1.1.</span> <span class="nav-text">镜像</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BD%91%E7%BB%9C"><span class="nav-number">1.2.</span> <span class="nav-text">网络</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8B%89%E8%B5%B7Ceph%E9%9B%86%E7%BE%A4"><span class="nav-number">1.3.</span> <span class="nav-text">拉起Ceph集群</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#MON"><span class="nav-number">1.3.1.</span> <span class="nav-text">MON</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#MGR"><span class="nav-number">1.3.2.</span> <span class="nav-text">MGR</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#OSD"><span class="nav-number">1.3.3.</span> <span class="nav-text">OSD</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%9B%AE%E5%BD%95"><span class="nav-number">1.3.3.1.</span> <span class="nav-text">目录</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%A1%AC%E7%9B%98"><span class="nav-number">1.3.3.2.</span> <span class="nav-text">硬盘</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">1.4.</span> <span class="nav-text">总结</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%82%E8%80%83-%E9%B8%A3%E8%B0%A2"><span class="nav-number">2.</span> <span class="nav-text">参考&amp;鸣谢</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">博</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">138</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">119</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">博</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

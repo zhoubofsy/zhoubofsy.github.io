@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zhoubofsy.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="Perf tools是由内核维护人员Ingo Molnar等人开发的linux内核的综合性能该要分析工具。通过它，应用程序可以利用 PMU，tracepoint 和内核中的特殊计数器来进行性能统计。它不但可以分析指定应用程序的性能问题 (per thread)，也可以用来分析内核的性能问题，当然也可以同时分析应用代码和内核，从而全面理解应用程序中的性能瓶颈。 环境** OS ** ubuntu 1">
+<meta property="og:type" content="article">
+<meta property="og:title" content="perf-tools">
+<meta property="og:url" content="http://zhoubofsy.github.io/2018/12/14/linux/perf-tools/index.html">
+<meta property="og:site_name" content="Bolog">
+<meta property="og:description" content="Perf tools是由内核维护人员Ingo Molnar等人开发的linux内核的综合性能该要分析工具。通过它，应用程序可以利用 PMU，tracepoint 和内核中的特殊计数器来进行性能统计。它不但可以分析指定应用程序的性能问题 (per thread)，也可以用来分析内核的性能问题，当然也可以同时分析应用代码和内核，从而全面理解应用程序中的性能瓶颈。 环境** OS ** ubuntu 1">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2018-12-14T09:08:22.000Z">
+<meta property="article:modified_time" content="2024-09-09T07:57:18.599Z">
+<meta property="article:author" content="博">
+<meta property="article:tag" content="perf">
+<meta property="article:tag" content="tools">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://zhoubofsy.github.io/2018/12/14/linux/perf-tools/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>perf-tools | Bolog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Bolog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2018/12/14/linux/perf-tools/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          perf-tools
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2018-12-14 17:08:22" itemprop="dateCreated datePublished" datetime="2018-12-14T17:08:22+08:00">2018-12-14</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/linux/" itemprop="url" rel="index"><span itemprop="name">linux</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>Perf tools是由内核维护人员Ingo Molnar等人开发的linux内核的综合性能该要分析工具。通过它，应用程序可以利用 PMU，tracepoint 和内核中的特殊计数器来进行性能统计。它不但可以分析指定应用程序的性能问题 (per thread)，也可以用来分析内核的性能问题，当然也可以同时分析应用代码和内核，从而全面理解应用程序中的性能瓶颈。</p>
+<h1 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h1><p>** OS **</p>
+<p>ubuntu 16.04.5 LTS</p>
+<p>** Kernel **</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">uname</span> -a</span></span><br><span class="line">Linux ubuntu-linux 4.4.0-138-generic #164-Ubuntu SMP Tue Oct 2 17:16:02 UTC 2018 x86_64 x86_64 x86_64 GNU/Linux</span><br></pre></td></tr></table></figure>
+
+<h2 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h2><p>perf的安装可以分成两种，一种是package安装法；</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt install linux-tools-common linux-tools-4.4.0-138-generic</span><br></pre></td></tr></table></figure>
+
+<p>另一种安装方法是源码安装，这种方法需要先下载当前内核对应的源代码，</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">下载 4.4.0-138 源码</span></span><br><span class="line">sudo apt-get install linux-source=4.4.0.138.144</span><br></pre></td></tr></table></figure>
+
+<p>然后进入<code>/usr/src</code>目录中的源代码目录下，找到<code>tools/perf</code>目录，并在该目录下执行<code>make</code>编译perf源码，再执行<code>make install</code>安装perf</p>
+<h1 id="perf使用姿势"><a href="#perf使用姿势" class="headerlink" title="perf使用姿势"></a>perf使用姿势</h1><h2 id="姿势一"><a href="#姿势一" class="headerlink" title="姿势一"></a>姿势一</h2><h3 id="选择分析的事件"><a href="#选择分析的事件" class="headerlink" title="选择分析的事件"></a>选择分析的事件</h3><p>通过<code>perf list</code>列出可以选择的分析事件</p>
+<h3 id="概要分析数据"><a href="#概要分析数据" class="headerlink" title="概要分析数据"></a>概要分析数据</h3><p>使用<code>perf top</code>和<code>perf stat</code>进行该要分析系统性能，<code>perf top</code>类似于linux的<code>top</code>命令，按进程显示分析数据，可以使用<code>-e</code>参数指定分析事件，通过<code>perf top</code>找出系统中的问题进程。（更多关于<code>perf top</code>的使用精请见<code>perf top -h</code>）</p>
+<p><code>perf stat</code>用于汇总综合性能，有人用此方法比较性能改善前后的结果。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">Performance counter stats for &#x27;ls /&#x27;:</span><br><span class="line"></span><br><span class="line">         0.827614      task-clock (msec)         #    0.707 CPUs utilized</span><br><span class="line">                0      context-switches          #    0.000 K/sec</span><br><span class="line">                0      cpu-migrations            #    0.000 K/sec</span><br><span class="line">               91      page-faults               #    0.110 M/sec</span><br><span class="line">  &lt;not supported&gt;      cycles</span><br><span class="line">  &lt;not supported&gt;      stalled-cycles-frontend</span><br><span class="line">  &lt;not supported&gt;      stalled-cycles-backend</span><br><span class="line">  &lt;not supported&gt;      instructions</span><br><span class="line">  &lt;not supported&gt;      branches</span><br><span class="line">  &lt;not supported&gt;      branch-misses</span><br><span class="line"></span><br><span class="line">      0.001169835 seconds time elapsed</span><br></pre></td></tr></table></figure>
+<p>(由于我使用的是VM，所有有很多不支持的)</p>
+<ul>
+<li>task clock<br>  进程执行所花费的时间，CPU 利用率，该值高，说明程序的多数时间花费在 CPU 计算上而非 IO。</li>
+<li>context switches<br>  进程切换次数，记录了程序运行过程中发生了多少次进程切换，频繁的进程切换是应该避免的。</li>
+<li>cpu migrations<br>  进程运行过程中发生了多少次 CPU 迁移，即被调度器从一个 CPU 转移到另外一个 CPU 上运行。</li>
+<li>page faults<br>  按需分页或交换等过程中使用的页面错误的发生次数和频率</li>
+<li>cycles<br>  处理器时钟，一条机器指令可能需要多个 cycles</li>
+<li>instructions<br>  机器指令数目</li>
+<li>branches<br>  分支命令的数量和频率</li>
+<li>branch misses<br>  分支预测错误的比例</li>
+</ul>
+<h3 id="分析记录的数据"><a href="#分析记录的数据" class="headerlink" title="分析记录的数据"></a>分析记录的数据</h3><h4 id="记录并保存分析数据"><a href="#记录并保存分析数据" class="headerlink" title="记录并保存分析数据"></a>记录并保存分析数据</h4><p>通过<code>perf record</code>命令实现将分析数据保存到<code>perf.data</code>（默认）文件中，虽然<code>perf top</code>也能获取分析数据，但是<code>perf top</code>每隔2秒（默认）更新一次，而且对于一些特殊case不好抓取。<code>perf record</code>特别适合针对某个进程某个事件的分析非常好用。具体使用方法可以参考<code>perf record -h</code></p>
+<h4 id="查看保存的分析数据"><a href="#查看保存的分析数据" class="headerlink" title="查看保存的分析数据"></a>查看保存的分析数据</h4><p>通过<code>perf report</code>查看<code>perf.data</code>（默认），<code>perf report</code>分析内容的查看与<code>perf top</code>的查看方式相同。</p>
+<h2 id="姿势二"><a href="#姿势二" class="headerlink" title="姿势二"></a>姿势二</h2><h3 id="perf-script"><a href="#perf-script" class="headerlink" title="perf script"></a>perf script</h3><p>一般情况下，我们可以通过<code>perf record</code>＋<code>-e</code>指定追踪事件方式来获取进程相关事件分析数据(<code>perf.data</code>)，然后通过<code>perf script</code>(不加任何脚本情况下)只显示记录到的追踪事件数据。若<code>perf script</code>后指定脚本，那么会将记录到的追踪事件数据作为输入，传递给指定的脚本处理。</p>
+<p>perf脚本处理数据分为在线处理和离线处理；</p>
+<ul>
+<li>在线处理<br>  在进行追踪的同时运行脚本，则不可避免地会增加负载<br>  eg: <code>perf script sctop</code> 统计系统调用次数</li>
+<li>离线处理<br>  进行离线处理时先追踪后处理，可以抑制处理对追踪对象的影响<br>  eg: <code>perf script record syscall-counts ls /</code> 先追踪，后处理；<code>perf script report syscall-counts</code> 查看统计系统调用次数结果</li>
+</ul>
+<p>** 自定义脚本 **</p>
+<p>用户可根据自己的需求编写自己的Python或Perl脚本处理追踪事件数据，二者分别需要安装libpython或libperl，并且需要重新build perf。</p>
+<p>过程：</p>
+<ul>
+<li>先记录必要事件的数据文件<br>  使用<code>perf record</code>记录执行<code>ls /</code>过程中内存分配kmalloc()的相关事件数据<br>  eg: <code>perf record -e kmem:kmalloc -e raw_syscalls:sys_enter ls /</code></li>
+<li>生成自定义脚本<br>  使用<code>perf script -g perl</code>(perl脚本) or <code>perf script -g python</code>(python脚本)生成自定义脚本，根据需要修改生成的脚本内容</li>
+<li>执行自定义脚本<br>  使用<code>perf script</code>+<code>-s</code>参数指定用户自定义的脚本执行追踪处理</li>
+</ul>
+<h2 id="姿势三"><a href="#姿势三" class="headerlink" title="姿势三"></a>姿势三</h2><p>Todo…</p>
+<h1 id="收"><a href="#收" class="headerlink" title="收"></a>收</h1><p>perf tools这把瑞士军刀可以说功能齐全威力惊人，但能将其发挥几层还要看使用者的功力如何。</p>
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="https://www.cnblogs.com/chenfulin5/p/8394973.html">ubuntu apt-get 安装指定版本软件</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.ibm.com/developerworks/cn/linux/l-cn-perf1/">Perf – Linux下的系统性能调优工具，第 1 部分</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.cnblogs.com/arnoldlu/p/6241297.html">系统级性能分析工具perf的介绍与使用</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/perf/" rel="tag"># perf</a>
+              <a href="/tags/tools/" rel="tag"># tools</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2018/11/21/storage/ceph/radosgw-frame/" rel="prev" title="Radosgw 架构">
+      <i class="fa fa-chevron-left"></i> Radosgw 架构
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2018/12/25/linux/kernel-module-sbull/" rel="next" title="Linux块设备驱动——sbull">
+      Linux块设备驱动——sbull <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%8E%AF%E5%A2%83"><span class="nav-number">1.</span> <span class="nav-text">环境</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%89%E8%A3%85"><span class="nav-number">1.1.</span> <span class="nav-text">安装</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#perf%E4%BD%BF%E7%94%A8%E5%A7%BF%E5%8A%BF"><span class="nav-number">2.</span> <span class="nav-text">perf使用姿势</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A7%BF%E5%8A%BF%E4%B8%80"><span class="nav-number">2.1.</span> <span class="nav-text">姿势一</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%80%89%E6%8B%A9%E5%88%86%E6%9E%90%E7%9A%84%E4%BA%8B%E4%BB%B6"><span class="nav-number">2.1.1.</span> <span class="nav-text">选择分析的事件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A6%82%E8%A6%81%E5%88%86%E6%9E%90%E6%95%B0%E6%8D%AE"><span class="nav-number">2.1.2.</span> <span class="nav-text">概要分析数据</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%86%E6%9E%90%E8%AE%B0%E5%BD%95%E7%9A%84%E6%95%B0%E6%8D%AE"><span class="nav-number">2.1.3.</span> <span class="nav-text">分析记录的数据</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%AE%B0%E5%BD%95%E5%B9%B6%E4%BF%9D%E5%AD%98%E5%88%86%E6%9E%90%E6%95%B0%E6%8D%AE"><span class="nav-number">2.1.3.1.</span> <span class="nav-text">记录并保存分析数据</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%9F%A5%E7%9C%8B%E4%BF%9D%E5%AD%98%E7%9A%84%E5%88%86%E6%9E%90%E6%95%B0%E6%8D%AE"><span class="nav-number">2.1.3.2.</span> <span class="nav-text">查看保存的分析数据</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A7%BF%E5%8A%BF%E4%BA%8C"><span class="nav-number">2.2.</span> <span class="nav-text">姿势二</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#perf-script"><span class="nav-number">2.2.1.</span> <span class="nav-text">perf script</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A7%BF%E5%8A%BF%E4%B8%89"><span class="nav-number">2.3.</span> <span class="nav-text">姿势三</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%94%B6"><span class="nav-number">3.</span> <span class="nav-text">收</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%82%E8%80%83-%E9%B8%A3%E8%B0%A2"><span class="nav-number">4.</span> <span class="nav-text">参考&amp;鸣谢</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">博</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">138</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">119</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">博</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zhoubofsy.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="123456789101112131415struct object_t &#123;  std::string name;  ......  void encode(ceph::buffer::list &amp;bl) const &#123;    using ceph::encode;    encode(name, bl);  &#125;  void decode(ceph::buff">
+<meta property="og:type" content="article">
+<meta property="og:title" content="encode和decode">
+<meta property="og:url" content="http://zhoubofsy.github.io/2021/12/18/storage/ceph/ceph-encode-decode/index.html">
+<meta property="og:site_name" content="Bolog">
+<meta property="og:description" content="123456789101112131415struct object_t &#123;  std::string name;  ......  void encode(ceph::buffer::list &amp;bl) const &#123;    using ceph::encode;    encode(name, bl);  &#125;  void decode(ceph::buff">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-12-18T07:12:12.000Z">
+<meta property="article:modified_time" content="2024-09-09T07:57:18.584Z">
+<meta property="article:author" content="博">
+<meta property="article:tag" content="ceph">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://zhoubofsy.github.io/2021/12/18/storage/ceph/ceph-encode-decode/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>encode和decode | Bolog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Bolog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2021/12/18/storage/ceph/ceph-encode-decode/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          encode和decode
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-12-18 15:12:12" itemprop="dateCreated datePublished" datetime="2021-12-18T15:12:12+08:00">2021-12-18</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">object_t</span> &#123;</span><br><span class="line">  std::string name;</span><br><span class="line"></span><br><span class="line">  ......</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="type">void</span> <span class="title">encode</span><span class="params">(ceph::buffer::list &amp;bl)</span> <span class="type">const</span> </span>&#123;</span><br><span class="line">    <span class="keyword">using</span> ceph::encode;</span><br><span class="line">    <span class="built_in">encode</span>(name, bl);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="function"><span class="type">void</span> <span class="title">decode</span><span class="params">(ceph::buffer::list::const_iterator &amp;bl)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">using</span> ceph::decode;</span><br><span class="line">    <span class="built_in">decode</span>(name, bl);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="built_in">WRITE_CLASS_ENCODER</span>(<span class="type">object_t</span>)</span><br></pre></td></tr></table></figure>
+<p>*** From: src&#x2F;include&#x2F;object.h ***</p>
+<p>对于Ceph中的每一种需要存储的资源在进行存储前都要进行<code>encode</code>操作，然后再将其写入硬盘。对于读取同样，在从硬盘获取到数据后需要进行<code>decode</code>操作。而每种需要存储资源如何<code>encode</code>和<code>decode</code>当然要由资源自己来决定。所以在资源的<code>class</code>或<code>struct</code>中要实现<code>encode</code>和<code>decode</code>方法。</p>
+<p><code>WRITE_CLASS_ENCODER(object_t)</code>干了些啥呢。。。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// see denc.h for ENCODE_DUMP_PATH discussion and definition.</span></span><br><span class="line"><span class="meta">#<span class="keyword">ifdef</span> ENCODE_DUMP_PATH</span></span><br><span class="line"><span class="meta"># <span class="keyword">define</span> ENCODE_DUMP_PRE()                      \</span></span><br><span class="line"><span class="meta">  unsigned pre_off = bl.length()</span></span><br><span class="line"><span class="meta"># <span class="keyword">define</span> ENCODE_DUMP_POST(cl)                                           \</span></span><br><span class="line"><span class="meta">  do &#123;                                                                  \</span></span><br><span class="line"><span class="meta">    static int i = 0;                                                   \</span></span><br><span class="line"><span class="meta">    i++;                                                                \</span></span><br><span class="line"><span class="meta">    int bits = 0;                                                       \</span></span><br><span class="line"><span class="meta">    for (unsigned t = i; t; bits++)                                     \</span></span><br><span class="line"><span class="meta">      t &amp;= t - 1;                                                       \</span></span><br><span class="line"><span class="meta">    <span class="keyword">if</span> (bits &gt; 2)                                                       \</span></span><br><span class="line"><span class="meta">      break;                                                            \</span></span><br><span class="line"><span class="meta">    char fn[PATH_MAX];                                                  \</span></span><br><span class="line"><span class="meta">    snprintf(fn, sizeof(fn), ENCODE_STRINGIFY(ENCODE_DUMP_PATH) <span class="string">&quot;/%s__%d.%x&quot;</span>, #cl, getpid(), i++); \</span></span><br><span class="line"><span class="meta">    int fd = ::open(fn, O_WRONLY|O_TRUNC|O_CREAT|O_CLOEXEC|O_BINARY, 0644);             \</span></span><br><span class="line"><span class="meta">    <span class="keyword">if</span> (fd &gt;= 0) &#123;                                                      \</span></span><br><span class="line"><span class="meta">      ::ceph::bufferlist sub;                                           \</span></span><br><span class="line"><span class="meta">      sub.substr_of(bl, pre_off, bl.length() - pre_off);                \</span></span><br><span class="line"><span class="meta">      sub.write_fd(fd);                                                 \</span></span><br><span class="line"><span class="meta">      ::close(fd);                                                      \</span></span><br><span class="line"><span class="meta">    &#125;                                                                   \</span></span><br><span class="line"><span class="meta">  &#125; while (0)</span></span><br><span class="line"><span class="meta">#<span class="keyword">else</span></span></span><br><span class="line"><span class="meta"># <span class="keyword">define</span> ENCODE_DUMP_PRE()</span></span><br><span class="line"><span class="meta"># <span class="keyword">define</span> ENCODE_DUMP_POST(cl)</span></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> WRITE_CLASS_ENCODER(cl)                                         \</span></span><br><span class="line"><span class="meta">  inline void encode(const cl&amp; c, ::ceph::buffer::list &amp;bl, uint64_t features=0) &#123; \</span></span><br><span class="line"><span class="meta">    ENCODE_DUMP_PRE(); c.encode(bl); ENCODE_DUMP_POST(cl); &#125;            \</span></span><br><span class="line"><span class="meta">  inline void decode(cl &amp;c, ::ceph::bufferlist::const_iterator &amp;p) &#123; c.decode(p); &#125;</span></span><br></pre></td></tr></table></figure>
+<p>*** From: src&#x2F;include&#x2F;encoding.h ***</p>
+<p>看了上面的代码应该能了解到<code>WRITE_CLASS_ENCODER(object_t)</code>是对<code>encode</code>和<code>decode</code>函数的重载。这是入口，然后再调用其资源自身<code>encode</code>或<code>decode</code>方法。</p>
+<p>那么对于一些基础类型（如：int、string等）是如果<code>encode</code>和<code>decode</code>的呢？</p>
+<h3 id="int类型"><a href="#int类型" class="headerlink" title="int类型"></a>int类型</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// int types</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> WRITE_INTTYPE_ENCODER(type, etype)                              \</span></span><br><span class="line"><span class="meta">  inline void encode(type v, ::ceph::bufferlist&amp; bl, uint64_t features=0) &#123; \</span></span><br><span class="line"><span class="meta">    ceph_##etype e;                                                     \</span></span><br><span class="line"><span class="meta">    e = v;                                                              \</span></span><br><span class="line"><span class="meta">    ::ceph::encode_raw(e, bl);                                          \</span></span><br><span class="line"><span class="meta">  &#125;                                                                     \</span></span><br><span class="line"><span class="meta">  inline void decode(type &amp;v, ::ceph::bufferlist::const_iterator&amp; p) &#123;  \</span></span><br><span class="line"><span class="meta">    ceph_##etype e;                                                     \</span></span><br><span class="line"><span class="meta">    ::ceph::decode_raw(e, p);                                           \</span></span><br><span class="line"><span class="meta">    v = e;                                                              \</span></span><br><span class="line"><span class="meta">  &#125;</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">WRITE_INTTYPE_ENCODER</span>(<span class="type">uint64_t</span>, le64)</span><br><span class="line"><span class="built_in">WRITE_INTTYPE_ENCODER</span>(<span class="type">int64_t</span>, le64)</span><br><span class="line"><span class="built_in">WRITE_INTTYPE_ENCODER</span>(<span class="type">uint32_t</span>, le32)</span><br><span class="line"><span class="built_in">WRITE_INTTYPE_ENCODER</span>(<span class="type">int32_t</span>, le32)</span><br><span class="line"><span class="built_in">WRITE_INTTYPE_ENCODER</span>(<span class="type">uint16_t</span>, le16)</span><br><span class="line"><span class="built_in">WRITE_INTTYPE_ENCODER</span>(<span class="type">int16_t</span>, le16)</span><br></pre></td></tr></table></figure>
+<p>*** From: src&#x2F;include&#x2F;encoding.h ***</p>
+<p>int类型的<code>encode</code>和<code>decode</code>又调用了<code>encode_raw</code>和<code>decode_raw</code>。真是一层套一层啊～（俄罗斯套娃嘛）～</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// base types</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> T&gt;</span></span><br><span class="line"><span class="function"><span class="keyword">inline</span> <span class="type">void</span> <span class="title">encode_raw</span><span class="params">(<span class="type">const</span> T&amp; t, bufferlist&amp; bl)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  bl.<span class="built_in">append</span>((<span class="type">char</span>*)&amp;t, <span class="built_in">sizeof</span>(t));</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> T&gt;</span></span><br><span class="line"><span class="function"><span class="keyword">inline</span> <span class="type">void</span> <span class="title">decode_raw</span><span class="params">(T&amp; t, bufferlist::const_iterator &amp;p)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  p.<span class="built_in">copy</span>(<span class="built_in">sizeof</span>(t), (<span class="type">char</span>*)&amp;t);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> WRITE_RAW_ENCODER(type)                                         \</span></span><br><span class="line"><span class="meta">  inline void encode(const type &amp;v, ::ceph::bufferlist&amp; bl, uint64_t features=0) &#123; ::ceph::encode_raw(v, bl); &#125; \</span></span><br><span class="line"><span class="meta">  inline void decode(type &amp;v, ::ceph::bufferlist::const_iterator&amp; p) &#123; ::ceph::decode_raw(v, p); &#125;</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">WRITE_RAW_ENCODER</span>(__u8)</span><br><span class="line"><span class="meta">#<span class="keyword">ifndef</span> _CHAR_IS_SIGNED</span></span><br><span class="line"><span class="built_in">WRITE_RAW_ENCODER</span>(__s8)</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"><span class="built_in">WRITE_RAW_ENCODER</span>(<span class="type">char</span>)</span><br><span class="line"><span class="built_in">WRITE_RAW_ENCODER</span>(ceph_le64)</span><br><span class="line"><span class="built_in">WRITE_RAW_ENCODER</span>(ceph_le32)</span><br><span class="line"><span class="built_in">WRITE_RAW_ENCODER</span>(ceph_le16)</span><br></pre></td></tr></table></figure>
+<p>*** From: src&#x2F;include&#x2F;encoding.h ***</p>
+<p>base比较简单，就是无论int几个字节，都是从低到高一个字节一个字节的写下去，再一个字节一个字节的读出来。。。</p>
+<h3 id="float类型"><a href="#float类型" class="headerlink" title="float类型"></a>float类型</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> WRITE_FLTTYPE_ENCODER(type, itype, etype)                       \</span></span><br><span class="line"><span class="meta">  static_assert(sizeof(type) == sizeof(itype));                         \</span></span><br><span class="line"><span class="meta">  static_assert(std::numeric_limits<span class="string">&lt;type&gt;</span>::is_iec559,                   \</span></span><br><span class="line"><span class="meta">              <span class="string">&quot;floating-point type not using IEEE754 format&quot;</span>);          \</span></span><br><span class="line"><span class="meta">  inline void encode(type v, ::ceph::bufferlist&amp; bl, uint64_t features=0) &#123; \</span></span><br><span class="line"><span class="meta">    ceph_##etype e;                                                     \</span></span><br><span class="line"><span class="meta">    e = *reinterpret_cast<span class="string">&lt;itype *&gt;</span>(&amp;v);                                 \</span></span><br><span class="line"><span class="meta">    ::ceph::encode_raw(e, bl);                                          \</span></span><br><span class="line"><span class="meta">  &#125;                                                                     \</span></span><br><span class="line"><span class="meta">  inline void decode(type &amp;v, ::ceph::bufferlist::const_iterator&amp; p) &#123;  \</span></span><br><span class="line"><span class="meta">    ceph_##etype e;                                                     \</span></span><br><span class="line"><span class="meta">    ::ceph::decode_raw(e, p);                                           \</span></span><br><span class="line"><span class="meta">    *reinterpret_cast<span class="string">&lt;itype *&gt;</span>(&amp;v) = e;                                 \</span></span><br><span class="line"><span class="meta">  &#125;</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">WRITE_FLTTYPE_ENCODER</span>(<span class="type">float</span>, <span class="type">uint32_t</span>, le32)</span><br><span class="line"><span class="built_in">WRITE_FLTTYPE_ENCODER</span>(<span class="type">double</span>, <span class="type">uint64_t</span>, le64)</span><br></pre></td></tr></table></figure>
+<p>*** From: src&#x2F;include&#x2F;encoding.h ***</p>
+<p>float类型关键在于<code>reinterpret_cast</code>将一个浮点数转换为整数。<a target="_blank" rel="noopener" href="https://zh.cppreference.com/w/cpp/language/reinterpret_cast">更多关于<code>reinterpret_cast</code>的内容</a></p>
+<h3 id="string"><a href="#string" class="headerlink" title="string"></a>string</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// string</span></span><br><span class="line"><span class="function"><span class="keyword">inline</span> <span class="type">void</span> <span class="title">encode</span><span class="params">(std::string_view s, bufferlist&amp; bl, <span class="type">uint64_t</span> features=<span class="number">0</span>)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  __u32 len = s.<span class="built_in">length</span>();</span><br><span class="line">  <span class="built_in">encode</span>(len, bl);</span><br><span class="line">  <span class="keyword">if</span> (len)</span><br><span class="line">    bl.<span class="built_in">append</span>(s.<span class="built_in">data</span>(), len);</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">inline</span> <span class="type">void</span> <span class="title">encode</span><span class="params">(<span class="type">const</span> std::string&amp; s, bufferlist&amp; bl, <span class="type">uint64_t</span> features=<span class="number">0</span>)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="built_in">encode</span>(std::<span class="built_in">string_view</span>(s), bl, features);</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">inline</span> <span class="type">void</span> <span class="title">decode</span><span class="params">(std::string&amp; s, bufferlist::const_iterator&amp; p)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  __u32 len;</span><br><span class="line">  <span class="built_in">decode</span>(len, p);</span><br><span class="line">  s.<span class="built_in">clear</span>();</span><br><span class="line">  p.<span class="built_in">copy</span>(len, s);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">inline</span> <span class="type">void</span> <span class="title">encode_nohead</span><span class="params">(std::string_view s, bufferlist&amp; bl)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  bl.<span class="built_in">append</span>(s.<span class="built_in">data</span>(), s.<span class="built_in">length</span>());</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">inline</span> <span class="type">void</span> <span class="title">encode_nohead</span><span class="params">(<span class="type">const</span> std::string&amp; s, bufferlist&amp; bl)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="built_in">encode_nohead</span>(std::<span class="built_in">string_view</span>(s), bl);</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">inline</span> <span class="type">void</span> <span class="title">decode_nohead</span><span class="params">(<span class="type">int</span> len, std::string&amp; s, bufferlist::const_iterator&amp; p)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  s.<span class="built_in">clear</span>();</span><br><span class="line">  p.<span class="built_in">copy</span>(len, s);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// const char* (encode only, string compatible)</span></span><br><span class="line"><span class="function"><span class="keyword">inline</span> <span class="type">void</span> <span class="title">encode</span><span class="params">(<span class="type">const</span> <span class="type">char</span> *s, bufferlist&amp; bl)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="built_in">encode</span>(std::<span class="built_in">string_view</span>(s, <span class="built_in">strlen</span>(s)), bl);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>*** From: src&#x2F;include&#x2F;encoding.h ***</p>
+<p>string的<code>encode</code>和<code>decode</code>分两种，一种是有“害的”(head)，一种是无“害的”。有“害的”需要先记录string的长度，再记录string的内容；无“害的”直接记录内容，单再<code>decode</code>过程中需要制定长度。总之这个长度总要有个人来记。好鸡肋！</p>
+<hr>
+<p>整个的<code>encode</code>和<code>decode</code>的过程用到了一个<code>bufferlist</code>类型，那么这个<code>bufferlist</code>又是个什么结构呢，详细请见<a href="">ceph中的buffer</a></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/ceph/" rel="tag"># ceph</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/09/28/language/cpp/stl-container/" rel="prev" title="STL容器们">
+      <i class="fa fa-chevron-left"></i> STL容器们
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2022/11/07/blockchain/ethereum/eth-helloworld/" rel="next" title="Hello Ethereum">
+      Hello Ethereum <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#int%E7%B1%BB%E5%9E%8B"><span class="nav-number">1.</span> <span class="nav-text">int类型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#float%E7%B1%BB%E5%9E%8B"><span class="nav-number">2.</span> <span class="nav-text">float类型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#string"><span class="nav-number">3.</span> <span class="nav-text">string</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">博</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">138</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">119</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">博</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

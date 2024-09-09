@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zhoubofsy.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="问：写一个以太坊智能合约helloworld总共分几步？答：三步，第一步创建以太坊服务环境；第二步撰写、编译、部署helloworld智能合约；第三步运行智能合约 部署Ethereum环境本人使用docker搭建Ethereum环境，拉取ubuntu:20.04镜像。 1docker pull --platform linux&#x2F;amd64 ubuntu:20.04  然后，创建容器并开始安装Eth">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Hello Ethereum">
+<meta property="og:url" content="http://zhoubofsy.github.io/2022/11/07/blockchain/ethereum/eth-helloworld/index.html">
+<meta property="og:site_name" content="Bolog">
+<meta property="og:description" content="问：写一个以太坊智能合约helloworld总共分几步？答：三步，第一步创建以太坊服务环境；第二步撰写、编译、部署helloworld智能合约；第三步运行智能合约 部署Ethereum环境本人使用docker搭建Ethereum环境，拉取ubuntu:20.04镜像。 1docker pull --platform linux&#x2F;amd64 ubuntu:20.04  然后，创建容器并开始安装Eth">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://zhoubofsy.github.io/images/blockchain/solidity_remix_compile.jpg">
+<meta property="og:image" content="http://zhoubofsy.github.io/images/blockchain/solidity_remix_deploy_setting_1.jpg">
+<meta property="og:image" content="http://zhoubofsy.github.io/images/blockchain/solidity_remix_deploy_setting_2.jpg">
+<meta property="og:image" content="http://zhoubofsy.github.io/images/blockchain/solidity_remix_deploy.jpg">
+<meta property="og:image" content="http://zhoubofsy.github.io/images/blockchain/solidity_remix_deploy_log.jpg">
+<meta property="article:published_time" content="2022-11-07T08:00:21.000Z">
+<meta property="article:modified_time" content="2024-09-09T07:57:18.597Z">
+<meta property="article:author" content="博">
+<meta property="article:tag" content="ethereum">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://zhoubofsy.github.io/images/blockchain/solidity_remix_compile.jpg">
+
+<link rel="canonical" href="http://zhoubofsy.github.io/2022/11/07/blockchain/ethereum/eth-helloworld/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Hello Ethereum | Bolog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Bolog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2022/11/07/blockchain/ethereum/eth-helloworld/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Hello Ethereum
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-11-07 16:00:21" itemprop="dateCreated datePublished" datetime="2022-11-07T16:00:21+08:00">2022-11-07</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/blockchain/" itemprop="url" rel="index"><span itemprop="name">blockchain</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>问：写一个以太坊智能合约helloworld总共分几步？<br>答：三步，第一步创建以太坊服务环境；第二步撰写、编译、部署helloworld智能合约；第三步运行智能合约</p>
+<h1 id="部署Ethereum环境"><a href="#部署Ethereum环境" class="headerlink" title="部署Ethereum环境"></a>部署Ethereum环境</h1><p>本人使用docker搭建Ethereum环境，拉取<code>ubuntu:20.04</code>镜像。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker pull --platform linux/amd64 ubuntu:20.04</span><br></pre></td></tr></table></figure>
+
+<p>然后，创建容器并开始安装Ethereum</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">docker run -it --name eth_server --net host ubuntu:20.04 /bin/bash</span><br><span class="line">docker run -it --net bridge -p 8545:8545 -p 8551:8551 --name eth_server ubuntu:20.04 /bin/bash</span><br></pre></td></tr></table></figure>
+
+<h2 id="安装Ethereum"><a href="#安装Ethereum" class="headerlink" title="安装Ethereum"></a>安装Ethereum</h2><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">apt update -y</span></span><br><span class="line">...</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">apt install -y software-properties-common</span></span><br><span class="line">...</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">add-apt-repository -y ppa:ethereum/ethereum</span></span><br><span class="line">...</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">apt update -y</span></span><br><span class="line">...</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">apt install -y ethereum</span></span><br></pre></td></tr></table></figure>
+
+<p>安装成功后，确认一下eth版本。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">geth version</span></span><br><span class="line">Geth</span><br><span class="line">Version: 1.10.26-stable</span><br><span class="line">Git Commit: e5eb32acee19cc9fca6a03b10283b7484246b15a</span><br><span class="line">Architecture: amd64</span><br><span class="line">Go Version: go1.18.5</span><br><span class="line">Operating System: linux</span><br><span class="line">GOPATH=</span><br><span class="line">GOROOT=go</span><br></pre></td></tr></table></figure>
+
+<h2 id="初始化"><a href="#初始化" class="headerlink" title="初始化"></a>初始化</h2><h3 id="创建配置文件"><a href="#创建配置文件" class="headerlink" title="创建配置文件"></a>创建配置文件</h3><p>创建一个<code>genesis.json</code>的文件，填充如下内容。</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;Config&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;chainId&quot;</span><span class="punctuation">:</span> <span class="number">110</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;homesteadBlock&quot;</span><span class="punctuation">:</span> <span class="number">0</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;byzantiumBlock&quot;</span><span class="punctuation">:</span> <span class="number">0</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;constantinopleBlock&quot;</span><span class="punctuation">:</span> <span class="number">0</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;eip150Block&quot;</span><span class="punctuation">:</span> <span class="number">0</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;eip155Block&quot;</span><span class="punctuation">:</span> <span class="number">0</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;eip158Block&quot;</span><span class="punctuation">:</span> <span class="number">0</span></span><br><span class="line">    <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;difficulty&quot;</span><span class="punctuation">:</span> <span class="string">&quot;0&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;gasLimit&quot;</span><span class="punctuation">:</span> <span class="string">&quot;2100000&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;alloc&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span><span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="初始化Ethereum数据"><a href="#初始化Ethereum数据" class="headerlink" title="初始化Ethereum数据"></a>初始化Ethereum数据</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">geth --datadir ./eth-data --allow-insecure-unlock --http --http.addr 172.17.0.2 --http.api <span class="string">&quot;admin,debug,web3,eth,txpool,personal,ethash,miner,net&quot;</span> --http.corsdomain <span class="string">&quot;*&quot;</span> --dev init genesis.json</span></span><br><span class="line">INFO [11-07|16:04:14.139] Maximum peer count                       ETH=50 LES=0 total=50</span><br><span class="line">INFO [11-07|16:04:14.151] Smartcard socket not found, disabling    err=&quot;stat /run/pcscd/pcscd.comm: no such file or directory&quot;</span><br><span class="line">INFO [11-07|16:04:14.179] Set global gas cap                       cap=50,000,000</span><br><span class="line">INFO [11-07|16:04:14.190] Allocated cache and file handles         database=/root/eth-data/geth/chaindata cache=16.00MiB handles=16</span><br><span class="line">INFO [11-07|16:04:14.224] Opened ancient database                  database=/root/eth-data/geth/chaindata/ancient/chain readonly=false</span><br><span class="line">INFO [11-07|16:04:14.226] Writing custom genesis block</span><br><span class="line">INFO [11-07|16:04:14.230] Persisted trie from memory database      nodes=0 size=0.00B time=&quot;347µs&quot; gcnodes=0 gcsize=0.00B gctime=0s livenodes=1 livesize=0.00B</span><br><span class="line">INFO [11-07|16:04:14.238] Successfully wrote genesis state         database=chaindata                     hash=a697c6..9bf39b</span><br><span class="line">INFO [11-07|16:04:14.238] Allocated cache and file handles         database=/root/eth-data/geth/lightchaindata cache=16.00MiB handles=16</span><br><span class="line">INFO [11-07|16:04:14.259] Opened ancient database                  database=/root/eth-data/geth/lightchaindata/ancient/chain readonly=false</span><br><span class="line">INFO [11-07|16:04:14.259] Writing custom genesis block</span><br><span class="line">INFO [11-07|16:04:14.261] Persisted trie from memory database      nodes=0 size=0.00B time=&quot;21.917µs&quot; gcnodes=0 gcsize=0.00B gctime=0s livenodes=1 livesize=0.00B</span><br><span class="line">INFO [11-07|16:04:14.262] Successfully wrote genesis state         database=lightchaindata                     hash=a697c6..9bf39b</span><br></pre></td></tr></table></figure>
+
+<h2 id="启动节点"><a href="#启动节点" class="headerlink" title="启动节点"></a>启动节点</h2><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">geth --datadir ./eth-data --networkid 110 --allow-insecure-unlock --http --http.addr 172.17.0.2 --http.api <span class="string">&quot;admin,debug,web3,eth,txpool,personal,ethash,miner,net&quot;</span> --http.corsdomain <span class="string">&quot;*&quot;</span> --dev</span></span><br><span class="line">INFO [11-07|16:14:23.231] Starting Geth in ephemeral dev mode...</span><br><span class="line">WARN [11-07|16:14:23.234] You are running Geth in --dev mode. Please note the following:</span><br><span class="line"></span><br><span class="line">  1. This mode is only intended for fast, iterative development without assumptions on</span><br><span class="line">     security or persistence.</span><br><span class="line">  2. The database is created in memory unless specified otherwise. Therefore, shutting down</span><br><span class="line">     your computer or losing power will wipe your entire block data and chain state for</span><br><span class="line">     your dev environment.</span><br><span class="line">  3. A random, pre-allocated developer account will be available and unlocked as</span><br><span class="line">     eth.coinbase, which can be used for testing. The random dev account is temporary,</span><br><span class="line">     stored on a ramdisk, and will be lost if your machine is restarted.</span><br><span class="line">  4. Mining is enabled by default. However, the client will only seal blocks if transactions</span><br><span class="line">     are pending in the mempool. The miner&#x27;s minimum accepted gas price is 1.</span><br><span class="line">  5. Networking is disabled; there is no listen-address, the maximum number of peers is set</span><br><span class="line">     to 0, and discovery is disabled.</span><br><span class="line">INFO [11-07|16:14:23.251] Maximum peer count                       ETH=50 LES=0 total=50</span><br><span class="line">INFO [11-07|16:14:23.261] Smartcard socket not found, disabling    err=&quot;stat /run/pcscd/pcscd.comm: no such file or directory&quot;</span><br><span class="line">INFO [11-07|16:14:23.291] Set global gas cap                       cap=50,000,000</span><br><span class="line">INFO [11-07|16:14:23.649] Using developer account                  address=0xA9CB6DB62D6673ae5CD79D0d29796Dd9DF1d1A5e</span><br><span class="line">INFO [11-07|16:14:23.652] Allocated cache and file handles         database=/root/eth-data/geth/chaindata cache=512.00MiB handles=524,288 readonly=true</span><br><span class="line">INFO [11-07|16:14:23.675] Opened ancient database                  database=/root/eth-data/geth/chaindata/ancient/chain readonly=true</span><br><span class="line">INFO [11-07|16:14:23.691] Allocated trie memory caches             clean=154.00MiB dirty=256.00MiB</span><br><span class="line">INFO [11-07|16:14:23.691] Allocated cache and file handles         database=/root/eth-data/geth/chaindata cache=512.00MiB handles=524,288</span><br><span class="line">INFO [11-07|16:14:23.756] Opened ancient database                  database=/root/eth-data/geth/chaindata/ancient/chain readonly=false</span><br><span class="line">INFO [11-07|16:14:23.763]</span><br><span class="line">INFO [11-07|16:14:23.764] ---------------------------------------------------------------------------------------------------------------------------------------------------------</span><br><span class="line">INFO [11-07|16:14:23.764] Chain ID:  110 (unknown)</span><br><span class="line">INFO [11-07|16:14:23.764] Consensus: unknown</span><br><span class="line">INFO [11-07|16:14:23.764]</span><br><span class="line">INFO [11-07|16:14:23.765] Pre-Merge hard forks:</span><br><span class="line">INFO [11-07|16:14:23.765]  - Homestead:                   0        (https://github.com/ethereum/execution-specs/blob/master/network-upgrades/mainnet-upgrades/homestead.md)</span><br><span class="line">INFO [11-07|16:14:23.765]  - Tangerine Whistle (EIP 150): 0        (https://github.com/ethereum/execution-specs/blob/master/network-upgrades/mainnet-upgrades/tangerine-whistle.md)</span><br><span class="line">INFO [11-07|16:14:23.765]  - Spurious Dragon/1 (EIP 155): 0        (https://github.com/ethereum/execution-specs/blob/master/network-upgrades/mainnet-upgrades/spurious-dragon.md)</span><br><span class="line">INFO [11-07|16:14:23.765]  - Spurious Dragon/2 (EIP 158): 0        (https://github.com/ethereum/execution-specs/blob/master/network-upgrades/mainnet-upgrades/spurious-dragon.md)</span><br><span class="line">INFO [11-07|16:14:23.765]  - Byzantium:                   &lt;nil&gt; (https://github.com/ethereum/execution-specs/blob/master/network-upgrades/mainnet-upgrades/byzantium.md)</span><br><span class="line">INFO [11-07|16:14:23.765]  - Constantinople:              &lt;nil&gt; (https://github.com/ethereum/execution-specs/blob/master/network-upgrades/mainnet-upgrades/constantinople.md)</span><br><span class="line">INFO [11-07|16:14:23.765]  - Petersburg:                  &lt;nil&gt; (https://github.com/ethereum/execution-specs/blob/master/network-upgrades/mainnet-upgrades/petersburg.md)</span><br><span class="line">INFO [11-07|16:14:23.766]  - Istanbul:                    &lt;nil&gt; (https://github.com/ethereum/execution-specs/blob/master/network-upgrades/mainnet-upgrades/istanbul.md)</span><br><span class="line">INFO [11-07|16:14:23.766]  - Berlin:                      &lt;nil&gt; (https://github.com/ethereum/execution-specs/blob/master/network-upgrades/mainnet-upgrades/berlin.md)</span><br><span class="line">INFO [11-07|16:14:23.766]  - London:                      &lt;nil&gt; (https://github.com/ethereum/execution-specs/blob/master/network-upgrades/mainnet-upgrades/london.md)</span><br><span class="line">INFO [11-07|16:14:23.766]</span><br><span class="line">INFO [11-07|16:14:23.766] The Merge is not yet available for this network!</span><br><span class="line">INFO [11-07|16:14:23.766]  - Hard-fork specification: https://github.com/ethereum/execution-specs/blob/master/network-upgrades/mainnet-upgrades/paris.md</span><br><span class="line">INFO [11-07|16:14:23.766] ---------------------------------------------------------------------------------------------------------------------------------------------------------</span><br><span class="line">INFO [11-07|16:14:23.766]</span><br><span class="line">INFO [11-07|16:14:23.768] Disk storage enabled for ethash caches   dir=/root/eth-data/geth/ethash count=3</span><br><span class="line">INFO [11-07|16:14:23.768] Disk storage enabled for ethash DAGs     dir=/root/.ethash              count=2</span><br><span class="line">INFO [11-07|16:14:23.769] Initialising Ethereum protocol           network=1337 dbversion=8</span><br><span class="line">INFO [11-07|16:14:23.779] Loaded most recent local header          number=0 hash=a697c6..9bf39b td=0 age=53y7mo1w</span><br><span class="line">INFO [11-07|16:14:23.780] Loaded most recent local full block      number=0 hash=a697c6..9bf39b td=0 age=53y7mo1w</span><br><span class="line">INFO [11-07|16:14:23.780] Loaded most recent local fast block      number=0 hash=a697c6..9bf39b td=0 age=53y7mo1w</span><br><span class="line">INFO [11-07|16:14:23.786] Loaded local transaction journal         transactions=0 dropped=0</span><br><span class="line">INFO [11-07|16:14:23.786] Regenerated local transaction journal    transactions=0 accounts=0</span><br><span class="line">INFO [11-07|16:14:23.791] Gasprice oracle is ignoring threshold set threshold=2</span><br><span class="line">WARN [11-07|16:14:23.798] Engine API enabled                       protocol=eth</span><br><span class="line">WARN [11-07|16:14:23.798] Engine API started but chain not configured for merge yet</span><br><span class="line">INFO [11-07|16:14:23.802] Starting peer-to-peer node               instance=Geth/v1.10.26-stable-e5eb32ac/linux-amd64/go1.18.5</span><br><span class="line">WARN [11-07|16:14:23.802] P2P server will be useless, neither dialing nor listening</span><br><span class="line">INFO [11-07|16:14:23.843] New local node record                    seq=1,667,808,816,313 id=321fce2047223769 ip=127.0.0.1 udp=0 tcp=0</span><br><span class="line">INFO [11-07|16:14:23.844] Started P2P networking                   self=enode://2d0246c1dd51623d6d8a8581095c033542366037b1e20ff815ad045af396de50df60f4aa9556148c2f4a89673bad5cab5c2ab22f3075d5bacba1b2fbebaf72e5@127.0.0.1:0</span><br><span class="line">INFO [11-07|16:14:23.848] IPC endpoint opened                      url=/root/eth-data/geth.ipc</span><br><span class="line">INFO [11-07|16:14:23.852] Loaded JWT secret file                   path=/root/eth-data/geth/jwtsecret crc32=0xef39c4cb</span><br><span class="line">INFO [11-07|16:14:23.856] HTTP server started                      endpoint=172.17.0.2:8545 auth=false prefix= cors= vhosts=localhost</span><br><span class="line">INFO [11-07|16:14:23.862] WebSocket enabled                        url=ws://127.0.0.1:8551</span><br><span class="line">INFO [11-07|16:14:23.862] HTTP server started                      endpoint=127.0.0.1:8551    auth=true  prefix= cors=localhost vhosts=localhost</span><br><span class="line">INFO [11-07|16:14:23.868] Transaction pool price threshold updated price=0</span><br><span class="line">INFO [11-07|16:14:23.868] Updated mining threads                   threads=0</span><br><span class="line">INFO [11-07|16:14:23.868] Transaction pool price threshold updated price=1</span><br><span class="line">INFO [11-07|16:14:23.868] Etherbase automatically configured       address=0xA9CB6DB62D6673ae5CD79D0d29796Dd9DF1d1A5e</span><br><span class="line">INFO [11-07|16:14:23.875] Commit new sealing work                  number=1 sealhash=6ca53b..19dc17 uncles=0 txs=0 gas=0 fees=0 elapsed=6.285ms</span><br><span class="line">INFO [11-07|16:14:23.877] Commit new sealing work                  number=1 sealhash=6ca53b..19dc17 uncles=0 txs=0 gas=0 fees=0 elapsed=8.056ms</span><br></pre></td></tr></table></figure>
+
+<h3 id="networkid"><a href="#networkid" class="headerlink" title="networkid"></a>networkid</h3><p><code>--networkid</code>参数需要与<code>genesis.json</code>配置文件中的<code>chainId</code>值一致。</p>
+<h3 id="http-api"><a href="#http-api" class="headerlink" title="http.api"></a>http.api</h3><p>若<code>--http.api</code>设置错误会出现如下错误</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ERROR[11-07|16:13:36.346] Unavailable modules in HTTP API list     unavailable=[db] available=&quot;[admin debug web3 eth txpool personal ethash miner net]&quot;</span><br></pre></td></tr></table></figure>
+<p>需要按照<code>available</code>中规定的内容进行配置<code>--http.api</code>参数。</p>
+<h2 id="attach交互"><a href="#attach交互" class="headerlink" title="attach交互"></a>attach交互</h2><p>接下来需要attach到以太坊节点，在geth节点启动过程中有这样一条日志</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">INFO [11-07|16:14:23.848] IPC endpoint opened                      url=/root/eth-data/geth.ipc</span><br></pre></td></tr></table></figure>
+<p>没错，你猜对了，就是要用这个endpoint进行attach</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">geth attach ipc:/root/eth-data/geth.ipc</span></span><br><span class="line">Welcome to the Geth JavaScript console!</span><br><span class="line"></span><br><span class="line">instance: Geth/v1.10.26-stable-e5eb32ac/linux-amd64/go1.18.5</span><br><span class="line">coinbase: 0xa9cb6db62d6673ae5cd79d0d29796dd9df1d1a5e</span><br><span class="line">at block: 0 (Thu Jan 01 1970 08:00:00 GMT+0800 (CST))</span><br><span class="line"> datadir: /root/eth-data</span><br><span class="line"> modules: admin:1.0 debug:1.0 engine:1.0 eth:1.0 ethash:1.0 miner:1.0 net:1.0 personal:1.0 rpc:1.0 txpool:1.0 web3:1.0</span><br><span class="line"></span><br><span class="line">To exit, press ctrl-d or type exit</span><br><span class="line"><span class="meta prompt_">&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>接下来的<code>创建用户</code>、<code>挖矿</code>等操作都需要在attach状态下进行。</p>
+<h2 id="创建用户"><a href="#创建用户" class="headerlink" title="创建用户"></a>创建用户</h2><p>使用<code>personal.newAccout</code>创建用户，然后可以使用<code>eth.accounts</code>查看用户列表。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">eth.accounts</span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">[<span class="string">&quot;0xa9cb6db62d6673ae5cd79d0d29796dd9df1d1a5e&quot;</span>]</span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">personal.newAccount()</span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">Passphrase:</span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">Repeat passphrase:</span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash"><span class="string">&quot;0x00e70f2bd5a644cdf4432f886bf25473cbe620ac&quot;</span></span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">eth.accounts</span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">[<span class="string">&quot;0xa9cb6db62d6673ae5cd79d0d29796dd9df1d1a5e&quot;</span>, <span class="string">&quot;0x00e70f2bd5a644cdf4432f886bf25473cbe620ac&quot;</span>]</span></span><br></pre></td></tr></table></figure>
+
+<p>若不解锁用户，部署会提示错误<code>creation of HelloWorld errored: authentication needed: password or unlock</code>。解锁用户</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">personal.unlockAccount(eth.accounts[1])</span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">Unlock account 0x00e70f2bd5a644cdf4432f886bf25473cbe620ac</span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">Passphrase:</span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash"><span class="literal">true</span></span></span><br></pre></td></tr></table></figure>
+
+<h2 id="挖矿"><a href="#挖矿" class="headerlink" title="挖矿"></a>挖矿</h2><p>使用<code>miner.start()</code>开始挖矿；使用<code>miner.stop()</code>停止挖矿。</p>
+<p>开始挖矿后，当出现如下日志信息时，说明挖到了。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">INFO [11-07|17:59:54.021] Successfully sealed new block            number=1 sealhash=84eaaa..f4d2c5 hash=925c9a..d8cb75 elapsed=1h30m51.894s</span><br><span class="line">INFO [11-07|17:59:54.022] 🔨 mined potential block                  number=1 hash=925c9a..d8cb75</span><br><span class="line">INFO [11-07|17:59:54.026] Commit new sealing work                  number=2 sealhash=865003..0e32da uncles=0 txs=0 gas=0 fees=0 elapsed=1.991ms</span><br><span class="line">INFO [11-07|17:59:54.027] Commit new sealing work                  number=2 sealhash=865003..0e32da uncles=0 txs=0 gas=0 fees=0 elapsed=3.070ms</span><br><span class="line">INFO [11-07|17:59:54.428] Generating DAG in progress               epoch=1 percentage=0  elapsed=3.563s</span><br><span class="line">INFO [11-07|17:59:56.581] Successfully sealed new block            number=2 sealhash=865003..0e32da hash=f1224d..9dc4b8 elapsed=2.554s</span><br><span class="line">INFO [11-07|17:59:56.582] 🔨 mined potential block                  number=2 hash=f1224d..9dc4b8</span><br><span class="line">INFO [11-07|17:59:56.584] Commit new sealing work                  number=3 sealhash=8de6d6..c8886e uncles=0 txs=0 gas=0 fees=0 elapsed=&quot;906.417µs&quot;</span><br><span class="line">INFO [11-07|17:59:56.585] Commit new sealing work                  number=3 sealhash=8de6d6..c8886e uncles=0 txs=0 gas=0 fees=0 elapsed=2.271ms</span><br><span class="line">INFO [11-07|17:59:57.730] Successfully sealed new block            number=3 sealhash=8de6d6..c8886e hash=42a018..4e7ef3 elapsed=1.146s</span><br><span class="line">INFO [11-07|17:59:57.731] 🔨 mined potential block                  number=3 hash=42a018..4e7ef3</span><br><span class="line">INFO [11-07|17:59:57.733] Commit new sealing work                  number=4 sealhash=26af07..609e57 uncles=0 txs=0 gas=0 fees=0 elapsed=1.165ms</span><br></pre></td></tr></table></figure>
+
+<p>此时使用<code>eth.blockNumber</code>可以查看到当前区块数量，使用<code>eth.getBalance(eth.accounts[0])</code>查看默认用户余额，同理使用<code>eth.getBalance(eth.accounts[1])</code>查看我们创建的用户的余额。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">eth.getBalance(eth.accounts[0])</span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">25000000000000000000</span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">eth.getBalance(eth.accounts[1])</span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">0</span></span><br></pre></td></tr></table></figure>
+
+<p>挖到的奖励都进了默认账户了，我们新建的账户里木有哦。来给我转账吧，嘿嘿嘿….</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">eth.sendTransaction(&#123;from:eth.accounts[0],to:eth.accounts[1],value:web3.toWei(10,<span class="string">&#x27;ether&#x27;</span>)&#125;)</span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash"><span class="string">&quot;0x244da771baf2bd65e5e040c33ee3047b57a2492b85d271564bc90ccd7cb4fa46&quot;</span></span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">eth.getBalance(eth.accounts[1])</span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">5000000000000000000</span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">&gt; eth.getBalance(eth.accounts[0])</span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">1.535e+21</span></span><br></pre></td></tr></table></figure>
+
+<p>哇哦，又挖到矿了。</p>
+<h1 id="智能合约"><a href="#智能合约" class="headerlink" title="智能合约"></a>智能合约</h1><p>环境搭建好了，现在开始编写智能合约。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">// compiler version must be greater than or equal to 0.8.13 and less than 0.9.0</span><br><span class="line">// SPDX-License-Identifier: MIT</span><br><span class="line">pragma solidity 0.8.13;</span><br><span class="line">contract HelloWorld &#123;</span><br><span class="line">    function sayHelloWorld() public returns (string memory) &#123;</span><br><span class="line">        return &quot;Hello World&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="Remix"><a href="#Remix" class="headerlink" title="Remix"></a>Remix</h2><p>在这里获<a target="_blank" rel="noopener" href="https://remix-project.org/">Remix</a></p>
+<h3 id="编译"><a href="#编译" class="headerlink" title="编译"></a>编译</h3><p><img src="/images/blockchain/solidity_remix_compile.jpg" alt="solidity_remix_compile"></p>
+<h3 id="部署"><a href="#部署" class="headerlink" title="部署"></a>部署</h3><p>点击部署，然后选择外部http provider，并配置我们搭建好的ethereum服务。</p>
+<p><img src="/images/blockchain/solidity_remix_deploy_setting_1.jpg" alt="solidity_remix_deploy_setting_1.jpg"></p>
+<p><img src="/images/blockchain/solidity_remix_deploy_setting_2.jpg" alt="solidity_remix_deploy_setting_2.jpg"></p>
+<p>接下中，选择我们创建好的账户，然后进行部署。</p>
+<p><img src="/images/blockchain/solidity_remix_deploy.jpg" alt="solidity_remix_deploy.jpg"></p>
+<p><img src="/images/blockchain/solidity_remix_deploy_log.jpg" alt="solidity_remix_deploy_log.jpg"></p>
+<h2 id="执行智能合约"><a href="#执行智能合约" class="headerlink" title="执行智能合约"></a>执行智能合约</h2><p>执行智能合约可以选择在Remix中执行，也可选择attach到eth_server控制台执行。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">abi =[&#123;<span class="string">&quot;inputs&quot;</span>:[],<span class="string">&quot;name&quot;</span>:<span class="string">&quot;sayHelloWorld&quot;</span>,<span class="string">&quot;outputs&quot;</span>:[&#123;<span class="string">&quot;internalType&quot;</span>:<span class="string">&quot;string&quot;</span>,<span class="string">&quot;name&quot;</span>:<span class="string">&quot;&quot;</span>,<span class="string">&quot;type&quot;</span>:<span class="string">&quot;string&quot;</span>&#125;],<span class="string">&quot;stateMutability&quot;</span>:<span class="string">&quot;nonpayable&quot;</span>,<span class="string">&quot;type&quot;</span>:<span class="string">&quot;function&quot;</span>&#125;]</span></span><br><span class="line">[&#123;</span><br><span class="line">    inputs: [],</span><br><span class="line">    name: &quot;sayHelloWorld&quot;,</span><br><span class="line">    outputs: [&#123;</span><br><span class="line">        internalType: &quot;string&quot;,</span><br><span class="line">        name: &quot;&quot;,</span><br><span class="line">        type: &quot;string&quot;</span><br><span class="line">    &#125;],</span><br><span class="line">    stateMutability: &quot;nonpayable&quot;,</span><br><span class="line">    type: &quot;function&quot;</span><br><span class="line">&#125;]</span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">hello=eth.contract(abi).at(<span class="string">&#x27;0xCB1B01B40CD752F5d42f5b8dCeE4BE2A637CaAf2&#x27;</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">  abi: [&#123;</span><br><span class="line">      inputs: [],</span><br><span class="line">      name: &quot;sayHelloWorld&quot;,</span><br><span class="line">      outputs: [&#123;...&#125;],</span><br><span class="line">      stateMutability: &quot;nonpayable&quot;,</span><br><span class="line">      type: &quot;function&quot;</span><br><span class="line">  &#125;],</span><br><span class="line">  address: &quot;0xCB1B01B40CD752F5d42f5b8dCeE4BE2A637CaAf2&quot;,</span><br><span class="line">  transactionHash: null,</span><br><span class="line">  allEvents: function bound(),</span><br><span class="line">  sayHelloWorld: function bound()</span><br><span class="line">&#125;</span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">hello.sayHelloWorld.call()</span></span><br><span class="line">&quot;Hello World&quot;</span><br></pre></td></tr></table></figure>
+
+<h1 id="参加-鸣谢"><a href="#参加-鸣谢" class="headerlink" title="参加&amp;鸣谢"></a>参加&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/6e739550a349">智能合约 hello world</a></li>
+<li><a target="_blank" rel="noopener" href="https://haofly.net/geth/">Geth 搭建私链 private blockchain</a></li>
+<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/weixin_42822207/article/details/120620731">【geth】Go语言调用智能合约 | 一起来学区块链</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/ethereum/" rel="tag"># ethereum</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/12/18/storage/ceph/ceph-encode-decode/" rel="prev" title="encode和decode">
+      <i class="fa fa-chevron-left"></i> encode和decode
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2023/02/16/storage/linux-drbd-usage/" rel="next" title="DRBD">
+      DRBD <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%83%A8%E7%BD%B2Ethereum%E7%8E%AF%E5%A2%83"><span class="nav-number">1.</span> <span class="nav-text">部署Ethereum环境</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%89%E8%A3%85Ethereum"><span class="nav-number">1.1.</span> <span class="nav-text">安装Ethereum</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="nav-number">1.2.</span> <span class="nav-text">初始化</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%9B%E5%BB%BA%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6"><span class="nav-number">1.2.1.</span> <span class="nav-text">创建配置文件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%9D%E5%A7%8B%E5%8C%96Ethereum%E6%95%B0%E6%8D%AE"><span class="nav-number">1.2.2.</span> <span class="nav-text">初始化Ethereum数据</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%90%AF%E5%8A%A8%E8%8A%82%E7%82%B9"><span class="nav-number">1.3.</span> <span class="nav-text">启动节点</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#networkid"><span class="nav-number">1.3.1.</span> <span class="nav-text">networkid</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#http-api"><span class="nav-number">1.3.2.</span> <span class="nav-text">http.api</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#attach%E4%BA%A4%E4%BA%92"><span class="nav-number">1.4.</span> <span class="nav-text">attach交互</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%9B%E5%BB%BA%E7%94%A8%E6%88%B7"><span class="nav-number">1.5.</span> <span class="nav-text">创建用户</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8C%96%E7%9F%BF"><span class="nav-number">1.6.</span> <span class="nav-text">挖矿</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%99%BA%E8%83%BD%E5%90%88%E7%BA%A6"><span class="nav-number">2.</span> <span class="nav-text">智能合约</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Remix"><span class="nav-number">2.1.</span> <span class="nav-text">Remix</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BC%96%E8%AF%91"><span class="nav-number">2.1.1.</span> <span class="nav-text">编译</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%83%A8%E7%BD%B2"><span class="nav-number">2.1.2.</span> <span class="nav-text">部署</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%89%A7%E8%A1%8C%E6%99%BA%E8%83%BD%E5%90%88%E7%BA%A6"><span class="nav-number">2.2.</span> <span class="nav-text">执行智能合约</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%82%E5%8A%A0-%E9%B8%A3%E8%B0%A2"><span class="nav-number">3.</span> <span class="nav-text">参加&amp;鸣谢</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">博</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">138</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">119</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">博</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

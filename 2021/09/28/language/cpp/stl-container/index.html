@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zhoubofsy.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="c++中stl涉及到的容器类（或struct）有很多，具体都是什么原理呢？ std::array12345678910111213141516171819202122232425262728293031323334353637  template&lt;typename _Tp, std::size_t _Nm&gt;      struct __array_traits      &#123;">
+<meta property="og:type" content="article">
+<meta property="og:title" content="STL容器们">
+<meta property="og:url" content="http://zhoubofsy.github.io/2021/09/28/language/cpp/stl-container/index.html">
+<meta property="og:site_name" content="Bolog">
+<meta property="og:description" content="c++中stl涉及到的容器类（或struct）有很多，具体都是什么原理呢？ std::array12345678910111213141516171819202122232425262728293031323334353637  template&lt;typename _Tp, std::size_t _Nm&gt;      struct __array_traits      &#123;">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-09-28T09:03:31.000Z">
+<meta property="article:modified_time" content="2024-09-09T07:57:18.581Z">
+<meta property="article:author" content="博">
+<meta property="article:tag" content="cpp">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://zhoubofsy.github.io/2021/09/28/language/cpp/stl-container/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>STL容器们 | Bolog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Bolog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2021/09/28/language/cpp/stl-container/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          STL容器们
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-09-28 17:03:31" itemprop="dateCreated datePublished" datetime="2021-09-28T17:03:31+08:00">2021-09-28</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/language/" itemprop="url" rel="index"><span itemprop="name">language</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>c++中stl涉及到的容器类（或struct）有很多，具体都是什么原理呢？</p>
+<h2 id="std-array"><a href="#std-array" class="headerlink" title="std::array"></a>std::array</h2><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line">  <span class="keyword">template</span>&lt;<span class="keyword">typename</span> _Tp, std::<span class="type">size_t</span> _Nm&gt;</span><br><span class="line">      <span class="keyword">struct</span> <span class="title class_">__array_traits</span></span><br><span class="line">      &#123;</span><br><span class="line">        <span class="keyword">typedef</span> _Tp _Type[_Nm];</span><br><span class="line">        <span class="keyword">typedef</span> __is_swappable&lt;_Tp&gt; _Is_swappable;</span><br><span class="line">        <span class="keyword">typedef</span> __is_nothrow_swappable&lt;_Tp&gt; _Is_nothrow_swappable;</span><br><span class="line"></span><br><span class="line">        <span class="type">static</span> <span class="keyword">constexpr</span> _Tp&amp;</span><br><span class="line">        _S_ref(<span class="type">const</span> _Type&amp; <span class="type">__t</span>, std::<span class="type">size_t</span> __n) <span class="keyword">noexcept</span></span><br><span class="line">        &#123; <span class="keyword">return</span> <span class="built_in">const_cast</span>&lt;_Tp&amp;&gt;(<span class="type">__t</span>[__n]); &#125;</span><br><span class="line"></span><br><span class="line">        <span class="type">static</span> <span class="keyword">constexpr</span> _Tp*</span><br><span class="line">        _S_ptr(<span class="type">const</span> _Type&amp; <span class="type">__t</span>) <span class="keyword">noexcept</span></span><br><span class="line">        &#123; <span class="keyword">return</span> <span class="built_in">const_cast</span>&lt;_Tp*&gt;(<span class="type">__t</span>); &#125;</span><br><span class="line">      &#125;;</span><br><span class="line">......</span><br><span class="line">  <span class="keyword">template</span>&lt;<span class="keyword">typename</span> _Tp, std::<span class="type">size_t</span> _Nm&gt;</span><br><span class="line">      <span class="keyword">struct</span> <span class="title class_">array</span></span><br><span class="line">      &#123;</span><br><span class="line">        <span class="keyword">typedef</span> _Tp                                     value_type;</span><br><span class="line">        <span class="keyword">typedef</span> value_type*                             pointer;</span><br><span class="line">        <span class="keyword">typedef</span> <span class="type">const</span> value_type*                       const_pointer;</span><br><span class="line">        <span class="keyword">typedef</span> value_type&amp;                             reference;</span><br><span class="line">        <span class="keyword">typedef</span> <span class="type">const</span> value_type&amp;                       const_reference;</span><br><span class="line">        <span class="keyword">typedef</span> value_type*                             iterator;</span><br><span class="line">        <span class="keyword">typedef</span> <span class="type">const</span> value_type*                       const_iterator;</span><br><span class="line">        <span class="keyword">typedef</span> std::<span class="type">size_t</span>                             size_type;</span><br><span class="line">        <span class="keyword">typedef</span> std::<span class="type">ptrdiff_t</span>                          difference_type;</span><br><span class="line">        <span class="keyword">typedef</span> std::reverse_iterator&lt;iterator&gt;         reverse_iterator;</span><br><span class="line">        <span class="keyword">typedef</span> std::reverse_iterator&lt;const_iterator&gt;   const_reverse_iterator;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Support for zero-sized arrays mandatory.</span></span><br><span class="line">        <span class="keyword">typedef</span> _GLIBCXX_STD_C::__array_traits&lt;_Tp, _Nm&gt; _AT_Type;</span><br><span class="line">        <span class="keyword">typename</span> _AT_Type::_Type                         _M_elems;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// No explicit construct/copy/destroy for aggregate type.</span></span><br><span class="line">......</span><br></pre></td></tr></table></figure>
+
+<p>看这里<code>typename _AT_Type::_Type _M_elems;</code>再看这里<code>typedef _Tp _Type[_Nm];</code>。懂了吗，就是在栈上分配一个大小固定的数组。</p>
+<h2 id="std-vector"><a href="#std-vector" class="headerlink" title="std::vector"></a>std::vector</h2><p><code>vector</code>也是一个数组，只是不是分配在栈上的，而是分配在堆上的。</p>
+<p>看这里有一个<code>_Alloc</code>默认使用的是<code>std::allocator&lt;_Tp&gt;</code>，这就是在堆上分配内存用的。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br></pre></td><td class="code"><pre><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">     *  @brief A standard container which offers fixed time access to</span></span><br><span class="line"><span class="comment">     *  individual elements in any order.</span></span><br><span class="line"><span class="comment">     *  </span></span><br><span class="line"><span class="comment">     *  @ingroup sequences</span></span><br><span class="line"><span class="comment">     *  </span></span><br><span class="line"><span class="comment">     *  @tparam _Tp  Type of element.</span></span><br><span class="line"><span class="comment">     *  @tparam _Alloc  Allocator type, defaults to allocator&lt;_Tp&gt;.</span></span><br><span class="line"><span class="comment">     *  </span></span><br><span class="line"><span class="comment">     *  Meets the requirements of a &lt;a href=&quot;tables.html#65&quot;&gt;container&lt;/a&gt;, a</span></span><br><span class="line"><span class="comment">     *  &lt;a href=&quot;tables.html#66&quot;&gt;reversible container&lt;/a&gt;, and a</span></span><br><span class="line"><span class="comment">     *  &lt;a href=&quot;tables.html#67&quot;&gt;sequence&lt;/a&gt;, including the</span></span><br><span class="line"><span class="comment">     *  &lt;a href=&quot;tables.html#68&quot;&gt;optional sequence requirements&lt;/a&gt; with the</span></span><br><span class="line"><span class="comment">     *  %exception of @c push_front and @c pop_front.</span></span><br><span class="line"><span class="comment">     *  </span></span><br><span class="line"><span class="comment">     *  In some terminology a %vector can be described as a dynamic</span></span><br><span class="line"><span class="comment">     *  C-style array, it offers fast and efficient access to individual</span></span><br><span class="line"><span class="comment">     *  elements in any order and saves the user from worrying about</span></span><br><span class="line"><span class="comment">     *  memory and size allocation.  Subscripting ( @c [] ) access is</span></span><br><span class="line"><span class="comment">     *  also provided as with C-style arrays.</span></span><br><span class="line"><span class="comment">  */</span></span><br><span class="line">  <span class="keyword">template</span>&lt;<span class="keyword">typename</span> _Tp, <span class="keyword">typename</span> _Alloc = std::allocator&lt;_Tp&gt; &gt;</span><br><span class="line">  <span class="keyword">class</span> vector : <span class="keyword">protected</span> _Vector_base&lt;_Tp, _Alloc&gt;</span><br><span class="line">  &#123;</span><br><span class="line"><span class="meta">#<span class="keyword">ifdef</span> _GLIBCXX_CONCEPT_CHECKS</span></span><br><span class="line">    <span class="comment">// Concept requirements.</span></span><br><span class="line">    <span class="keyword">typedef</span> <span class="keyword">typename</span> _Alloc::value_type               _Alloc_value_type;</span><br><span class="line"><span class="meta"># <span class="keyword">if</span> __cplusplus &lt; 201103L</span></span><br><span class="line">    __glibcxx_class_requires(_Tp, _SGIAssignableConcept)</span><br><span class="line"><span class="meta"># <span class="keyword">endif</span></span></span><br><span class="line">    __glibcxx_class_requires2(_Tp, _Alloc_value_type, _SameTypeConcept)</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">if</span> __cplusplus &gt;= 201103L</span></span><br><span class="line">    <span class="built_in">static_assert</span>(is_same&lt;<span class="keyword">typename</span> remove_cv&lt;_Tp&gt;::type, _Tp&gt;::value,</span><br><span class="line">        <span class="string">&quot;std::vector must have a non-const, non-volatile value_type&quot;</span>);</span><br><span class="line"><span class="meta"># <span class="keyword">if</span> __cplusplus &gt; 201703L || defined __STRICT_ANSI__</span></span><br><span class="line">    <span class="built_in">static_assert</span>(is_same&lt;<span class="keyword">typename</span> _Alloc::value_type, _Tp&gt;::value,</span><br><span class="line">        <span class="string">&quot;std::vector must have the same value_type as its allocator&quot;</span>);</span><br><span class="line"><span class="meta"># <span class="keyword">endif</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">typedef</span> _Vector_base&lt;_Tp, _Alloc&gt;                 _Base;</span><br><span class="line">    <span class="keyword">typedef</span> <span class="keyword">typename</span> _Base::_Tp_alloc_type            _Tp_alloc_type;</span><br><span class="line">    <span class="keyword">typedef</span> __gnu_cxx::__alloc_traits&lt;_Tp_alloc_type&gt; _Alloc_traits;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="keyword">typedef</span> _Tp                                       value_type;</span><br><span class="line">        <span class="keyword">typedef</span> <span class="keyword">typename</span> _Base::pointer                   pointer;</span><br><span class="line">        <span class="keyword">typedef</span> <span class="keyword">typename</span> _Alloc_traits::const_pointer     const_pointer;</span><br><span class="line">        <span class="keyword">typedef</span> <span class="keyword">typename</span> _Alloc_traits::reference         reference;</span><br><span class="line">        <span class="keyword">typedef</span> <span class="keyword">typename</span> _Alloc_traits::const_reference   const_reference;</span><br><span class="line">        <span class="keyword">typedef</span> __gnu_cxx::__normal_iterator&lt;pointer, vector&gt; iterator;</span><br><span class="line">        <span class="keyword">typedef</span> __gnu_cxx::__normal_iterator&lt;const_pointer, vector&gt;</span><br><span class="line">        const_iterator;</span><br><span class="line">        <span class="keyword">typedef</span> std::reverse_iterator&lt;const_iterator&gt;     const_reverse_iterator;</span><br><span class="line">        <span class="keyword">typedef</span> std::reverse_iterator&lt;iterator&gt;           reverse_iterator;</span><br><span class="line">        <span class="keyword">typedef</span> <span class="type">size_t</span>                                    size_type;</span><br><span class="line">        <span class="keyword">typedef</span> <span class="type">ptrdiff_t</span>                                 difference_type;</span><br><span class="line">        <span class="keyword">typedef</span> _Alloc                                    allocator_type;</span><br><span class="line">......</span><br></pre></td></tr></table></figure>
+<p>再看这里定义了三个指针，用的是<code>typedef typename _Base::pointer pointer;</code>类型。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">namespace</span> std _GLIBCXX_VISIBILITY(<span class="keyword">default</span>)</span><br><span class="line">&#123;</span><br><span class="line">_GLIBCXX_BEGIN_NAMESPACE_VERSION</span><br><span class="line">_GLIBCXX_BEGIN_NAMESPACE_CONTAINER</span><br><span class="line"></span><br><span class="line">  <span class="comment">/// See bits/stl_deque.h&#x27;s _Deque_base for an explanation.</span></span><br><span class="line">  <span class="keyword">template</span>&lt;<span class="keyword">typename</span> _Tp, <span class="keyword">typename</span> _Alloc&gt;</span><br><span class="line">  <span class="keyword">struct</span> <span class="title class_">_Vector_base</span></span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">typedef</span> <span class="keyword">typename</span> __gnu_cxx::__alloc_traits&lt;_Alloc&gt;::<span class="keyword">template</span></span><br><span class="line">      rebind&lt;_Tp&gt;::other _Tp_alloc_type;</span><br><span class="line">    <span class="keyword">typedef</span> <span class="keyword">typename</span> __gnu_cxx::__alloc_traits&lt;_Tp_alloc_type&gt;::pointer</span><br><span class="line">      pointer;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">_Vector_impl_data</span></span><br><span class="line">    &#123;</span><br><span class="line">      pointer _M_start;</span><br><span class="line">      pointer _M_finish;</span><br><span class="line">      pointer _M_end_of_storage;</span><br><span class="line"></span><br><span class="line">      _Vector_impl_data() _GLIBCXX_NOEXCEPT</span><br><span class="line">      : _M_start(), _M_finish(), _M_end_of_storage()</span><br><span class="line">      &#123; &#125;</span><br><span class="line">......</span><br></pre></td></tr></table></figure>
+<p>指针分别叫：<code>pointer _M_start;</code>、<code>pointer _M_finish;</code>、<code>pointer _M_end_of_storage;</code> 之前不叫这个的，现在都改了。。。无所谓了，含义没变。。。</p>
+<p><code>vector</code>在堆上申请了一块内存，用于存放数组元素。用<code>_M_start</code>表示数组开始的位置，用<code>_M_finish</code>数据结束的位置，用<code>_M_end_of_storage</code> 表示这块内存容量结束的位置。</p>
+<ul>
+<li>当<code>vector</code>容量不足时，需要进行扩容，扩容会引发内存拷贝。</li>
+<li>当向<code>vector</code>插入、删除某些元素时，由于采用连续存储方式，也会引发内存拷贝。</li>
+</ul>
+<h3 id="扩容"><a href="#扩容" class="headerlink" title="扩容"></a>扩容</h3><p>刚刚提到了扩容，如果一个<code>vector</code>容量不足了需要扩容，应该扩多少呢？这个根据<code>reserve()</code>的值来决定。如果你没有设置的话，按你存入的数据量进行扩容。如果你设置了这个值，那么每次扩<code>reserve()</code>个。</p>
+<h2 id="list"><a href="#list" class="headerlink" title="list"></a>list</h2><p>To be countinue…</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/cpp/" rel="tag"># cpp</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/09/27/language/cpp/variable-in-elf/" rel="prev" title="变量及函数在内存中的位置">
+      <i class="fa fa-chevron-left"></i> 变量及函数在内存中的位置
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2021/12/18/storage/ceph/ceph-encode-decode/" rel="next" title="encode和decode">
+      encode和decode <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#std-array"><span class="nav-number">1.</span> <span class="nav-text">std::array</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#std-vector"><span class="nav-number">2.</span> <span class="nav-text">std::vector</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%89%A9%E5%AE%B9"><span class="nav-number">2.1.</span> <span class="nav-text">扩容</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#list"><span class="nav-number">3.</span> <span class="nav-text">list</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">博</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">138</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">119</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">博</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

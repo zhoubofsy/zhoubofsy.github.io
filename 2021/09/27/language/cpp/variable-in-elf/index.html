@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zhoubofsy.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="从一个CPP文件编译成ELF可执行文件过程中会把不同的变量和函数映射到不同的内存区域。这些不同的区域具有不同的访问权限，有的是只读的，有的是读写的，有的是可执行的。让我们举个简单的例子来了解一下。 示例代码 123456789101112131415161718192021222324252627282930313233343536373839404142434445464748495051525">
+<meta property="og:type" content="article">
+<meta property="og:title" content="变量及函数在内存中的位置">
+<meta property="og:url" content="http://zhoubofsy.github.io/2021/09/27/language/cpp/variable-in-elf/index.html">
+<meta property="og:site_name" content="Bolog">
+<meta property="og:description" content="从一个CPP文件编译成ELF可执行文件过程中会把不同的变量和函数映射到不同的内存区域。这些不同的区域具有不同的访问权限，有的是只读的，有的是读写的，有的是可执行的。让我们举个简单的例子来了解一下。 示例代码 123456789101112131415161718192021222324252627282930313233343536373839404142434445464748495051525">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://zhoubofsy.github.io/images/cpp/variable.png">
+<meta property="article:published_time" content="2021-09-27T07:50:26.000Z">
+<meta property="article:modified_time" content="2024-09-09T07:57:18.581Z">
+<meta property="article:author" content="博">
+<meta property="article:tag" content="cpp">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://zhoubofsy.github.io/images/cpp/variable.png">
+
+<link rel="canonical" href="http://zhoubofsy.github.io/2021/09/27/language/cpp/variable-in-elf/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>变量及函数在内存中的位置 | Bolog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Bolog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2021/09/27/language/cpp/variable-in-elf/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          变量及函数在内存中的位置
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-09-27 15:50:26" itemprop="dateCreated datePublished" datetime="2021-09-27T15:50:26+08:00">2021-09-27</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/language/" itemprop="url" rel="index"><span itemprop="name">language</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>从一个CPP文件编译成ELF可执行文件过程中会把不同的变量和函数映射到不同的内存区域。这些不同的区域具有不同的访问权限，有的是只读的，有的是读写的，有的是可执行的。让我们举个简单的例子来了解一下。</p>
+<p>示例代码</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> dst_type,<span class="keyword">typename</span> src_type&gt;</span></span><br><span class="line"><span class="function">dst_type <span class="title">pointer_cast</span><span class="params">(src_type src)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">        <span class="keyword">return</span> *<span class="built_in">static_cast</span>&lt;dst_type*&gt;(<span class="built_in">static_cast</span>&lt;<span class="type">void</span>*&gt;(&amp;src));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> global_uninit_var;</span><br><span class="line"><span class="type">int</span> global_init_var = <span class="number">255</span>;</span><br><span class="line"><span class="type">const</span> <span class="type">int</span> const_global_int = <span class="number">255</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Just a function\n&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">static_func</span><span class="params">()</span> </span>&#123;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">inline</span> <span class="type">void</span> <span class="title">inline_func</span><span class="params">()</span> </span>&#123;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">typedef</span> <span class="title">void</span> <span class="params">(*<span class="type">pfunc_t</span>)</span><span class="params">()</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">typedef</span> <span class="title">int</span> <span class="params">(*<span class="type">main_func_t</span>)</span><span class="params">()</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">typedef</span> <span class="title">void</span> <span class="params">(*<span class="type">static_func_t</span>)</span><span class="params">()</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Simple</span> &#123;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">Show</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;I am Show...\n&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="function"><span class="type">void</span> <span class="title">localshow</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;I am localshow...\n&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="type">static</span> <span class="type">int</span> static_var = <span class="number">255</span>;</span><br><span class="line"></span><br><span class="line">    <span class="type">int</span> local_uninit_var;</span><br><span class="line">    <span class="type">int</span> local_init_var = <span class="number">-1</span>;</span><br><span class="line"></span><br><span class="line">    <span class="type">const</span> <span class="type">int</span> const_local_int = <span class="number">127</span>;</span><br><span class="line"></span><br><span class="line">    <span class="type">int</span>* heap_int = <span class="keyword">new</span> <span class="built_in">int</span>();</span><br><span class="line"></span><br><span class="line">    <span class="type">pfunc_t</span> pf = func;</span><br><span class="line">    <span class="type">main_func_t</span> mf = main;</span><br><span class="line">    <span class="type">static_func_t</span> sf = static_func;</span><br><span class="line">    <span class="type">static_func_t</span> csf = Simple::Show;</span><br><span class="line">    <span class="type">void</span>* cpf = <span class="built_in">pointer_cast</span>&lt;<span class="type">void</span>*&gt;(&amp;Simple::localshow);</span><br><span class="line">    <span class="type">pfunc_t</span> ipf = inline_func;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;global_uninit_var: 0x%x\n&quot;</span>, &amp;global_uninit_var);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;global_init_var: 0x%x\n&quot;</span>, &amp;global_init_var);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;static_var: 0x%x\n&quot;</span>, &amp;static_var);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;const_global_int: 0x%x\n&quot;</span>, &amp;const_global_int);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;local_uninit_var: 0x%x\n&quot;</span>, &amp;local_uninit_var);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;local_init_var: 0x%x\n&quot;</span>, &amp;local_init_var);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;const_local_int: 0x%x\n&quot;</span>, &amp;const_local_int);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;heap_int: 0x%x, 0x%x\n&quot;</span>, &amp;heap_int, heap_int);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;point_func: 0x%x, 0x%x\n&quot;</span>, &amp;pf, pf);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;point_main_func: 0x%x, 0x%x\n&quot;</span>, &amp;mf, mf);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;static_func: 0x%x, 0x%x\n&quot;</span>, &amp;sf, sf);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;class_static_func: 0x%x, 0x%x\n&quot;</span>, &amp;csf, csf);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;class_local_func: 0x%x, 0x%x\n&quot;</span>, &amp;cpf, cpf);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;inline_func: 0x%x, 0x%x\n&quot;</span>, &amp;ipf, ipf);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>由于ELF格式中有很多信息，我们只取<code>readelf --sections</code>相关信息<br>ELF结构如下：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line">[Nr] Name              Type             Address           Offset       Size              EntSize          Flags  Link  Info  Align</span><br><span class="line">[ 0]                   NULL             0000000000000000  00000000       0000000000000000  0000000000000000           0     0     0</span><br><span class="line">[ 1] .interp           PROGBITS         00000000004002a8  000002a8       000000000000001c  0000000000000000   A       0     0     1</span><br><span class="line">[ 2] .note.gnu.bu[...] NOTE             00000000004002c4  000002c4       0000000000000024  0000000000000000   A       0     0     4</span><br><span class="line">[ 3] .note.ABI-tag     NOTE             00000000004002e8  000002e8       0000000000000020  0000000000000000   A       0     0     4</span><br><span class="line">[ 4] .gnu.hash         GNU_HASH         0000000000400308  00000308       000000000000001c  0000000000000000   A       5     0     8</span><br><span class="line">[ 5] .dynsym           DYNSYM           0000000000400328  00000328       0000000000000090  0000000000000018   A       6     1     8</span><br><span class="line">[ 6] .dynstr           STRTAB           00000000004003b8  000003b8       000000000000007d  0000000000000000   A       0     0     1</span><br><span class="line">[ 7] .gnu.version      VERSYM           0000000000400436  00000436       000000000000000c  0000000000000002   A       5     0     2</span><br><span class="line">[ 8] .gnu.version_r    VERNEED          0000000000400448  00000448       0000000000000040  0000000000000000   A       6     2     8</span><br><span class="line">[ 9] .rela.dyn         RELA             0000000000400488  00000488       0000000000000018  0000000000000018   A       5     0     8</span><br><span class="line">[10] .rela.plt         RELA             00000000004004a0  000004a0       0000000000000078  0000000000000018  AI       5    22     8</span><br><span class="line">[11] .init             PROGBITS         0000000000401000  00001000       000000000000001a  0000000000000000  AX       0     0     4</span><br><span class="line">[12] .plt              PROGBITS         0000000000401020  00001020       0000000000000060  0000000000000010  AX       0     0     16</span><br><span class="line">[13] .text             PROGBITS         0000000000401080  00001080       0000000000000392  0000000000000000  AX       0     0     16</span><br><span class="line">[14] .fini             PROGBITS         0000000000401414  00001414       0000000000000009  0000000000000000  AX       0     0     4</span><br><span class="line">[15] .rodata           PROGBITS         0000000000402000  00002000       000000000000019e  0000000000000000   A       0     0     8</span><br><span class="line">[16] .eh_frame_hdr     PROGBITS         00000000004021a0  000021a0       0000000000000064  0000000000000000   A       0     0     4</span><br><span class="line">[17] .eh_frame         PROGBITS         0000000000402208  00002208       00000000000001b8  0000000000000000   A       0     0     8</span><br><span class="line">[18] .init_array       INIT_ARRAY       0000000000403de8  00002de8       0000000000000008  0000000000000008  WA       0     0     8</span><br><span class="line">[19] .fini_array       FINI_ARRAY       0000000000403df0  00002df0       0000000000000008  0000000000000008  WA       0     0     8</span><br><span class="line">[20] .dynamic          DYNAMIC          0000000000403df8  00002df8       0000000000000200  0000000000000010  WA       6     0     8</span><br><span class="line">[21] .got              PROGBITS         0000000000403ff8  00002ff8       0000000000000008  0000000000000008  WA       0     0     8</span><br><span class="line">[22] .got.plt          PROGBITS         0000000000404000  00003000       0000000000000040  0000000000000008  WA       0     0     8</span><br><span class="line">[23] .data             PROGBITS         0000000000404040  00003040       000000000000000c  0000000000000000  WA       0     0     4</span><br><span class="line">[24] .bss              NOBITS           000000000040404c  0000304c       000000000000000c  0000000000000000  WA       0     0     4</span><br><span class="line">[25] .comment          PROGBITS         0000000000000000  0000304c       000000000000005c  0000000000000001  MS       0     0     1</span><br><span class="line">[26] .debug_aranges    PROGBITS         0000000000000000  000030a8       0000000000000070  0000000000000000           0     0     1</span><br><span class="line">[27] .debug_info       PROGBITS         0000000000000000  00003118       000000000000031a  0000000000000000           0     0     1</span><br><span class="line">[28] .debug_abbrev     PROGBITS         0000000000000000  00003432       00000000000001d9  0000000000000000           0     0     1</span><br><span class="line">[29] .debug_line       PROGBITS         0000000000000000  0000360b       0000000000000114  0000000000000000           0     0     1</span><br><span class="line">[30] .debug_str        PROGBITS         0000000000000000  0000371f       0000000000000235  0000000000000001  MS       0     0     1</span><br><span class="line">[31] .debug_ranges     PROGBITS         0000000000000000  00003954       0000000000000060  0000000000000000           0     0     1</span><br><span class="line">[32] .symtab           SYMTAB           0000000000000000  000039b8       0000000000000750  0000000000000018          33    52     8</span><br><span class="line">[33] .strtab           STRTAB           0000000000000000  00004108       0000000000000298  0000000000000000           0     0     1</span><br><span class="line">[34] .shstrtab         STRTAB           0000000000000000  000043a0       0000000000000151  0000000000000000           0     0     1</span><br></pre></td></tr></table></figure>
+
+<p>将上述代码编译运行打印出的结果对应到elf格式中相应的区域如下：</p>
+<p><img src="/images/cpp/variable.png" alt="variable"></p>
+<ul>
+<li>所有代码无聊作何标记全部存储在<code>.text</code>段，换句话说从汇编的角度可以调用任何函数都可以被调用</li>
+<li>全局的<code>const</code>常量存放在<code>.rodata</code>段</li>
+<li>局部的<code>const</code>常量则存储在栈空间内，而常量的右值<code>127</code>则存放在<code>.text</code>段</li>
+<li>已经初始化的全局变量或<code>static</code>变量存放在<code>.data</code>段</li>
+<li>未初始化的全局变量存放在<code>bss</code>段</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/cpp/" rel="tag"># cpp</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/09/23/language/cpp/smart-pointers/" rel="prev" title="C++智能指针">
+      <i class="fa fa-chevron-left"></i> C++智能指针
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2021/09/28/language/cpp/stl-container/" rel="next" title="STL容器们">
+      STL容器们 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">博</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">138</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">119</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">博</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zhoubofsy.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="从k8s 1.2版本开始提供Ingress来实现对外暴露服务；目前k8s有三种暴露方式  LoadBlancer Service NodePort Service Ingress  K8s-LBSLBS是k8s与云平台深度结合的一个组件，当使用LBS暴露服务时，实际上是通过底层云平台申请创建一个负载均衡器来向外暴露服务。目前LBS支持的云平台有GCE、DigitalOcean、Aliyun、私有云">
+<meta property="og:type" content="article">
+<meta property="og:title" content="k8s service expose">
+<meta property="og:url" content="http://zhoubofsy.github.io/2017/03/29/container/k8s/k8s-service-expose/index.html">
+<meta property="og:site_name" content="Bolog">
+<meta property="og:description" content="从k8s 1.2版本开始提供Ingress来实现对外暴露服务；目前k8s有三种暴露方式  LoadBlancer Service NodePort Service Ingress  K8s-LBSLBS是k8s与云平台深度结合的一个组件，当使用LBS暴露服务时，实际上是通过底层云平台申请创建一个负载均衡器来向外暴露服务。目前LBS支持的云平台有GCE、DigitalOcean、Aliyun、私有云">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://zhoubofsy.github.io/images/k8s/k8s_nodeport.png">
+<meta property="article:published_time" content="2017-03-29T03:08:40.000Z">
+<meta property="article:modified_time" content="2024-09-09T07:57:18.595Z">
+<meta property="article:author" content="博">
+<meta property="article:tag" content="k8s">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://zhoubofsy.github.io/images/k8s/k8s_nodeport.png">
+
+<link rel="canonical" href="http://zhoubofsy.github.io/2017/03/29/container/k8s/k8s-service-expose/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>k8s service expose | Bolog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Bolog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/03/29/container/k8s/k8s-service-expose/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          k8s service expose
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2017-03-29 11:08:40" itemprop="dateCreated datePublished" datetime="2017-03-29T11:08:40+08:00">2017-03-29</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/container/" itemprop="url" rel="index"><span itemprop="name">container</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>从<code>k8s 1.2</code>版本开始提供Ingress来实现对外暴露服务；目前k8s有三种暴露方式</p>
+<ul>
+<li>LoadBlancer Service</li>
+<li>NodePort Service</li>
+<li>Ingress</li>
+</ul>
+<h1 id="K8s-LBS"><a href="#K8s-LBS" class="headerlink" title="K8s-LBS"></a>K8s-LBS</h1><p>LBS是k8s与云平台深度结合的一个组件，当使用LBS暴露服务时，实际上是通过底层云平台申请创建一个负载均衡器来向外暴露服务。目前LBS支持的云平台有GCE、DigitalOcean、Aliyun、私有云Openstack等等，由于LBS与云平台深度结合，所以只能在这些平台上使用。</p>
+<h1 id="NodePort"><a href="#NodePort" class="headerlink" title="NodePort"></a>NodePort</h1><p><img src="/images/k8s/k8s_nodeport.png" alt="k8s_nodeport"></p>
+<p>k8s的端口分为：</p>
+<ul>
+<li>Port<br>  service上暴露出来的端口，提供给集群(集群指整个容器集群)内部客户访问的端口。</li>
+<li>NodePort<br>  node上暴露的端口，提供给集群外部客户访问的端口。</li>
+<li>TargetPort<br>  endpoint上暴露的端口，也可以当作Pod上暴露的端口，无论从Port或NodePort上来的数据最终都会经过kube-proxy转发到Pod的TargetPort端口上。</li>
+</ul>
+<p>k8s的IP分为：</p>
+<ul>
+<li>ClusterIP<br>  service上虚拟ip地址，它由kube-proxy使用iptables规则重新定向到本地端口，再均衡到后端的Pod上。</li>
+<li>NodeIP<br>  node节点的物理ip地址，它被kube-proxy使用iptables规则重定向到本地端口。</li>
+<li>ContainerIP&#x2F;PodIP<br>  K8s中以Pod为最小部署单位，一个Pod中共享一个网络资源（无论Pod中有几个容器）。每个Pod启动时，会自动创建一个镜像为gcr.io&#x2F;google_containers&#x2F;pause:0.8.0的容器，容器内部与外部的通信经由此容器代理，所以ContainerIP就是PodIP。</li>
+</ul>
+<h2 id="暴露方法及API"><a href="#暴露方法及API" class="headerlink" title="暴露方法及API"></a>暴露方法及API</h2><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Service</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">svc-1</span></span><br><span class="line">  <span class="attr">labels:</span></span><br><span class="line">    <span class="attr">name:</span> <span class="string">svc-1</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">type:</span> <span class="string">NodePort</span></span><br><span class="line">  <span class="attr">ports:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">port:</span> <span class="number">2222</span></span><br><span class="line">      <span class="attr">targetPort:</span> <span class="number">22</span></span><br><span class="line">      <span class="attr">nodePort:</span> <span class="number">30022</span></span><br><span class="line">  <span class="attr">selector:</span></span><br><span class="line">    <span class="attr">name:</span> <span class="string">rc-test</span></span><br></pre></td></tr></table></figure>
+
+<p><a target="_blank" rel="noopener" href="https://kubernetes.io/docs/api-reference/v1.5/#service-v1">API操作</a></p>
+<h2 id="实现原理"><a href="#实现原理" class="headerlink" title="实现原理"></a>实现原理</h2><p>ip地址及端口的暴露都是通过修改iptables规则来实现的。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">iptables -t nat -L -n</span></span><br><span class="line">...</span><br><span class="line">Chain KUBE-NODEPORTS (1 references)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">KUBE-MARK-MASQ  tcp  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-lonely: */ tcp dpt:30023</span><br><span class="line">KUBE-SVC-E6FDK4HG4F4JSB77  tcp  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-lonely: */ tcp dpt:30023</span><br><span class="line">KUBE-MARK-MASQ  tcp  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-tmp: */ tcp dpt:30099</span><br><span class="line">KUBE-SVC-OOWDNB3NCXKPBPZE  tcp  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-tmp: */ tcp dpt:30099</span><br><span class="line">KUBE-MARK-MASQ  tcp  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-1: */ tcp dpt:30022</span><br><span class="line">KUBE-SVC-D25WXD2YSOVKEUTU  tcp  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-1: */ tcp dpt:30022</span><br><span class="line">...</span><br><span class="line">Chain KUBE-SEP-2LNK4QUGPB2C5PDO (2 references)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">KUBE-MARK-MASQ  all  --  192.168.6.110        0.0.0.0/0            /* default/kubernetes:https */</span><br><span class="line">DNAT       tcp  --  0.0.0.0/0            0.0.0.0/0            /* default/kubernetes:https */ recent: SET name: KUBE-SEP-2LNK4QUGPB2C5PDO side: source mask: 255.255.255.255 tcp to:192.168.6.110:6443</span><br><span class="line"></span><br><span class="line">Chain KUBE-SEP-5GTCHBFJM5RAI7LS (1 references)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">KUBE-MARK-MASQ  all  --  10.254.86.9          0.0.0.0/0            /* default/svc-lonely: */</span><br><span class="line">DNAT       tcp  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-lonely: */ tcp to:10.254.86.9:22</span><br><span class="line"></span><br><span class="line">Chain KUBE-SEP-BCYRFQ26LZTOSSU7 (1 references)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">KUBE-MARK-MASQ  all  --  10.254.86.4          0.0.0.0/0            /* default/svc-1: */</span><br><span class="line">DNAT       tcp  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-1: */ tcp to:10.254.86.4:22</span><br><span class="line"></span><br><span class="line">Chain KUBE-SEP-CLKUH4WMQ3CNBJ7K (1 references)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">KUBE-MARK-MASQ  all  --  10.254.86.2          0.0.0.0/0            /* default/svc-1: */</span><br><span class="line">DNAT       tcp  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-1: */ tcp to:10.254.86.2:22</span><br><span class="line"></span><br><span class="line">Chain KUBE-SEP-D3FORTYMXA7BVSDA (1 references)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">KUBE-MARK-MASQ  all  --  10.254.86.8          0.0.0.0/0            /* default/svc-1: */</span><br><span class="line">DNAT       tcp  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-1: */ tcp to:10.254.86.8:22</span><br><span class="line"></span><br><span class="line">Chain KUBE-SEP-F4EJGNTAH3JOOQC6 (1 references)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">KUBE-MARK-MASQ  all  --  10.254.86.3          0.0.0.0/0            /* default/svc-1: */</span><br><span class="line">DNAT       tcp  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-1: */ tcp to:10.254.86.3:22</span><br><span class="line"></span><br><span class="line">Chain KUBE-SEP-HO23WAVQKIB2R4KD (1 references)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">KUBE-MARK-MASQ  all  --  10.254.86.10         0.0.0.0/0            /* default/svc-tmp: */</span><br><span class="line">DNAT       tcp  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-tmp: */ tcp to:10.254.86.10:99</span><br><span class="line"></span><br><span class="line">Chain KUBE-SERVICES (2 references)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">KUBE-SVC-E6FDK4HG4F4JSB77  tcp  --  0.0.0.0/0            10.254.162.24        /* default/svc-lonely: cluster IP */ tcp dpt:2223</span><br><span class="line">KUBE-SVC-OOWDNB3NCXKPBPZE  tcp  --  0.0.0.0/0            10.254.119.86        /* default/svc-tmp: cluster IP */ tcp dpt:9999</span><br><span class="line">KUBE-SVC-NPX46M4PTMTKRN6Y  tcp  --  0.0.0.0/0            10.254.0.1           /* default/kubernetes:https cluster IP */ tcp dpt:443</span><br><span class="line">KUBE-SVC-D25WXD2YSOVKEUTU  tcp  --  0.0.0.0/0            10.254.159.12        /* default/svc-1: cluster IP */ tcp dpt:2222</span><br><span class="line">KUBE-NODEPORTS  all  --  0.0.0.0/0            0.0.0.0/0            /* kubernetes service nodeports; NOTE: this must be the last rule in this chain */ ADDRTYPE match dst-type LOCAL</span><br><span class="line"></span><br><span class="line">Chain KUBE-SVC-D25WXD2YSOVKEUTU (2 references)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">KUBE-SEP-CLKUH4WMQ3CNBJ7K  all  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-1: */ statistic mode random probability 0.25000000000</span><br><span class="line">KUBE-SEP-F4EJGNTAH3JOOQC6  all  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-1: */ statistic mode random probability 0.33332999982</span><br><span class="line">KUBE-SEP-BCYRFQ26LZTOSSU7  all  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-1: */ statistic mode random probability 0.50000000000</span><br><span class="line">KUBE-SEP-D3FORTYMXA7BVSDA  all  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-1: */</span><br><span class="line"></span><br><span class="line">Chain KUBE-SVC-E6FDK4HG4F4JSB77 (2 references)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">KUBE-SEP-5GTCHBFJM5RAI7LS  all  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-lonely: */</span><br><span class="line"></span><br><span class="line">Chain KUBE-SVC-NPX46M4PTMTKRN6Y (1 references)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">KUBE-SEP-2LNK4QUGPB2C5PDO  all  --  0.0.0.0/0            0.0.0.0/0            /* default/kubernetes:https */ recent: CHECK seconds: 180 reap name: KUBE-SEP-2LNK4QUGPB2C5PDO side: source mask: 255.255.255.255</span><br><span class="line">KUBE-SEP-2LNK4QUGPB2C5PDO  all  --  0.0.0.0/0            0.0.0.0/0            /* default/kubernetes:https */</span><br><span class="line"></span><br><span class="line">Chain KUBE-SVC-OOWDNB3NCXKPBPZE (2 references)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">KUBE-SEP-HO23WAVQKIB2R4KD  all  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-tmp: */</span><br></pre></td></tr></table></figure>
+
+<h1 id="Ingress"><a href="#Ingress" class="headerlink" title="Ingress"></a>Ingress</h1><p>Todo…</p>
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="http://www.colabug.com/thread-1703745-1-1.html?pp=2">Traefik-kubernetes 初试</a></li>
+<li><a target="_blank" rel="noopener" href="http://blog.163.com/hk_bs/blog/static/245038011201611149254899/">Kubernetes 中的PodIP、ClusterIP 和外部IP</a></li>
+<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/xinghun_4/article/details/50492041">kubernetes中port、target port、node port的对比分析，以及kube-proxy代理</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/k8s/" rel="tag"># k8s</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2017/03/03/container/docker/docker-network/" rel="prev" title="Docker网络技术(Bridge)">
+      <i class="fa fa-chevron-left"></i> Docker网络技术(Bridge)
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2017/04/27/container/k8s/k8s-analyze-service-discovery/" rel="next" title="K8s服务发现分析">
+      K8s服务发现分析 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#K8s-LBS"><span class="nav-number">1.</span> <span class="nav-text">K8s-LBS</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#NodePort"><span class="nav-number">2.</span> <span class="nav-text">NodePort</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9A%B4%E9%9C%B2%E6%96%B9%E6%B3%95%E5%8F%8AAPI"><span class="nav-number">2.1.</span> <span class="nav-text">暴露方法及API</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86"><span class="nav-number">2.2.</span> <span class="nav-text">实现原理</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Ingress"><span class="nav-number">3.</span> <span class="nav-text">Ingress</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%82%E8%80%83-%E9%B8%A3%E8%B0%A2"><span class="nav-number">4.</span> <span class="nav-text">参考&amp;鸣谢</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">博</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">138</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">119</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">博</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

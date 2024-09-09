@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zhoubofsy.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="什么是服务发现容器可以对其它容器提供服务，如mysql（数据库服务）、nginx、mangodb等等。这些服务都可以通过IP＋Port方式访问。由于容器会经常重建迁移，所以IP会发生变化，如果调用服务的程序使用IP访问就会很不方便，为此可以使用DNS、zookeeper、etcd等技术实现服务访问与IP的解耦。这种解耦方式叫做服务发现。 版本 rancher-dns v0.13.3  Ranche">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Rancher服务发现分析">
+<meta property="og:url" content="http://zhoubofsy.github.io/2017/03/01/container/rancher/rancher-dns-and-metadata/index.html">
+<meta property="og:site_name" content="Bolog">
+<meta property="og:description" content="什么是服务发现容器可以对其它容器提供服务，如mysql（数据库服务）、nginx、mangodb等等。这些服务都可以通过IP＋Port方式访问。由于容器会经常重建迁移，所以IP会发生变化，如果调用服务的程序使用IP访问就会很不方便，为此可以使用DNS、zookeeper、etcd等技术实现服务访问与IP的解耦。这种解耦方式叫做服务发现。 版本 rancher-dns v0.13.3  Ranche">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://zhoubofsy.github.io/images/rancher/rancher-dns-and-metadata.png">
+<meta property="og:image" content="http://zhoubofsy.github.io/images/rancher/rancher-dns-struct.png">
+<meta property="og:image" content="http://zhoubofsy.github.io/images/rancher/rancher-dns-route-workflow.png">
+<meta property="article:published_time" content="2017-03-01T07:52:16.000Z">
+<meta property="article:modified_time" content="2024-09-09T07:57:18.596Z">
+<meta property="article:author" content="博">
+<meta property="article:tag" content="rancher">
+<meta property="article:tag" content="dns">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://zhoubofsy.github.io/images/rancher/rancher-dns-and-metadata.png">
+
+<link rel="canonical" href="http://zhoubofsy.github.io/2017/03/01/container/rancher/rancher-dns-and-metadata/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Rancher服务发现分析 | Bolog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Bolog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/03/01/container/rancher/rancher-dns-and-metadata/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Rancher服务发现分析
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2017-03-01 15:52:16" itemprop="dateCreated datePublished" datetime="2017-03-01T15:52:16+08:00">2017-03-01</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/container/" itemprop="url" rel="index"><span itemprop="name">container</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="什么是服务发现"><a href="#什么是服务发现" class="headerlink" title="什么是服务发现"></a>什么是服务发现</h1><p>容器可以对其它容器提供服务，如mysql（数据库服务）、nginx、mangodb等等。这些服务都可以通过IP＋Port方式访问。由于容器会经常重建迁移，所以IP会发生变化，如果调用服务的程序使用IP访问就会很不方便，为此可以使用DNS、zookeeper、etcd等技术实现服务访问与IP的解耦。这种解耦方式叫做服务发现。</p>
+<h1 id="版本"><a href="#版本" class="headerlink" title="版本"></a>版本</h1><ul>
+<li>rancher-dns v0.13.3</li>
+</ul>
+<h1 id="Rancher服务发现构成及更新流程"><a href="#Rancher服务发现构成及更新流程" class="headerlink" title="Rancher服务发现构成及更新流程"></a>Rancher服务发现构成及更新流程</h1><p><img src="/images/rancher/rancher-dns-and-metadata.png" alt="rancher-dns-and-metadata"></p>
+<ul>
+<li>Cattle<br>  容器管理器（rancher核心）。</li>
+<li>Event Subscriber<br>  轻量级的消息队列，用于通知rancher-metadata更新数据<br>  ** 猜测：采用websocket协议通讯，Cattle为消息生产者，rancher-metadata、scheduler、rancher-agent为消费者或消息订阅者 **</li>
+<li>rancher-dns<br>  向容器提供DNS服务</li>
+<li>rancher-metadata<br>  rancher中的元数据管理器</li>
+</ul>
+<h1 id="rancher-dns结构"><a href="#rancher-dns结构" class="headerlink" title="rancher-dns结构"></a>rancher-dns结构</h1><p><img src="/images/rancher/rancher-dns-struct.png" alt="rancher-dns-struct"></p>
+<ul>
+<li>TCP、UDP Listen<br>  rancher-dns监听53端口，用于接收域名解析请求。</li>
+<li>miekg DNS<br>  DNS协议封装解析库</li>
+<li>ROUTE<br>  处理域名解析业务逻辑</li>
+<li>metadata client<br>  负责与rancher-metadata同步answer数据，每5秒同步一次。</li>
+<li>answers<br>  负责存储解析<code>metadata client</code>同步来的answer数据（<code>/etc/rancher/answers.json</code>）</li>
+</ul>
+<h1 id="rancher-dns-ROUTE工作流程"><a href="#rancher-dns-ROUTE工作流程" class="headerlink" title="rancher-dns ROUTE工作流程"></a>rancher-dns ROUTE工作流程</h1><p><img src="/images/rancher/rancher-dns-route-workflow.png" alt="rancher-dns-route-workflow"></p>
+<p>*** 关于域名协议流程参见：<a href="https://zhoubofsy.github.io/2017/02/17/network/dns-protocol/">《DNS协议》</a>中相关内容 ***</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/rancher/" rel="tag"># rancher</a>
+              <a href="/tags/dns/" rel="tag"># dns</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2017/02/23/apple/mac-remove-sqlite-editor-app-intr/" rel="prev" title="Mac通知中心自动推送SQLite Editor广告问题修改">
+      <i class="fa fa-chevron-left"></i> Mac通知中心自动推送SQLite Editor广告问题修改
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2017/03/03/container/docker/docker-network/" rel="next" title="Docker网络技术(Bridge)">
+      Docker网络技术(Bridge) <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF%E6%9C%8D%E5%8A%A1%E5%8F%91%E7%8E%B0"><span class="nav-number">1.</span> <span class="nav-text">什么是服务发现</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%89%88%E6%9C%AC"><span class="nav-number">2.</span> <span class="nav-text">版本</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Rancher%E6%9C%8D%E5%8A%A1%E5%8F%91%E7%8E%B0%E6%9E%84%E6%88%90%E5%8F%8A%E6%9B%B4%E6%96%B0%E6%B5%81%E7%A8%8B"><span class="nav-number">3.</span> <span class="nav-text">Rancher服务发现构成及更新流程</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#rancher-dns%E7%BB%93%E6%9E%84"><span class="nav-number">4.</span> <span class="nav-text">rancher-dns结构</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#rancher-dns-ROUTE%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B"><span class="nav-number">5.</span> <span class="nav-text">rancher-dns ROUTE工作流程</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">博</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">138</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">119</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">博</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
