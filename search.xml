@@ -236,8 +236,9 @@
 <li>Familiar with container technology docker, and its principles</li>
 </ul>
 <h2 id="Detail"><a href="#Detail" class="headerlink" title="Detail"></a>Detail</h2><p><a href="https://zhoubofsy.github.io/">https://zhoubofsy.github.io</a></p>
-<h1 id="Contact"><a href="#Contact" class="headerlink" title="Contact"></a>Contact</h1><p>Email：<a href="mailto:&#122;&#x68;&#x6f;&#x75;&#x62;&#111;&#102;&#115;&#x79;&#64;&#x68;&#x6f;&#116;&#x6d;&#x61;&#x69;&#x6c;&#x2e;&#x63;&#111;&#109;">&#122;&#x68;&#x6f;&#x75;&#x62;&#111;&#102;&#115;&#x79;&#64;&#x68;&#x6f;&#116;&#x6d;&#x61;&#x69;&#x6c;&#x2e;&#x63;&#111;&#109;</a><br>Tel：13042422560</p>
-<h1 id="Work-experience"><a href="#Work-experience" class="headerlink" title="Work experience"></a>Work experience</h1><h2 id="2020-12-–-Now"><a href="#2020-12-–-Now" class="headerlink" title="2020&#x2F;12 – Now"></a>2020&#x2F;12 – Now</h2><h3 id="CCB-FINTECH-CO-LTD"><a href="#CCB-FINTECH-CO-LTD" class="headerlink" title="CCB FINTECH CO., LTD."></a>CCB FINTECH CO., LTD.</h3><p><strong>Position</strong> : Senior Development Engineer<br><strong>Description</strong></p>
+<h1 id="Contact"><a href="#Contact" class="headerlink" title="Contact"></a>Contact</h1><p>Email：<a href="mailto:&#122;&#104;&#x6f;&#117;&#x62;&#111;&#x66;&#x73;&#x79;&#64;&#104;&#111;&#116;&#x6d;&#x61;&#x69;&#x6c;&#46;&#99;&#111;&#x6d;">&#122;&#104;&#x6f;&#117;&#x62;&#111;&#x66;&#x73;&#x79;&#64;&#104;&#111;&#116;&#x6d;&#x61;&#x69;&#x6c;&#46;&#99;&#111;&#x6d;</a><br>Tel：13042422560</p>
+<h1 id="Work-experience"><a href="#Work-experience" class="headerlink" title="Work experience"></a>Work experience</h1><h2 id="2020-12-–-Now"><a href="#2020-12-–-Now" class="headerlink" title="2020&#x2F;12 – Now"></a>2020&#x2F;12 – Now</h2><h3 id="CCB-FINTECH-CO-LTD"><a href="#CCB-FINTECH-CO-LTD" class="headerlink" title="CCB FINTECH CO., LTD."></a>CCB FINTECH CO., LTD.</h3><p><strong>Position</strong> : Senior Development Engineer</p>
+<p><strong>Description</strong></p>
 <ul>
 <li>Responsible for the design, development, operation and maintenance of CFS file storage functions</li>
 <li>Responsible for TCE (Tencent Cloud Storage) code compilation and analysis</li>
@@ -245,25 +246,30 @@
 <li>Be responsible for the development of vsphere SDK required by the MultiCloud platform (Code Review: <a href="https://github.com/zhoubofsy/vsphere-go-sdk">https://github.com/zhoubofsy/vsphere-go-sdk</a>)</li>
 <li>Responsible for Ceph deployment and development</li>
 </ul>
-<h2 id="2019-09-–-2020-12"><a href="#2019-09-–-2020-12" class="headerlink" title="2019&#x2F;09 – 2020&#x2F;12"></a>2019&#x2F;09 – 2020&#x2F;12</h2><h3 id="Beijing-WangZhongGongChuang-Technology-Co-Ltd"><a href="#Beijing-WangZhongGongChuang-Technology-Co-Ltd" class="headerlink" title="Beijing WangZhongGongChuang Technology Co., Ltd"></a>Beijing WangZhongGongChuang Technology Co., Ltd</h3><p><strong>Position</strong> : Senior Cloud Platform Development Engineer<br><strong>Description</strong></p>
+<h2 id="2019-09-–-2020-12"><a href="#2019-09-–-2020-12" class="headerlink" title="2019&#x2F;09 – 2020&#x2F;12"></a>2019&#x2F;09 – 2020&#x2F;12</h2><h3 id="Beijing-WangZhongGongChuang-Technology-Co-Ltd"><a href="#Beijing-WangZhongGongChuang-Technology-Co-Ltd" class="headerlink" title="Beijing WangZhongGongChuang Technology Co., Ltd"></a>Beijing WangZhongGongChuang Technology Co., Ltd</h3><p><strong>Position</strong> : Senior Cloud Platform Development Engineer</p>
+<p><strong>Description</strong></p>
 <ul>
 <li>Responsible for the O&amp;M of distributed storage (Ceph)</li>
 <li>Responsible for the development of distributed storage (Ceph) (Code Review: <a href="https://github.com/zhoubofsy/ceph/commits/3-apimask/">https://github.com/zhoubofsy/ceph/commits/3-apimask/</a>)</li>
 <li>Design and development of S3 migration tool (Code Review: <a href="https://github.com/zhoubofsy/s3sooner">https://github.com/zhoubofsy/s3sooner</a>)</li>
 </ul>
-<h2 id="2016-03-–-2019-08"><a href="#2016-03-–-2019-08" class="headerlink" title="2016&#x2F;03 – 2019&#x2F;08"></a>2016&#x2F;03 – 2019&#x2F;08</h2><h3 id="eKing-Technology-Co-Ltd"><a href="#eKing-Technology-Co-Ltd" class="headerlink" title="eKing Technology Co., Ltd"></a>eKing Technology Co., Ltd</h3><p><strong>Position</strong> : Architect<br><strong>Description</strong></p>
+<h2 id="2016-03-–-2019-08"><a href="#2016-03-–-2019-08" class="headerlink" title="2016&#x2F;03 – 2019&#x2F;08"></a>2016&#x2F;03 – 2019&#x2F;08</h2><h3 id="eKing-Technology-Co-Ltd"><a href="#eKing-Technology-Co-Ltd" class="headerlink" title="eKing Technology Co., Ltd"></a>eKing Technology Co., Ltd</h3><p><strong>Position</strong> : Architect</p>
+<p><strong>Description</strong></p>
 <ul>
 <li>Responsible for distributed storage (Ceph) program research and development;</li>
 <li>Responsible for distributed storage Ceph performance optimization;</li>
 <li>Responsible for distributed storage Ceph and XenServer integration;</li>
 <li>Responsible for Docker related technology research;</li>
 </ul>
-<h3 id="Project"><a href="#Project" class="headerlink" title="Project"></a>Project</h3><h4 id="eKing-IAAS-Cloud-Platform"><a href="#eKing-IAAS-Cloud-Platform" class="headerlink" title="eKing IAAS Cloud Platform"></a>eKing IAAS Cloud Platform</h4><p><strong>Introduction</strong> ：<br>Provide private cloud IAAS services for HNA Group.<br>The cloud platform is based on the cloud computing platform as the core, integrating a variety of high-quality cloud products, committed to providing users with integrated cloud services, creating an enterprise-level integrated platform for multi-cloud product integration and cross-data center management, the platform applies the open source cloud platform architecture, based on Xen\VMWare virtualization technology, to ensure the high availability of the cloud platform, and the cloud management platform provides resource management functions such as data center management, cluster management, host management, storage management, network management, template management, and snapshot management. Integrate high-quality resourcesUsers provide a variety of high-quality cloud services, such as cloud servers, load balancing, auto scaling services, cloud disks, data backup, cloud monitoring, and resource expansion. The cloud platform provides VLAN, GRE network isolation technology, and active&#x2F;standby deployment modes to ensure high security and reliability of the platform.<br><strong>Duty</strong> :</p>
+<h3 id="Project"><a href="#Project" class="headerlink" title="Project"></a>Project</h3><h4 id="eKing-IAAS-Cloud-Platform"><a href="#eKing-IAAS-Cloud-Platform" class="headerlink" title="eKing IAAS Cloud Platform"></a>eKing IAAS Cloud Platform</h4><p><strong>Introduction</strong> ：</p>
+<p>Provide private cloud IAAS services for HNA Group.<br>The cloud platform is based on the cloud computing platform as the core, integrating a variety of high-quality cloud products, committed to providing users with integrated cloud services, creating an enterprise-level integrated platform for multi-cloud product integration and cross-data center management, the platform applies the open source cloud platform architecture, based on Xen\VMWare virtualization technology, to ensure the high availability of the cloud platform, and the cloud management platform provides resource management functions such as data center management, cluster management, host management, storage management, network management, template management, and snapshot management. Integrate high-quality resourcesUsers provide a variety of high-quality cloud services, such as cloud servers, load balancing, auto scaling services, cloud disks, data backup, cloud monitoring, and resource expansion. The cloud platform provides VLAN, GRE network isolation technology, and active&#x2F;standby deployment modes to ensure high security and reliability of the platform.</p>
+<p><strong>Duty</strong> :</p>
 <ol>
 <li>Design Distributed Storage Ceph Scheme</li>
 <li>Distributed storage Ceph reliability tuning, and performance optimization</li>
-<li>Integrate Distributed Storage Ceph RBD with XenServer<br><strong>Code Review</strong></li>
+<li>Integrate Distributed Storage Ceph RBD with XenServer</li>
 </ol>
+<p><strong>Code Review</strong></p>
 <ul>
 <li><a href="https://github.com/zhoubofsy/rbdsr/commits/master/">RBDSR Driver</a></li>
 <li><a href="https://github.com/zhoubofsy/RBDSR-1/commits/master/">RBDSR Driver</a></li>
@@ -281,7 +287,8 @@
 <li><a href="https://github.com/zhoubofsy/RDS">RDS</a></li>
 </ul>
 <hr>
-<h2 id="2014-05-–-2016-03"><a href="#2014-05-–-2016-03" class="headerlink" title="2014&#x2F;05 – 2016&#x2F;03"></a>2014&#x2F;05 – 2016&#x2F;03</h2><h3 id="NEUNN-Technology-Co-Ltd"><a href="#NEUNN-Technology-Co-Ltd" class="headerlink" title="NEUNN Technology Co., Ltd"></a>NEUNN Technology Co., Ltd</h3><p><strong>Position</strong> : Cloud Computing Storage Senior Software Engineer<br><strong>Description</strong> : </p>
+<h2 id="2014-05-–-2016-03"><a href="#2014-05-–-2016-03" class="headerlink" title="2014&#x2F;05 – 2016&#x2F;03"></a>2014&#x2F;05 – 2016&#x2F;03</h2><h3 id="NEUNN-Technology-Co-Ltd"><a href="#NEUNN-Technology-Co-Ltd" class="headerlink" title="NEUNN Technology Co., Ltd"></a>NEUNN Technology Co., Ltd</h3><p><strong>Position</strong> : Cloud Computing Storage Senior Software Engineer</p>
+<p><strong>Description</strong> : </p>
 <ul>
 <li>Responsible for distributed storage (Ceph) program research and development;</li>
 <li>Responsible for distributed storage Ceph secondary development and depth customization;</li>
