@@ -188,6 +188,277 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/11/03/language/python/python-matplotlib/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2017/11/03/language/python/python-matplotlib/" class="post-title-link" itemprop="url">matplotlib</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2017-11-03 16:15:29" itemprop="dateCreated datePublished" datetime="2017-11-03T16:15:29+08:00">2017-11-03</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/language/" itemprop="url" rel="index"><span itemprop="name">language</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>Matplotlib数据可视化第三方库(<a target="_blank" rel="noopener" href="http://matplotlib.org/">官网</a>)。由各种可视化类构成。</p>
+<h1 id="matplotlib-pyplot"><a href="#matplotlib-pyplot" class="headerlink" title="matplotlib.pyplot"></a>matplotlib.pyplot</h1><p><code>matplotlib.pyplot</code>是绘制各类可视化图形的命令子库。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#!/usr/bin/python</span></span><br><span class="line"><span class="comment">#encoding:utf-8</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt</span><br><span class="line"></span><br><span class="line">plt.plot([<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>,<span class="number">4</span>,<span class="number">5</span>,<span class="number">6</span>])</span><br><span class="line">plt.ylabel(<span class="string">&quot;value&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 将图像保存成PNG格式</span></span><br><span class="line">plt.savefig(<span class="string">&quot;./test&quot;</span>, dpi=<span class="number">600</span>)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># x值[0,2,4,6,8]; y值[3,1,4,5,2]</span></span><br><span class="line">plt.plot([<span class="number">0</span>,<span class="number">2</span>,<span class="number">4</span>,<span class="number">6</span>,<span class="number">8</span>], [<span class="number">3</span>,<span class="number">1</span>,<span class="number">4</span>,<span class="number">5</span>,<span class="number">2</span>])</span><br><span class="line">plt.ylabel(<span class="string">&quot;value&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># X轴[-1,10]; Y轴[0,10]</span></span><br><span class="line">plt.axis([-<span class="number">1</span>,<span class="number">10</span>,<span class="number">0</span>,<span class="number">10</span>])</span><br><span class="line"></span><br><span class="line">plt.show()</span><br></pre></td></tr></table></figure>
+
+<h2 id="plot"><a href="#plot" class="headerlink" title="plot"></a>plot</h2><p><code>plt.plot(x,y,format_string, **kwargs)</code></p>
+<ul>
+<li>x X轴数据，列表或数组，只有一条曲线的时候可选。</li>
+<li>y Y轴数据，列表或数组。</li>
+<li>format_string 控制曲线的各式字符串，可选。</li>
+<li>kwargs 第二组或更多(x,y,format_string)</li>
+</ul>
+<p><code>format_string</code>分别由“颜色字符”、“风格字符”、“标记字符”构成</p>
+<p>** 颜色字符 **</p>
+<table>
+<thead>
+<tr>
+<th align="center">颜色字符</th>
+<th align="center">说明</th>
+<th align="center">颜色字符</th>
+<th align="center">说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">‘b’</td>
+<td align="center">蓝色</td>
+<td align="center">‘m’</td>
+<td align="center">洋红色</td>
+</tr>
+<tr>
+<td align="center">‘g’</td>
+<td align="center">绿色</td>
+<td align="center">‘y’</td>
+<td align="center">黄色</td>
+</tr>
+<tr>
+<td align="center">‘r’</td>
+<td align="center">红色</td>
+<td align="center">‘k’</td>
+<td align="center">黑色</td>
+</tr>
+<tr>
+<td align="center">‘c’</td>
+<td align="center">青色</td>
+<td align="center">‘w’</td>
+<td align="center">白色</td>
+</tr>
+<tr>
+<td align="center">‘#008000’</td>
+<td align="center">RGB某颜色</td>
+<td align="center">‘0.8’</td>
+<td align="center">灰度值字符串</td>
+</tr>
+</tbody></table>
+<p>如果用户不指定颜色，系统会自动指定不重复的颜色。</p>
+<p>** 风格字符 **</p>
+<table>
+<thead>
+<tr>
+<th align="center">风格字符</th>
+<th align="left">说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">‘-‘</td>
+<td align="left">实现</td>
+</tr>
+<tr>
+<td align="center">‘–’</td>
+<td align="left">破折线</td>
+</tr>
+<tr>
+<td align="center">‘-.’</td>
+<td align="left">点划线</td>
+</tr>
+<tr>
+<td align="center">‘:’</td>
+<td align="left">虚线</td>
+</tr>
+<tr>
+<td align="center">‘’</td>
+<td align="left">无线条</td>
+</tr>
+</tbody></table>
+<p>*** 更多关于标记内容请见<a target="_blank" rel="noopener" href="http://matplotlib.org/api/_as_gen/matplotlib.pyplot.plot.html#matplotlib.pyplot.plot">HERE</a> ***</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt</span><br><span class="line"></span><br><span class="line">a = np.arange(<span class="number">10</span>)</span><br><span class="line">plt.plot(a,a*<span class="number">1.5</span>,<span class="string">&#x27;go-&#x27;</span>, a,a*<span class="number">2.5</span>,<span class="string">&#x27;rx&#x27;</span>, a,a*<span class="number">3.5</span>,<span class="string">&#x27;*&#x27;</span>, a,a*<span class="number">4.5</span>,<span class="string">&#x27;b-.&#x27;</span>)</span><br><span class="line">plt.show()</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="分区绘制"><a href="#分区绘制" class="headerlink" title="分区绘制"></a>分区绘制</h2><h3 id="subplot"><a href="#subplot" class="headerlink" title="subplot"></a>subplot</h3><p><code>plt.subplot(nrows, ncols, plot_number)</code> 将绘制区域分割成 nrows x ncols个区域，plot_number指定绘制的是哪个区域</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">f</span>(<span class="params">t</span>):</span><br><span class="line">    <span class="keyword">return</span> np.exp(-t) * np.cos(<span class="number">2</span>*np.pi*t)</span><br><span class="line"></span><br><span class="line">a = np.arange(<span class="number">0.0</span>,<span class="number">5.0</span>,<span class="number">2.0</span>)</span><br><span class="line"></span><br><span class="line">plt.subplot(<span class="number">2</span>,<span class="number">1</span>,<span class="number">1</span>)</span><br><span class="line">plt.plot(a, f(a))</span><br><span class="line"></span><br><span class="line">plt.subplot(<span class="number">2</span>,<span class="number">1</span>,<span class="number">2</span>)</span><br><span class="line">plt.plot(a, np.cos(<span class="number">2</span>*np.pi*a), <span class="string">&#x27;r--&#x27;</span>)</span><br><span class="line"></span><br><span class="line">plt.show()</span><br></pre></td></tr></table></figure>
+
+
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="http://www.icourse163.org/learn/BIT-1001870002?tid=1002239009">Python数据分析与展示</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/11/03/language/python/python-numpy-pillow/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2017/11/03/language/python/python-numpy-pillow/" class="post-title-link" itemprop="url">NumPy + PIL 处理图像</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2017-11-03 13:41:27" itemprop="dateCreated datePublished" datetime="2017-11-03T13:41:27+08:00">2017-11-03</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/language/" itemprop="url" rel="index"><span itemprop="name">language</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <ul>
+<li><a href="https://zhoubofsy.github.io/2017/11/02/language/python/python-numpy/">NumPy</a></li>
+<li>PIL<br>  PIL(Python Image Library)库是一个具有强大图像处理能力的第三方库</li>
+</ul>
+<h1 id="图像＝-数组"><a href="#图像＝-数组" class="headerlink" title="图像＝&gt;数组"></a>图像＝&gt;数组</h1><p>图像采用的色彩模式为RGB模式，即每个像素点由R（红色）、G（绿色）、B（蓝色）组成。我们人眼所能看到的颜色都是由这三种颜色变化叠加得到的。</p>
+<ul>
+<li>R红色，取值范围，0～255</li>
+<li>G绿色，取值范围，0～255</li>
+<li>B蓝色，取值范围，0～255</li>
+</ul>
+<p>图像是一个由像素组成的二维矩阵，每个元素是一个RGB值。</p>
+<h1 id="PIL安装"><a href="#PIL安装" class="headerlink" title="PIL安装"></a>PIL安装</h1><p>OSX: <code>pip install pillow</code></p>
+<h1 id="图像处理"><a href="#图像处理" class="headerlink" title="图像处理"></a>图像处理</h1><h2 id="图像加载"><a href="#图像加载" class="headerlink" title="图像加载"></a>图像加载</h2><p><img src="/images/python/turkey_orig.jpg" alt="turkey_orig.jpg"></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="keyword">from</span> PIL <span class="keyword">import</span> Image</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>img = np.array(Image.<span class="built_in">open</span>(<span class="string">&quot;turkey_orig.jpg&quot;</span>))</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>img_l = np.array(Image.<span class="built_in">open</span>(<span class="string">&quot;turkey_orig.jpg&quot;</span>).convert(<span class="string">&#x27;L&#x27;</span>)) </span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="built_in">print</span> img.shape, img.dtype</span><br><span class="line">(<span class="number">1184</span>, <span class="number">2104</span>, <span class="number">3</span>) uint8</span><br><span class="line"><span class="comment"># img是一个三维数组每一个元素代表RGB的一个值</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="built_in">print</span> img_l.shape, img_l.shape</span><br><span class="line">(<span class="number">1184</span>, <span class="number">2104</span>) uint8</span><br><span class="line"><span class="comment"># img_l是一个二维数组每一个元素对应一个灰度值</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="图像变换"><a href="#图像变换" class="headerlink" title="图像变换"></a>图像变换</h2><h3 id="返选效果"><a href="#返选效果" class="headerlink" title="返选效果"></a>返选效果</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">md_img = [<span class="number">255</span>,<span class="number">255</span>,<span class="number">255</span>] - img</span><br></pre></td></tr></table></figure>
+<p><img src="/images/python/turkey_modify_1.jpg" alt="turkey_modify_1.jpg"></p>
+<h3 id="底片效果"><a href="#底片效果" class="headerlink" title="底片效果"></a>底片效果</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">md_img = <span class="number">255</span> - img_l</span><br></pre></td></tr></table></figure>
+<p><img src="/images/python/turkey_modify_2.jpg" alt="turkey_modify_2.jpg"></p>
+<h3 id="区间变换"><a href="#区间变换" class="headerlink" title="区间变换"></a>区间变换</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">md_img = (<span class="number">100.0</span>/<span class="number">255.0</span>)*img_l + <span class="number">150</span></span><br></pre></td></tr></table></figure>
+<p><img src="/images/python/turkey_modify_3.jpg" alt="turkey_modify_3.jpg"></p>
+<h3 id="平方变换"><a href="#平方变换" class="headerlink" title="平方变换"></a>平方变换</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">md_img = <span class="number">255</span> * ((img_l/<span class="number">255.0</span>)**<span class="number">2</span>)</span><br></pre></td></tr></table></figure>
+<p><img src="/images/python/turkey_modify_4.jpg" alt="turkey_modify_4.jpg"></p>
+<h3 id="手绘效果"><a href="#手绘效果" class="headerlink" title="手绘效果"></a>手绘效果</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">img_l_float = img_l.astype(<span class="string">&quot;float&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 深度值，范围为0～100</span></span><br><span class="line">depth = <span class="number">10</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 提取x和y方向的梯度值</span></span><br><span class="line">grad = np.gradient(img_l_float)</span><br><span class="line">grad_x, grad_y = grad</span><br><span class="line"></span><br><span class="line"><span class="comment"># 根据深度调整梯度值</span></span><br><span class="line">grad_x = grad_x*depth/<span class="number">100</span></span><br><span class="line">grad_y = grad_y*depth/<span class="number">100</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 此处计算的是什么？</span></span><br><span class="line">A = np.sqrt(grad_x**<span class="number">2</span> + grad_y**<span class="number">2</span> + <span class="number">1.0</span>)</span><br><span class="line">uni_x = grad_x/A</span><br><span class="line">uni_y = grad_y/A</span><br><span class="line">uni_z = <span class="number">1.0</span>/A</span><br><span class="line"></span><br><span class="line"><span class="comment"># 为什么要引入光源？</span></span><br><span class="line">vec_el = np.pi/<span class="number">2.2</span></span><br><span class="line">vec_az = np.pi/<span class="number">4.0</span></span><br><span class="line">dx = np.cos(vec_el)*np.cos(vec_az)</span><br><span class="line">dy = np.cos(vec_el)*np.sin(vec_az)</span><br><span class="line">dz = np.sin(vec_el)</span><br><span class="line"></span><br><span class="line"><span class="comment">#dx, dy, dz = 1,1,1</span></span><br><span class="line">md_img = <span class="number">255</span>*(dx*uni_x + dy*uni_y + dz*uni_z)</span><br><span class="line">md_img = md_img.clip(<span class="number">0</span>,<span class="number">255</span>)</span><br></pre></td></tr></table></figure>
+<p>无光源效果：<br><img src="/images/python/turkey_modify_6.jpg" alt="turkey_modify_6.jpg"></p>
+<p>有光源效果：<br><img src="/images/python/turkey_modify_5.jpg" alt="turkey_modify_5.jpg"></p>
+<h2 id="图像保存"><a href="#图像保存" class="headerlink" title="图像保存"></a>图像保存</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">save_img = Image.fromarray(md_img.astype(<span class="string">&#x27;uint8&#x27;</span>))</span><br><span class="line">save_img.save(<span class="string">&quot;turkey_modify.jpg&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="http://www.icourse163.org/learn/BIT-1001870002?tid=1002239009">Python数据分析与展示</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/11/02/language/python/python-numpy/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -2160,215 +2431,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/09/13/network/ssl-tls-layer/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2017/09/13/network/ssl-tls-layer/" class="post-title-link" itemprop="url">SSL/TLS</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2017-09-13 16:20:19" itemprop="dateCreated datePublished" datetime="2017-09-13T16:20:19+08:00">2017-09-13</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/network/" itemprop="url" rel="index"><span itemprop="name">network</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p><img src="/images/ssl_tls/ssl_tls_protocol.png" alt="ssl_tls"></p>
-<ul>
-<li>SSL<br>  Secure Socket Layer，安全套接字层，为Netscape所研发，用以保障在Internet上数据传输之安全，利用数据加密(Encryption)技术，可确保数据在网络上之传输过程中不会被截取。当前版本为3.0。它已被广泛地用于Web浏览器与服务器之间的身份认证和加密数据传输。<br>  SSL协议位于TCP&#x2F;IP协议与各种应用层协议之间，为数据通讯提供安全支持。SSL协议可分为两层： SSL记录协议（SSL Record Protocol）：它建立在可靠的传输协议（如TCP）之上，为高层协议提供数据封装、压缩、加密等基本功能的支持。 SSL握手协议（SSL Handshake Protocol）：它建立在SSL记录协议之上，用于在实际的数据传输开始前，通讯双方进行身份认证、协商加密算法、交换加密密钥等</li>
-<li>TLS<br>  Transport Layer Security，传输层安全协议，用于两个应用程序之间提供保密性和数据完整性。<br>  TLS 1.0是IETF（Internet Engineering Task Force，Internet工程任务组）制定的一种新的协议，它建立在SSL 3.0协议规范之上，是SSL 3.0的后续版本，可以理解为SSL 3.1，它是写入了 RFC 的。该协议由两层组成： TLS 记录协议（TLS Record）和 TLS 握手协议（TLS Handshake）。较低的层为 TLS 记录协议，位于某个可靠的传输协议（例如 TCP）上面。</li>
-</ul>
-<h1 id="TLS握手"><a href="#TLS握手" class="headerlink" title="TLS握手"></a>TLS握手</h1><p>TLS协议分为两部分：Handshake Protocol和Record Protocol。其中Handshake Protocol用来协商密钥，协议的大部分内容就是通信双方如何利用它来安全的协商出一份密钥。 Record Protocol则定义了传输的格式。</p>
-<p>由于非对称加密的速度比较慢，所以它一般用于密钥交换，双方通过公钥算法协商出一份密钥，然后通过对称加密来通信，当然，为了保证数据的完整性，在加密前要先经过HMAC的处理。</p>
-<p><img src="/images/ssl_tls/handshake.svg" alt="handshake"></p>
-<p>TLS缺省只进行server端的认证，客户端的认证是可选的(<code>[</code> <code>]</code>中是可选项)。只进行server端的认证叫单向认证，server端客户端同时认证的叫双向认证。</p>
-<h2 id="单向认证流程"><a href="#单向认证流程" class="headerlink" title="单向认证流程"></a>单向认证流程</h2><p><img src="/images/ssl_tls/single_handshake.jpg" alt="single-handshake"></p>
-<ol>
-<li>客户端向服务端发送SSL协议版本号、加密算法种类、随机数等信息。</li>
-<li>服务端给客户端返回SSL协议版本号、加密算法种类、随机数等信息，同时也返回服务器端的证书，即公钥证书</li>
-<li>客户端使用服务端返回的信息验证服务器的合法性，包括：<br> 证书是否过期<br> 发型服务器证书的CA是否可靠<br> 返回的公钥是否能正确解开返回证书中的数字签名<br> 服务器证书上的域名是否和服务器的实际域名相匹配<br> 验证通过后，将继续进行通信，否则，终止通信</li>
-<li>客户端向服务端发送自己所能支持的对称加密方案，供服务器端进行选择</li>
-<li>服务器端在客户端提供的加密方案中选择加密程度最高的加密方式。</li>
-<li>服务器将选择好的加密方案通过明文方式返回给客户端</li>
-<li>客户端接收到服务端返回的加密方式后，使用该加密方式生成产生随机码，用作通信过程中对称加密的密钥，使用服务端返回的公钥进行加密，将加密后的随机码发送至服务器</li>
-<li>服务器收到客户端返回的加密信息后，使用自己的私钥进行解密，获取对称加密密钥。 </li>
-<li>在接下来的会话中，服务器和客户端将会使用该密码进行对称加密，保证通信过程中信息的安全。</li>
-</ol>
-<h2 id="双向认证流程"><a href="#双向认证流程" class="headerlink" title="双向认证流程"></a>双向认证流程</h2><p><img src="/images/ssl_tls/double_handshake.jpg" alt="double-handshake"></p>
-<ol>
-<li>客户端向服务端发送SSL协议版本号、加密算法种类、随机数等信息。</li>
-<li>服务端给客户端返回SSL协议版本号、加密算法种类、随机数等信息，同时也返回服务器端的证书，即公钥证书</li>
-<li>客户端使用服务端返回的信息验证服务器的合法性，包括：<br> 证书是否过期<br> 发型服务器证书的CA是否可靠<br> 返回的公钥是否能正确解开返回证书中的数字签名<br> 服务器证书上的域名是否和服务器的实际域名相匹配<br> 验证通过后，将继续进行通信，否则，终止通信</li>
-<li>服务端要求客户端发送客户端的证书，客户端会将自己的证书发送至服务端</li>
-<li>验证客户端的证书，通过验证后，会获得客户端的公钥</li>
-<li>客户端向服务端发送自己所能支持的对称加密方案，供服务器端进行选择</li>
-<li>服务器端在客户端提供的加密方案中选择加密程度最高的加密方式</li>
-<li>将加密方案通过使用之前获取到的公钥进行加密，返回给客户端</li>
-<li>客户端收到服务端返回的加密方案密文后，使用自己的私钥进行解密，获取具体加密方式，而后，产生该加密方式的随机码，用作加密过程中的密钥，使用之前从服务端证书中获取到的公钥进行加密后，发送给服务端</li>
-<li>服务端收到客户端发送的消息后，使用自己的私钥进行解密，获取对称加密的密钥，在接下来的会话中，服务器和客户端将会使用该密码进行对称加密，保证通信过程中信息的安全。</li>
-</ol>
-<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/duanbokan/article/details/50847612">Https单向认证和双向认证</a></li>
-<li><a target="_blank" rel="noopener" href="https://segmentfault.com/a/1190000002554673">SSL&#x2F;TLS原理详解</a></li>
-<li><a target="_blank" rel="noopener" href="http://www.cnblogs.com/Anker/p/6018032.html">基于openssl的单向和双向认证</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/09/13/security/certificate-theory/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2017/09/13/security/certificate-theory/" class="post-title-link" itemprop="url">证书、签名、密钥那些事儿</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2017-09-13 14:59:55" itemprop="dateCreated datePublished" datetime="2017-09-13T14:59:55+08:00">2017-09-13</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/security/" itemprop="url" rel="index"><span itemprop="name">security</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>我对这些问题的理解，一直是模模糊糊的，很多细节搞不清楚。网上看到一篇文章<a target="_blank" rel="noopener" href="http://www.ruanyifeng.com/blog/2011/08/what_is_a_digital_signature.html">《数字签名是什么？》</a>，发现思路一下子就理清了。为了加深记忆，我把文字和图片都复制过来。</p>
-<p><img src="/images/certificate_theory/keys_1.png" alt="keys_1"></p>
-<p><img src="/images/certificate_theory/keys_2.png" alt="keys_2"></p>
-<p><img src="/images/certificate_theory/keys_3.png" alt="keys_3"></p>
-<p><img src="/images/certificate_theory/keys_4.png" alt="keys_4"></p>
-<p>鲍勃收信后，用私钥解密，就看到了信件内容。这里要强调的是，只要鲍勃的私钥不泄露，这封信就是安全的，即使落在别人手里，也无法解密。</p>
-<p><img src="/images/certificate_theory/sign_1.png" alt="sign_1"></p>
-<p>鲍勃给苏珊回信，决定采用”数字签名”。他写完后先用Hash函数，生成信件的摘要（digest）。</p>
-<p><img src="/images/certificate_theory/sign_2.png" alt="sign_2"></p>
-<p><img src="/images/certificate_theory/sign_3.png" alt="sign_3"></p>
-<p><img src="/images/certificate_theory/sign_4.png" alt="sign_4"></p>
-<p><img src="/images/certificate_theory/sign_5.png" alt="sign_5"></p>
-<p>苏珊再对信件本身使用Hash函数，将得到的结果，与上一步得到的摘要进行对比。如果两者一致，就证明这封信未被修改过。</p>
-<p><img src="/images/certificate_theory/cert_1.png" alt="cert_1"></p>
-<p>复杂的情况出现了。道格想欺骗苏珊，他偷偷使用了苏珊的电脑，用自己的公钥换走了鲍勃的公钥。此时，苏珊实际拥有的是道格的公钥，但是还以为这是鲍勃的公钥。因此，道格就可以冒充鲍勃，用自己的私钥做成”数字签名”，写信给苏珊，让苏珊用假的鲍勃公钥进行解密。</p>
-<p><img src="/images/certificate_theory/cert_2.png" alt="cert_2"></p>
-<p>后来，苏珊感觉不对劲，发现自己无法确定公钥是否真的属于鲍勃。她想到了一个办法，要求鲍勃去找”证书中心”（certificate authority，简称CA），为公钥做认证。证书中心用自己的私钥，对鲍勃的公钥和一些相关信息一起加密，生成”数字证书”（Digital Certificate）。</p>
-<p><img src="/images/certificate_theory/cert_3.png" alt="cert_3"></p>
-<p>鲍勃拿到数字证书以后，就可以放心了。以后再给苏珊写信，只要在签名的同时，再附上数字证书就行了。</p>
-<p><img src="/images/certificate_theory/cert_4.png" alt="cert_4"></p>
-<p>苏珊收信后，用CA的公钥解开数字证书，就可以拿到鲍勃真实的公钥了，然后就能证明”数字签名”是否真的是鲍勃签的。</p>
-<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a target="_blank" rel="noopener" href="http://www.ruanyifeng.com/blog/2011/08/what_is_a_digital_signature.html">数字签名是什么？</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -2438,7 +2500,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">138</span>
+          <span class="site-state-item-count">140</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -2451,7 +2513,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">119</span>
+        <span class="site-state-item-count">120</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>

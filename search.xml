@@ -4818,7 +4818,7 @@
 <h2 id="执行智能合约"><a href="#执行智能合约" class="headerlink" title="执行智能合约"></a>执行智能合约</h2><p>执行智能合约可以选择在Remix中执行，也可选择attach到eth_server控制台执行。</p>
 <figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">abi =[&#123;<span class="string">&quot;inputs&quot;</span>:[],<span class="string">&quot;name&quot;</span>:<span class="string">&quot;sayHelloWorld&quot;</span>,<span class="string">&quot;outputs&quot;</span>:[&#123;<span class="string">&quot;internalType&quot;</span>:<span class="string">&quot;string&quot;</span>,<span class="string">&quot;name&quot;</span>:<span class="string">&quot;&quot;</span>,<span class="string">&quot;type&quot;</span>:<span class="string">&quot;string&quot;</span>&#125;],<span class="string">&quot;stateMutability&quot;</span>:<span class="string">&quot;nonpayable&quot;</span>,<span class="string">&quot;type&quot;</span>:<span class="string">&quot;function&quot;</span>&#125;]</span></span><br><span class="line">[&#123;</span><br><span class="line">    inputs: [],</span><br><span class="line">    name: &quot;sayHelloWorld&quot;,</span><br><span class="line">    outputs: [&#123;</span><br><span class="line">        internalType: &quot;string&quot;,</span><br><span class="line">        name: &quot;&quot;,</span><br><span class="line">        type: &quot;string&quot;</span><br><span class="line">    &#125;],</span><br><span class="line">    stateMutability: &quot;nonpayable&quot;,</span><br><span class="line">    type: &quot;function&quot;</span><br><span class="line">&#125;]</span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">hello=eth.contract(abi).at(<span class="string">&#x27;0xCB1B01B40CD752F5d42f5b8dCeE4BE2A637CaAf2&#x27;</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">  abi: [&#123;</span><br><span class="line">      inputs: [],</span><br><span class="line">      name: &quot;sayHelloWorld&quot;,</span><br><span class="line">      outputs: [&#123;...&#125;],</span><br><span class="line">      stateMutability: &quot;nonpayable&quot;,</span><br><span class="line">      type: &quot;function&quot;</span><br><span class="line">  &#125;],</span><br><span class="line">  address: &quot;0xCB1B01B40CD752F5d42f5b8dCeE4BE2A637CaAf2&quot;,</span><br><span class="line">  transactionHash: null,</span><br><span class="line">  allEvents: function bound(),</span><br><span class="line">  sayHelloWorld: function bound()</span><br><span class="line">&#125;</span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">hello.sayHelloWorld.call()</span></span><br><span class="line">&quot;Hello World&quot;</span><br></pre></td></tr></table></figure>
 
-<h1 id="参加-鸣谢"><a href="#参加-鸣谢" class="headerlink" title="参加&amp;鸣谢"></a>参加&amp;鸣谢</h1><ul>
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
 <li><a href="https://www.jianshu.com/p/6e739550a349">智能合约 hello world</a></li>
 <li><a href="https://haofly.net/geth/">Geth 搭建私链 private blockchain</a></li>
 <li><a href="https://blog.csdn.net/weixin_42822207/article/details/120620731">【geth】Go语言调用智能合约 | 一起来学区块链</a></li>
@@ -9725,6 +9725,179 @@
       <tags>
         <tag>ceph</tag>
         <tag>rgw</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>ERC-20</title>
+    <url>/2024/11/25/blockchain/ethereum/erc-20/</url>
+    <content><![CDATA[<h1 id="什么是-ERC-20？"><a href="#什么是-ERC-20？" class="headerlink" title="什么是 ERC-20？"></a>什么是 ERC-20？</h1><p>ERC-20 提出了一个同质化代币的标准，换句话说，它们具有一种属性，使得每个代币都与另一个代币（在类型和价值上）完全相同。 例如，一个 ERC-20 代币就像以太币一样，意味着一个代币会并永远会与其他代币一样。(From: 《<a href="https://ethereum.org/zh/developers/docs/standards/tokens/erc-20/">ERC-20 代币标准</a>》)</p>
+<h2 id="方法（Method）"><a href="#方法（Method）" class="headerlink" title="方法（Method）"></a>方法（Method）</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">function name() public view returns (string)</span><br><span class="line">// 返回令牌的名称 - 例如 &quot;MyToken&quot;</span><br><span class="line">// 可选 - 此方法可用于提高可用性，但接口和其他协定不得期望存在这些值。</span><br><span class="line"></span><br><span class="line">function symbol() public view returns (string)</span><br><span class="line">// 返回令牌的 symbol。例如“HIX”。</span><br><span class="line">// 可选 - 此方法可用于提高可用性，但接口和其他协定不得期望存在这些值。</span><br><span class="line"></span><br><span class="line">function decimals() public view returns (uint8)</span><br><span class="line">// 返回代币使用的小数位数 - 例如 8，表示将代币数量除以 100000000 以获得其用户表示。</span><br><span class="line">// 可选 - 此方法可用于提高可用性，但接口和其他协定不得期望存在这些值。</span><br><span class="line"></span><br><span class="line">function totalSupply() public view returns (uint256)</span><br><span class="line">// 返回总代币供应量。</span><br><span class="line"></span><br><span class="line">function balanceOf(address _owner) public view returns (uint256 balance)</span><br><span class="line">// 返回地址为 _owner 的另一个账户的账户余额。</span><br><span class="line"></span><br><span class="line">function transfer(address _to, uint256 _value) public returns (bool success)</span><br><span class="line">// 将 _value 数量的代币转移到 _to，并且必须触发 Transfer 事件。如果消息调用者的账户余额没有足够的代币可供花费，则函数应该throw。</span><br><span class="line">// 注意值为 0 的传输必须被视为正常传输，并触发 Transfer 事件。</span><br><span class="line"></span><br><span class="line">function transferFrom(address _from, address _to, uint256 _value) public returns (bool success)</span><br><span class="line">// 将 _value数量的代币从地址 _from 转移到地址 _to，并且必须触发 Transfer 事件。</span><br><span class="line">// transferFrom 方法用于提现工作流程，允许合约代表您转移代币。例如，这可用于允许合约代表您转移代币和/或以子货币收取费用。除非 _from 账户通过某种机制故意授权了消息的发送者，否则该函数应该throw。</span><br><span class="line"></span><br><span class="line">function approve(address _spender, uint256 _value) public returns (bool success)</span><br><span class="line">// 允许_spender多次从您的账户提款，最高可达_value金额。如果再次调用此函数，它将用 _value 覆盖当前限额。</span><br><span class="line">// 注意：客户端应该确保在创建用户界面时，先将限额设置为 0，然后再为同一花费者将其设置为另一个值。尽管 Contract 本身不应该强制执行它，以允许向后兼容之前部署的 Contract</span><br><span class="line"></span><br><span class="line">function allowance(address _owner, address _spender) public view returns (uint256 remaining)</span><br><span class="line">// 返回 _spender 仍允许从 _owner 中提取的金额。</span><br></pre></td></tr></table></figure>
+
+<h2 id="事件（Event）"><a href="#事件（Event）" class="headerlink" title="事件（Event）"></a>事件（Event）</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">event Transfer(address indexed _from, address indexed _to, uint256 _value)</span><br><span class="line">// 必须在代币转移时触发，包括零价值转移。</span><br><span class="line">// 创建新代币的代币合约应该在创建代币时触发 Transfer 事件，并将 _from 地址设置为 0x0。</span><br><span class="line"></span><br><span class="line">event Approval(address indexed _owner, address indexed _spender, uint256 _value)</span><br><span class="line">// 必须在成功调用 approve(address _spender, uint256 _value) 时触发。</span><br></pre></td></tr></table></figure>
+
+<h1 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h1><h2 id="简单示例"><a href="#简单示例" class="headerlink" title="简单示例"></a>简单示例</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">// SPDX-License-Identifier: MIT</span><br><span class="line"></span><br><span class="line">pragma solidity ^0.8.0;</span><br><span class="line"></span><br><span class="line">contract MyToken &#123;</span><br><span class="line">    string public constant name = &quot;Bob&#x27;s Token&quot;;</span><br><span class="line">    string public constant symbol = &quot;BBK&quot;;</span><br><span class="line">    uint8 public constant decimals = 18;</span><br><span class="line">    uint16 private constant increase = 1000;</span><br><span class="line">    uint256 public constant totalLimit = 27000000 * (10 ** decimals);</span><br><span class="line">    uint256 public totalSupply = 0;</span><br><span class="line">    address private owner;</span><br><span class="line">    mapping(address =&gt; uint256) public balanceOf;</span><br><span class="line">    mapping(address =&gt; mapping(address =&gt; uint256)) public allowance;</span><br><span class="line"></span><br><span class="line">    event Transfer(address indexed _from, address indexed _to, uint256 _value);</span><br><span class="line">    event Approval(address indexed _owner, address indexed _spender, uint256 _value);</span><br><span class="line"></span><br><span class="line">    modifier checkAddress(address _addr) &#123;</span><br><span class="line">        require(address(_addr) != address(0), &quot;Invalid address.&quot;);</span><br><span class="line">        _;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    modifier checkBalanceOf(address _addr, uint256 _value) &#123;</span><br><span class="line">        require(balanceOf[_addr] &gt;= _value, &quot;Insufficient balance&quot;);</span><br><span class="line">        _;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    modifier checkOwner() &#123;</span><br><span class="line">        require(msg.sender == owner, &quot;Not owner.&quot;);</span><br><span class="line">        _;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    constructor() &#123;</span><br><span class="line">        owner = msg.sender;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function mint(address _to) public checkOwner returns (uint256) &#123;</span><br><span class="line">        uint256 mintValue = increase * (10  ** decimals);</span><br><span class="line">        require(totalLimit &gt;= (totalSupply + mintValue), &quot;Out of limit.&quot;);</span><br><span class="line">        totalSupply += mintValue;</span><br><span class="line">        balanceOf[_to] += mintValue;</span><br><span class="line">        return balanceOf[_to];</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function transfer(address _to, uint256 _value) public checkAddress(_to) checkBalanceOf(msg.sender, _value) returns (bool success)&#123;</span><br><span class="line">        balanceOf[msg.sender] -= _value;</span><br><span class="line">        balanceOf[_to] += _value;</span><br><span class="line">        emit Transfer(msg.sender, _to, _value);</span><br><span class="line">        return true;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function transferFrom(address _from, address _to, uint256 _value) public checkAddress(_to) checkBalanceOf(_from, _value) returns (bool success) &#123;</span><br><span class="line">        require(allowance[_from][msg.sender] &gt;= _value, &quot;No enough approve value.&quot;);</span><br><span class="line">        allowance[_from][msg.sender] -= _value;</span><br><span class="line">        balanceOf[_from] -= _value;</span><br><span class="line">        balanceOf[_to] += _value;</span><br><span class="line">        emit Transfer(_from, _to, _value);</span><br><span class="line">        return true;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function approve(address _spender, uint256 _value) public returns (bool success)&#123;</span><br><span class="line">        allowance[msg.sender][_spender] = _value;</span><br><span class="line">        emit Approval(msg.sender, _spender, _value);</span><br><span class="line">        return true;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>注意事项</strong></p>
+<ul>
+<li>由于本合约的编译版本为0.8.0，此版本具备整数溢出检查，所以可以不使用safeMath。</li>
+</ul>
+<h2 id="快速示例"><a href="#快速示例" class="headerlink" title="快速示例"></a>快速示例</h2><p>使用<a href="https://docs.openzeppelin.com/contracts/5.x/wizard">OpenZeppelin</a>快速创建ERC-20合约</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">// SPDX-License-Identifier: MIT</span><br><span class="line">// Compatible with OpenZeppelin Contracts ^5.0.0</span><br><span class="line">pragma solidity ^0.8.22;</span><br><span class="line"></span><br><span class="line">import &#123;AccessManaged&#125; from &quot;@openzeppelin/contracts/access/manager/AccessManaged.sol&quot;;</span><br><span class="line">import &#123;ERC20&#125; from &quot;@openzeppelin/contracts/token/ERC20/ERC20.sol&quot;;</span><br><span class="line">import &#123;ERC20Pausable&#125; from &quot;@openzeppelin/contracts/token/ERC20/extensions/ERC20Pausable.sol&quot;;</span><br><span class="line">import &#123;ERC20Permit&#125; from &quot;@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol&quot;;</span><br><span class="line"></span><br><span class="line">contract BobToken is ERC20, ERC20Pausable, AccessManaged, ERC20Permit &#123;</span><br><span class="line">    constructor(address initialAuthority)</span><br><span class="line">         ERC20(&quot;BobToken&quot;, &quot;BBK&quot;)</span><br><span class="line">         AccessManaged(initialAuthority)</span><br><span class="line">         ERC20Permit(&quot;BobToken&quot;)</span><br><span class="line">    &#123;&#125;</span><br><span class="line"></span><br><span class="line">    function pause() public restricted &#123;</span><br><span class="line">         _pause();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function unpause() public restricted &#123;</span><br><span class="line">         _unpause();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function mint(address to, uint256 amount) public restricted &#123;</span><br><span class="line">        _mint(to, amount);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // The following functions are overrides required by Solidity.</span><br><span class="line"></span><br><span class="line">    function _update(address from, address to, uint256 value)</span><br><span class="line">        internal</span><br><span class="line">        override(ERC20, ERC20Pausable)</span><br><span class="line">    &#123;</span><br><span class="line">        super._update(from, to, value);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>我们的合约通常通过<a href="https://solidity.readthedocs.io/en/latest/contracts.html#inheritance">继承</a>来使用，在这里我们将 <code>ERC20</code> 重新用于基本标准实现以及 <code>name</code>、<code>symbol</code> 和 <code>decimals</code> 可选扩展。此外，我们正在创建一个代币的 <code>initialSupply</code>，该代币将被分配给部署合约的地址。</p>
+]]></content>
+      <categories>
+        <category>blockchain</category>
+      </categories>
+      <tags>
+        <tag>ethereum</tag>
+        <tag>solidity</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>call、staticcall、delegatecall使用</title>
+    <url>/2024/11/21/blockchain/ethereum/usage-of-call-staticcall-delegatecall/</url>
+    <content><![CDATA[<p>在 Solidity 中，<code>call</code>、<code>staticcall</code>和<code>delegatecall</code>是强大的低级操作，用于与其他合约交互或在当前上下文中执行外部合约的逻辑。掌握它们的用法和区别对于智能合约开发非常重要。</p>
+<p>本文将详细介绍它们的功能、适用场景、代码示例，以及使用时需要注意的潜在问题。</p>
+<h1 id="call"><a href="#call" class="headerlink" title="call"></a>call</h1><p><strong>功能</strong></p>
+<p><code>call</code> 是一种通用方法，用于调用另一个合约的函数或发送 ETH。它可以调用目标合约的任意函数，包括不存在的函数（在这种情况下不会抛出错误）。</p>
+<p><strong>特点</strong></p>
+<ul>
+<li>可读写目标合约的状态。</li>
+<li>支持附带 ETH 发送。</li>
+<li>返回两个值：<ul>
+<li>调用是否成功 (bool)。</li>
+<li>调用返回的数据 (bytes memory)。</li>
+</ul>
+</li>
+</ul>
+<p><strong>使用场景</strong></p>
+<ul>
+<li>调用外部合约的任意函数。</li>
+<li>向合约或外部账户发送 ETH。</li>
+</ul>
+<p><strong>代码示例</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">pragma solidity ^0.8.0;</span><br><span class="line"></span><br><span class="line">contract CallExample &#123;</span><br><span class="line">    function callFunction(address target, uint256 value) external returns (bool, bytes memory) &#123;</span><br><span class="line">        // 通过 call 调用目标合约的 setValue(uint)</span><br><span class="line">        (bool success, bytes memory data) = target.call(</span><br><span class="line">            abi.encodeWithSignature(&quot;setValue(uint256)&quot;, value)</span><br><span class="line">        );</span><br><span class="line">        require(success, &quot;Call failed&quot;);</span><br><span class="line">        return (success, data);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function sendEth(address payable target) external payable &#123;</span><br><span class="line">        // 使用 call 发送 ETH</span><br><span class="line">        (bool success, ) = target.call&#123;value: msg.value&#125;(&quot;&quot;);</span><br><span class="line">        require(success, &quot;Send ETH failed&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="staticcall"><a href="#staticcall" class="headerlink" title="staticcall"></a>staticcall</h1><p><strong>功能</strong></p>
+<p><code>staticcall</code>是一种只读调用方法，用于调用目标合约的视图或纯函数。它不允许改变状态，因此更安全且节省 Gas</p>
+<p><strong>特点</strong></p>
+<ul>
+<li>只能调用 view 或 pure 修饰的函数。</li>
+<li>无法修改状态或发送 ETH。</li>
+<li>返回两个值：<ul>
+<li>调用是否成功 (bool)。</li>
+<li>调用返回的数据 (bytes memory)。</li>
+</ul>
+</li>
+</ul>
+<p><strong>使用场景</strong></p>
+<ul>
+<li>查询目标合约的状态。</li>
+<li>调用只读逻辑以避免状态改变。</li>
+</ul>
+<p><strong>代码示例</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">pragma solidity ^0.8.0;</span><br><span class="line"></span><br><span class="line">contract StaticCallExample &#123;</span><br><span class="line">    function staticCallFunction(address target) external view returns (uint256) &#123;</span><br><span class="line">        // 使用 staticcall 调用目标合约的 storedValue()</span><br><span class="line">        (bool success, bytes memory data) = target.staticcall(</span><br><span class="line">            abi.encodeWithSignature(&quot;storedValue()&quot;)</span><br><span class="line">        );</span><br><span class="line">        require(success, &quot;Staticcall failed&quot;);</span><br><span class="line">        return abi.decode(data, (uint256));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="delegatecall"><a href="#delegatecall" class="headerlink" title="delegatecall"></a>delegatecall</h1><p><strong>功能</strong></p>
+<p><code>delegatecall</code> 是一种在当前合约上下文中执行目标合约逻辑的方法。它会以调用合约的存储布局为准，执行目标合约中的代码。</p>
+<p><strong>特点</strong></p>
+<ul>
+<li>使用调用合约的存储。</li>
+<li>使用调用合约的 msg.sender 和 msg.value。</li>
+<li>返回两个值：<ul>
+<li>调用是否成功 (bool)。</li>
+<li>调用返回的数据 (bytes memory)。</li>
+</ul>
+</li>
+</ul>
+<p><strong>使用场景</strong></p>
+<ul>
+<li>实现合约代理（如升级逻辑）。</li>
+<li>在共享存储布局的上下文中执行外部逻辑。</li>
+</ul>
+<p><strong>代码示例</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">pragma solidity ^0.8.0;</span><br><span class="line"></span><br><span class="line">contract DelegateCallExample &#123;</span><br><span class="line">    uint256 public storedValue;</span><br><span class="line"></span><br><span class="line">    function delegateCallFunction(address target, uint256 value) external &#123;</span><br><span class="line">        // 使用 delegatecall 调用目标合约的 setValue(uint)</span><br><span class="line">        (bool success, ) = target.delegatecall(</span><br><span class="line">            abi.encodeWithSignature(&quot;setValue(uint256)&quot;, value)</span><br><span class="line">        );</span><br><span class="line">        require(success, &quot;Delegatecall failed&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// 被调用合约 (Library)</span><br><span class="line">contract Target &#123;</span><br><span class="line">    uint256 public storedValue;</span><br><span class="line"></span><br><span class="line">    function setValue(uint256 value) external &#123;</span><br><span class="line">        storedValue = value</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="call-VS-staticcall-VS-delegatecall"><a href="#call-VS-staticcall-VS-delegatecall" class="headerlink" title="call VS staticcall VS delegatecall"></a><code>call</code> VS <code>staticcall</code> VS <code>delegatecall</code></h1><table>
+<thead>
+<tr>
+<th align="center">特性</th>
+<th align="center">call</th>
+<th align="center">staticcall</th>
+<th align="center">delegatecall</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">可读写状态</td>
+<td align="center">✅</td>
+<td align="center">❌（只读）</td>
+<td align="center">✅</td>
+</tr>
+<tr>
+<td align="center">使用调用合约存储</td>
+<td align="center">❌</td>
+<td align="center">❌</td>
+<td align="center">✅</td>
+</tr>
+<tr>
+<td align="center">使用调用合约<code>msg.sender</code></td>
+<td align="center">❌</td>
+<td align="center">❌</td>
+<td align="center">✅</td>
+</tr>
+<tr>
+<td align="center">支持发送ETH</td>
+<td align="center">✅</td>
+<td align="center">❌</td>
+<td align="center">❌</td>
+</tr>
+<tr>
+<td align="center">调用不存在的函数</td>
+<td align="center">支持，返回失败</td>
+<td align="center">支持，返回失败</td>
+<td align="center">支持，返回失败</td>
+</tr>
+</tbody></table>
+<h1 id="使用注意事项"><a href="#使用注意事项" class="headerlink" title="使用注意事项"></a>使用注意事项</h1><p><strong>call 的安全性</strong></p>
+<ul>
+<li>使用 call 调用外部合约时，目标合约可能会执行恶意代码。需要额外检查返回值并限制权限。</li>
+<li>不要轻易使用 call 调用不可信的合约。</li>
+</ul>
+<p><strong>delegatecall 的存储风险</strong></p>
+<ul>
+<li>调用目标合约时，目标合约必须与调用合约共享相同的存储布局，否则可能导致存储冲突。</li>
+<li>使用 delegatecall 需要确保调用的是受信任的逻辑。</li>
+</ul>
+<p><strong>Gas 消耗与返回值处理</strong></p>
+<ul>
+<li>注意低级调用的 Gas 使用，避免由于 Gas 不足导致调用失败。</li>
+<li>低级调用（call、staticcall 和 delegatecall）不会自动抛出异常，需要手动处理返回值。</li>
+</ul>
+<p><strong>不要使用简写类型</strong></p>
+<p>无论是使用abi.encodeWithSelect 还是 abi.encodeWithSignature ，参数中方法名后的参数一定不要使用简写类型。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">// 错误写法</span><br><span class="line">(bool success, ) = target.call(abi.encodeWithSignature(&quot;setValue(uint)&quot;, value));</span><br></pre></td></tr></table></figure>
+
+<p>因为在编译的过程中，编译器会将简写类型（如：uint）转换成uint256，这将导致，你的签名或选择器不匹配，导致执行失败。</p>
+<h1 id="实践案例：实现代理合约"><a href="#实践案例：实现代理合约" class="headerlink" title="实践案例：实现代理合约"></a>实践案例：实现代理合约</h1><p>以下是使用 <code>delegatecall</code> 的代理合约的示例，用于实现合约逻辑的动态升级</p>
+<p><strong>代码示例</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">pragma solidity ^0.8.0;</span><br><span class="line"></span><br><span class="line">// 逻辑合约</span><br><span class="line">contract LogicContract &#123;</span><br><span class="line">    uint256 public storedValue;</span><br><span class="line"></span><br><span class="line">    function setValue(uint256 value) external &#123;</span><br><span class="line">        storedValue = value;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// 代理合约</span><br><span class="line">contract ProxyContract &#123;</span><br><span class="line">    address public logicContract;</span><br><span class="line"></span><br><span class="line">    constructor(address _logicContract) &#123;</span><br><span class="line">        logicContract = _logicContract;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    fallback() external payable &#123;</span><br><span class="line">        (bool success, ) = logicContract.delegatecall(msg.data);</span><br><span class="line">        require(success, &quot;Delegatecall failed&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>运行过程</strong></p>
+<ul>
+<li>部署 LogicContract。</li>
+<li>部署 ProxyContract，将 LogicContract 的地址传递给其构造函数。</li>
+<li>通过代理合约调用 setValue 方法，storedValue 实际存储在 ProxyContract 中</li>
+</ul>
+<h1 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h1><p><code>call</code>、<code>staticcall</code> 和 <code>delegatecall</code> 是 Solidity 中的基础工具，可以用来实现灵活的合约交互和逻辑扩展。在使用这些低级调用时，需要仔细处理返回值、安全性以及存储一致性问题。</p>
+<p>通过合理使用这些工具，您可以设计功能强大且可扩展的智能合约体系，同时避免潜在的安全漏洞。</p>
+]]></content>
+      <categories>
+        <category>blockchain</category>
+      </categories>
+      <tags>
+        <tag>ethereum</tag>
+        <tag>solidity</tag>
       </tags>
   </entry>
 </search>

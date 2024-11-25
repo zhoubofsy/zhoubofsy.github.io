@@ -188,6 +188,183 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/03/01/container/rancher/rancher-dns-and-metadata/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2017/03/01/container/rancher/rancher-dns-and-metadata/" class="post-title-link" itemprop="url">Rancher服务发现分析</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2017-03-01 15:52:16" itemprop="dateCreated datePublished" datetime="2017-03-01T15:52:16+08:00">2017-03-01</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/container/" itemprop="url" rel="index"><span itemprop="name">container</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="什么是服务发现"><a href="#什么是服务发现" class="headerlink" title="什么是服务发现"></a>什么是服务发现</h1><p>容器可以对其它容器提供服务，如mysql（数据库服务）、nginx、mangodb等等。这些服务都可以通过IP＋Port方式访问。由于容器会经常重建迁移，所以IP会发生变化，如果调用服务的程序使用IP访问就会很不方便，为此可以使用DNS、zookeeper、etcd等技术实现服务访问与IP的解耦。这种解耦方式叫做服务发现。</p>
+<h1 id="版本"><a href="#版本" class="headerlink" title="版本"></a>版本</h1><ul>
+<li>rancher-dns v0.13.3</li>
+</ul>
+<h1 id="Rancher服务发现构成及更新流程"><a href="#Rancher服务发现构成及更新流程" class="headerlink" title="Rancher服务发现构成及更新流程"></a>Rancher服务发现构成及更新流程</h1><p><img src="/images/rancher/rancher-dns-and-metadata.png" alt="rancher-dns-and-metadata"></p>
+<ul>
+<li>Cattle<br>  容器管理器（rancher核心）。</li>
+<li>Event Subscriber<br>  轻量级的消息队列，用于通知rancher-metadata更新数据<br>  ** 猜测：采用websocket协议通讯，Cattle为消息生产者，rancher-metadata、scheduler、rancher-agent为消费者或消息订阅者 **</li>
+<li>rancher-dns<br>  向容器提供DNS服务</li>
+<li>rancher-metadata<br>  rancher中的元数据管理器</li>
+</ul>
+<h1 id="rancher-dns结构"><a href="#rancher-dns结构" class="headerlink" title="rancher-dns结构"></a>rancher-dns结构</h1><p><img src="/images/rancher/rancher-dns-struct.png" alt="rancher-dns-struct"></p>
+<ul>
+<li>TCP、UDP Listen<br>  rancher-dns监听53端口，用于接收域名解析请求。</li>
+<li>miekg DNS<br>  DNS协议封装解析库</li>
+<li>ROUTE<br>  处理域名解析业务逻辑</li>
+<li>metadata client<br>  负责与rancher-metadata同步answer数据，每5秒同步一次。</li>
+<li>answers<br>  负责存储解析<code>metadata client</code>同步来的answer数据（<code>/etc/rancher/answers.json</code>）</li>
+</ul>
+<h1 id="rancher-dns-ROUTE工作流程"><a href="#rancher-dns-ROUTE工作流程" class="headerlink" title="rancher-dns ROUTE工作流程"></a>rancher-dns ROUTE工作流程</h1><p><img src="/images/rancher/rancher-dns-route-workflow.png" alt="rancher-dns-route-workflow"></p>
+<p>*** 关于域名协议流程参见：<a href="https://zhoubofsy.github.io/2017/02/17/network/dns-protocol/">《DNS协议》</a>中相关内容 ***</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/02/23/apple/mac-remove-sqlite-editor-app-intr/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2017/02/23/apple/mac-remove-sqlite-editor-app-intr/" class="post-title-link" itemprop="url">Mac通知中心自动推送SQLite Editor广告问题修改</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2017-02-23 10:37:39" itemprop="dateCreated datePublished" datetime="2017-02-23T10:37:39+08:00">2017-02-23</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/apple/" itemprop="url" rel="index"><span itemprop="name">apple</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p><img src="/images/apple/mac-sqlite-ad-bugfix.png" alt="mac-sqlite-ad-bugfix"></p>
+<h1 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h1><p>mac上有很多流氓软件，尤其是你通过非app store安装的时候。今天我遇到了这样一个问题，mac的通知中心通知我<code>Get it NOW!</code>，这是SQLite Editor的一个广告推送。频率为每天一次，记住当它提示你get的时候，千万别点，点了便每天会自动打开App Store ＋ Web来提示你购买。我操，真是烦死了。</p>
+<h1 id="版本"><a href="#版本" class="headerlink" title="版本"></a>版本</h1><p>OS X 10.11.6</p>
+<h1 id="解决方法"><a href="#解决方法" class="headerlink" title="解决方法"></a>解决方法</h1><ul>
+<li>清理base-sqlite的推送程序<br>  在”&#x2F;Users&#x2F;zhoub&#x2F;Library&#x2F;Application Support”目录下，有一个”com.asoffertest.base-sqlite”目录，这里面的asoffer.py就是完成广告推送的罪魁祸首，不要由于果断将”com.asoffertest.base-sqlite”目录删除。</li>
+<li>清理NotificationCenter数据库中的记录<br>  虽然清理了推送程序，但是通知中心中依然有推送程序的选项卡——一个叫python的选项卡。所以需要按照<a href="https://zhoubofsy.github.io/2017/02/20/apple/mac-notification-center-manage/">《Mac中NotificationCenter残留应用删除》</a>的方法清除“python选项卡”。</li>
+<li>重启系统<br>  ……系统启动后，通知中心的选项卡中没有“python”了。</li>
+</ul>
+<h1 id="原因"><a href="#原因" class="headerlink" title="原因"></a>原因</h1><p>上诉的推送程序本人也不知道是装哪个软件装上的。但本人在<code>MPlayerX</code>官网上下载过osx安装包，并安装过。然后提示我已经安装了mackeeper，mackeeper可是个…以前就被这个mk（mackeeper）坑过，这次估计又是这厮搞得。</p>
+<p>*** 以上纯属猜测，没有直接根据。***</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/02/20/apple/mac-notification-center-manage/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1211,244 +1388,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/01/20/raspbarrypi/rpi3-make-image/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2017/01/20/raspbarrypi/rpi3-make-image/" class="post-title-link" itemprop="url">img制作</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2017-01-20 13:54:34" itemprop="dateCreated datePublished" datetime="2017-01-20T13:54:34+08:00">2017-01-20</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/rpi/" itemprop="url" rel="index"><span itemprop="name">rpi</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h1><p>新买了一个TF卡，Class10的，应该能挺快。原来的卡是class4的，如果用新卡做系统，然后所有软件都重装重配，太麻烦！所以将现有系统，做成镜像（img），然后直接<code>dd</code>到新卡上，然后再执行<code>raspi-conf</code>进行容量扩展就可以正常使用了。</p>
-<h1 id="版本"><a href="#版本" class="headerlink" title="版本"></a>版本</h1><ul>
-<li>硬件，RaspberryPi3</li>
-<li>OS，raspbian jessie</li>
-</ul>
-<h1 id="步骤"><a href="#步骤" class="headerlink" title="步骤"></a>步骤</h1><h2 id="安装需要的软件"><a href="#安装需要的软件" class="headerlink" title="安装需要的软件"></a>安装需要的软件</h2><p>安装<code>dosfstools</code>、<code>parted</code>、<code>kpartx</code>软件及依赖包。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt-get install dosfstools parted kpartx</span><br></pre></td></tr></table></figure>
-
-<h2 id="计算镜像大小"><a href="#计算镜像大小" class="headerlink" title="计算镜像大小"></a>计算镜像大小</h2><p>获取<code>/dev/root</code>和<code>/dev/mmcblk0p1</code>占用的空间，然后计算镜像大小，计算公式：1.2 * (size(&#x2F;dev&#x2F;root) + size(&#x2F;dev&#x2F;mmcblk0p1))</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">df</span> -P</span></span><br><span class="line">Filesystem     1024-blocks      Used Available Capacity Mounted on</span><br><span class="line">/dev/root         30690780   1390740  28024812       5% /</span><br><span class="line">/dev/mmcblk0p1       64366     20698     43668      33% /boot</span><br></pre></td></tr></table></figure>
-<p><code>df</code>返回的容量单位为KB。</p>
-<h2 id="生成空白镜像文件"><a href="#生成空白镜像文件" class="headerlink" title="生成空白镜像文件"></a>生成空白镜像文件</h2><p>使用<code>dd</code>和<code>/dev/zero</code>生成空白镜像文件<code>sudo dd if=/dev/zero of=&#123;镜像文件&#125; bs=1K count=&#123;镜像大小（单位为K）&#125;</code></p>
-<h2 id="分区镜像文件并格式化"><a href="#分区镜像文件并格式化" class="headerlink" title="分区镜像文件并格式化"></a>分区镜像文件并格式化</h2><h3 id="分区"><a href="#分区" class="headerlink" title="分区"></a>分区</h3><p>使用<code>parted</code>为img文件分区</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">标记label，选择MBR or GPT主引导格式，MBR:msdos, GPT:gpt</span></span><br><span class="line">sudo parted &#123;镜像文件&#125; -s -- mklabel msdos</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">创建分区</span></span><br><span class="line">sudo parted &#123;镜像文件&#125; -s -- mkpart primary fat32 &#123;开始扇区&#125;s &#123;结束扇区&#125;s</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">创建分区</span></span><br><span class="line">sudo parted &#123;镜像文件&#125; -s -- mkpart primary ext4 &#123;开始扇区&#125;s -1</span><br></pre></td></tr></table></figure>
-<p>开始扇区和结束扇区可是通过<code>sudo fdisk -l /dev/mmcblk0</code>来查看。</p>
-<h3 id="格式化"><a href="#格式化" class="headerlink" title="格式化"></a>格式化</h3><p>在格式化前，需要先将img文件映射给系统的loop设备，然后在将loop设备映射给device mapper。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">映射loop设备</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> losetup -f --show &#123;镜像文件&#125;</span></span><br><span class="line">/dev/loop0</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">device mapper</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> kpartx -va /dev/loop0</span></span><br><span class="line">add map loop0p1 (254:0): 0 257 linear /dev/loop0 256</span><br><span class="line">add map loop0p2 (254:1): 0 18015 linear /dev/loop0 513</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">格式化</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> mkfs.vfat /dev/mapper/loop0p1</span></span><br><span class="line">......</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> mkfs.ext4 /dev/mapper/loop0p2</span></span><br><span class="line">......</span><br></pre></td></tr></table></figure>
-
-<h2 id="挂载并备份系统"><a href="#挂载并备份系统" class="headerlink" title="挂载并备份系统"></a>挂载并备份系统</h2><p>备份<code>/boot</code></p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> mount -f vfat /dev/mapper/loop0p1 /media</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> <span class="built_in">cp</span> -rfp /boot/* /media/</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> umount /media</span></span><br></pre></td></tr></table></figure>
-
-<p>备份<code>/</code></p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> mount -t ext4 /dev/mapper/loop0p2 /media</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> rsync -aP --exclude=&#123;镜像文件&#125; --exclude=/media/* --exclude=/sys/* --exclude=/proc/* --exclude=/tmp/* / /media/</span></span><br><span class="line">...</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> umount /media</span></span><br></pre></td></tr></table></figure>
-
-<h2 id="卸载打包镜像文件"><a href="#卸载打包镜像文件" class="headerlink" title="卸载打包镜像文件"></a>卸载打包镜像文件</h2><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">关闭device mapper</span></span><br><span class="line">sudo kpartx -d /dev/loop0</span><br><span class="line"></span><br><span class="line">＃关闭 loop 设备</span><br><span class="line">sudo losetup -d /dev/loop0</span><br></pre></td></tr></table></figure>
-
-<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/talkxin/article/details/50456282">制作树莓派最小镜像-img裁剪瘦身</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/01/13/linux/filesystem-userspace-usage/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2017/01/13/linux/filesystem-userspace-usage/" class="post-title-link" itemprop="url">FUSE的使用及示例</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2017-01-13 14:24:21" itemprop="dateCreated datePublished" datetime="2017-01-13T14:24:21+08:00">2017-01-13</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/linux/" itemprop="url" rel="index"><span itemprop="name">linux</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>文件系统，是任何OS都不可却少的。想要编写一个属于自己的文件系统很容易，但调试十分不方便。为了方便调试，提高开发效率，可以使用FUSE（Filesystem in userspace）框架进行开发。这是一个内核模块，能够让用户在用户空间实现文件系统并且挂载到某个目录，就像在内核实现的文件系统一样。使用 FUSE 有几个好处：一是因为在用户空间实现，开发和调试都比较方便；二是可以把一些常用的服务以文件系统的形式展现，方便操作，如 ftpfs，sshfs，mailfs 等；另外可以避免一些版权问题，如 Linux 上对 ntfs，zfs 的操作都是通过 FUSE 实现的。当然用户空间的实现也有缺点，最明显的就是由多次在用户态&#x2F;内核态切换带来的性能下降。</p>
-<h1 id="FUSE架构"><a href="#FUSE架构" class="headerlink" title="FUSE架构"></a>FUSE架构</h1><p><img src="/images/linux/fuse.png" alt="FUSE Frame"><br>将文件系统需要处理的读、写、创建、删除等函数，以回调的方式注册到FUSE模块中，当用户访问挂载目录时，FUSE模块回调相应的注册接口。</p>
-<h1 id="FUSE安装"><a href="#FUSE安装" class="headerlink" title="FUSE安装"></a>FUSE安装</h1><h2 id="ubuntu-16-04-安装"><a href="#ubuntu-16-04-安装" class="headerlink" title="ubuntu 16.04 安装"></a>ubuntu 16.04 安装</h2><p>需要安装<code>libfuse2</code>和<code>libfuse-dev</code></p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt-get install libfuse2 libfuse-dev pkg-config</span><br></pre></td></tr></table></figure>
-<p>版本:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">FUSE library version: 2.9.4</span><br><span class="line">fusermount version: 2.9.4</span><br><span class="line">using FUSE kernel interface version 7.19</span><br></pre></td></tr></table></figure>
-
-<h2 id="OSX-10-11-6-安装"><a href="#OSX-10-11-6-安装" class="headerlink" title="OSX 10.11.6 安装"></a>OSX 10.11.6 安装</h2><p>需要安装<code>Caskroom/cask/osxfuse</code></p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">brew cask install osxfuse</span><br></pre></td></tr></table></figure>
-<p>版本:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">OSXFUSE 3.5.4</span><br><span class="line">FUSE library version: 2.9.7</span><br><span class="line">fuse: no mount point</span><br></pre></td></tr></table></figure>
-
-<h1 id="FUSE使用"><a href="#FUSE使用" class="headerlink" title="FUSE使用"></a>FUSE使用</h1><p>FUSE有两种接口，一种是<code>fuse_operations</code>另一种是<code>fuse_lowlevel_ops</code>。</p>
-<ul>
-<li><code>fuse_operations</code>是较为上层的接口，我们可以使用<code>fuse_main</code>函数将其传入FUSE中<br>  eg:<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="keyword">struct</span> <span class="title class_">fuse_operations</span> cryptfs_ops = &#123;</span><br><span class="line">        .init = cfs_init,</span><br><span class="line">        .destroy = cfs_destroy,</span><br><span class="line">        .open = cfs_open,</span><br><span class="line">        .read = cfs_read,</span><br><span class="line">        .write = cfs_write,</span><br><span class="line">        .release = cfs_release,</span><br><span class="line">        .readdir = cfs_readdir,</span><br><span class="line">        .getattr = cfs_getattr,</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></li>
-<li><code>fuse_lowlevel_ops</code>是较底层的接口，我们可以使用<code>fuse_session_loop</code>函数实现<br>  eg:<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="keyword">struct</span> <span class="title class_">fuse_lowlevel_ops</span>  lowlevel_handler =   </span><br><span class="line">&#123;  </span><br><span class="line">        .lookup   = lowlevel_lookup,  </span><br><span class="line">        .getattr  = lowlevel_getattr,  </span><br><span class="line">        .readdir  = lowlevel_readdir,  </span><br><span class="line">        .mkdir    = lowlevel_mkdir,  </span><br><span class="line">        .rmdir    = lowlevel_rmdir,  </span><br><span class="line">        .open     = lowlevel_open,  </span><br><span class="line">        .read     = lowlevel_read,  </span><br><span class="line">        .write    = lowlevel_write,  </span><br><span class="line">        .unlink   = lowlevel_unlink,  </span><br><span class="line">        .rename   = lowlevel_rename,  </span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<code>fuse_operations</code>使用简单，容易上手。<code>fuse_lowlevel_ops</code>灵活性大，需要有FS开发经验。</li>
-</ul>
-<h2 id="Helloworld示例"><a href="#Helloworld示例" class="headerlink" title="Helloworld示例"></a>Helloworld示例</h2><p>实现<code>ls ./mp</code>系统提示<code>Hello-world</code>(<code>./mp</code>为挂载目录)<br><code>ls</code>会用到的方法代码:</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;fuse.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">static</span> <span class="type">int</span> <span class="title">cfs_readdir</span><span class="params">(<span class="type">const</span> <span class="type">char</span>* path, <span class="type">void</span>* buf, <span class="type">fuse_fill_dir_t</span> filler, <span class="type">off_t</span> offset, <span class="keyword">struct</span> fuse_file_info* fi)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">fprintf</span>(prd-&gt;logfile, <span class="string">&quot;cfs_readdir\t path : %s\n&quot;</span>, path);</span><br><span class="line">    <span class="built_in">fflush</span>(prd-&gt;logfile);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">filler</span>(buf, <span class="string">&quot;Hello-world&quot;</span>, <span class="literal">NULL</span>, <span class="number">0</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">static</span> <span class="type">int</span> <span class="title">cfs_getattr</span><span class="params">(<span class="type">const</span> <span class="type">char</span>* path, <span class="keyword">struct</span> stat *stbuf)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">fprintf</span>(prd-&gt;logfile, <span class="string">&quot;cfs_getattr\t path : %s\n&quot;</span>, path);</span><br><span class="line">    <span class="built_in">fflush</span>(prd-&gt;logfile);</span><br><span class="line">    <span class="keyword">if</span>(<span class="built_in">strcmp</span>(path, <span class="string">&quot;/&quot;</span>) == <span class="number">0</span>)</span><br><span class="line">        stbuf-&gt;st_mode = <span class="number">0755</span> | S_IFDIR;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        stbuf-&gt;st_mode = <span class="number">0644</span> | S_IFREG;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p><code>fuse_main</code>将接口注册到FUSE中:</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="keyword">struct</span> <span class="title class_">fuse_operations</span> cryptfs_ops = &#123;</span><br><span class="line">    .readdir = cfs_readdir,</span><br><span class="line">    .getattr = cfs_getattr,</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">(<span class="type">int</span> argc, <span class="type">char</span> *argv[])</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">int</span> ret = <span class="number">0</span>;</span><br><span class="line">    ret = <span class="built_in">fuse_main</span>(argc, argv, &amp;cryptfs_ops);</span><br><span class="line">    <span class="keyword">return</span> ret;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="编译"><a href="#编译" class="headerlink" title="编译"></a>编译</h2><h3 id="ubuntu-16-04"><a href="#ubuntu-16-04" class="headerlink" title="ubuntu 16.04"></a>ubuntu 16.04</h3><p>编译命令:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc myfuse.c -o myfuse -DFUSE_USE_VERSION=22 `pkg-config fuse --cflags --libs` -g</span><br></pre></td></tr></table></figure>
-<p>or</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc myfuse.c -o myfuse -DFUSE_USE_VERSION=22 -D_FILE_OFFSET_BITS=64 -I/usr/include/fuse -lfuse -pthread -g </span><br></pre></td></tr></table></figure>
-<p>使用后者编译时不需要安装包<code>pkg-config</code>，由于不同操作系统fuse安装位置不一样，所以还是推荐使用<code>pkg-config</code>的方式</p>
-<h2 id="调试"><a href="#调试" class="headerlink" title="调试"></a>调试</h2><p>可使用GDB调试，<code>myfuse</code>会以守护进程方式启动，调试有三种方法。</p>
-<ul>
-<li>待<code>myfuse</code>进程启动后，使用GDB中的<code>attach</code>方法进行调试</li>
-<li>使用GDB调试<code>myfuse</code>，参数中增加<code>-d</code>参数，该参数可以使<code>myfuse</code>不已守护进程方式启动 ( ** Version: 2.9.9上无法实现 ** )</li>
-<li>在<code>myfuse</code>中增加调试打印信息进行调试</li>
-</ul>
-<h3 id="挂载FUSE"><a href="#挂载FUSE" class="headerlink" title="挂载FUSE"></a>挂载FUSE</h3><p>先创建一个目录(<code>mkdir ./mp</code>)，用于挂载<code>myfuse</code>文件系统，然后调用<code>myfuse</code>进行挂载。<br>eg:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo ./myfuse ./mp</span><br></pre></td></tr></table></figure>
-<p>对于mac系统挂载文件系统需要使用参数<code>-o allow_other</code>，否则挂在后，挂载目录将无权访问。<br>eg:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo ./myfuse ./mp -o allow_other</span><br></pre></td></tr></table></figure>
-<p>使用<code>mount</code>查看挂载的文件系统。<br>eg:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">mount</span></span><br><span class="line">...</span><br><span class="line">/home/xxxx/xxxx/myfuse on /home/xxxx/xxxx/mp type fuse.myfuse (rw,nosuid,nodev,relatime,user_id=1000,group_id=1000)</span><br></pre></td></tr></table></figure>
-
-<p>使用<code>ls ./mp</code>查看挂载点内容，根据实现应提示<code>Hello-world</code><br>eg:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">ls</span> ./mp/</span></span><br><span class="line">Hello-world</span><br></pre></td></tr></table></figure>
-
-<h3 id="卸载FUSE"><a href="#卸载FUSE" class="headerlink" title="卸载FUSE"></a>卸载FUSE</h3><p>使用<code>umount</code>卸载<code>myfuse</code>文件系统，需要输入挂载点的全路径<br>eg:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo umount /home/xxxx/xxxx/mp</span><br></pre></td></tr></table></figure>
-
-<h2 id="FUSE-Options说明"><a href="#FUSE-Options说明" class="headerlink" title="FUSE Options说明"></a>FUSE Options说明</h2><p><code>fuse_main</code>函数自带usage信息，只需要将<code>--help</code>参数传入，便能将usage信息打出来。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">./myfuse --<span class="built_in">help</span></span></span><br><span class="line">usage: ./myfuse mountpoint [options]</span><br><span class="line"></span><br><span class="line">general options:</span><br><span class="line">    -o opt,[opt...]        mount options</span><br><span class="line">    -h   --help            print help</span><br><span class="line">    -V   --version         print version</span><br><span class="line"></span><br><span class="line">FUSE options:</span><br><span class="line">    -d   -o debug          enable debug output (implies -f)</span><br><span class="line">    -f                     foreground operation</span><br><span class="line">    -s                     disable multi-threaded operation</span><br><span class="line"></span><br><span class="line">    -o allow_other         allow access to other users</span><br><span class="line">    -o allow_root          allow access to root</span><br><span class="line">    -o auto_unmount        auto unmount on process termination</span><br><span class="line">    -o nonempty            allow mounts over non-empty file/dir</span><br><span class="line">    -o default_permissions enable permission checking by kernel</span><br><span class="line">    -o fsname=NAME         set filesystem name</span><br><span class="line">    -o subtype=NAME        set filesystem type</span><br><span class="line">    -o large_read          issue large read requests (2.4 only)</span><br><span class="line">    -o max_read=N          set maximum size of read requests</span><br><span class="line">    </span><br><span class="line">    -o hard_remove         immediate removal (don&#x27;t hide files)</span><br><span class="line">    -o use_ino             let filesystem set inode numbers</span><br><span class="line">    -o readdir_ino         try to fill in d_ino in readdir</span><br><span class="line">    -o direct_io           use direct I/O</span><br><span class="line">    -o kernel_cache        cache files in kernel</span><br><span class="line">    -o [no]auto_cache      enable caching based on modification times (off)</span><br><span class="line">    -o umask=M             set file permissions (octal)</span><br><span class="line">    -o uid=N               set file owner</span><br><span class="line">    -o gid=N               set file group</span><br><span class="line">    -o entry_timeout=T     cache timeout for names (1.0s)</span><br><span class="line">    -o negative_timeout=T  cache timeout for deleted names (0.0s)</span><br><span class="line">    -o attr_timeout=T      cache timeout for attributes (1.0s)</span><br><span class="line">    -o ac_attr_timeout=T   auto cache timeout for attributes (attr_timeout)</span><br><span class="line">    -o noforget            never forget cached inodes</span><br><span class="line">    -o remember=T          remember cached inodes for T seconds (0s)</span><br><span class="line">    -o nopath              don&#x27;t supply path if not necessary</span><br><span class="line">    -o intr                allow requests to be interrupted</span><br><span class="line">    -o intr_signal=NUM     signal to send on interrupt (10)</span><br><span class="line">    -o modules=M1[:M2...]  names of modules to push onto filesystem stack</span><br><span class="line">    -o max_write=N         set maximum size of write requests</span><br><span class="line">    -o max_readahead=N     set maximum readahead</span><br><span class="line">    -o max_background=N    set number of maximum background requests</span><br><span class="line">    -o congestion_threshold=N  set kernel&#x27;s congestion threshold</span><br><span class="line">    -o async_read          perform reads asynchronously (default)</span><br><span class="line">    -o sync_read           perform reads synchronously</span><br><span class="line">    -o atomic_o_trunc      enable atomic open+truncate support</span><br><span class="line">    -o big_writes          enable larger than 4kB writes</span><br><span class="line">    -o no_remote_lock      disable remote file locking</span><br><span class="line">    -o no_remote_flock     disable remote file locking (BSD)</span><br><span class="line">    -o no_remote_posix_lock disable remove file locking (POSIX)</span><br><span class="line">    -o [no_]splice_write   use splice to write to the fuse device</span><br><span class="line">    -o [no_]splice_move    move data while splicing to the fuse device</span><br><span class="line">    -o [no_]splice_read    use splice to read from the fuse device</span><br></pre></td></tr></table></figure>
-
-<h2 id="FUSE-Operations说明"><a href="#FUSE-Operations说明" class="headerlink" title="FUSE Operations说明"></a>FUSE Operations说明</h2><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">fuse_operations</span> &#123;</span><br><span class="line">    <span class="built_in">int</span> (*getattr) (<span class="type">const</span> <span class="type">char</span> *, <span class="keyword">struct</span> stat *);</span><br><span class="line">    <span class="comment">/* 这个函数与 stat() 类似。st_dev 和 st_blksize 域都可以忽略。st_ino 域也会被忽略，除非在执行 mount 时指定了 use_ino 选项 */</span></span><br><span class="line"></span><br><span class="line">    <span class="built_in">int</span> (*readlink) (<span class="type">const</span> <span class="type">char</span> *, <span class="type">char</span> *, <span class="type">size_t</span>);</span><br><span class="line">    <span class="comment">/* 这个函数会读取一个符号链接的目标。缓冲区应该是一个以 null 结束的字符串。缓冲区的大小参数包括这个 null 结束字符的空间。如果链接名太长，不能保存到缓冲区中，就应该被截断。成功时的返回值应该是 “0” */</span></span><br><span class="line"></span><br><span class="line">    <span class="built_in">int</span> (*getdir) (<span class="type">const</span> <span class="type">char</span> *, <span class="type">fuse_dirh_t</span>, <span class="type">fuse_dirfil_t</span>);</span><br><span class="line">    <span class="comment">/* 这个函数会读取一个目录中的内容。这个操作实际上是在一次调用中执行 opendir()、readdir()、...、closedir() 序列。对于每个目录项来说，都应该调用 filldir() 函数 */</span></span><br><span class="line"></span><br><span class="line">    <span class="built_in">int</span> (*mknod) (<span class="type">const</span> <span class="type">char</span> *, <span class="type">mode_t</span>, <span class="type">dev_t</span>);</span><br><span class="line">    <span class="comment">/* 这个函数会创建一个文件节点。此处没有 create() 操作；mknod() 会在创建非目录、非符号链接的节点时调用 */</span></span><br><span class="line"></span><br><span class="line">    <span class="built_in">int</span> (*mkdir) (<span class="type">const</span> <span class="type">char</span> *, <span class="type">mode_t</span>);</span><br><span class="line">    <span class="built_in">int</span> (*rmdir) (<span class="type">const</span> <span class="type">char</span> *);</span><br><span class="line">    <span class="comment">/* 这两个函数分别用来创建和删除一个目录 */</span></span><br><span class="line"></span><br><span class="line">    <span class="built_in">int</span> (*unlink) (<span class="type">const</span> <span class="type">char</span> *);</span><br><span class="line">    <span class="built_in">int</span> (*rename) (<span class="type">const</span> <span class="type">char</span> *, <span class="type">const</span> <span class="type">char</span> *);</span><br><span class="line">    <span class="comment">/* 这两个函数分别用来删除和重命名一个文件 */</span></span><br><span class="line"></span><br><span class="line">    <span class="built_in">int</span> (*symlink) (<span class="type">const</span> <span class="type">char</span> *, <span class="type">const</span> <span class="type">char</span> *);</span><br><span class="line">    <span class="comment">/* 这个函数用来创建一个符号链接 */</span></span><br><span class="line"></span><br><span class="line">    <span class="built_in">int</span> (*link) (<span class="type">const</span> <span class="type">char</span> *, <span class="type">const</span> <span class="type">char</span> *);</span><br><span class="line">    <span class="comment">/* 这个函数创建一个到文件的硬链接 */</span></span><br><span class="line"></span><br><span class="line">    <span class="built_in">int</span> (*chmod) (<span class="type">const</span> <span class="type">char</span> *, <span class="type">mode_t</span>);</span><br><span class="line">    <span class="built_in">int</span> (*chown) (<span class="type">const</span> <span class="type">char</span> *, <span class="type">uid_t</span>, <span class="type">gid_t</span>);</span><br><span class="line">    <span class="built_in">int</span> (*truncate) (<span class="type">const</span> <span class="type">char</span> *, <span class="type">off_t</span>);</span><br><span class="line">    <span class="built_in">int</span> (*utime) (<span class="type">const</span> <span class="type">char</span> *, <span class="keyword">struct</span> utimbuf *);</span><br><span class="line">    <span class="comment">/* 这 4 个函数分别用来修改文件的权限位、属主和用户、大小以及文件的访问/修改时间 */</span></span><br><span class="line"></span><br><span class="line">    <span class="built_in">int</span> (*open) (<span class="type">const</span> <span class="type">char</span> *, <span class="keyword">struct</span> fuse_file_info *);</span><br><span class="line">    <span class="comment">/* 这是文件的打开操作。对 open() 函数不能传递创建或截断标记（O_CREAT、O_EXCL、O_TRUNC）。这个函数应该检查是否允许执行给定的标记的操作。另外，open() 也可能在 fuse_file_info 结构中返回任意的文件句柄，这会传递给所有的文件操作 */</span></span><br><span class="line">    <span class="built_in">int</span> (*read) (<span class="type">const</span> <span class="type">char</span> *, <span class="type">char</span> *, <span class="type">size_t</span>, <span class="type">off_t</span>, <span class="keyword">struct</span> fuse_file_info *);</span><br><span class="line">    <span class="comment">/* 这个函数从一个打开文件中读取数据。除非碰到 EOF 或出现错误，否则 read() 应该返回所请求的字节数的数据；否则，其余数据都会被替换成 0。一个例外是在执行 mount 命令时指定了 direct_io 选项，在这种情况中 read() 系统调用的返回值会影响这个操作的返回值 */</span></span><br><span class="line"></span><br><span class="line">    <span class="built_in">int</span> (*write) (<span class="type">const</span> <span class="type">char</span> *, <span class="type">const</span> <span class="type">char</span> *, <span class="type">size_t</span>, <span class="type">off_t</span>,<span class="keyword">struct</span> fuse_file_info *);</span><br><span class="line">    <span class="comment">/* 这个函数将数据写入一个打开的文件中。除非碰到 EOF 或出现错误，否则 write() 应该返回所请求的字节数的数据。一个例外是在执行 mount 命令时指定了 direct_io 选项（这于 read() 操作的情况类似） */</span></span><br><span class="line"></span><br><span class="line">    <span class="built_in">int</span> (*statfs) (<span class="type">const</span> <span class="type">char</span> *, <span class="keyword">struct</span> statfs *);</span><br><span class="line">    <span class="comment">/* 这个函数获取文件系统的统计信息。f_type 和 f_fsid 域都会被忽略 */</span></span><br><span class="line"></span><br><span class="line">    <span class="built_in">int</span> (*flush) (<span class="type">const</span> <span class="type">char</span> *, <span class="keyword">struct</span> fuse_file_info *);</span><br><span class="line">    <span class="comment">/* 这表示要刷新缓存数据。它并不等于 fsync() 函数 —— 也不是请求同步脏数据。每次对一个文件描述符执行 close() 函数时，都会调用 flush()；因此如果文件系统希望在 close() 中返回写错误，并且这个文件已经缓存了脏数据，那么此处就是回写数据并返回错误的好地方。由于很多应用程序都会忽略 close() 错误，因此这通常用处不大 */</span></span><br><span class="line"></span><br><span class="line">    <span class="built_in">int</span> (*release) (<span class="type">const</span> <span class="type">char</span> *, <span class="keyword">struct</span> fuse_file_info *);</span><br><span class="line">    <span class="comment">/* 这个函数释放一个打开文件。release() 是在对一个打开文件没有其他引用时调用的 —— 此时所有的文件描述符都会被关闭，所有的内存映射都会被取消。对于每个 open() 调用来说，都必须有一个使用完全相同标记和文件描述符的 release() 调用。对一个文件打开多次是可能的，在这种情况中只会考虑最后一次 release，然后就不能再对这个文件执行更多的读/写操作了。release 的返回值会被忽略 */</span></span><br><span class="line"></span><br><span class="line">    <span class="built_in">int</span> (*fsync) (<span class="type">const</span> <span class="type">char</span> *, <span class="type">int</span>, <span class="keyword">struct</span> fuse_file_info *);</span><br><span class="line">    <span class="comment">/* 这个函数用来同步文件内容。如果 datasync 参数为非 0，那么就只会刷新用户数据，而不会刷新元数据 */</span></span><br><span class="line"></span><br><span class="line">    <span class="built_in">int</span> (*setxattr) (<span class="type">const</span> <span class="type">char</span> *, <span class="type">const</span> <span class="type">char</span> *, <span class="type">const</span> <span class="type">char</span> *, <span class="type">size_t</span>, <span class="type">int</span>);</span><br><span class="line">    <span class="built_in">int</span> (*getxattr) (<span class="type">const</span> <span class="type">char</span> *, <span class="type">const</span> <span class="type">char</span> *, <span class="type">char</span> *, <span class="type">size_t</span>);</span><br><span class="line">    <span class="built_in">int</span> (*listxattr) (<span class="type">const</span> <span class="type">char</span> *, <span class="type">char</span> *, <span class="type">size_t</span>);</span><br><span class="line">    <span class="built_in">int</span> (*removexattr) (<span class="type">const</span> <span class="type">char</span> *, <span class="type">const</span> <span class="type">char</span> *);</span><br><span class="line">    <span class="comment">/* 这些函数分别用来设置、获取、列出和删除扩展属性 */</span></span><br><span class="line">    ......</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>更多详细说明，请见<code>fuse.h</code>文件。</p>
-<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a target="_blank" rel="noopener" href="http://blog.jeffli.me/blog/2014/08/30/use-gdb-to-understand-fuse-file-system/">Use GDB to Understand FUSE File System</a></li>
-<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/langeldep/article/details/6401567">FUSE API 的两种使用方法</a></li>
-<li><a target="_blank" rel="noopener" href="http://ouonline.net/building-your-own-fs-with-fuse-1">使用 fuse 编写文件系统 (1)</a></li>
-<li><a target="_blank" rel="noopener" href="https://github.com/osxfuse/osxfuse/issues/45">cannot umount or mount an sshfs volume after ssh connection cut</a></li>
-<li><a target="_blank" rel="noopener" href="http://www.tuicool.com/articles/qAjARfY">Fuse文件系统优化方案</a></li>
-<li><a target="_blank" rel="noopener" href="http://www.tuicool.com/articles/6F7Fzi">FUSE源码剖析</a></li>
-<li><a target="_blank" rel="noopener" href="http://www.ibm.com/developerworks/cn/linux/l-fuse/">使用 FUSE 开发自己的文件系统</a></li>
-<li><a target="_blank" rel="noopener" href="https://github.com/gerard/ext4fuse/issues/36">ext4fuse issues</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1518,7 +1457,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">138</span>
+          <span class="site-state-item-count">140</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -1531,7 +1470,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">119</span>
+        <span class="site-state-item-count">120</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>

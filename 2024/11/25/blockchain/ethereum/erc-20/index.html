@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zhoubofsy.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="什么是 ERC-20？ERC-20 提出了一个同质化代币的标准，换句话说，它们具有一种属性，使得每个代币都与另一个代币（在类型和价值上）完全相同。 例如，一个 ERC-20 代币就像以太币一样，意味着一个代币会并永远会与其他代币一样。(From: 《ERC-20 代币标准》) 方法（Method）123456789101112131415161718192021222324252627282930">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ERC-20">
+<meta property="og:url" content="http://zhoubofsy.github.io/2024/11/25/blockchain/ethereum/erc-20/index.html">
+<meta property="og:site_name" content="Bolog">
+<meta property="og:description" content="什么是 ERC-20？ERC-20 提出了一个同质化代币的标准，换句话说，它们具有一种属性，使得每个代币都与另一个代币（在类型和价值上）完全相同。 例如，一个 ERC-20 代币就像以太币一样，意味着一个代币会并永远会与其他代币一样。(From: 《ERC-20 代币标准》) 方法（Method）123456789101112131415161718192021222324252627282930">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2024-11-25T02:32:32.000Z">
+<meta property="article:modified_time" content="2024-11-25T02:55:47.968Z">
+<meta property="article:author" content="博">
+<meta property="article:tag" content="ethereum">
+<meta property="article:tag" content="solidity">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://zhoubofsy.github.io/2024/11/25/blockchain/ethereum/erc-20/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>ERC-20 | Bolog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Bolog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2024/11/25/blockchain/ethereum/erc-20/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          ERC-20
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2024-11-25 10:32:32 / Modified: 10:55:47" itemprop="dateCreated datePublished" datetime="2024-11-25T10:32:32+08:00">2024-11-25</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/blockchain/" itemprop="url" rel="index"><span itemprop="name">blockchain</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="什么是-ERC-20？"><a href="#什么是-ERC-20？" class="headerlink" title="什么是 ERC-20？"></a>什么是 ERC-20？</h1><p>ERC-20 提出了一个同质化代币的标准，换句话说，它们具有一种属性，使得每个代币都与另一个代币（在类型和价值上）完全相同。 例如，一个 ERC-20 代币就像以太币一样，意味着一个代币会并永远会与其他代币一样。(From: 《<a target="_blank" rel="noopener" href="https://ethereum.org/zh/developers/docs/standards/tokens/erc-20/">ERC-20 代币标准</a>》)</p>
+<h2 id="方法（Method）"><a href="#方法（Method）" class="headerlink" title="方法（Method）"></a>方法（Method）</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">function name() public view returns (string)</span><br><span class="line">// 返回令牌的名称 - 例如 &quot;MyToken&quot;</span><br><span class="line">// 可选 - 此方法可用于提高可用性，但接口和其他协定不得期望存在这些值。</span><br><span class="line"></span><br><span class="line">function symbol() public view returns (string)</span><br><span class="line">// 返回令牌的 symbol。例如“HIX”。</span><br><span class="line">// 可选 - 此方法可用于提高可用性，但接口和其他协定不得期望存在这些值。</span><br><span class="line"></span><br><span class="line">function decimals() public view returns (uint8)</span><br><span class="line">// 返回代币使用的小数位数 - 例如 8，表示将代币数量除以 100000000 以获得其用户表示。</span><br><span class="line">// 可选 - 此方法可用于提高可用性，但接口和其他协定不得期望存在这些值。</span><br><span class="line"></span><br><span class="line">function totalSupply() public view returns (uint256)</span><br><span class="line">// 返回总代币供应量。</span><br><span class="line"></span><br><span class="line">function balanceOf(address _owner) public view returns (uint256 balance)</span><br><span class="line">// 返回地址为 _owner 的另一个账户的账户余额。</span><br><span class="line"></span><br><span class="line">function transfer(address _to, uint256 _value) public returns (bool success)</span><br><span class="line">// 将 _value 数量的代币转移到 _to，并且必须触发 Transfer 事件。如果消息调用者的账户余额没有足够的代币可供花费，则函数应该throw。</span><br><span class="line">// 注意值为 0 的传输必须被视为正常传输，并触发 Transfer 事件。</span><br><span class="line"></span><br><span class="line">function transferFrom(address _from, address _to, uint256 _value) public returns (bool success)</span><br><span class="line">// 将 _value数量的代币从地址 _from 转移到地址 _to，并且必须触发 Transfer 事件。</span><br><span class="line">// transferFrom 方法用于提现工作流程，允许合约代表您转移代币。例如，这可用于允许合约代表您转移代币和/或以子货币收取费用。除非 _from 账户通过某种机制故意授权了消息的发送者，否则该函数应该throw。</span><br><span class="line"></span><br><span class="line">function approve(address _spender, uint256 _value) public returns (bool success)</span><br><span class="line">// 允许_spender多次从您的账户提款，最高可达_value金额。如果再次调用此函数，它将用 _value 覆盖当前限额。</span><br><span class="line">// 注意：客户端应该确保在创建用户界面时，先将限额设置为 0，然后再为同一花费者将其设置为另一个值。尽管 Contract 本身不应该强制执行它，以允许向后兼容之前部署的 Contract</span><br><span class="line"></span><br><span class="line">function allowance(address _owner, address _spender) public view returns (uint256 remaining)</span><br><span class="line">// 返回 _spender 仍允许从 _owner 中提取的金额。</span><br></pre></td></tr></table></figure>
+
+<h2 id="事件（Event）"><a href="#事件（Event）" class="headerlink" title="事件（Event）"></a>事件（Event）</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">event Transfer(address indexed _from, address indexed _to, uint256 _value)</span><br><span class="line">// 必须在代币转移时触发，包括零价值转移。</span><br><span class="line">// 创建新代币的代币合约应该在创建代币时触发 Transfer 事件，并将 _from 地址设置为 0x0。</span><br><span class="line"></span><br><span class="line">event Approval(address indexed _owner, address indexed _spender, uint256 _value)</span><br><span class="line">// 必须在成功调用 approve(address _spender, uint256 _value) 时触发。</span><br></pre></td></tr></table></figure>
+
+<h1 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h1><h2 id="简单示例"><a href="#简单示例" class="headerlink" title="简单示例"></a>简单示例</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br></pre></td><td class="code"><pre><span class="line">// SPDX-License-Identifier: MIT</span><br><span class="line"></span><br><span class="line">pragma solidity ^0.8.0;</span><br><span class="line"></span><br><span class="line">contract MyToken &#123;</span><br><span class="line">    string public constant name = &quot;Bob&#x27;s Token&quot;;</span><br><span class="line">    string public constant symbol = &quot;BBK&quot;;</span><br><span class="line">    uint8 public constant decimals = 18;</span><br><span class="line">    uint16 private constant increase = 1000;</span><br><span class="line">    uint256 public constant totalLimit = 27000000 * (10 ** decimals);</span><br><span class="line">    uint256 public totalSupply = 0;</span><br><span class="line">    address private owner;</span><br><span class="line">    mapping(address =&gt; uint256) public balanceOf;</span><br><span class="line">    mapping(address =&gt; mapping(address =&gt; uint256)) public allowance;</span><br><span class="line"></span><br><span class="line">    event Transfer(address indexed _from, address indexed _to, uint256 _value);</span><br><span class="line">    event Approval(address indexed _owner, address indexed _spender, uint256 _value);</span><br><span class="line"></span><br><span class="line">    modifier checkAddress(address _addr) &#123;</span><br><span class="line">        require(address(_addr) != address(0), &quot;Invalid address.&quot;);</span><br><span class="line">        _;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    modifier checkBalanceOf(address _addr, uint256 _value) &#123;</span><br><span class="line">        require(balanceOf[_addr] &gt;= _value, &quot;Insufficient balance&quot;);</span><br><span class="line">        _;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    modifier checkOwner() &#123;</span><br><span class="line">        require(msg.sender == owner, &quot;Not owner.&quot;);</span><br><span class="line">        _;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    constructor() &#123;</span><br><span class="line">        owner = msg.sender;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function mint(address _to) public checkOwner returns (uint256) &#123;</span><br><span class="line">        uint256 mintValue = increase * (10  ** decimals);</span><br><span class="line">        require(totalLimit &gt;= (totalSupply + mintValue), &quot;Out of limit.&quot;);</span><br><span class="line">        totalSupply += mintValue;</span><br><span class="line">        balanceOf[_to] += mintValue;</span><br><span class="line">        return balanceOf[_to];</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function transfer(address _to, uint256 _value) public checkAddress(_to) checkBalanceOf(msg.sender, _value) returns (bool success)&#123;</span><br><span class="line">        balanceOf[msg.sender] -= _value;</span><br><span class="line">        balanceOf[_to] += _value;</span><br><span class="line">        emit Transfer(msg.sender, _to, _value);</span><br><span class="line">        return true;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function transferFrom(address _from, address _to, uint256 _value) public checkAddress(_to) checkBalanceOf(_from, _value) returns (bool success) &#123;</span><br><span class="line">        require(allowance[_from][msg.sender] &gt;= _value, &quot;No enough approve value.&quot;);</span><br><span class="line">        allowance[_from][msg.sender] -= _value;</span><br><span class="line">        balanceOf[_from] -= _value;</span><br><span class="line">        balanceOf[_to] += _value;</span><br><span class="line">        emit Transfer(_from, _to, _value);</span><br><span class="line">        return true;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function approve(address _spender, uint256 _value) public returns (bool success)&#123;</span><br><span class="line">        allowance[msg.sender][_spender] = _value;</span><br><span class="line">        emit Approval(msg.sender, _spender, _value);</span><br><span class="line">        return true;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>注意事项</strong></p>
+<ul>
+<li>由于本合约的编译版本为0.8.0，此版本具备整数溢出检查，所以可以不使用safeMath。</li>
+</ul>
+<h2 id="快速示例"><a href="#快速示例" class="headerlink" title="快速示例"></a>快速示例</h2><p>使用<a target="_blank" rel="noopener" href="https://docs.openzeppelin.com/contracts/5.x/wizard">OpenZeppelin</a>快速创建ERC-20合约</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line">// SPDX-License-Identifier: MIT</span><br><span class="line">// Compatible with OpenZeppelin Contracts ^5.0.0</span><br><span class="line">pragma solidity ^0.8.22;</span><br><span class="line"></span><br><span class="line">import &#123;AccessManaged&#125; from &quot;@openzeppelin/contracts/access/manager/AccessManaged.sol&quot;;</span><br><span class="line">import &#123;ERC20&#125; from &quot;@openzeppelin/contracts/token/ERC20/ERC20.sol&quot;;</span><br><span class="line">import &#123;ERC20Pausable&#125; from &quot;@openzeppelin/contracts/token/ERC20/extensions/ERC20Pausable.sol&quot;;</span><br><span class="line">import &#123;ERC20Permit&#125; from &quot;@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol&quot;;</span><br><span class="line"></span><br><span class="line">contract BobToken is ERC20, ERC20Pausable, AccessManaged, ERC20Permit &#123;</span><br><span class="line">    constructor(address initialAuthority)</span><br><span class="line">         ERC20(&quot;BobToken&quot;, &quot;BBK&quot;)</span><br><span class="line">         AccessManaged(initialAuthority)</span><br><span class="line">         ERC20Permit(&quot;BobToken&quot;)</span><br><span class="line">    &#123;&#125;</span><br><span class="line"></span><br><span class="line">    function pause() public restricted &#123;</span><br><span class="line">         _pause();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function unpause() public restricted &#123;</span><br><span class="line">         _unpause();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function mint(address to, uint256 amount) public restricted &#123;</span><br><span class="line">        _mint(to, amount);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // The following functions are overrides required by Solidity.</span><br><span class="line"></span><br><span class="line">    function _update(address from, address to, uint256 value)</span><br><span class="line">        internal</span><br><span class="line">        override(ERC20, ERC20Pausable)</span><br><span class="line">    &#123;</span><br><span class="line">        super._update(from, to, value);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>我们的合约通常通过<a target="_blank" rel="noopener" href="https://solidity.readthedocs.io/en/latest/contracts.html#inheritance">继承</a>来使用，在这里我们将 <code>ERC20</code> 重新用于基本标准实现以及 <code>name</code>、<code>symbol</code> 和 <code>decimals</code> 可选扩展。此外，我们正在创建一个代币的 <code>initialSupply</code>，该代币将被分配给部署合约的地址。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/ethereum/" rel="tag"># ethereum</a>
+              <a href="/tags/solidity/" rel="tag"># solidity</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2024/11/21/blockchain/ethereum/usage-of-call-staticcall-delegatecall/" rel="prev" title="call、staticcall、delegatecall使用">
+      <i class="fa fa-chevron-left"></i> call、staticcall、delegatecall使用
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF-ERC-20%EF%BC%9F"><span class="nav-number">1.</span> <span class="nav-text">什么是 ERC-20？</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%B9%E6%B3%95%EF%BC%88Method%EF%BC%89"><span class="nav-number">1.1.</span> <span class="nav-text">方法（Method）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8B%E4%BB%B6%EF%BC%88Event%EF%BC%89"><span class="nav-number">1.2.</span> <span class="nav-text">事件（Event）</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0"><span class="nav-number">2.</span> <span class="nav-text">实现</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%80%E5%8D%95%E7%A4%BA%E4%BE%8B"><span class="nav-number">2.1.</span> <span class="nav-text">简单示例</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BF%AB%E9%80%9F%E7%A4%BA%E4%BE%8B"><span class="nav-number">2.2.</span> <span class="nav-text">快速示例</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">博</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">140</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">120</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">博</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : 'Iv1.9c9e3f90ac2cc9f9',
+      clientSecret: '478f8511687999ac85664313c08c94a1420e13f6',
+      repo        : 'zhoubofsy.github.io',
+      owner       : 'zhoubofsy',
+      admin       : ['zhoubofsy'],
+      id          : 'a3381e2619efc5991c195be87ac0edf5',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>
