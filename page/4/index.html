@@ -188,6 +188,193 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2019/09/23/storage/ceph/ceph-deploy-indocker/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2019/09/23/storage/ceph/ceph-deploy-indocker/" class="post-title-link" itemprop="url">Ceph容器部署</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2019-09-23 16:23:53" itemprop="dateCreated datePublished" datetime="2019-09-23T16:23:53+08:00">2019-09-23</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>容器化、容器化、容器化。。。都说重要的事情说三遍，那么Ceph部署有必要容器化吗？</p>
+<p>有必要，非常有必要。容器化以后，不仅不会损失性能，而且对以后更新、回退都很方便。而且一个物理机（或虚拟机）上可以跑多个Ceph集群。对于一个开发人员，修改调试都实在是太方便了～～～～～！</p>
+<p>闲言碎语不要讲，先拉个集群起来看看吧。</p>
+<h1 id="mimic"><a href="#mimic" class="headerlink" title="mimic"></a>mimic</h1><h2 id="镜像"><a href="#镜像" class="headerlink" title="镜像"></a>镜像</h2><p><a target="_blank" rel="noopener" href="https://hub.docker.com/r/ceph/daemon"><code>ceph/daemon:latest-mimic</code></a></p>
+<h2 id="网络"><a href="#网络" class="headerlink" title="网络"></a>网络</h2><p>使用docker bridge网络，每个容器指定静态IP。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker network create --subnet 192.168.44.0/24 cephnet</span><br></pre></td></tr></table></figure>
+
+<h2 id="拉起Ceph集群"><a href="#拉起Ceph集群" class="headerlink" title="拉起Ceph集群"></a>拉起Ceph集群</h2><h3 id="MON"><a href="#MON" class="headerlink" title="MON"></a>MON</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run -d --net cephnet --ip 192.168.44.11 -v /Users/zhoub/temp/etc_ceph/:/etc/ceph -v /Users/zhoub/temp/var_lib_ceph/:/var/lib/ceph -e MON_IP=192.168.44.11 -e CEPH_PUBLIC_NETWORK=192.168.44.0/24 --name mon --hostname mon  ceph/daemon:latest-mimic mon</span><br></pre></td></tr></table></figure>
+
+<h3 id="MGR"><a href="#MGR" class="headerlink" title="MGR"></a>MGR</h3><p>MGR节点很重要，如果没有MGR节点，你就看不到OSD的使用量了。现在的MON真是翻身农奴把歌唱啊，一心只做心跳了。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run -d --net cephnet --ip 192.168.44.12 -v /Users/zhoub/temp/etc_ceph/:/etc/ceph -v /Users/zhoub/temp/var_lib_ceph/:/var/lib/ceph --name mgr --hostname mgr ceph/daemon:latest-mimic mgr</span><br></pre></td></tr></table></figure>
+
+<h3 id="OSD"><a href="#OSD" class="headerlink" title="OSD"></a>OSD</h3><p>OSD有两种部署方式，一种是将硬盘部署；另一种是目录部署。由于本人使用mac版本docker，所以在映射硬盘过程不太方便，所以使用目录部署。后面会给出硬盘部署的方式。</p>
+<h4 id="目录"><a href="#目录" class="headerlink" title="目录"></a>目录</h4><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run -d --net cephnet --ip 192.168.44.13 -v /Users/zhoub/temp/etc_ceph/:/etc/ceph -v /Users/zhoub/temp/var_lib_ceph/:/var/lib/ceph --name osd --hostname osd -e OSD_TYPE=directory ceph/daemon:latest-mimic osd</span><br></pre></td></tr></table></figure>
+
+<p>由于mac上的docker是运行在一个虚拟机中的，目前不太清楚该虚拟机使用的文件系统是什么，所以osd会暴如下错误：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker logs -f osd</span></span><br><span class="line">2019-09-23 10:59:14  /opt/ceph-container/bin/entrypoint.sh: static: does not generate config</span><br><span class="line">2019-09-23 10:59:14  /opt/ceph-container/bin/entrypoint.sh: Creating osd</span><br><span class="line">2019-09-23 10:59:14  /opt/ceph-container/bin/entrypoint.sh: OSD created with ID: 0</span><br><span class="line">2019-09-23 10:59:14  /opt/ceph-container/bin/entrypoint.sh: created folder /var/lib/ceph/osd/ceph-0/</span><br><span class="line">creating /var/lib/ceph/osd/ceph-0//keyring</span><br><span class="line">added entity osd.0 auth auth(auid = 18446744073709551615 key=AQCCpYhdbE1EGxAAxX2Av3Gzez/5j8sijQg1jQ== with 0 caps)</span><br><span class="line">2019-09-23 10:59:15.014 7f255136fd80 -1 filestore(/var/lib/ceph/osd/ceph-0) WARNING: max attr value size (1024) is smaller than osd_max_object_name_len (2048).  Your backend filesystem appears to not support attrs large enough to handle the configured max rados name size.  You may get unexpected ENAMETOOLONG errors on rados operations or buggy behavior</span><br><span class="line">2019-09-23 10:59:15.084 7f255136fd80 -1 filestore(/var/lib/ceph/osd/ceph-0) mkjournal(1101): error creating journal on /var/lib/ceph/osd/ceph-0//journal: (22) Invalid argument</span><br><span class="line">2019-09-23 10:59:15.084 7f255136fd80 -1 OSD::mkfs: ObjectStore::mkfs failed with error (22) Invalid argument</span><br><span class="line">2019-09-23 10:59:15.084 7f255136fd80 -1  ** ERROR: error creating empty object store in /var/lib/ceph/osd/ceph-0: (22) Invalid argument</span><br></pre></td></tr></table></figure>
+
+<h4 id="硬盘"><a href="#硬盘" class="headerlink" title="硬盘"></a>硬盘</h4><p>在硬盘部署以前，需要先对硬盘进行格式化</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run -d --privileged=true --rm -v /dev/:/dev/ -e OSD_DEVICE=/dev/sdb ceph/daemon:latest-mimic zap_device</span><br></pre></td></tr></table></figure>
+
+<p>格式化后再启动容器</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run -d --net cephnet --ip 192.168.44.13 --hostname osd --name=osd --privileged  -v /Users/zhoub/temp/etc_ceph/:/etc/ceph -v /Users/zhoub/temp/var_lib_ceph/:/var/lib/ceph -v /dev/:/dev/ -e OSD_DEVICE=/dev/sdb ceph/daemon:latest-mimic osd</span><br></pre></td></tr></table></figure>
+
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>集群除OSD服务外其它服务均可以正常容器化</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">[root@mon /]# ceph -s</span><br><span class="line">  cluster:</span><br><span class="line">    id:     61a4f9d8-fdc7-4883-8b71-7f93c2017f86</span><br><span class="line">    health: HEALTH_OK</span><br><span class="line"></span><br><span class="line">  services:</span><br><span class="line">    mon: 1 daemons, quorum mon</span><br><span class="line">    mgr: mgr(active)</span><br><span class="line">    osd: 1 osds: 0 up, 0 in</span><br><span class="line"></span><br><span class="line">  data:</span><br><span class="line">    pools:   0 pools, 0 pgs</span><br><span class="line">    objects: 0  objects, 0 B</span><br><span class="line">    usage:   0 B used, 0 B / 0 B avail</span><br><span class="line">    pgs:</span><br></pre></td></tr></table></figure>
+<p>OSD目录部署不能正常提供服务主要是因为宿主机的文件系统类型未知，若宿主机可正常登录操作，此问题可解；<br>OSD硬盘部署不能正常提供服务主要是因为宿主机不能增加硬盘设备，若宿主机可以添加硬盘，此问题可解。</p>
+<p>综上所述，问题根本在于对宿主机的操作了解不够清晰。</p>
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/ff3be28a1015">使用Docker快速部署Ceph集群</a></li>
+<li><a target="_blank" rel="noopener" href="https://hub.docker.com/r/ceph/daemon">ceph&#x2F;daemon</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2019/09/20/linux/linux-env-variable/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2019/09/20/linux/linux-env-variable/" class="post-title-link" itemprop="url">Linux环境变量</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2019-09-20 14:08:09" itemprop="dateCreated datePublished" datetime="2019-09-20T14:08:09+08:00">2019-09-20</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/linux/" itemprop="url" rel="index"><span itemprop="name">linux</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>说起环境变量，可能首先想到的是shell中敲入<code>env</code>所看到的这些。没错，这些的确是环境变量。</p>
+<p>还有吗。。。<br>有！你再试试<code>set</code>命令，看看是不是比<code>env</code>的多啊。是不是有点儿小懵逼。怎么还不一样呢！<code>set</code>看到的是shell变量，那shell变量是环境变量吗？是。</p>
+<p>还有吗。。。<br>有！在你输入<code>set</code>的时候你看到<code>$@</code>、<code>$?</code>这些了吗？貌似没有吧。据说这些属于系统变量。(听说而已。。。)</p>
+<p>还有吗。。。<br>目前为止，我只知道这么多，如果我了解到更多的再补充吧。</p>
+<p>说了这么多，上一张图，就一目了然了。</p>
+<p><img src="/images/linux/linux_env_variable.jpg" alt="linux_env_variable"></p>
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/fec33aed017b">Linux:环境变量 - set、env、export</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2019/09/11/storage/ceph/rgw-cluster/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1359,237 +1546,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2019/05/05/storage/ceph/rbd-mirror/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2019/05/05/storage/ceph/rbd-mirror/" class="post-title-link" itemprop="url">rbd-mirror 跨集群备份</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2019-05-05 09:30:42" itemprop="dateCreated datePublished" datetime="2019-05-05T09:30:42+08:00">2019-05-05</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h1><p>Todo…</p>
-<h3 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h3><ul>
-<li>增加了RBD Journal的写入操作，是否会产生写放大现象。</li>
-<li>Ceph-RBD-Mirror回放日志的的时间间隔</li>
-<li>RBD Journal的容量大小如何配置</li>
-<li>RBD Journal存储介质是否可以优化</li>
-</ul>
-<h1 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h1><h2 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h2><h4 id="要求"><a href="#要求" class="headerlink" title="要求"></a>要求</h4><ul>
-<li>Ceph版本必须为Jewel及之后版本<br>  RBD-Mirror功能从Jewel版本引入，之前版本不支持该feature。本文以jewel版本为例进行演示。</li>
-<li>RBD feature必须包含<code>journaling</code><br>  RBD-Mirror依赖journal完成工作，类似Mysql的主从同步机制。使用日志回放方法备份数据。</li>
-</ul>
-<h4 id="准备"><a href="#准备" class="headerlink" title="准备"></a>准备</h4><ul>
-<li><p>准备两个集群分别为cls17和cls26<br>  cls17为primary集群，cls26为non-primary集群，将cls17内的RBD数据备份到cls26集群内</p>
-</li>
-<li><p>在这两个集群中创建同名pool——<code>rmp</code>（RBD Mirror Pool）</p>
-</li>
-</ul>
-<h4 id="ceph-rbd-mirror服务"><a href="#ceph-rbd-mirror服务" class="headerlink" title="ceph-rbd-mirror服务"></a>ceph-rbd-mirror服务</h4><p>根据RBD-Mirror的原理，需要在non-primery集群上启动<code>ceph-rbd-mirror</code>服务</p>
-<p>** 安装 **</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">yum install -y rbd-mirror</span></span><br></pre></td></tr></table></figure>
-
-<p>** 启动 **</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">systemctl <span class="built_in">enable</span> ceph-rbd-mirror@admin.service</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">systemctl start ceph-rbd-mirror@admin.service</span></span><br></pre></td></tr></table></figure>
-
-<p><code>@admin</code>是ceph中的<code>client.admin</code>用户，只是这里省略了<code>client.</code>。关于Ceph用户管理相关操作可以使用<code>ceph auth</code>命令。</p>
-<h4 id="Copy-Config-keyring"><a href="#Copy-Config-keyring" class="headerlink" title="Copy Config &amp; keyring"></a>Copy Config &amp; keyring</h4><p>将cls17集群中的<code>ceph.conf</code>和<code>ceph.client.admin.keyring</code>copy到cls26集群的<code>/etc/ceph</code>目录中，并重命名成<code>cls17.conf</code>和<code>cls17.client.admin.keyring</code>。然后在cls26集群中可通过指定<code>--cluster cls17</code>来指定访问集群。</p>
-<h2 id="备份Pool中所有RBD"><a href="#备份Pool中所有RBD" class="headerlink" title="备份Pool中所有RBD"></a>备份Pool中所有RBD</h2><h3 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h3><h4 id="Pool-Mirror-Mode"><a href="#Pool-Mirror-Mode" class="headerlink" title="Pool Mirror Mode"></a>Pool Mirror Mode</h4><p>需要将两个集群的的<code>rmp</code>pool的mirror mode设置成<code>pool</code>。</p>
-<p>集群cls26</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd mirror pool <span class="built_in">enable</span> rmp pool</span></span><br></pre></td></tr></table></figure>
-
-<p>集群cls17</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd mirror pool <span class="built_in">enable</span> rmp pool --cluster cls17</span></span><br></pre></td></tr></table></figure>
-
-<h4 id="Add-Peer"><a href="#Add-Peer" class="headerlink" title="Add Peer"></a>Add Peer</h4><p>将Primary集群信息加入到<code>rmp</code>pool中。</p>
-<p>集群cls26</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd mirror pool peer add rmp client.admin@cls17</span></span><br></pre></td></tr></table></figure>
-<p>查看两个集群的peer信息</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd mirror pool info rmp</span></span><br><span class="line">Mode: pool</span><br><span class="line">Peers:</span><br><span class="line">  UUID                                 NAME  CLIENT</span><br><span class="line">  2c2c1293-0e97-4c57-9bf1-e5f934274758 cls17 client.admin</span><br><span class="line"><span class="meta prompt_">$</span><span class="language-bash"></span></span><br><span class="line"><span class="language-bash">$ rbd mirror pool info rmp --cluster cls17</span></span><br><span class="line">Mode: pool</span><br><span class="line">Peers: none</span><br></pre></td></tr></table></figure>
-
-<p>至此备份Pool中所有RBD的配置操作已经完成，接下来进行验证操作。</p>
-<h3 id="测试"><a href="#测试" class="headerlink" title="测试"></a>测试</h3><p>在集群cls17中<code>rmp</code>pool创建RBD，并查看集群cls26中<code>rmp</code>pool是否有回放操作（RBD是否备份到cls26集群）。由于整个RBD-Mirror依赖于<code>journaling</code>feature，所以创建RBD时需要指定该feature。若对当前<code>rmp</code>pool中存在RBD进行备份，需要先增加<code>jouranling</code>feature，使用<code>rbd feature enable rmp/rd1 journaling</code>命令。</p>
-<p>集群cls17</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd create -p rmp --image-format 2 --image-feature layering,exclusive-lock,object-map,fast-diff,deep-flatten,journaling -s 1G rd1</span></span><br></pre></td></tr></table></figure>
-
-<p>集群cls26</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd -p rmp <span class="built_in">ls</span></span></span><br><span class="line">rd1</span><br></pre></td></tr></table></figure>
-
-<h2 id="备份单个RBD"><a href="#备份单个RBD" class="headerlink" title="备份单个RBD"></a>备份单个RBD</h2><h3 id="配置-1"><a href="#配置-1" class="headerlink" title="配置"></a>配置</h3><h4 id="Pool-Mirror-Mode-1"><a href="#Pool-Mirror-Mode-1" class="headerlink" title="Pool Mirror Mode"></a>Pool Mirror Mode</h4><p>将两个集群的<code>rbd</code>pool的mirror mode设置成<code>image</code>。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd mirror pool <span class="built_in">enable</span> rbd image</span></span><br></pre></td></tr></table></figure>
-
-<h4 id="Add-Peer-1"><a href="#Add-Peer-1" class="headerlink" title="Add Peer"></a>Add Peer</h4><p>将Primary集群信息加入到<code>rbd</code>pool中。具体操作方法，同上。</p>
-<h4 id="Enable-Image-Mirror"><a href="#Enable-Image-Mirror" class="headerlink" title="Enable Image Mirror"></a>Enable Image Mirror</h4><p>集群cls17</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd info rd1</span></span><br><span class="line">rbd image &#x27;rd1&#x27;:</span><br><span class="line">    size 1024 MB in 256 objects</span><br><span class="line">    order 22 (4096 kB objects)</span><br><span class="line">    block_name_prefix: rbd_data.ad616b8b4567</span><br><span class="line">    format: 2</span><br><span class="line">    features: exclusive-lock, journaling</span><br><span class="line">    flags:</span><br><span class="line">    journal: ad616b8b4567</span><br><span class="line">    mirroring state: disabled</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd mirror image <span class="built_in">enable</span> rbd/rd1</span></span><br><span class="line">Mirroring enabled</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd info rd1</span></span><br><span class="line">    rbd image &#x27;rd1&#x27;:</span><br><span class="line">    size 1024 MB in 256 objects</span><br><span class="line">    order 22 (4096 kB objects)</span><br><span class="line">    block_name_prefix: rbd_data.ad616b8b4567</span><br><span class="line">    format: 2</span><br><span class="line">    features: exclusive-lock, journaling</span><br><span class="line">    flags:</span><br><span class="line">    journal: ad616b8b4567</span><br><span class="line">    mirroring state: enabled</span><br><span class="line">    mirroring global id: f0c9972d-7585-4bda-a486-baa9a6f96eb5</span><br><span class="line">    mirroring primary: true</span><br></pre></td></tr></table></figure>
-
-<p>集群cls26</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd info rd1</span></span><br><span class="line">rbd image &#x27;rd1&#x27;:</span><br><span class="line">    size 1024 MB in 256 objects</span><br><span class="line">    order 22 (4096 kB objects)</span><br><span class="line">    block_name_prefix: rbd_data.8587327b23c6</span><br><span class="line">    format: 2</span><br><span class="line">    features: exclusive-lock, journaling</span><br><span class="line">    flags:</span><br><span class="line">    journal: 8587327b23c6</span><br><span class="line">    mirroring state: enabled</span><br><span class="line">    mirroring global id: f0c9972d-7585-4bda-a486-baa9a6f96eb5</span><br><span class="line">    mirroring primary: false</span><br></pre></td></tr></table></figure>
-
-<h3 id="测试-1"><a href="#测试-1" class="headerlink" title="测试"></a>测试</h3><p>(同上)</p>
-<p>*** 无论是全Pool备份，还是单个RBD备份，只要建立mirror关系，只有primary rbd才能处理读写操作 ***</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2019/04/28/storage/ceph/rbd-export-import/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2019/04/28/storage/ceph/rbd-export-import/" class="post-title-link" itemprop="url">RBD备份</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2019-04-28 14:15:47" itemprop="dateCreated datePublished" datetime="2019-04-28T14:15:47+08:00">2019-04-28</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <ul>
-<li>Ceph中的RBD备份分为全量备份和增量备份，恢复也有增全量之分。</li>
-<li>备份和恢复的操作都是基于快照来操作的。</li>
-<li>RBD的format必须为2 （–image-format 2）</li>
-</ul>
-<h1 id="备份"><a href="#备份" class="headerlink" title="备份"></a>备份</h1><p>备份操作流程，先做一个全量备份，然后每隔一段时间做一个快照，并将快照导出。</p>
-<h2 id="准备"><a href="#准备" class="headerlink" title="准备"></a>准备</h2><p>创建一个RBD image</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd create --image-format 2 --size 1G crbd_cls17_1</span></span><br></pre></td></tr></table></figure>
-
-<h2 id="全量"><a href="#全量" class="headerlink" title="全量"></a>全量</h2><p>创建一个快照，然后备份从image创建一直到创建快照之前的全量数据</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd snap create crbd_cls17_1@s1</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd export-diff crbd_cls17_1@s1 ./crbd_base</span></span><br></pre></td></tr></table></figure>
-
-<h2 id="增量"><a href="#增量" class="headerlink" title="增量"></a>增量</h2><p>继续写入一段数据后，再次做快照，并导出增量数据</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd snap create crbd_cls17_1@s2</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd export-diff crbd_cls17_1@s2 --from-snap s1 ./crbd_s1_s2</span></span><br></pre></td></tr></table></figure>
-
-<p>至此，全量和增量备份数据都以导出到文件<code>crbd_base</code>和<code>crbd_s1_s2</code>两个文件中。</p>
-<h1 id="恢复"><a href="#恢复" class="headerlink" title="恢复"></a>恢复</h1><h2 id="准备-1"><a href="#准备-1" class="headerlink" title="准备"></a>准备</h2><p>将之前导出的增全量备份数据<code>crbd_base</code>、<code>crbd_s1_s2</code>拷贝到需要导入的ceph集群上。创建一个rbd image用于导入备份数据。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd create --image-format 2 --size 1G crbd_cls26_1</span></span><br></pre></td></tr></table></figure>
-
-<h2 id="全量-1"><a href="#全量-1" class="headerlink" title="全量"></a>全量</h2><p>恢复全量数据</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd import-diff ./crbd_base crbd_cls26_1</span></span><br></pre></td></tr></table></figure>
-
-<h2 id="增量-1"><a href="#增量-1" class="headerlink" title="增量"></a>增量</h2><p>恢复增量数据</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd import-diff ./crbd_s1_s2 crbd_cls26_1</span></span><br></pre></td></tr></table></figure>
-
-<p>Over!</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1659,7 +1615,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">141</span>
+          <span class="site-state-item-count">143</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -1672,7 +1628,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">121</span>
+        <span class="site-state-item-count">122</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>

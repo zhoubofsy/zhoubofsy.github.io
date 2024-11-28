@@ -188,6 +188,302 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/01/25/container/docker/docker-resource-separation/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2017/01/25/container/docker/docker-resource-separation/" class="post-title-link" itemprop="url">docker 资源隔离</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2017-01-25 14:44:23" itemprop="dateCreated datePublished" datetime="2017-01-25T14:44:23+08:00">2017-01-25</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/container/" itemprop="url" rel="index"><span itemprop="name">container</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h1><p>docker不是一项新技术，docker是老旧技术的组合，为了更方便使用容器技术，docker提供了简单方便的UI。docker隔离资源主要用到了两种技术namespace、cgroup。</p>
+<h1 id="Namespace"><a href="#Namespace" class="headerlink" title="Namespace"></a>Namespace</h1><p>namespace是linux内核提供的隔离技术，它包括六种资源隔离，UTS（主机名与域名）、IPC（信号量、消息队列和共享内存）、PID（进程编号）、NET（网络设备、网络栈、端口…）、Mount（文件系统、挂载点）、User（用户和用户组）。</p>
+<table>
+<thead>
+<tr>
+<th align="center">Type</th>
+<th align="center">Sys Params</th>
+<th align="center">ker ver</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">UTS</td>
+<td align="center">CLONE_NEWUTS</td>
+<td align="center">2.6.19</td>
+</tr>
+<tr>
+<td align="center">IPC</td>
+<td align="center">CLONE_NEWIPC</td>
+<td align="center">2.6.19</td>
+</tr>
+<tr>
+<td align="center">PID</td>
+<td align="center">CLONE_NEWPID</td>
+<td align="center">2.6.24</td>
+</tr>
+<tr>
+<td align="center">NET</td>
+<td align="center">CLONE_NEWNET</td>
+<td align="center">2.6.29</td>
+</tr>
+<tr>
+<td align="center">Mount</td>
+<td align="center">CLONE_NEWNS</td>
+<td align="center">2.4.19</td>
+</tr>
+<tr>
+<td align="center">User</td>
+<td align="center">CLONE_NEWUSER</td>
+<td align="center">3.8</td>
+</tr>
+</tbody></table>
+<p>操作系统调用接口：</p>
+<ul>
+<li>clone()<br>  创建一个独立的进程独立的namespace</li>
+<li>setns()<br>  使用已有的一个namespace</li>
+<li>unshare()<br>  不启动新进程，在原进程上进行namespace隔离</li>
+</ul>
+<p>docker run中提供了使用namespace的接口:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">docker run --<span class="built_in">help</span> | grep -i namespace</span></span><br><span class="line">--ipc string                  IPC namespace to use</span><br><span class="line">--pid string                  PID namespace to use</span><br><span class="line">--userns string               User namespace to use</span><br><span class="line">--uts string                  UTS namespace to use</span><br></pre></td></tr></table></figure>
+
+<h2 id="UTS"><a href="#UTS" class="headerlink" title="UTS"></a>UTS</h2><p>提供了主机名和域名的隔离，这样每个容器就可以拥有了独立的主机名和域名，在网络上可以被视作一个独立的节点而非宿主机上的一个进程。<br>docker在run或create时，使用<code>-h</code>或<code>--hostname</code>指定hostname</p>
+<h2 id="IPC"><a href="#IPC" class="headerlink" title="IPC"></a>IPC</h2><p>IPC是Unix／linux下进程间通讯的一种方式，包括信号量、消息队列、共享内存。容器内部进程间通信对宿主机来说，实际上是具有相同PID namespace中的进程间通信，因此需要一个唯一的标识符来进行区别。申请IPC资源就申请了这样一个全局唯一的32位ID，所以IPC namespace中实际上包含了系统IPC标识符以及实现POSIX消息队列的文件系统。在同一个IPC namespace下的进程彼此可见，而与其他的IPC namespace下的进程则互相不可见。</p>
+<p>在宿主机上创建IPC（以消息队列为例）：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">ipcmk -Q</span></span><br><span class="line">消息队列 id：32768</span><br></pre></td></tr></table></figure>
+<p>在宿主机上查询IPC：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">ipcs</span></span><br><span class="line"></span><br><span class="line">--------- 消息队列 -----------</span><br><span class="line">键        msqid      拥有者  权限     已用字节数 消息</span><br><span class="line">0xabba8164 32768      root       644        0            0</span><br></pre></td></tr></table></figure>
+<p>在容器中查询IPC：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">docker <span class="built_in">exec</span> -it net_5 ipcs</span></span><br><span class="line"></span><br><span class="line">------ Message Queues --------</span><br><span class="line">key        msqid      owner      perms      used-bytes   messages</span><br><span class="line"></span><br><span class="line">------ Shared Memory Segments --------</span><br><span class="line">key        shmid      owner      perms      bytes      nattch     status</span><br><span class="line"></span><br><span class="line">------ Semaphore Arrays --------</span><br><span class="line">key        semid      owner      perms      nsems</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h2 id="PID"><a href="#PID" class="headerlink" title="PID"></a>PID</h2><p>它对进程PID重新标号，即两个不同namespace下的进程可以有同一个PID。每个PID namespace都有自己的计数程序。内核为所有的PID namespace维护了一个树状结构，最顶层的是系统初始时创建的，我们称之为root namespace。他创建的新PID namespace就称之为child namespace（树的子节点），而原先的PID namespace就是新创建的PID namespace的parent namespace（树的父节点）。通过这种方式，不同的PID namespaces会形成一个等级体系。所属的父节点可以看到子节点中的进程，并可以通过信号等方式对子节点中的进程产生影响。反过来，子节点不能看到父节点PID namespace中的任何内容。<br>    * 每个PID namespace中的第一个进程“PID 1“，都会像传统Linux中的init进程一样拥有特权，起特殊作用。<br>    * 一个namespace中的进程，不可能通过kill或ptrace影响父节点或者兄弟节点中的进程，因为其他节点的PID在这个namespace中没有任何意义。<br>    * 如果你在新的PID namespace中重新挂载&#x2F;proc文件系统，会发现其下只显示同属一个PID namespace中的其他进程。（挂载&#x2F;proc 文件系统尤为重要）<br>    * 在root namespace中可以看到所有的进程，并且递归包含所有子节点中的进程。</p>
+<p><img src="/images/docker/docker-resource-separation-pid.png" alt="docker-resource-separation-pid"></p>
+<p>以容器的ceph-mon节点为例：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">宿主机上查看 ceph-mon 进程</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">ps -ef| grep 9184</span></span><br><span class="line">root      9184  3122  0 1月20 ?       00:00:04 docker-containerd-shim be0583fade06df3f6510dd629bde4a636e68c755aa8b0733db6702493b1d0c38 /var/run/docker/libcontainerd/be0583fade06df3f6510dd629bde4a636e68c755aa8b0733db6702493b1d0c38 docker-runc</span><br><span class="line">64045     9200  9184  0 1月20 ?       00:01:03 /usr/bin/ceph-mon --cluster ceph -d -i rhel82 --public-addr 192.168.1.82:6789 --setuser ceph --setgroup ceph</span><br><span class="line">root     21893  9855  0 16:15 pts/5    00:00:00 grep --color=auto 9184</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">容器中查看 ceph-mon 进程</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">docker <span class="built_in">exec</span> -it ceph-mon ps -ef</span></span><br><span class="line">UID        PID  PPID  C STIME TTY          TIME CMD</span><br><span class="line">ceph         1     0  0 Jan20 ?        00:01:03 /usr/bin/ceph-mon --cluster ceph</span><br><span class="line">root        26     0  0 08:15 ?        00:00:00 ps -ef</span><br></pre></td></tr></table></figure>
+
+<h2 id="NET"><a href="#NET" class="headerlink" title="NET"></a>NET</h2><p>Pv4和IPv6协议栈、IP路由表、防火墙、&#x2F;proc&#x2F;net目录、&#x2F;sys&#x2F;class&#x2F;net目录、端口（socket）等等。一个物理的网络设备最多存在在一个network namespace中，你可以通过创建veth pair（虚拟网络设备对：有两端，类似管道，如果数据从一端传入另一端也能接收到，反之亦然）在不同的network namespace间创建通道，以此达到通信的目的。</p>
+<p>一般情况下，物理网络设备都分配在最初的root namespace（表示系统默认的namespace，在PID namespace中已经提及）中。但是如果你有多块物理网卡，也可以把其中一块或多块分配给新创建的network namespace。需要注意的是，当新创建的network namespace被释放时（所有内部的进程都终止并且namespace文件没有被挂载或打开），在这个namespace中的物理网卡会返回到root namespace而非创建该进程的父进程所在的network namespace。</p>
+<p>当我们说到network namespace时，其实我们指的未必是真正的网络隔离，而是把网络独立出来，给外部用户一种透明的感觉，仿佛跟另外一个网络实体在进行通信。为了达到这个目的，容器的经典做法就是创建一个veth pair，一端放置在新的namespace中，通常命名为eth0，一端放在原先的namespace中连接物理网络设备，再通过网桥把别的设备连接进来或者进行路由转发，以此网络实现通信的目的。</p>
+<p><img src="/images/docker/docker-resource-separation-network.png" alt="docker-resource-separation-network"></p>
+<p>可通过<code>ip netns</code>、<code>brctl</code>管理Network Namespace，docker创建的netns路径为<code>/proc/&#123;进程ID&#125;/ns/net</code>，<code>ip netns</code>访问的默认路径为<code>/var/run/netns/</code>。<br>若需要访问其Network Namespace内部，先创建软连接链至<code>ip netns</code>访问路径，然后使用<code>ip netns exec</code>访问该网络内部。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">在ip netns访问路径下创建network namespace的软链接</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash"><span class="built_in">ln</span> -s /proc/7013/ns/net /var/run/netns/net_5</span></span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">使用 ip netns <span class="built_in">exec</span> 访问指定network namespace的网络</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">ip netns <span class="built_in">exec</span> net_5 ip addr</span></span><br><span class="line">1: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu 65536 qdisc noqueue state UNKNOWN group default</span><br><span class="line">  link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00</span><br><span class="line">  inet 127.0.0.1/8 scope host lo</span><br><span class="line">  valid_lft forever preferred_lft forever</span><br><span class="line">  inet6 ::1/128 scope host</span><br><span class="line">  valid_lft forever preferred_lft forever</span><br><span class="line">15: eth0: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc noqueue state UP group default</span><br><span class="line">  link/ether 02:42:ac:11:00:03 brd ff:ff:ff:ff:ff:ff</span><br><span class="line">  inet 172.17.0.3/16 scope global eth0</span><br><span class="line">  valid_lft forever preferred_lft forever</span><br><span class="line">  inet6 fe80::42:acff:fe11:3/64 scope link</span><br><span class="line">  valid_lft forever preferred_lft forever</span><br></pre></td></tr></table></figure>
+
+<h2 id="Mount"><a href="#Mount" class="headerlink" title="Mount"></a>Mount</h2><p>隔离后，不同mount namespace中的文件结构发生变化也互不影响。你可以通过<code>/proc/[pid]/mounts</code>查看到所有挂载在当前namespace中的文件系统，还可以通过<code>/proc/[pid]/mountstats</code>看到mount namespace中文件设备的统计信息，包括挂载文件的名字、文件系统类型、挂载位置等等。（此处用到了<a href="https://zhoubofsy.github.io/2017/01/24/linux/mount-usage/">mount propagation </a> 技术）</p>
+<p><img src="/images/docker/docker-resource-separation-mount.png" alt="docker-resource-separation-mount.png"><br>上图mount挂载方式有待确认。</p>
+<h2 id="USER"><a href="#USER" class="headerlink" title="USER"></a>USER</h2><p>主要隔离了安全相关的标识符（identifiers）和属性（attributes），包括用户ID、用户组ID、root目录、key（指密钥）以及特殊权限。说得通俗一点，一个普通用户的进程通过clone()创建的新进程在新user namespace中可以拥有不同的用户和用户组。这意味着一个进程在容器外属于一个没有特权的普通用户，但是他创建的容器进程却属于拥有所有权限的超级用户，这个技术为容器提供了极大的自由。</p>
+<p>docker通过<code>/proc/&#123;进程ID&#125;/uid_map</code>和<code>/proc/&#123;进程ID&#125;/gid_map</code>把容器中的uid、gid和真实系统的uid、gid给映射在一起，格式为：<code>ID-inside-ns   ID-outside-ns   length</code>。</p>
+<ul>
+<li>ID-inside-ns 表示在容器内显示的uid或gid</li>
+<li>ID-outside-ns 表示在容器外映射的真实的uid或gid</li>
+<li>length 表示映射范围，一般为1，表示一一对应(把ID-outside-ns ~（ID-outside-ns+length） 映射到 ID-inside-ns ～（ID-inside-ns+length）上)</li>
+</ul>
+<h1 id="cgroups"><a href="#cgroups" class="headerlink" title="cgroups"></a>cgroups</h1><p>Control Groups(cgroups)，是Linux 内核提供的一种可以限制、记录、隔离进程组所使用的物理资源(如 cpu、memory、磁盘IO等等) 的机制，被LXC、docker等很多项目用于实现进程资源控制。</p>
+<p>cgroups子系统：</p>
+<ul>
+<li>cpu<br>  使用调度程序提供对 CPU 的 cgroup 任务访问</li>
+<li>cpuset<br>  为cgroup中的任务分配独立CPU（在多核系统）和内存节点</li>
+<li>devices<br>  可允许或者拒绝 cgroup 中的任务访问设备</li>
+<li>blkio<br>  为块设备设定输入&#x2F;输出限制，比如物理设备（磁盘，固态硬盘，USB 等等）</li>
+<li>freezer<br>  挂起或者恢复 cgroup 中的任务</li>
+<li>memory<br>  设定 cgroup 中任务使用的内存限制，并自动生成由那些任务使用的内存资源报告</li>
+<li>net_cls<br>  使用等级识别符（classid）标记网络数据包，可允许 Linux 流量控制程序（tc）识别从具体 cgroup 中生成的数据包</li>
+</ul>
+<h2 id="CPU"><a href="#CPU" class="headerlink" title="CPU"></a>CPU</h2><h3 id="cpu-shares"><a href="#cpu-shares" class="headerlink" title="cpu-shares"></a>cpu-shares</h3><p>在<code>docker create/run</code>容器时可以通过<code>--cpu-shares</code>参数来指定容器所使用的CPU加权值。默认情况下，每个docker容器的cpu-shares值都是1024。单独一个容器的cpu-shares是没有意义的，只在多个容器分配的资源紧缺时，也就是说在需要对容器使用的资源进行限制时，才会生效。配之后，可通过<code>./cgroup/cpu/docker/&lt;容器ID&gt;/cpu.shares</code>查看。</p>
+<h3 id="cpu-period-cpu-quota"><a href="#cpu-period-cpu-quota" class="headerlink" title="cpu-period &amp; cpu-quota"></a>cpu-period &amp; cpu-quota</h3><ul>
+<li>cpu-period 用来指定容器对CPU的使用要在多长时间内做一次重新分配</li>
+<li>cpu-quota 用来指定在这个周期内，最多可以有多少时间用来跑这个容器<br>在<code>docker create/run</code>时使用，参数为<code>--cpu-period</code>和<code>--cpu-quota</code>单位为微秒，cpu-period的默认值为0.1秒（100000 微秒），cpu-quota的默认值为-1(表示不控制)。配置后，可通过<code>./cgroup/cpu/docker/&lt;容器ID&gt;/cpu.cfs_period_us</code>和<code>./cgroup/cpu/docker/&lt;容器ID&gt;/cpu.cfs_quota_us</code>查看。</li>
+</ul>
+<h3 id="cpuset"><a href="#cpuset" class="headerlink" title="cpuset"></a>cpuset</h3><p>docker可使用<code>--cpuset-cpus</code>和<code>--cpuset-mems</code>参数控制容器运行限定使用哪些cpu和内存节点。配之后，可通过<code>./cgroup/cpuset/docker/&lt;容器ID&gt;/cpuset.cpus</code>和<code>./cgroup/cpuset/docker/&lt;容器ID&gt;/cpuset.mems</code>查看。</p>
+<p>*** 注：对于具有NUMA的服务器很重要 ***</p>
+<h2 id="Memory"><a href="#Memory" class="headerlink" title="Memory"></a>Memory</h2><p>在<code>docker create/run</code>时，可以对内存资源加以限制。</p>
+<ul>
+<li>kernel-memory<br>  使用参数<code>--kernel-memory</code>，限制内核内存，该内存不会被交换到swap上。</li>
+<li>memory<br>  使用参数<code>--memory</code>，设置容器使用的最大内存上限。默认单位为byte，可以使用K、G、M等带单位的字符串。</li>
+<li>memory-reservation<br>  使用参数<code>--memory-reservation</code>，启用弹性的内存共享，当宿主机资源充足时，允许容器尽量多地使用内存，当检测到内存竞争或者低内存时，强制将容器的内存降低到memory-reservation所指定的内存大小。不设置此选项时，有可能出现某些容器长时间占用大量内存，导致性能上的损失。</li>
+<li>memory-swap<br>  使用参数<code>--memory-swap</code>，设置总内存大小，相当于内存和swap大小的总和，设置-1时，表示swap分区大小是无限的。默认单位为byte，可以使用K、G、M等带单位的字符串。</li>
+<li>memory-swappiness<br>  使用参数<code>--memory-swappiness</code>，设置控制进程将物理内存交换到swap分区的倾向，系数越小，就越倾向于使用物理内存。值范围为0-100。当值为100时，表示尽量使用swap分区；当值为0时，表示禁用容器 swap 功能(这点不同于宿主机，宿主机 swappiness 设置为 0 也不保证 swap 不会被使用)</li>
+</ul>
+<h2 id="Block-Device"><a href="#Block-Device" class="headerlink" title="Block Device"></a>Block Device</h2><h3 id="I-O"><a href="#I-O" class="headerlink" title="I&#x2F;O"></a>I&#x2F;O</h3><ul>
+<li>device-read-bps<br>  限制此设备上的读速度（bytes per second），单位可以是kb、mb或者gb</li>
+<li>device-read-iops<br>  通过每秒读IO次数来限制指定设备的读速度</li>
+<li>device-write-bps<br>  限制此设备上的写速度（bytes per second），单位可以是kb、mb或者gb</li>
+<li>device-write-iops<br>  通过每秒写IO次数来限制指定设备的写速度</li>
+<li>blkio-weight<br>  容器默认磁盘IO的加权值，有效值范围为10-100。要使<code>-–blkio-weight</code>生效，需要保证IO的调度算法为CFQ<br>  <code>echo &quot;cfq&quot; &gt; /sys/block/&lt;设备名&gt;/queue/scheduler</code></li>
+<li>blkio-weight-device<br>  针对特定设备的IO加权控制。其格式为DEVICE_NAME:WEIGHT</li>
+</ul>
+<h3 id="Volume"><a href="#Volume" class="headerlink" title="Volume"></a>Volume</h3><p>使用参数<code>--storage-opt</code>，传入<code>dm.basesize=&lt;容量大小&gt;</code>可以设置rootfs大小。如果不设置<code>dm.basesize</code>，默认值为10G，若要使<code>dm.basesize</code>生效，storage driver 必须是 device mapper。<br>设置rootfs大小后，需要重启docker服务，并且<code>--storage-opts</code>参数需要在启动docker服务时使用。<br>以RHEL7.2为例，需要修改<code>/etc/systemd/system/multi-user.target.wants/docker.service</code>中<code>/usr/bin/dockerd</code>的参数。</p>
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="http://www.infoq.com/cn/articles/docker-kernel-knowledge-namespace-resource-isolation?utm_source=tuicool">Docker背后的内核知识——Namespace资源隔离</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.cnblogs.com/sammyliu/p/5878973.html">理解Docker（3）：Docker 使用 Linux namespace 隔离容器的运行环境</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.cnblogs.com/ilinuxer/p/6188450.html">Linux Namespace 介绍</a></li>
+<li><a target="_blank" rel="noopener" href="https://segmentfault.com/a/1190000006913195">Linux Namespace系列（07）：user namespace (CLONE_NEWUSER) (第一部分)</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.07net01.com/2017/01/1778663.html">理解Docker容器网络之Linux Network Namespace</a></li>
+<li><a target="_blank" rel="noopener" href="http://coolshell.cn/articles/17010.html">DOCKER基础技术：LINUX NAMESPACE（上）</a></li>
+<li><a target="_blank" rel="noopener" href="http://coolshell.cn/articles/17029.html">DOCKER基础技术：LINUX NAMESPACE（下）</a></li>
+<li><a target="_blank" rel="noopener" href="http://blog.chinaunix.net/uid-20788636-id-5029770.html">调整docker中rootfs的分区大小</a></li>
+<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/horsefoot/article/details/51731543">docker容器资源配额控制</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/01/24/linux/mount-usage/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2017/01/24/linux/mount-usage/" class="post-title-link" itemprop="url">mount更多用法</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2017-01-24 10:42:35" itemprop="dateCreated datePublished" datetime="2017-01-24T10:42:35+08:00">2017-01-24</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/linux/" itemprop="url" rel="index"><span itemprop="name">linux</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h1><p>每一个使用linux或类unix系统的人都会用到的命令mount，它用来挂载／卸载文件系统。这是该命令基本功能，除了基本功能该命令还有其它功能。</p>
+<h1 id="更多多多多多多多多多多多多多多多用法"><a href="#更多多多多多多多多多多多多多多多用法" class="headerlink" title="更多多多多多多多多多多多多多多多用法"></a>更多多多多多多多多多多多多多多多用法</h1><h2 id="绑定挂载-bind-mount"><a href="#绑定挂载-bind-mount" class="headerlink" title="绑定挂载(bind mount)"></a>绑定挂载(bind mount)</h2><p>windows的快捷方式、linux的软硬链接，相信你已很熟悉了，下面我来说说mount的绑定挂载<code>--bind</code>。</p>
+<p>linux的软硬链接原理:<br><img src="/images/linux/soft_hard_link.jpg" alt="原理图"></p>
+<ul>
+<li>软连接受应用程序影响，不是所有应用程序都能通过软连接访问资源的</li>
+<li>硬链接只能作用在文件上，不能为文件夹创建硬链接</li>
+</ul>
+<p>bind mount:<br>能成功克服软硬链接的缺点，将文件或文件夹挂载到指定的挂载点上。使对挂载点的操作转移到文件或文件夹上。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"> # </span><span class="language-bash"><span class="built_in">ls</span> -li uts*</span></span><br><span class="line">583819234 -rw-r--r--. 1 root root 4 1月  23 16:55 uts</span><br><span class="line">606248334 -rw-r--r--. 1 root root 2 1月  23 10:44 uts2</span><br><span class="line"><span class="meta prompt_"> # </span><span class="language-bash">mount --<span class="built_in">bind</span> ./uts2 ./uts</span></span><br><span class="line"><span class="meta prompt_"> # </span><span class="language-bash"><span class="built_in">ls</span> -li uts*</span></span><br><span class="line">606248334 -rw-r--r--. 1 root root 2 1月  23 10:44 uts</span><br><span class="line">606248334 -rw-r--r--. 1 root root 2 1月  23 10:44 uts2</span><br></pre></td></tr></table></figure>
+<p>uts的inode变成了，uts2的inode id，所有访问uts的io都会转移到uts2上；并且在mount中能查看到<code>bind mount</code>信息。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"> # </span><span class="language-bash">mount</span></span><br><span class="line">...</span><br><span class="line">/dev/mapper/rhel_rhel82-root on /home/zhoub/uts type xfs (rw,relatime,seclabel,attr2,inode64,noquota)</span><br></pre></td></tr></table></figure>
+<p><code>bind mount</code>是用挂载文件或目录信息遮盖了挂载的文件或目录，当不需要时，可以通过<code>umount</code>卸载，恢复原文件或目录的信息。</p>
+<h2 id="挂载传播-mount-propagation"><a href="#挂载传播-mount-propagation" class="headerlink" title="挂载传播(mount propagation)"></a>挂载传播(mount propagation)</h2><p>执行<code>clone()</code>时，进程拷贝当前文件系统树，此后，新进程就拥有与原进程相同的文件系统树拷贝，两个文件系统树中的任何挂载操作都不会影响另一个拷贝。尽管每个进程使用单独的文件系统名称空间在理论上非常有意义，但完全隔离也会造成较大限制性。进程克隆了系统的文件系统名称空间之后，已经运行的系统守护进程无法为这个用户自动挂载 CD-ROM，因为在原文件系统名称空间中执行的挂载无法影响用户的拷贝。2006 年引入的挂载传播（mount propagation）解决了这个问题，挂载传播定义了挂载对象之间的关系。</p>
+<ul>
+<li>共享挂载(share mount)<br>  如果两个挂载对象具有共享关系，那么一个挂载对象中的挂载事件会传播到另一个挂载对象，反之亦然<br>  <code>mount --make-shared &lt;mount-object&gt;</code><br>  <code>mount --make-rshared &lt;mount-object&gt;</code></li>
+<li>从属挂载(slave mount)<br>  如果两个挂载对象形成从属（slave）关系，那么一个挂载对象中的挂载事件会传播到另一个挂载对象，但是反过来不行；在这种关系中，从属对象是事件的接收者<br>  <code>mount --make-slave &lt;mount-object&gt;</code></li>
+<li>私有挂载(private mount)<br>  既不传播也不接收挂载事件<br>  <code>mount --make-private &lt;mount-object&gt;</code></li>
+<li>不可绑定挂载(unbindable mount)<br>  与私有挂载相似，但是不允许执行绑定挂载<br>  <code>mount --make-unbindable &lt;mount-object&gt;</code></li>
+</ul>
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/shengxia1999/article/details/52060354">mount –bind和硬连接的区别</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.ibm.com/developerworks/cn/linux/l-cn-hardandsymb-links/">理解 Linux 的硬链接与软链接</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.ibm.com/developerworks/cn/linux/l-mount-namespaces.html">应用挂载名称空间</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/01/22/storage/ceph/librbd-frame-analyse/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1050,338 +1346,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2016/12/30/container/docker/dockerfile-write/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2016/12/30/container/docker/dockerfile-write/" class="post-title-link" itemprop="url">Dockerfile</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2016-12-30 10:01:58" itemprop="dateCreated datePublished" datetime="2016-12-30T10:01:58+08:00">2016-12-30</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/container/" itemprop="url" rel="index"><span itemprop="name">container</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h1><p>Dockerfile是docker image构建脚本，是用于生成image。Dockerfile忽略大小写，使用‘#’注释，每行只执行一条指令。Dockerfile指令分为两种，构建指令和设置指令。</p>
-<ul>
-<li>构建指令，用于构建image，不会在image的容器上执行</li>
-<li>设置指令，用于设置image属性，会在image的容器上执行</li>
-</ul>
-<h1 id="Dockerfile指令"><a href="#Dockerfile指令" class="headerlink" title="Dockerfile指令"></a>Dockerfile指令</h1><h2 id="FROM"><a href="#FROM" class="headerlink" title="FROM"></a>FROM</h2><p>构建指令，用于指定基础image。该指令必须指定在Dockerfile其它指令的前面，后面的Dockerfile指令都依赖于该指令指定的image。FROM指令指定的基础image可以是官方docker hub仓库中的，也可以是位于本地仓库中的。</p>
-<p>指令格式：<code>FROM &lt;image&gt;[:&lt;tag&gt;]</code><br>若不指定<code>:&lt;tag&gt;</code>，默认使用<code>:latest</code>。</p>
-<h2 id="MAINTAINER"><a href="#MAINTAINER" class="headerlink" title="MAINTAINER"></a>MAINTAINER</h2><p>构建指令，用于将image的制作者相关信息写入到image中。</p>
-<p>指令格式：<code>MAINTAINER &lt;name&gt;</code></p>
-<h2 id="RUN"><a href="#RUN" class="headerlink" title="RUN"></a>RUN</h2><p>构建指令，可以运行任何被基础image支持的命令。</p>
-<p>指令格式：<code>RUN &lt;command&gt;</code> 或 <code>RUN [&quot;executable&quot;,&quot;param 1&quot;,&quot;param n&quot;]</code><br>一般用于软件安装</p>
-<h2 id="CMD"><a href="#CMD" class="headerlink" title="CMD"></a>CMD</h2><p>设置指令，用于container启动时指定的操作。该操作可以是执行自定义脚本，也可以是执行系统命令。该指令只能在文件中存在一次，如果有多个，则只执行最后一条。</p>
-<p>指令格式：<code>CMD &lt;executable&gt; &lt;param 1&gt; &lt;param n&gt;</code> 或 <code>CMD [&quot;executable&quot;, &quot;param 1&quot;, &quot;param n&quot;]</code></p>
-<h2 id="ENTRYPOINT"><a href="#ENTRYPOINT" class="headerlink" title="ENTRYPOINT"></a>ENTRYPOINT</h2><p>设置指令，指定容器启动时执行的命令，可以多次设置，但是只有最后一个有效。</p>
-<p>指令格式：<code>ENTRYPOINT [&quot;executable&quot;, &quot;param 1&quot;, &quot;param n&quot;]</code> 或 <code>ENTRYPOINT &lt;executable&gt; &lt;param 1&gt; &lt;param n&gt;</code><br>CMD指令和ENTRYPOINT会互相覆盖只有最后一个CMD或者ENTRYPOINT有效。</p>
-<p>和CMD指令配合使用来指定ENTRYPOINT的默认参数，这时CMD指令不是一个完整的可执行命令，仅仅是参数部分。ENTRYPOINT指令只能使用JSON方式指定执行命令，而不能指定参数。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">FROM centos7</span><br><span class="line">CMD [<span class="string">&quot;-l&quot;</span>]</span><br><span class="line">ENTRYPOINT [<span class="string">&quot;/usr/bin/ls&quot;</span>]</span><br></pre></td></tr></table></figure>
-
-<h2 id="USER"><a href="#USER" class="headerlink" title="USER"></a>USER</h2><p>设置指令，设置启动容器的用户，默认是root用户</p>
-<p>指令格式：<code>USER &lt;user name&gt;</code></p>
-<h2 id="EXPOSE"><a href="#EXPOSE" class="headerlink" title="EXPOSE"></a>EXPOSE</h2><p>设置指令，该指令会将容器中的端口映射成宿主机器中的某个端口。需要访问容器的时候，可以不是用容器的IP地址而是使用宿主机器的IP地址和映射后的端口。首先在Dockerfile使用EXPOSE设置需要映射的容器端口，然后在运行容器的时候指定-p选项加上EXPOSE设置的端口，这样EXPOSE设置的端口号会被随机映射成宿主机器中的一个端口号。也可以指定需要映射到宿主机器的那个端口，这时要确保宿主机器上的端口号没有被使用。EXPOSE指令可以一次设置多个端口号，相应的运行容器的时候，可以配套的多次使用-p选项。</p>
-<p>指令格式：<code>EXPOSE &lt;port&gt; [&lt;port&gt;...]</code></p>
-<h2 id="ENV"><a href="#ENV" class="headerlink" title="ENV"></a>ENV</h2><p>构建指令，在image中设置一个环境变量</p>
-<p>指令格式：<code>ENV &lt;key&gt; &lt;value&gt;</code><br>设置了后，后续的RUN命令都可以使用，container启动后，可以通过docker inspect查看这个环境变量，也可以通过在docker run –env key&#x3D;value时设置或修改环境变量。</p>
-<h2 id="ADD"><a href="#ADD" class="headerlink" title="ADD"></a>ADD</h2><p>构建指令，从src复制文件到container的dest路径。</p>
-<p>指令格式：<code>ADD &lt;src&gt; &lt;dest&gt;</code></p>
-<ul>
-<li><code>&lt;src&gt;</code>是相对被构建的源目录的相对路径，可以是文件或目录的路径，也可以是一个远程的文件url</li>
-<li><code>&lt;dest&gt;</code>是container中的绝对路径<br>所有拷贝到container中的文件和文件夹权限为0755，uid和gid为0；如果是一个目录，那么会将该目录下的所有文件添加到container中，不包括目录；如果文件是可识别的压缩格式，则docker会帮忙解压缩（注意压缩格式）；如果<code>&lt;src&gt;</code>是文件且<code>&lt;dest&gt;</code>中不使用斜杠结束，则会将<code>&lt;dest&gt;</code>视为文件，<code>&lt;src&gt;</code>的内容会写入<code>&lt;dest&gt;</code>；如果<code>&lt;src&gt;</code>是文件且<code>&lt;dest&gt;</code>中使用斜杠结束，则会<code>&lt;src&gt;</code>文件拷贝到<code>&lt;dest&gt;</code>目录下。</li>
-</ul>
-<h2 id="VOLUME"><a href="#VOLUME" class="headerlink" title="VOLUME"></a>VOLUME</h2><p>设置指令，指定挂载点。使容器中的一个目录具有持久化存储数据的功能，该目录可以被容器本身使用，也可以共享给其他容器使用。我们知道容器使用的是AUFS，这种文件系统不能持久化数据，当容器关闭后，所有的更改都会丢失。当容器中的应用有持久化数据的需求时可以在Dockerfile中使用该指令。</p>
-<p>指令格式：<code>VOLUME [&quot;&lt;mount point path&gt;&quot;]</code></p>
-<h2 id="WORKDIR"><a href="#WORKDIR" class="headerlink" title="WORKDIR"></a>WORKDIR</h2><p>设置指令，切换目录，可多次切换（相当于cd命令），对<code>RUN</code>、<code>CMD</code>、<code>ENTRYPOINT</code>生效</p>
-<p>指令格式：<code>WORKDIR &lt;path&gt;</code></p>
-<h2 id="ONBUILD"><a href="#ONBUILD" class="headerlink" title="ONBUILD"></a>ONBUILD</h2><p>设置指令，在子镜像中执行，在构建镜像时并不执行，而是在它的子镜像中执行</p>
-<p>指令格式：<code>ONBUILD &lt;Dockerfile指令&gt;</code></p>
-<h1 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h1><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">第一条有效指令必须指出基础镜像</span></span><br><span class="line">FROM my_ubuntu_03:latest</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">作者</span></span><br><span class="line">MAINTAINER zhou bo</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">环境变量</span></span><br><span class="line">ENV BASE_IMAGE=&quot;ubuntu:16&quot;</span><br><span class="line">ENV CURRENT_IMAGE=&quot;Simple Image&quot;</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">安装 ssh server 端程序</span></span><br><span class="line">RUN apt-get update</span><br><span class="line">RUN apt-get install -y openssh-server</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">映射端口22</span></span><br><span class="line">EXPOSE 22</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">启动 ssh 守护进程</span></span><br><span class="line">CMD [&quot;-D&quot;]</span><br><span class="line">ENTRYPOINT [&quot;/usr/sbin/sshd&quot;]</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">在 / 目录下挂在一个 DataFolder 目录</span></span><br><span class="line">VOLUME [&quot;/DataFolder&quot;]</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">在子镜像中执行的指令</span></span><br><span class="line">ONBUILD ENV SON_IAMGE=&quot;你永远是我儿子&quot;</span><br></pre></td></tr></table></figure>
-
-<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/qinyushuang/article/details/43342553">如何使用Dockerfile构建镜像</a></li>
-<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/i6448038/article/details/50855538">Dockerfile指令详解</a></li>
-<li><a target="_blank" rel="noopener" href="http://www.tuicool.com/articles/YfMFVv6">Dockerfile文件编写</a></li>
-<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/wanglei_storage/article/details/48709255">dockerfile 多端口映射 expose</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2016/12/26/container/docker/docker-usage/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2016/12/26/container/docker/docker-usage/" class="post-title-link" itemprop="url">Docker使用介绍</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2016-12-26 19:32:46" itemprop="dateCreated datePublished" datetime="2016-12-26T19:32:46+08:00">2016-12-26</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/container/" itemprop="url" rel="index"><span itemprop="name">container</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p><img src="/images/docker/docker-vs-vms.jpg" alt="docker-vs-vms"></p>
-<h1 id="Deploy"><a href="#Deploy" class="headerlink" title="Deploy"></a>Deploy</h1><h2 id="Linux部署"><a href="#Linux部署" class="headerlink" title="Linux部署"></a>Linux部署</h2><p>（由于Linux发行版众多，本文以RHEL7.2为例）</p>
-<h3 id="单机版环境docker部署"><a href="#单机版环境docker部署" class="headerlink" title="单机版环境docker部署"></a>单机版环境docker部署</h3><p>通过yum源安装docker，<code>yum install docker</code>。</p>
-<p>安装完成后，使用<code>docker version</code>查看docker客户端和服务端版本号</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker version</span></span><br><span class="line">Client:</span><br><span class="line"> Version:      1.12.5</span><br><span class="line"> API version:  1.24</span><br><span class="line"> Go version:   go1.6.4</span><br><span class="line"> Git commit:   7392c3b</span><br><span class="line"> Built:        Fri Dec 16 02:23:59 2016</span><br><span class="line"> OS/Arch:      linux/amd64</span><br><span class="line"></span><br><span class="line">Server:</span><br><span class="line"> Version:      1.12.5</span><br><span class="line"> API version:  1.24</span><br><span class="line"> Go version:   go1.6.4</span><br><span class="line"> Git commit:   7392c3b</span><br><span class="line"> Built:        Fri Dec 16 02:23:59 2016</span><br><span class="line"> OS/Arch:      linux/amd64</span><br></pre></td></tr></table></figure>
-
-<h3 id="分布式环境docker部署"><a href="#分布式环境docker部署" class="headerlink" title="分布式环境docker部署"></a>分布式环境docker部署</h3><p>详细请见：<a target="_blank" rel="noopener" href="https://docs.docker.com/engine/installation/linux/rhel/">docker官网关于linux环境安装部分</a></p>
-<h2 id="MacOS部署"><a href="#MacOS部署" class="headerlink" title="MacOS部署"></a>MacOS部署</h2><p>从Docker官网上下载<code>Docker.dmg</code>（下载地址：<code>https://www.docker.com/products/docker#/mac</code>），并安装。</p>
-<p>安装完成后，使用<code>docker version</code>查看docker客户端和服务端版本号</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker version</span></span><br><span class="line">Client:</span><br><span class="line"> Version:      1.12.5</span><br><span class="line"> API version:  1.24</span><br><span class="line"> Go version:   go1.6.4</span><br><span class="line"> Git commit:   7392c3b</span><br><span class="line"> Built:        Fri Dec 16 06:14:34 2016</span><br><span class="line"> OS/Arch:      darwin/amd64</span><br><span class="line"></span><br><span class="line">Server:</span><br><span class="line"> Version:      1.12.5</span><br><span class="line"> API version:  1.24</span><br><span class="line"> Go version:   go1.6.4</span><br><span class="line"> Git commit:   7392c3b</span><br><span class="line"> Built:        Fri Dec 16 06:14:34 2016</span><br><span class="line"> OS/Arch:      linux/amd64</span><br></pre></td></tr></table></figure>
-
-<h1 id="Container"><a href="#Container" class="headerlink" title="Container"></a>Container</h1><h2 id="容器创建-删除"><a href="#容器创建-删除" class="headerlink" title="容器创建&amp;删除"></a>容器创建&amp;删除</h2><h3 id="docker-create"><a href="#docker-create" class="headerlink" title="docker create"></a>docker create</h3><p>使用<code>docker create &#123;选项&#125; &#123;镜像ID/镜像名称&#125; &#123;COMMAND&#125;</code>创建容器，返回容器ID</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker create -i -t --name=ubu my_ubuntu_03 /bin/bash</span></span><br><span class="line">1af8ed9b04f8b16d264418038e1f4004b1f5512f229059646a5c9b1d20ed8404</span><br></pre></td></tr></table></figure>
-
-<h3 id="docker-run"><a href="#docker-run" class="headerlink" title="docker run"></a>docker run</h3><p>使用<code>docker run &#123;选项&#125; &#123;镜像ID/镜像名称&#125; &#123;COMMMAND&#125;</code>创建并运行容器，run ＝ create ＋ start。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run -i -t ubuntu /bin/bash</span><br></pre></td></tr></table></figure>
-
-<h3 id="docker-rm"><a href="#docker-rm" class="headerlink" title="docker rm"></a>docker rm</h3><p>使用<code>docker rm &#123;容器ID／容器名称&#125;</code>删除已经停止的容器，使用<code>-f</code>参数，可删除正在运行中的容器。</p>
-<h2 id="容器查询"><a href="#容器查询" class="headerlink" title="容器查询"></a>容器查询</h2><h3 id="docker-ps"><a href="#docker-ps" class="headerlink" title="docker ps"></a>docker ps</h3><p>使用<code>docker ps</code>列出所有运行中的容器，带<code>-a</code>参数，可列出所有容器（包括非运行状态的容器）</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker ps -a</span></span><br><span class="line">CONTAINER ID        IMAGE               COMMAND                CREATED             STATUS                    PORTS                   NAMES</span><br><span class="line">1af8ed9b04f8        my_ubuntu_03        &quot;/bin/bash&quot;            2 minutes ago       Up 3 seconds                                      ubu</span><br><span class="line">ebe0ce381aaf        my_ubuntu_03        &quot;/usr/sbin/sshd -D&quot;    42 hours ago        Up 42 hours               0.0.0.0:50022-&gt;22/tcp   ubu_03_sshd</span><br><span class="line">e69e9d4cdfa3        my_ubuntu_01        &quot;/bin/bash&quot;            43 hours ago        Exited (0) 42 hours ago                           ubu_01</span><br><span class="line">0fa200a32e8e        ceph/daemon         &quot;/entrypoint.sh osd&quot;   47 hours ago        Up 47 hours                                       ceph-osd</span><br><span class="line">be0583fade06        ceph/daemon         &quot;/entrypoint.sh mon&quot;   4 days ago          Up 47 hours                                       ceph-mon</span><br></pre></td></tr></table></figure>
-
-<h3 id="docker-inspect"><a href="#docker-inspect" class="headerlink" title="docker inspect"></a>docker inspect</h3><p>使用<code>docker inspect &#123;容器ID／容器名称&#125;</code>查看容器详细信息(容器详细信息以JSON格式返回)</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker inspect ubu_03_sshd</span></span><br><span class="line">[</span><br><span class="line">    &#123;</span><br><span class="line">            &quot;Id&quot;: &quot;ebe0ce381aafa73ec679ec0dc38e8d54291378693146a65d3655dd574c76ec01&quot;,</span><br><span class="line">            &quot;Created&quot;: &quot;2016-12-26T08:00:56.73955094Z&quot;,</span><br><span class="line">            &quot;Path&quot;: &quot;/usr/sbin/sshd&quot;,</span><br><span class="line">            &quot;Args&quot;: [</span><br><span class="line">                &quot;-D&quot;</span><br><span class="line">            ],</span><br><span class="line">......</span><br><span class="line">]</span><br></pre></td></tr></table></figure>
-
-<h2 id="容器启停"><a href="#容器启停" class="headerlink" title="容器启停"></a>容器启停</h2><p>使用<code>docker start/stop &#123;容器ID／容器名称&#125;</code>启动或停止容器运行。</p>
-<h2 id="容器访问"><a href="#容器访问" class="headerlink" title="容器访问"></a>容器访问</h2><h3 id="在容器内执行命令"><a href="#在容器内执行命令" class="headerlink" title="在容器内执行命令"></a>在容器内执行命令</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker <span class="built_in">exec</span> ubu ps -ef</span></span><br><span class="line">UID        PID  PPID  C STIME TTY          TIME CMD</span><br><span class="line">root         1     0  0 07:01 ?        00:00:00 /bin/bash</span><br><span class="line">root        10     0  0 07:02 ?        00:00:00 ps -ef</span><br></pre></td></tr></table></figure>
-
-<h3 id="Attach-Detach容器"><a href="#Attach-Detach容器" class="headerlink" title="Attach&#x2F;Detach容器"></a>Attach&#x2F;Detach容器</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker attach ubu</span></span><br><span class="line">root@1af8ed9b04f8:/#</span><br></pre></td></tr></table></figure>
-<p>Detach容器时，只要在command line中输入exit即可，但detach时，会导致容器停止运行。所以若不想导致容器停止运行可以使用<code>docker exec -it ubu /bin/bash</code></p>
-<h1 id="Image"><a href="#Image" class="headerlink" title="Image"></a>Image</h1><h2 id="镜像创建"><a href="#镜像创建" class="headerlink" title="镜像创建"></a>镜像创建</h2><h3 id="创建新镜像-Dockerfile"><a href="#创建新镜像-Dockerfile" class="headerlink" title="创建新镜像(Dockerfile)"></a>创建新镜像(Dockerfile)</h3><p>使用Dockerfile创建镜像，首先需要选择基础镜像，然后撰写dockerfile，最后使用<code>docker build -t &#123;new image name&#125;:&#123;new image tag&#125; [-f &#123;dockerfile&#125;] .</code>创建Image</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker build -t new_image_ubu03:v1 -f ./dockerfile/tmp.docker .</span></span><br><span class="line">Sending build context to Docker daemon 317.7 MB</span><br><span class="line">Step 1 : FROM my_ubuntu_03</span><br><span class="line"><span class="meta prompt_"> ---&gt; </span><span class="language-bash">28b69113a240</span></span><br><span class="line">Step 2 : MAINTAINER xxx xx &quot;x.xxx@xxxx.com&quot;</span><br><span class="line"><span class="meta prompt_"> ---&gt; </span><span class="language-bash">Running <span class="keyword">in</span> ae3004ef2bd2</span></span><br><span class="line"><span class="meta prompt_"> ---&gt; </span><span class="language-bash">68ab9a056fbf</span></span><br><span class="line">Removing intermediate container ae3004ef2bd2</span><br><span class="line">Successfully built 68ab9a056fbf</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker images</span></span><br><span class="line">REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE</span><br><span class="line">new_image_ubu03     v1                  68ab9a056fbf        14 seconds ago      304.4 MB</span><br><span class="line">my_ubuntu_01        v1                  e1aace2f9532        46 hours ago        304.4 MB</span><br><span class="line">my_ubu              base                31184d4c3c2c        47 hours ago        317.7 MB</span><br><span class="line">my_ubuntu_03        latest              28b69113a240        3 days ago          304.4 MB</span><br><span class="line">my_ubuntu_01        latest              800c37009cde        3 days ago          270 MB</span><br><span class="line">ubuntu              latest              104bec311bcd        2 weeks ago         128.9 MB</span><br><span class="line">ceph/daemon         latest              c06ccf521c4e        6 weeks ago         1.078 GB</span><br></pre></td></tr></table></figure>
-<p>关于dockerfile的撰写请见<a href="https://zhoubofsy.github.io/2016/12/30/container/docker/dockerfile-write/">《Dockerfile》</a></p>
-<h3 id="基于已有镜像创建新镜像"><a href="#基于已有镜像创建新镜像" class="headerlink" title="基于已有镜像创建新镜像"></a>基于已有镜像创建新镜像</h3><p>使用<code>docker commit &#123;容器名称/容器ID&#125; &#123;RESPOSITORY&#125;&lt;TAG&gt;</code>用已有容器创建镜像。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker commit ubu_01 my_ubuntu_01:v1</span></span><br><span class="line">sha256:e1aace2f953280326b96f31708ddf8f9f02289845e997736fcb1d0342777c72f</span><br></pre></td></tr></table></figure>
-
-<h3 id="从docker-hub上下载新镜像"><a href="#从docker-hub上下载新镜像" class="headerlink" title="从docker hub上下载新镜像"></a>从docker hub上下载新镜像</h3><p>在docker hub上有很多镜像，供使用者下载，用户可以使用<code>docker search</code>查询要下载的镜像，然后使用<code>docker pull</code>下载镜像。 </p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker pull hello-world</span></span><br><span class="line">Using default tag: latest</span><br><span class="line">latest: Pulling from library/hello-world</span><br><span class="line">Digest: sha256:0256e8a36e2070f7bf2d0b0763dbabdd67798512411de4cdcf9431a1feb60fd9</span><br><span class="line">Status: Image is up to date for hello-world:latest</span><br></pre></td></tr></table></figure>
-
-<h2 id="镜像查询"><a href="#镜像查询" class="headerlink" title="镜像查询"></a>镜像查询</h2><h3 id="查询本地镜像"><a href="#查询本地镜像" class="headerlink" title="查询本地镜像"></a>查询本地镜像</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker images</span></span><br><span class="line">REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE</span><br><span class="line">my_ubu              base                31184d4c3c2c        7 seconds ago       317.7 MB</span><br><span class="line">my_ubuntu_03        latest              28b69113a240        47 hours ago        304.4 MB</span><br><span class="line">my_ubuntu_01        latest              800c37009cde        2 days ago          270 MB</span><br><span class="line">ubuntu              latest              104bec311bcd        12 days ago         128.9 MB</span><br><span class="line">ceph/daemon         latest              c06ccf521c4e        5 weeks ago         1.078 GB</span><br><span class="line">hello-world         latest              c54a2cc56cbb        5 months ago        1.848 kB</span><br></pre></td></tr></table></figure>
-
-<h3 id="查询镜像详细信息"><a href="#查询镜像详细信息" class="headerlink" title="查询镜像详细信息"></a>查询镜像详细信息</h3><p>使用<code>docker inspect &#123;IMAGE ID/REPOSITORY&#125;&lt;:&#123;TAG&#125;&gt;</code>查询镜像库的详细信息，TAG默认为“latest”。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker inspect my_ubu:base</span></span><br><span class="line">[</span><br><span class="line">    &#123;</span><br><span class="line">           &quot;Id&quot;: &quot;sha256:31184d4c3c2cbbc56e087dfff68cad2d2d89d628a260f6789baf108345cd6c9b&quot;,</span><br><span class="line">                    &quot;RepoTags&quot;: [</span><br><span class="line">                        &quot;my_ubu:base&quot;</span><br><span class="line">                    ],</span><br><span class="line">           &quot;RepoDigests&quot;: [],</span><br><span class="line">           &quot;Parent&quot;: &quot;&quot;,</span><br><span class="line">           &quot;Comment&quot;: &quot;Imported from -&quot;,</span><br><span class="line">           &quot;Created&quot;: &quot;2016-12-28T07:30:31.500350508Z&quot;,</span><br><span class="line">           &quot;Container&quot;: &quot;&quot;,</span><br><span class="line">           &quot;ContainerConfig&quot;: &#123;</span><br><span class="line">......</span><br><span class="line">]</span><br></pre></td></tr></table></figure>
-
-<h3 id="查询hub上的镜像"><a href="#查询hub上的镜像" class="headerlink" title="查询hub上的镜像"></a>查询hub上的镜像</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker search ceph</span></span><br><span class="line">NAME                        DESCRIPTION                                     STARS     OFFICIAL   AUTOMATED</span><br><span class="line">ceph/daemon                 Image containing all the Ceph daemons           29                   [OK]</span><br><span class="line">ceph/demo                                                                   10                   [OK]</span><br><span class="line">ceph/osd                    Ceph OSD (object storage daemon)                6                    [OK]</span><br><span class="line">ceph/base                   Ceph base image                                 5                    [OK]</span><br><span class="line">ceph/radosgw                Ceph RADOSGW (S3/Swift-like service for Ceph)   4                    [OK]</span><br><span class="line">cdxvirt/ceph-daemon         All-in-one container for cdxvirt ceph core...   2                    [OK]</span><br><span class="line">ceph/config                 Ceph bootstrap (configuration)                  2                    [OK]</span><br><span class="line">ceph/rbd                    Ceph rbd (RADOS block device) CLI tool          2                    [OK]</span><br><span class="line">ceph/mds                    Ceph MDS (metadata server)                      2                    [OK]</span><br><span class="line">ulexus/ceph-osd             DEPRECATED:  development is now at ceph/osd     2                    [OK]</span><br><span class="line">ceph/mon                    Ceph MON (monitor daemon)                       1                    [OK]</span><br><span class="line">h0tbird/ceph                Containerized Ceph distributed file system      1                    [OK]</span><br><span class="line">ceph/rados                  Ceph rados (reliable autonomic distributed...   1                    [OK]</span><br><span class="line">cdxvirt/ceph-base           Ceph base container image                       1                    [OK]</span><br><span class="line">qnib/ceph-base              QNIBTerminal ceph base image                    0                    [OK]</span><br><span class="line">qnib/ceph-mono              Monolithic approach of an CEPH cluster + r...   0                    [OK]</span><br><span class="line">fernandosanchez/ceph-dash   ceph-dash                                       0                    [OK]</span><br><span class="line">ceph/install-utils          Install wrappers for common Ceph utility p...   0                    [OK]</span><br><span class="line">qnib/ceph-mon               QNIBTerminal CEPH monitoring Image              0                    [OK]</span><br><span class="line">cephbuilder/ceph            Docker image for building custom Ceph daem...   0                    [OK]</span><br><span class="line">qnib/d-ceph-fuse            QNIBTerminal image (debian) mounting /ceph...   0                    [OK]</span><br><span class="line">ulexus/ceph-mon             DEPRECATED:  development is now at ceph/mon     0                    [OK]</span><br><span class="line">fmeppo/ceph-daemon          Main container for Ceph in Docker.              0                    [OK]</span><br><span class="line">fmeppo/ceph-base            Base container for Ceph in Docker.              0                    [OK]</span><br><span class="line">xenopathic/ceph-keystone    Automated full-stack Ceph environment with...   0                    [OK]</span><br></pre></td></tr></table></figure>
-
-<h2 id="镜像删除"><a href="#镜像删除" class="headerlink" title="镜像删除"></a>镜像删除</h2><p>使用<code>docker rmi &#123;REPOSITORY/IMAGE ID&#125;</code>删除镜像。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker rmi hello-world</span></span><br><span class="line">Untagged: hello-world:latest</span><br><span class="line">Untagged: hello-world@sha256:0256e8a36e2070f7bf2d0b0763dbabdd67798512411de4cdcf9431a1feb60fd9</span><br><span class="line">Deleted: sha256:c54a2cc56cbb2f04003c1cd4507e118af7c0d340fe7e2720f70976c4b75237dc</span><br><span class="line">Deleted: sha256:a02596fdd012f22b03af6ad7d11fa590c57507558357b079c3e8cebceb4262d7</span><br></pre></td></tr></table></figure>
-
-<h2 id="镜像导出导入"><a href="#镜像导出导入" class="headerlink" title="镜像导出导入"></a>镜像导出导入</h2><h3 id="save-load"><a href="#save-load" class="headerlink" title="save &amp; load"></a>save &amp; load</h3><p>只用于镜像（image）的导入导出文件</p>
-<h3 id="export-import"><a href="#export-import" class="headerlink" title="export &amp; import"></a>export &amp; import</h3><ul>
-<li>export用于容易导出成文件</li>
-<li>import用于文件导入成镜像（image）</li>
-</ul>
-<h3 id="关系图"><a href="#关系图" class="headerlink" title="关系图"></a>关系图</h3><p><img src="/images/docker/docker_save_load_export_import.jpg" alt="import_export"></p>
-<h1 id="Volume"><a href="#Volume" class="headerlink" title="Volume"></a>Volume</h1><h2 id="数据卷创建、删除、查询、权限"><a href="#数据卷创建、删除、查询、权限" class="headerlink" title="数据卷创建、删除、查询、权限"></a>数据卷创建、删除、查询、权限</h2><h3 id="创建-权限"><a href="#创建-权限" class="headerlink" title="创建&amp;权限"></a>创建&amp;权限</h3><p>*** docker在创建容器时，可以创建数据卷；一旦容器运行后，就不能动态添加数据卷。若想添加需要重新创建容器。***</p>
-<h4 id="私有数据卷创建"><a href="#私有数据卷创建" class="headerlink" title="私有数据卷创建"></a>私有数据卷创建</h4><p>在<code>docker run/create</code>时，使用<code>-v &#123;容器内路径&#125;</code>参数在容器内创建指定的目录，并映射到其宿主机<code>/var/lib/docker/volumes/&#123;ID&#125;/_data</code>的路径下。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">数据卷创建</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker run -it --name=ubu2 -v=/home/zhoub/docker/data ubuntu /bin/bash</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">数据卷查询</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">dccker inspect ubu2</span></span><br><span class="line">...</span><br><span class="line">        &quot;Mounts&quot;: [</span><br><span class="line">            &#123;</span><br><span class="line">                &quot;Name&quot;: &quot;95868b7e6fd47927cfb7f54b35057545f4302d69ed92aa73425dffc289527b6b&quot;,</span><br><span class="line">                &quot;Source&quot;: &quot;/var/lib/docker/volumes/95868b7e6fd47927cfb7f54b35057545f4302d69ed92aa73425dffc289527b6b/_data&quot;,</span><br><span class="line">                &quot;Destination&quot;: &quot;/home/zhoub/docker/data&quot;,</span><br><span class="line">                &quot;Driver&quot;: &quot;local&quot;,</span><br><span class="line">                &quot;Mode&quot;: &quot;&quot;,</span><br><span class="line">                &quot;RW&quot;: true,</span><br><span class="line">                &quot;Propagation&quot;: &quot;&quot;</span><br><span class="line">            &#125;</span><br><span class="line">        ],</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
-
-<h4 id="共享数据卷创建"><a href="#共享数据卷创建" class="headerlink" title="共享数据卷创建"></a>共享数据卷创建</h4><p>在<code>docker run/create</code>时，使用<code>-v &#123;宿主机路径:容器内路径:访问权限(ro/rw,默认是RW)&#125;</code>参数挂载数据目录或文件到容器内，宿主机与容器共享该目录，无论宿主机还是容器修改该目录后，另一方也能看到改变。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">数据卷创建</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker run -it --name=ubu -v=/home/zhoub/docker/data:/data ubuntu /bin/bash</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">数据卷查询</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker inspect ubu</span></span><br><span class="line">...</span><br><span class="line">        &quot;Mounts&quot;: [</span><br><span class="line">            &#123;</span><br><span class="line">                &quot;Source&quot;: &quot;/home/zhoub/docker/data&quot;,</span><br><span class="line">                &quot;Destination&quot;: &quot;/data&quot;,</span><br><span class="line">                &quot;Mode&quot;: &quot;&quot;,</span><br><span class="line">                &quot;RW&quot;: true,</span><br><span class="line">                &quot;Propagation&quot;: &quot;rprivate&quot;</span><br><span class="line">            &#125;</span><br><span class="line">        ],</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
-
-<h3 id="数据卷删除"><a href="#数据卷删除" class="headerlink" title="数据卷删除"></a>数据卷删除</h3><ul>
-<li>仅使用<code>docker rm</code>删除容器，会导致数据卷无法删除，仍占用硬盘空间</li>
-<li>使用<code>docker rm -v</code>删除容器和数据卷</li>
-</ul>
-<h2 id="数据卷容器"><a href="#数据卷容器" class="headerlink" title="数据卷容器"></a>数据卷容器</h2><h3 id="创建数据卷容器"><a href="#创建数据卷容器" class="headerlink" title="创建数据卷容器"></a>创建数据卷容器</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker run -v /vol --name voldata ubuntu <span class="built_in">echo</span> <span class="string">&quot;Data Container&quot;</span></span></span><br></pre></td></tr></table></figure>
-<p>或</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker create -v /vol --name voldata ubuntu <span class="built_in">echo</span> <span class="string">&quot;Data Container&quot;</span></span></span><br></pre></td></tr></table></figure>
-<p>注：</p>
-<ul>
-<li>数据卷容器不需要运行，运行会白浪费系统资源</li>
-<li>不要下载微小镜像创建数据卷容器，只使用本机所带的镜像即可，不需要咱用额外的存储空间。</li>
-</ul>
-<h3 id="使用数据卷容器"><a href="#使用数据卷容器" class="headerlink" title="使用数据卷容器"></a>使用数据卷容器</h3><p>在<code>docker run</code>中使用<code>--volumes-from</code>参数为新建的容器挂载voldata数据卷容器中的<code>/vol</code>目录</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker run --volumes-from voldata -it --name testContainer ubuntu /bin/bash</span></span><br></pre></td></tr></table></figure>
-
-<h2 id="数据卷备份"><a href="#数据卷备份" class="headerlink" title="数据卷备份"></a>数据卷备份</h2><p>将数据卷容器中数据卷里的数据备份到指定目录中</p>
-<p>步骤：</p>
-<ol>
-<li>创建备份目录</li>
-<li>创建容器映射备份目录到容器内，并挂载数据卷容器</li>
-<li>在容器中将数据卷容器中的数据copy到映射的备份目录内</li>
-</ol>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">mkdir</span> /tmp/backup</span></span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker run --<span class="built_in">rm</span> --volumes-from voldata -v /tmp/backup:/backup ubuntu tar cvf /backup/voldata.tar /vol</span></span><br></pre></td></tr></table></figure>
-
-<p>看到此处估计你已经要骂娘了，什么破Docker，连个卷管理接口都没有！以上是老版本中docker对卷的管理方法。接下来说一下新版本中docker对卷的管理。<br>** 一条华丽的分割线… **</p>
-<h2 id="新的数据卷管理"><a href="#新的数据卷管理" class="headerlink" title="新的数据卷管理"></a>新的数据卷管理</h2><ul>
-<li>卷创建<br>  <code>docker volume create &#123;options&#125;</code>，创建卷，可指定卷名称和访问卷所使用的驱动。目前docker volume plugin支持的驱动包括：blockbridge、convoy、flocker、glusterfs、horcrux、ipfs、netshare、openstorage、quobyte</li>
-<li>卷查询<br>  <code>docker volume ls</code>，显示卷列表<br>  <code>docker volume inspect &#123;volume name&#125;</code>，显示指定卷的详细信息</li>
-<li>卷删除<br>  <code>docker rm &#123;volume name&#125;</code>，删除指定卷，若卷已经被容器所加载，无论容器是否出于运行状态，删除都会失败。</li>
-</ul>
-<p>*** 很可惜docker新版本中还是不支持动态加载卸载数据卷 ***</p>
-<h1 id="Network"><a href="#Network" class="headerlink" title="Network"></a>Network</h1><p>docker 有三种网络bridge、host、none。</p>
-<ul>
-<li>bridge 桥接网络</li>
-<li>host 复制宿主机网络</li>
-<li>none 无网络，容器只有一个回环地址</li>
-</ul>
-<h2 id="网络管理"><a href="#网络管理" class="headerlink" title="网络管理"></a>网络管理</h2><h3 id="网络创建"><a href="#网络创建" class="headerlink" title="网络创建"></a>网络创建</h3><h4 id="bridge"><a href="#bridge" class="headerlink" title="bridge"></a>bridge</h4><p>可通过<code>docker network create --subnet &#123;CIDR&#125; &#123;network name&#125;</code>创建bridge网络 </p>
-<h4 id="host"><a href="#host" class="headerlink" title="host"></a>host</h4><p>默认docker会提供一个host网络，用户不能再手动创建该网络<code>Error response from daemon: only one instance of &quot;host&quot; network is allowed</code></p>
-<h4 id="none"><a href="#none" class="headerlink" title="none"></a>none</h4><p>该网络不可自创建</p>
-<h3 id="网络删除"><a href="#网络删除" class="headerlink" title="网络删除"></a>网络删除</h3><p>可使用<code>docker network rm &#123;network name&#125;</code>删除指定网络</p>
-<h3 id="网络查询"><a href="#网络查询" class="headerlink" title="网络查询"></a>网络查询</h3><p>使用<code>docker network ls</code>查看网络列表</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker network <span class="built_in">ls</span></span></span><br><span class="line">ETWORK ID          NAME                DRIVER              SCOPE</span><br><span class="line">852c90cb4a48        bridge              bridge              local</span><br><span class="line">bebda2efe6dc        host                host                local</span><br><span class="line">6a69c0cd935e        my_net              bridge              local</span><br><span class="line">09cf35b0a2fe        none                null                local</span><br></pre></td></tr></table></figure>
-
-<p>使用<code>docker network inspect &#123;network name&#125;</code>查看指定网络信息</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker network inspect my_net</span></span><br><span class="line">[</span><br><span class="line">    &#123;</span><br><span class="line">        &quot;Name&quot;: &quot;my_net&quot;,</span><br><span class="line">        &quot;Id&quot;: &quot;6a69c0cd935ef315d143f1253634b8cce2b20e8e330ce791d53d26a6a08c387f&quot;,</span><br><span class="line">        &quot;Scope&quot;: &quot;local&quot;,</span><br><span class="line">        &quot;Driver&quot;: &quot;bridge&quot;,</span><br><span class="line">        &quot;EnableIPv6&quot;: false,</span><br><span class="line">        &quot;IPAM&quot;: &#123;</span><br><span class="line">            &quot;Driver&quot;: &quot;default&quot;,</span><br><span class="line">            &quot;Options&quot;: &#123;&#125;,</span><br><span class="line">            &quot;Config&quot;: [</span><br><span class="line">                &#123;</span><br><span class="line">                    &quot;Subnet&quot;: &quot;192.168.100.0/24&quot;,</span><br><span class="line">                    &quot;Gateway&quot;: &quot;192.168.100.1&quot;</span><br><span class="line">                &#125;</span><br><span class="line">            ]</span><br><span class="line">        &#125;,</span><br><span class="line">        &quot;Internal&quot;: false,</span><br><span class="line">        &quot;Containers&quot;: &#123;&#125;,</span><br><span class="line">        &quot;Options&quot;: &#123;</span><br><span class="line">            &quot;com.docker.network.bridge.name&quot;: &quot;my_net&quot;</span><br><span class="line">        &#125;,</span><br><span class="line">        &quot;Labels&quot;: &#123;&#125;</span><br><span class="line">    &#125;</span><br><span class="line">]</span><br></pre></td></tr></table></figure>
-
-<h2 id="网络使用"><a href="#网络使用" class="headerlink" title="网络使用"></a>网络使用</h2><h3 id="with-‘–network’"><a href="#with-‘–network’" class="headerlink" title="with ‘–network’"></a>with ‘–network’</h3><p>在<code>docker create/run</code>时，指定<code>--network &#123;network name&#125;</code>参数，默认网络使用<code>bridge</code>。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker run -it --name net_1 --network my_net my_ubuntu_03 /bin/bash</span></span><br></pre></td></tr></table></figure>
-
-<h3 id="container复制"><a href="#container复制" class="headerlink" title="container复制"></a>container复制</h3><p>使用<code>--network container:&#123;容器名称／容器ID&#125;</code>将指定容器的网络及主机名复制到新容器内。</p>
-<p>创建‘net_4’容器，并复制‘net_1’的network</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker run -it --name net_4 --network container:net_1 my_ubuntu_03 /bin/bash</span></span><br><span class="line">root@5eb98cff1ec6:/# ifconfig</span><br><span class="line">eth0      Link encap:Ethernet  HWaddr 02:42:c0:a8:64:02</span><br><span class="line">          inet addr:192.168.100.2  Bcast:0.0.0.0  Mask:255.255.255.0</span><br><span class="line">          inet6 addr: fe80::42:c0ff:fea8:6402/64 Scope:Link</span><br><span class="line">          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1</span><br><span class="line">          RX packets:8 errors:0 dropped:0 overruns:0 frame:0</span><br><span class="line">          TX packets:8 errors:0 dropped:0 overruns:0 carrier:0</span><br><span class="line">          collisions:0 txqueuelen:0</span><br><span class="line">          RX bytes:648 (648.0 B)  TX bytes:648 (648.0 B)</span><br><span class="line"></span><br><span class="line">lo        Link encap:Local Loopback</span><br><span class="line">          inet addr:127.0.0.1  Mask:255.0.0.0</span><br><span class="line">          inet6 addr: ::1/128 Scope:Host</span><br><span class="line">          UP LOOPBACK RUNNING  MTU:65536  Metric:1</span><br><span class="line">          RX packets:0 errors:0 dropped:0 overruns:0 frame:0</span><br><span class="line">          TX packets:0 errors:0 dropped:0 overruns:0 carrier:0</span><br><span class="line">          collisions:0 txqueuelen:0</span><br><span class="line">          RX bytes:0 (0.0 B)  TX bytes:0 (0.0 B)</span><br></pre></td></tr></table></figure>
-
-<p>容器‘net_1’的网卡信息</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker <span class="built_in">exec</span> -it net_1 /bin/bash</span></span><br><span class="line">root@5eb98cff1ec6:/# ifconfig</span><br><span class="line">eth0      Link encap:Ethernet  HWaddr 02:42:c0:a8:64:02</span><br><span class="line">          inet addr:192.168.100.2  Bcast:0.0.0.0  Mask:255.255.255.0</span><br><span class="line">          inet6 addr: fe80::42:c0ff:fea8:6402/64 Scope:Link</span><br><span class="line">          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1</span><br><span class="line">          RX packets:16 errors:0 dropped:0 overruns:0 frame:0</span><br><span class="line">          TX packets:16 errors:0 dropped:0 overruns:0 carrier:0</span><br><span class="line">          collisions:0 txqueuelen:0</span><br><span class="line">          RX bytes:1395 (1.3 KB)  TX bytes:1284 (1.2 KB)</span><br><span class="line"></span><br><span class="line">lo        Link encap:Local Loopback</span><br><span class="line">          inet addr:127.0.0.1  Mask:255.0.0.0</span><br><span class="line">          inet6 addr: ::1/128 Scope:Host</span><br><span class="line">          UP LOOPBACK RUNNING  MTU:65536  Metric:1</span><br><span class="line">          RX packets:4 errors:0 dropped:0 overruns:0 frame:0</span><br><span class="line">          TX packets:4 errors:0 dropped:0 overruns:0 carrier:0</span><br><span class="line">          collisions:0 txqueuelen:0</span><br><span class="line">          RX bytes:375 (375.0 B)  TX bytes:375 (375.0 B)</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>复制主机名</li>
-<li>复制MAC地址</li>
-<li>复制IP地址</li>
-</ul>
-<h1 id="Docker-Remote-API"><a href="#Docker-Remote-API" class="headerlink" title="Docker Remote API"></a>Docker Remote API</h1><h2 id="开启Remote-API"><a href="#开启Remote-API" class="headerlink" title="开启Remote API"></a>开启Remote API</h2><p>以RHEL7.2为例，开启Docker Remote API服务</p>
-<ol>
-<li>修改systemd中的docker.server<br> 找到<code>ExecStart</code>项，增加<code>-H tcp://0.0.0.0:2375</code>允许任意客户端访问；增加<code>-H unix:///var/run/docker.sock</code>保证<code>docker</code>命令能正常使用。<br> 若需要使用HTTPS证书，可以增加<code>--tls=true --tlscert=cert.pem --tlskey=key.pem</code>。<a target="_blank" rel="noopener" href="https://docs.docker.com/engine/admin/">详细请见</a></li>
-<li>增加防火墙规则／关闭防火墙<br> RHEL7.2中防火墙服务为<code>firewalld</code>。<br> eg: <code>sudo systemctl stop firewalld</code></li>
-<li>重启docker服务<br> 重载配置<code>sudo systemctl daemon-reload</code><br> 重启服务<code>sudo systemctl restart docker</code></li>
-</ol>
-<h2 id="API使用说明"><a href="#API使用说明" class="headerlink" title="API使用说明"></a>API使用说明</h2><p>详细请见：<a target="_blank" rel="noopener" href="https://docs.docker.com/engine/reference/api/docker_remote_api_v1.24/">《Docker Remote API v1.24》</a></p>
-<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a target="_blank" rel="noopener" href="https://www.docker.com/">docker官网</a></li>
-<li><a target="_blank" rel="noopener" href="https://hub.docker.com/">docker hub</a></li>
-<li><a target="_blank" rel="noopener" href="http://wwwbuild.net/dockerone/263124.html">Docker开源组件：HyperKit、VPNKit和DataKit介绍</a></li>
-<li><a target="_blank" rel="noopener" href="http://www.tuicool.com/articles/uAvQRz6">docker save&#x2F;load, export&#x2F;import测试对比</a></li>
-<li><a target="_blank" rel="noopener" href="http://www.cnblogs.com/liuyansheng/p/6097710.html">Docker 数据卷管理</a></li>
-<li><a target="_blank" rel="noopener" href="http://www.tuicool.com/articles/uYzeAnz">深入理解 Docker Volume（一）</a></li>
-<li><a target="_blank" rel="noopener" href="http://www.cnblogs.com/sammyliu/p/5932996.html">理解Docker（8）：Docker 存储之卷（Volume）</a></li>
-<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/halcyonbaby/article/details/42112141">docker的四种网络方式</a></li>
-<li><a target="_blank" rel="noopener" href="https://docs.docker.com/engine/reference/api/docker_remote_api/">Docker Remote API</a></li>
-<li><a target="_blank" rel="noopener" href="https://www.zhihu.com/question/24852884">Docker Remote API 如何使用？</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1451,7 +1415,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">141</span>
+          <span class="site-state-item-count">143</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -1464,7 +1428,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">121</span>
+        <span class="site-state-item-count">122</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>

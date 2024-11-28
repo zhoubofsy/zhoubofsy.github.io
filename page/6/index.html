@@ -188,6 +188,199 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/12/01/container/docker/docker-image-untar/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2017/12/01/container/docker/docker-image-untar/" class="post-title-link" itemprop="url">Untar Docker Image</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2017-12-01 09:57:17" itemprop="dateCreated datePublished" datetime="2017-12-01T09:57:17+08:00">2017-12-01</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/container/" itemprop="url" rel="index"><span itemprop="name">container</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>docker中容器的运行离不开image，一个image中都存放有哪些东西呢？这些东西又是以何种方式组织在一起的呢？今天让我们来撕开这层面纱，看看image到底是什么样。</p>
+<h1 id="撕"><a href="#撕" class="headerlink" title="撕"></a>撕</h1><h2 id="导出tar包"><a href="#导出tar包" class="headerlink" title="导出tar包"></a>导出tar包</h2><p>首先我们使用<code>docker save</code>，将一个docker image保存成tar包，我们以<code>nginx官方镜像</code>为例</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker images</span></span><br><span class="line">REPOSITORY                               TAG                 IMAGE ID            CREATED             SIZE</span><br><span class="line">nginx                                   1.11.3              4efb2fcdb1ab        15 months ago       183MB</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker save nginx:1.11.3 -o ./nginx.tar</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">tar -xvf ./nginx.tar -C ./nginx</span></span><br><span class="line">...</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">ls</span> -l ./</span></span><br><span class="line">drwxrwxr-x 5 zhoub zhoub      4096 11月 28 16:55 nginx</span><br><span class="line">-rw------- 1 zhoub zhoub 191400960 11月 28 16:52 nginx.tar</span><br></pre></td></tr></table></figure>
+
+<h2 id="走近nginx目录"><a href="#走近nginx目录" class="headerlink" title="走近nginx目录"></a>走近nginx目录</h2><p>现在<code>nginx.tar</code>已经被解开了，接下来就要进入nginx目录一探究竟了。首先<code>tree</code>一下nginx目录，看看都有什么文件。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">tree -L 2 ./nginx</span></span><br><span class="line">./nginx</span><br><span class="line">├── 01d69dac180439f10b5f2f06b71fa19c9f89fb85cb5fd543dba9bb2ca9b620ef</span><br><span class="line">│   ├── json</span><br><span class="line">│   ├── layer</span><br><span class="line">│   ├── layer.tar</span><br><span class="line">│   └── VERSION</span><br><span class="line">├── 4efb2fcdb1ab05fb03c9435234343c1cc65289eeb016be86193e88d3a5d84f6b.json</span><br><span class="line">├── 80cdba09b091f72276c031bd64488c3da5f82022812bc995f0859abe0855a872</span><br><span class="line">│   ├── json</span><br><span class="line">│   ├── layer</span><br><span class="line">│   ├── layer.tar</span><br><span class="line">│   └── VERSION</span><br><span class="line">├── c575e5db41b92dbf9e1814b8ea9cf989ef650e37cfcef12fa402e630db6a581f</span><br><span class="line">│   ├── json</span><br><span class="line">│   ├── layer</span><br><span class="line">│   ├── layer.tar</span><br><span class="line">│   └── VERSION</span><br><span class="line">├── manifest.json</span><br><span class="line">└── repositories</span><br></pre></td></tr></table></figure>
+<p>从目录结构上来看，有三个总体的描述文件<code>repositories</code>、<code>manifest.json</code>、<code>4efb2fcdb1ab05fb03c9435234343c1cc65289eeb016be86193e88d3a5d84f6b.json</code>，还有三个目录，这三个目录的结构基本相同都由<code>json</code>、<code>layer</code>、<code>VERSION</code>组成。</p>
+<p>通过这些名字，我们先简单猜测一下，image由很多layer组成，上层layer基于下层layer构建而成，下层layer基于基层layer构成。到底image是不是按我们的猜测构成的呢，让我们来看一看总体描述的三个文件。</p>
+<p>manifest.json:</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span><span class="attr">&quot;Config&quot;</span><span class="punctuation">:</span><span class="string">&quot;4efb2fcdb1ab05fb03c9435234343c1cc65289eeb016be86193e88d3a5d84f6b.json&quot;</span><span class="punctuation">,</span><span class="attr">&quot;RepoTags&quot;</span><span class="punctuation">:</span><span class="punctuation">[</span><span class="string">&quot;nginx:1.11.3&quot;</span><span class="punctuation">]</span><span class="punctuation">,</span><span class="attr">&quot;Layers&quot;</span><span class="punctuation">:</span><span class="punctuation">[</span><span class="string">&quot;80cdba09b091f72276c031bd64488c3da5f82022812bc995f0859abe0855a872/layer.tar&quot;</span><span class="punctuation">,</span><span class="string">&quot;c575e5db41b92dbf9e1814b8ea9cf989ef650e37cfcef12fa402e630db6a581f/layer.tar&quot;</span><span class="punctuation">,</span><span class="string">&quot;01d69dac180439f10b5f2f06b71fa19c9f89fb85cb5fd543dba9bb2ca9b620ef/layer.tar&quot;</span><span class="punctuation">]</span><span class="punctuation">&#125;</span><span class="punctuation">]</span></span><br></pre></td></tr></table></figure>
+<p>通过<code>manifest.json</code>文件我们可以看出，<code>nginx:1.11.3</code>这个image的配置文件是<code>4efb2fcdb1ab05fb03c9435234343c1cc65289eeb016be86193e88d3a5d84f6b.json</code>，layer一共有三个分别是<code>80cdba09b091f72276c031bd64488c3da5f82022812bc995f0859abe0855a872/layer.tar</code>，<code>c575e5db41b92dbf9e1814b8ea9cf989ef650e37cfcef12fa402e630db6a581f/layer.tar</code>，<code>01d69dac180439f10b5f2f06b71fa19c9f89fb85cb5fd543dba9bb2ca9b620ef/layer.tar</code>。</p>
+<p>image的配置文件中都对image进行了哪些配置呢？让我们来看一看<br>4efb2fcdb1ab05fb03c9435234343c1cc65289eeb016be86193e88d3a5d84f6b.json</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;architecture&quot;</span><span class="punctuation">:</span><span class="string">&quot;amd64&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;author&quot;</span><span class="punctuation">:</span><span class="string">&quot;NGINX Docker Maintainers \&quot;docker-maint@nginx.com\&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;config&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;Hostname&quot;</span><span class="punctuation">:</span><span class="string">&quot;2da0903ff372&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Domainname&quot;</span><span class="punctuation">:</span><span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;User&quot;</span><span class="punctuation">:</span><span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;AttachStdin&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;AttachStdout&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;AttachStderr&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;ExposedPorts&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span><span class="attr">&quot;443/tcp&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span><span class="attr">&quot;80/tcp&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span><span class="punctuation">&#125;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Tty&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;OpenStdin&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;StdinOnce&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Env&quot;</span><span class="punctuation">:</span><span class="punctuation">[</span><span class="string">&quot;PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin&quot;</span><span class="punctuation">,</span><span class="string">&quot;NGINX_VERSION=1.11.3-1~jessie&quot;</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Cmd&quot;</span><span class="punctuation">:</span><span class="punctuation">[</span><span class="string">&quot;nginx&quot;</span><span class="punctuation">,</span><span class="string">&quot;-g&quot;</span><span class="punctuation">,</span><span class="string">&quot;daemon off;&quot;</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;ArgsEscaped&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Image&quot;</span><span class="punctuation">:</span><span class="string">&quot;sha256:27ca9d70a764c6955e354f5fdc706b03ed47601213ac9fc638a8943fcc7680f8&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Volumes&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">null</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;WorkingDir&quot;</span><span class="punctuation">:</span><span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Entrypoint&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">null</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;OnBuild&quot;</span><span class="punctuation">:</span><span class="punctuation">[</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Labels&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span><span class="punctuation">&#125;</span></span><br><span class="line">    <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;container&quot;</span><span class="punctuation">:</span><span class="string">&quot;25ab8b143580751e438246801e7ba720f6f84ee9faca3522532e7fbe1ed7021f&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;container_config&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;Hostname&quot;</span><span class="punctuation">:</span><span class="string">&quot;2da0903ff372&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Domainname&quot;</span><span class="punctuation">:</span><span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;User&quot;</span><span class="punctuation">:</span><span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;AttachStdin&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;AttachStdout&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;AttachStderr&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;ExposedPorts&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span><span class="attr">&quot;443/tcp&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span><span class="attr">&quot;80/tcp&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span><span class="punctuation">&#125;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Tty&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;OpenStdin&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;StdinOnce&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Env&quot;</span><span class="punctuation">:</span><span class="punctuation">[</span><span class="string">&quot;PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin&quot;</span><span class="punctuation">,</span><span class="string">&quot;NGINX_VERSION=1.11.3-1~jessie&quot;</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Cmd&quot;</span><span class="punctuation">:</span><span class="punctuation">[</span><span class="string">&quot;/bin/sh&quot;</span><span class="punctuation">,</span><span class="string">&quot;-c&quot;</span><span class="punctuation">,</span><span class="string">&quot;#(nop) CMD [\&quot;nginx\&quot; \&quot;-g\&quot; \&quot;daemon off;\&quot;]&quot;</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;ArgsEscaped&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Image&quot;</span><span class="punctuation">:</span><span class="string">&quot;sha256:27ca9d70a764c6955e354f5fdc706b03ed47601213ac9fc638a8943fcc7680f8&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Volumes&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">null</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;WorkingDir&quot;</span><span class="punctuation">:</span><span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Entrypoint&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">null</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;OnBuild&quot;</span><span class="punctuation">:</span><span class="punctuation">[</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Labels&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span><span class="punctuation">&#125;</span></span><br><span class="line">    <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;created&quot;</span><span class="punctuation">:</span><span class="string">&quot;2016-08-23T18:51:23.709520142Z&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;docker_version&quot;</span><span class="punctuation">:</span><span class="string">&quot;1.10.3&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;history&quot;</span><span class="punctuation">:</span><span class="punctuation">[</span></span><br><span class="line">        <span class="punctuation">&#123;</span><span class="attr">&quot;created&quot;</span><span class="punctuation">:</span><span class="string">&quot;2016-07-28T17:47:54.990622865Z&quot;</span><span class="punctuation">,</span><span class="attr">&quot;created_by&quot;</span><span class="punctuation">:</span><span class="string">&quot;/bin/sh -c #(nop) ADD file:0e0565652aa852f62033d99f84892216020d30f64521ded5e72d4940bc4c9697 in /&quot;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="punctuation">&#123;</span><span class="attr">&quot;created&quot;</span><span class="punctuation">:</span><span class="string">&quot;2016-07-28T17:47:55.809686499Z&quot;</span><span class="punctuation">,</span><span class="attr">&quot;created_by&quot;</span><span class="punctuation">:</span><span class="string">&quot;/bin/sh -c #(nop) CMD [\&quot;/bin/bash\&quot;]&quot;</span><span class="punctuation">,</span><span class="attr">&quot;empty_layer&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">true</span></span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="punctuation">&#123;</span><span class="attr">&quot;created&quot;</span><span class="punctuation">:</span><span class="string">&quot;2016-08-23T18:49:31.945397165Z&quot;</span><span class="punctuation">,</span><span class="attr">&quot;author&quot;</span><span class="punctuation">:</span><span class="string">&quot;NGINX Docker Maintainers \&quot;docker-maint@nginx.com\&quot;&quot;</span><span class="punctuation">,</span><span class="attr">&quot;created_by&quot;</span><span class="punctuation">:</span><span class="string">&quot;/bin/sh -c #(nop) MAINTAINER NGINX Docker Maintainers \&quot;docker-maint@nginx.com\&quot;&quot;</span><span class="punctuation">,</span><span class="attr">&quot;empty_layer&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">true</span></span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="punctuation">&#123;</span><span class="attr">&quot;created&quot;</span><span class="punctuation">:</span><span class="string">&quot;2016-08-23T18:49:33.057946615Z&quot;</span><span class="punctuation">,</span><span class="attr">&quot;author&quot;</span><span class="punctuation">:</span><span class="string">&quot;NGINX Docker Maintainers \&quot;docker-maint@nginx.com\&quot;&quot;</span><span class="punctuation">,</span><span class="attr">&quot;created_by&quot;</span><span class="punctuation">:</span><span class="string">&quot;/bin/sh -c #(nop) ENV NGINX_VERSION=1.11.3-1~jessie&quot;</span><span class="punctuation">,</span><span class="attr">&quot;empty_layer&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">true</span></span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="punctuation">&#123;</span><span class="attr">&quot;created&quot;</span><span class="punctuation">:</span><span class="string">&quot;2016-08-23T18:51:19.236946594Z&quot;</span><span class="punctuation">,</span><span class="attr">&quot;author&quot;</span><span class="punctuation">:</span><span class="string">&quot;NGINX Docker Maintainers \&quot;docker-maint@nginx.com\&quot;&quot;</span><span class="punctuation">,</span><span class="attr">&quot;created_by&quot;</span><span class="punctuation">:</span><span class="string">&quot;/bin/sh -c apt-key adv --keyserver hkp://pgp.mit.edu:80 --recv-keys 573BFD6B3D8FBC641079A6ABABF5BD827BD9BF62 \t\u0026\u0026 echo \&quot;deb http://nginx.org/packages/mainline/debian/ jessie nginx\&quot; \u003e\u003e /etc/apt/sources.list \t\u0026\u0026 apt-get update \t\u0026\u0026 apt-get install --no-install-recommends --no-install-suggests -y \t\t\t\t\t\tca-certificates \t\t\t\t\t\tnginx=$&#123;NGINX_VERSION&#125; \t\t\t\t\t\tnginx-module-xslt \t\t\t\t\t\tnginx-module-geoip \t\t\t\t\t\tnginx-module-image-filter \t\t\t\t\t\tnginx-module-perl \t\t\t\t\t\tnginx-module-njs \t\t\t\t\t\tgettext-base \t\u0026\u0026 rm -rf /var/lib/apt/lists/*&quot;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="punctuation">&#123;</span><span class="attr">&quot;created&quot;</span><span class="punctuation">:</span><span class="string">&quot;2016-08-23T18:51:21.574094006Z&quot;</span><span class="punctuation">,</span><span class="attr">&quot;author&quot;</span><span class="punctuation">:</span><span class="string">&quot;NGINX Docker Maintainers \&quot;docker-maint@nginx.com\&quot;&quot;</span><span class="punctuation">,</span><span class="attr">&quot;created_by&quot;</span><span class="punctuation">:</span><span class="string">&quot;/bin/sh -c ln -sf /dev/stdout /var/log/nginx/access.log \t\u0026\u0026 ln -sf /dev/stderr /var/log/nginx/error.log&quot;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="punctuation">&#123;</span><span class="attr">&quot;created&quot;</span><span class="punctuation">:</span><span class="string">&quot;2016-08-23T18:51:22.632895061Z&quot;</span><span class="punctuation">,</span><span class="attr">&quot;author&quot;</span><span class="punctuation">:</span><span class="string">&quot;NGINX Docker Maintainers \&quot;docker-maint@nginx.com\&quot;&quot;</span><span class="punctuation">,</span><span class="attr">&quot;created_by&quot;</span><span class="punctuation">:</span><span class="string">&quot;/bin/sh -c #(nop) EXPOSE 443/tcp 80/tcp&quot;</span><span class="punctuation">,</span><span class="attr">&quot;empty_layer&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">true</span></span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="punctuation">&#123;</span><span class="attr">&quot;created&quot;</span><span class="punctuation">:</span><span class="string">&quot;2016-08-23T18:51:23.709520142Z&quot;</span><span class="punctuation">,</span><span class="attr">&quot;author&quot;</span><span class="punctuation">:</span><span class="string">&quot;NGINX Docker Maintainers \&quot;docker-maint@nginx.com\&quot;&quot;</span><span class="punctuation">,</span><span class="attr">&quot;created_by&quot;</span><span class="punctuation">:</span><span class="string">&quot;/bin/sh -c #(nop) CMD [\&quot;nginx\&quot; \&quot;-g\&quot; \&quot;daemon off;\&quot;]&quot;</span><span class="punctuation">,</span><span class="attr">&quot;empty_layer&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">true</span></span><span class="punctuation">&#125;</span></span><br><span class="line">    <span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;os&quot;</span><span class="punctuation">:</span><span class="string">&quot;linux&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;rootfs&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;type&quot;</span><span class="punctuation">:</span><span class="string">&quot;layers&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;diff_ids&quot;</span><span class="punctuation">:</span><span class="punctuation">[</span></span><br><span class="line">            <span class="string">&quot;sha256:2f71b45e4e254ddceb187b1467f5471f0e14d7124ac2dd7fdd7ddbc76e13f0e5&quot;</span><span class="punctuation">,</span></span><br><span class="line">            <span class="string">&quot;sha256:d7953e5e5bba5c637ce6eb81a4528a777c4265386cb12e9bff8124ef97538746&quot;</span><span class="punctuation">,</span></span><br><span class="line">            <span class="string">&quot;sha256:69ecf026ff94793ab573754612e6fa40b28331a47c3584de0b32d39a88959c37&quot;</span></span><br><span class="line">        <span class="punctuation">]</span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+<p>看完这个配置文件我惊到了，如此庞大的一个配置文件告诉我们dockerfile能配的我能配，dockerfile不能配的我也能配。。。这个配置文件具体就不分析了。。。</p>
+<p>刚刚看完那个累心的配置文件，接下来让我们来说说这三个layer，哪一个layer是入口呢？</p>
+<p>repositories:</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span><span class="attr">&quot;nginx&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span><span class="attr">&quot;1.11.3&quot;</span><span class="punctuation">:</span><span class="string">&quot;01d69dac180439f10b5f2f06b71fa19c9f89fb85cb5fd543dba9bb2ca9b620ef&quot;</span><span class="punctuation">&#125;</span><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+<p>我们通过查看<code>repositories</code>可以看出<code>1.11.3</code>这个版本的layer入口是<code>01d69dac180439f10b5f2f06b71fa19c9f89fb85cb5fd543dba9bb2ca9b620ef</code>。那么三个layer之间的依赖关系怎样呢？让我们进入各个layer一探究竟吧。</p>
+<h3 id="layer-01d69dac180439f10b5f2f06b71fa19c9f89fb85cb5fd543dba9bb2ca9b620ef"><a href="#layer-01d69dac180439f10b5f2f06b71fa19c9f89fb85cb5fd543dba9bb2ca9b620ef" class="headerlink" title="layer 01d69dac180439f10b5f2f06b71fa19c9f89fb85cb5fd543dba9bb2ca9b620ef"></a>layer 01d69dac180439f10b5f2f06b71fa19c9f89fb85cb5fd543dba9bb2ca9b620ef</h3><p>该layer中的<code>json</code>文件描述的本layer的配置信息</p>
+<p>json:</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;id&quot;</span><span class="punctuation">:</span><span class="string">&quot;01d69dac180439f10b5f2f06b71fa19c9f89fb85cb5fd543dba9bb2ca9b620ef&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;parent&quot;</span><span class="punctuation">:</span><span class="string">&quot;c575e5db41b92dbf9e1814b8ea9cf989ef650e37cfcef12fa402e630db6a581f&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;created&quot;</span><span class="punctuation">:</span><span class="string">&quot;2016-08-23T18:51:23.709520142Z&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;container&quot;</span><span class="punctuation">:</span><span class="string">&quot;25ab8b143580751e438246801e7ba720f6f84ee9faca3522532e7fbe1ed7021f&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;container_config&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;Hostname&quot;</span><span class="punctuation">:</span><span class="string">&quot;2da0903ff372&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Domainname&quot;</span><span class="punctuation">:</span><span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;User&quot;</span><span class="punctuation">:</span><span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;AttachStdin&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;AttachStdout&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;AttachStderr&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;ExposedPorts&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span><span class="attr">&quot;443/tcp&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span><span class="attr">&quot;80/tcp&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span><span class="punctuation">&#125;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Tty&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;OpenStdin&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;StdinOnce&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Env&quot;</span><span class="punctuation">:</span><span class="punctuation">[</span><span class="string">&quot;PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin&quot;</span><span class="punctuation">,</span><span class="string">&quot;NGINX_VERSION=1.11.3-1~jessie&quot;</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Cmd&quot;</span><span class="punctuation">:</span><span class="punctuation">[</span><span class="string">&quot;/bin/sh&quot;</span><span class="punctuation">,</span><span class="string">&quot;-c&quot;</span><span class="punctuation">,</span><span class="string">&quot;#(nop) CMD [\&quot;nginx\&quot; \&quot;-g\&quot; \&quot;daemon off;\&quot;]&quot;</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;ArgsEscaped&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Image&quot;</span><span class="punctuation">:</span><span class="string">&quot;sha256:27ca9d70a764c6955e354f5fdc706b03ed47601213ac9fc638a8943fcc7680f8&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Volumes&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">null</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;WorkingDir&quot;</span><span class="punctuation">:</span><span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Entrypoint&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">null</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;OnBuild&quot;</span><span class="punctuation">:</span><span class="punctuation">[</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Labels&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span><span class="punctuation">&#125;</span></span><br><span class="line">    <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;docker_version&quot;</span><span class="punctuation">:</span><span class="string">&quot;1.10.3&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;author&quot;</span><span class="punctuation">:</span><span class="string">&quot;NGINX Docker Maintainers \&quot;docker-maint@nginx.com\&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;config&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;Hostname&quot;</span><span class="punctuation">:</span><span class="string">&quot;2da0903ff372&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Domainname&quot;</span><span class="punctuation">:</span><span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;User&quot;</span><span class="punctuation">:</span><span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;AttachStdin&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;AttachStdout&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;AttachStderr&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;ExposedPorts&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span><span class="attr">&quot;443/tcp&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span><span class="attr">&quot;80/tcp&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span><span class="punctuation">&#125;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Tty&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;OpenStdin&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;StdinOnce&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Env&quot;</span><span class="punctuation">:</span><span class="punctuation">[</span><span class="string">&quot;PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin&quot;</span><span class="punctuation">,</span><span class="string">&quot;NGINX_VERSION=1.11.3-1~jessie&quot;</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Cmd&quot;</span><span class="punctuation">:</span><span class="punctuation">[</span><span class="string">&quot;nginx&quot;</span><span class="punctuation">,</span><span class="string">&quot;-g&quot;</span><span class="punctuation">,</span><span class="string">&quot;daemon off;&quot;</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;ArgsEscaped&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Image&quot;</span><span class="punctuation">:</span><span class="string">&quot;sha256:27ca9d70a764c6955e354f5fdc706b03ed47601213ac9fc638a8943fcc7680f8&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Volumes&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">null</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;WorkingDir&quot;</span><span class="punctuation">:</span><span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Entrypoint&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">null</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;OnBuild&quot;</span><span class="punctuation">:</span><span class="punctuation">[</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Labels&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span><span class="punctuation">&#125;</span></span><br><span class="line">    <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;architecture&quot;</span><span class="punctuation">:</span><span class="string">&quot;amd64&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;os&quot;</span><span class="punctuation">:</span><span class="string">&quot;linux&quot;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+<p>我们可以看到<code>parent</code>字段指出了当前layer的父layer是<code>c575e5db41b92dbf9e1814b8ea9cf989ef650e37cfcef12fa402e630db6a581f</code>。<br>当前layer中数据内容请见<code>layer.tar</code></p>
+<p>layer.tar:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">tree ./layer</span></span><br><span class="line">./layer</span><br><span class="line">└── var</span><br><span class="line">    └── log</span><br><span class="line">    └── nginx</span><br><span class="line">        ├── access.log -&gt; /dev/stdout</span><br><span class="line">        └── error.log -&gt; /dev/stderr</span><br></pre></td></tr></table></figure>
+
+<h3 id="layer-c575e5db41b92dbf9e1814b8ea9cf989ef650e37cfcef12fa402e630db6a581f"><a href="#layer-c575e5db41b92dbf9e1814b8ea9cf989ef650e37cfcef12fa402e630db6a581f" class="headerlink" title="layer c575e5db41b92dbf9e1814b8ea9cf989ef650e37cfcef12fa402e630db6a581f"></a>layer c575e5db41b92dbf9e1814b8ea9cf989ef650e37cfcef12fa402e630db6a581f</h3><p>该layer中的<code>json</code>文件描述的本layer的配置信息</p>
+<p>json:</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;id&quot;</span><span class="punctuation">:</span><span class="string">&quot;c575e5db41b92dbf9e1814b8ea9cf989ef650e37cfcef12fa402e630db6a581f&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;parent&quot;</span><span class="punctuation">:</span><span class="string">&quot;80cdba09b091f72276c031bd64488c3da5f82022812bc995f0859abe0855a872&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;created&quot;</span><span class="punctuation">:</span><span class="string">&quot;1970-01-01T08:00:00+08:00&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;container_config&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;Hostname&quot;</span><span class="punctuation">:</span><span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Domainname&quot;</span><span class="punctuation">:</span><span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;User&quot;</span><span class="punctuation">:</span><span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;AttachStdin&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;AttachStdout&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;AttachStderr&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Tty&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;OpenStdin&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;StdinOnce&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Env&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">null</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Cmd&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">null</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Image&quot;</span><span class="punctuation">:</span><span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Volumes&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">null</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;WorkingDir&quot;</span><span class="punctuation">:</span><span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Entrypoint&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">null</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;OnBuild&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">null</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Labels&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">null</span></span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>该layer中的父layer是<code>80cdba09b091f72276c031bd64488c3da5f82022812bc995f0859abe0855a872</code><br>当前layer中的数据内容请见<code>layer.tar</code></p>
+<p>layer.tar:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">tree -L 2 ./layer</span></span><br><span class="line">./layer</span><br><span class="line">├── etc</span><br><span class="line">│   ├── alternatives</span><br><span class="line">│   ├── apt</span><br><span class="line">│   ├── ca-certificates</span><br><span class="line">│   ├── ca-certificates.conf</span><br><span class="line">│   ├── default</span><br><span class="line">│   ├── fonts</span><br><span class="line">│   ├── group</span><br><span class="line">│   ├── group-</span><br><span class="line">│   ├── gshadow</span><br><span class="line">│   ├── gshadow-</span><br><span class="line">│   ├── init.d</span><br><span class="line">│   ├── ld.so.cache</span><br><span class="line">│   ├── logrotate.d</span><br><span class="line">│   ├── nginx</span><br><span class="line">│   ├── passwd</span><br><span class="line">│   ├── passwd-</span><br><span class="line">│   ├── perl</span><br><span class="line">│   ├── rc0.d</span><br><span class="line">│   ├── rc1.d</span><br><span class="line">│   ├── rc2.d</span><br><span class="line">│   ├── rc3.d</span><br><span class="line">│   ├── rc4.d</span><br><span class="line">│   ├── rc5.d</span><br><span class="line">│   ├── rc6.d</span><br><span class="line">│   ├── shadow</span><br><span class="line">│   ├── shadow-</span><br><span class="line">│   ├── ssl</span><br><span class="line">│   ├── subgid</span><br><span class="line">│   ├── subgid-</span><br><span class="line">│   ├── subuid</span><br><span class="line">│   ├── subuid-</span><br><span class="line">│   └── ucf.conf</span><br><span class="line">├── lib</span><br><span class="line">│   └── x86_64-linux-gnu</span><br><span class="line">├── tmp</span><br><span class="line">├── usr</span><br><span class="line">│   ├── bin</span><br><span class="line">│   ├── lib</span><br><span class="line">│   ├── local</span><br><span class="line">│   ├── sbin</span><br><span class="line">│   └── share</span><br><span class="line">└── var</span><br><span class="line">    ├── cache</span><br><span class="line">    ├── lib</span><br><span class="line">    └── log</span><br></pre></td></tr></table></figure>
+
+<h3 id="layer-80cdba09b091f72276c031bd64488c3da5f82022812bc995f0859abe0855a872"><a href="#layer-80cdba09b091f72276c031bd64488c3da5f82022812bc995f0859abe0855a872" class="headerlink" title="layer 80cdba09b091f72276c031bd64488c3da5f82022812bc995f0859abe0855a872"></a>layer 80cdba09b091f72276c031bd64488c3da5f82022812bc995f0859abe0855a872</h3><p>该layer中的<code>json</code>文件描述的本layer的配置信息<br>json:</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;id&quot;</span><span class="punctuation">:</span><span class="string">&quot;80cdba09b091f72276c031bd64488c3da5f82022812bc995f0859abe0855a872&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;created&quot;</span><span class="punctuation">:</span><span class="string">&quot;1970-01-01T08:00:00+08:00&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;container_config&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;Hostname&quot;</span><span class="punctuation">:</span><span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Domainname&quot;</span><span class="punctuation">:</span><span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;User&quot;</span><span class="punctuation">:</span><span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;AttachStdin&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;AttachStdout&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;AttachStderr&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Tty&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;OpenStdin&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;StdinOnce&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Env&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">null</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Cmd&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">null</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Image&quot;</span><span class="punctuation">:</span><span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Volumes&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">null</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;WorkingDir&quot;</span><span class="punctuation">:</span><span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Entrypoint&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">null</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;OnBuild&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">null</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Labels&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">null</span></span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+<p>从配置中可以看出，没有<code>parent</code>字段了。说明这个layer应该就是base layer了。(我十分好奇nginx镜像是用哪个基础镜像做出来的?)<br>当前layer中的数据内容请见<code>layer.tar</code><br>layer.tar:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">tree -L 1 ./layer</span></span><br><span class="line">./layer</span><br><span class="line">├── bin</span><br><span class="line">├── boot</span><br><span class="line">├── dev</span><br><span class="line">├── etc</span><br><span class="line">├── home</span><br><span class="line">├── lib</span><br><span class="line">├── lib64</span><br><span class="line">├── media</span><br><span class="line">├── mnt</span><br><span class="line">├── opt</span><br><span class="line">├── proc</span><br><span class="line">├── root</span><br><span class="line">├── run</span><br><span class="line">├── sbin</span><br><span class="line">├── srv</span><br><span class="line">├── sys</span><br><span class="line">├── tmp</span><br><span class="line">├── usr</span><br><span class="line">└── var</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cat</span> ./layer/etc/debian_version</span></span><br><span class="line">8.5</span><br></pre></td></tr></table></figure>
+<p>噢，原来nginx镜像是基于debian 8.5做出来的。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/11/27/storage/ceph/radosgw-arch/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2017/11/27/storage/ceph/radosgw-arch/" class="post-title-link" itemprop="url">俯瞰 RadosGW</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2017-11-27 22:18:29" itemprop="dateCreated datePublished" datetime="2017-11-27T22:18:29+08:00">2017-11-27</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>Ceph号称统一存储，何为统一，就是将块、文件、对象统一到一起。RadosGW（简称RGW）就是Ceph中提供对象存储服务的模块。它能提供S3和Swift两种对象存储接口，当然也是最主流的两种接口。</p>
+<p>本文不打算介绍概念性的东西，只为扒一扒RGW的架构。废话不多讲，直接上图</p>
+<p><img src="/images/ceph/rgw_arch.png" alt="rgw_arch.png"></p>
+<p>我觉得画的挺清楚了，就不细讲了。</p>
+<hr>
+<p>一张图不过瘾，再来一发。</p>
+<p><img src="/images/ceph/rgw_structural.png" alt="rgw_structural"></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/11/20/network/dnsmasq-usage/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1766,351 +1959,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/09/25/language/python/python-encode-decode/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2017/09/25/language/python/python-encode-decode/" class="post-title-link" itemprop="url">encode and decode</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2017-09-25 10:35:14" itemprop="dateCreated datePublished" datetime="2017-09-25T10:35:14+08:00">2017-09-25</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/language/" itemprop="url" rel="index"><span itemprop="name">language</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>计算机只能处理数字，如果要处理文本，就必须先把文本转换为数字才能处理。最早的计算机在设计时采用8个比特（bit）作为一个字节（byte），所以，一个字节能表示的最大的整数就是255（二进制11111111&#x3D;十进制255），如果要表示更大的整数，就必须用更多的字节。比如两个字节可以表示的最大整数是65535，4个字节可以表示的最大整数是4294967295。</p>
-<h2 id="ASCII"><a href="#ASCII" class="headerlink" title="ASCII"></a>ASCII</h2><p>规定了128个字符的编码(准确地说ASCII码是一个编码字符集),比如空格“SPACE”是32（二进制00100000），大写的字母A是65（二进制01000001）。这128个符号（包括32个不能打印出来的控制符号），只占用了一个字节的后面7位，最前面的1位统一规定为0。后128个称为扩展ASCII码，目前许多基于x86的系统都支持使用扩展ASCII码。256个ASCII码中的后128个扩展码可定制用来表示特殊字符和非英语字符，GB2312就是利用这后面的128个扩展字符来表示汉字，[161,254]共94个字符来组成双字节来表示简体汉字字符表。</p>
-<h2 id="Unicode"><a href="#Unicode" class="headerlink" title="Unicode"></a>Unicode</h2><p>光是英语字符ASCII编码字符集是够了，但是如果算上世界上其他的语言的字符，ASCII码显然不够了，于是Unicode编码字符集应运而生。Unicode用数字0-0x10FFFF来映射这些字符，最多可以容纳1114112个字符，或者说有1114112个码位。码位就是可以分配给字符的数字。UTF-8、UTF-16、UTF-32都是将所有Unicode用到的数字转换为程序数据的编码方案。全世界的字符加起来也用不了所有的码位，Unicode 5.0版本中，才用了238605个码位。</p>
-<h2 id="UTF8"><a href="#UTF8" class="headerlink" title="UTF8"></a>UTF8</h2><p>新问题的出现：如果统一成Unicode编码，乱码问题从此消失了。但是，如果你写的文本基本上全部是英文的话，用Unicode编码比ASCII编码需要多一倍的存储空间，在存储和传输上就十分不划算。因此，又出现了把Unicode编码转化为“可变长编码”的UTF-8编码。UTF-8编码把一个Unicode字符根据不同的数字大小编码成1-6个字节，常用的英文字母被编码成1个字节，汉字通常是3个字节，只有很生僻的字符才会被编码成4-6个字节。如果你要传输的文本包含大量英文字符，用UTF-8编码就能节省空间。ASCII编码实际上可以被看成是UTF-8编码的一部分，所以，大量只支持ASCII编码的历史遗留软件可以在UTF-8编码下继续工作。Unicode是字符集，UTF-8、UTF-16等是编码格式，定义“字符对应的数字”如何在以二进制的方式存储。</p>
-<h2 id="GB2312"><a href="#GB2312" class="headerlink" title="GB2312"></a>GB2312</h2><p>规定: 一个小于127的字符的意义与原来相同, 但两个大于127的字符连在一起时, 就表示一个汉字, 前面的一个字节(他称之为高字节)从0xA1用到 0xF7, 后面一个字节(低字节)从0xA1到0xFE, 这样我们就可以组合出大约7000多个简体汉字了. 在这些编码里, 我们还把数学符号,罗马希腊的 字母,日文的假名们都编进去了, 连在 ASCII 里本来就有的数字,标点,字母都统统重新编了两个字节长的编码, 这就是常说的”全角”字符, 而原来在127号以下的那些就叫”半角”字符了。</p>
-<h2 id="GBK"><a href="#GBK" class="headerlink" title="GBK"></a>GBK</h2><p>GBK 包括了 GB2312 的所有内容, 同时又增加了近20000个新的汉字(包括繁体字)和符号。</p>
-<h1 id="转换"><a href="#转换" class="headerlink" title="转换"></a>转换</h1><p>unicode兼容ascii，GBK兼容GB2312，转换也就是unicode与GBK之间的事情了。字符串在Python内部的表示是unicode编码，因此，在做编码转换时，通常需要以unicode作为中间编码，即先将其他编码的字符串解码（decode）成unicode，再从unicode编码（encode）成另一种编码。</p>
-<ul>
-<li>decode的作用是将其他编码的字符串转换成unicode编码，如str1.decode(‘gb2312’)，表示将gb2312编码的字符串转换成unicode编码</li>
-<li>encode的作用是将unicode编码转换成其他编码的字符串，如str2.encode(‘gb2312’)，表示将unicode编码的字符串转换成gb2312编码</li>
-</ul>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#encoding=utf8</span></span><br><span class="line"></span><br><span class="line">s = <span class="string">&#x27;中文&#x27;</span></span><br><span class="line"><span class="built_in">print</span> <span class="built_in">type</span>(s)</span><br><span class="line"><span class="built_in">print</span> s</span><br><span class="line"></span><br><span class="line">us = s.decode(<span class="string">&#x27;utf8&#x27;</span>)</span><br><span class="line"><span class="built_in">print</span> <span class="built_in">type</span>(us)</span><br><span class="line"><span class="built_in">print</span> s</span><br><span class="line"></span><br><span class="line">gs = us.encode(<span class="string">&#x27;gb2312&#x27;</span>)</span><br><span class="line"><span class="built_in">print</span> <span class="built_in">type</span>(gs)</span><br><span class="line"><span class="built_in">print</span> gs</span><br></pre></td></tr></table></figure>
-
-<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a target="_blank" rel="noopener" href="http://www.cnblogs.com/yuguangchuan/p/4310952.html">三种常见字符编码简介：ASCII、Unicode和UTF-8</a></li>
-<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/nodeathphoenix/article/details/7057760">Unicode 字符集与它的编码方式</a></li>
-<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/zhao1949/article/details/51198040">字符编码的故事：ASCII，GB2312，Unicode，UTF-8，UTF-16</a></li>
-<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/q_l_s/article/details/51253542">Python字符串的编码与解码(encode与decode)</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/09/19/language/python/python-basic-grammar/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2017/09/19/language/python/python-basic-grammar/" class="post-title-link" itemprop="url">Python基础语法</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2017-09-19 09:44:32" itemprop="dateCreated datePublished" datetime="2017-09-19T09:44:32+08:00">2017-09-19</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/language/" itemprop="url" rel="index"><span itemprop="name">language</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="Python语法概况"><a href="#Python语法概况" class="headerlink" title="Python语法概况"></a>Python语法概况</h1><p><img src="/images/python/grammar.png" alt="grammar"></p>
-<h2 id="关键字"><a href="#关键字" class="headerlink" title="关键字"></a>关键字</h2><p>and , exec , not , assert , finally , or , break , for , pass , class , from , print , countinue , global , raise , def , if , return , del , import , try , elif , in , while , else , is , with , except , lambda , yield</p>
-<ul>
-<li>exec<br>  用来执行储存在字符串或文件中的Python语句。eg：  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="built_in">exec</span> <span class="string">&#x27;print &quot;Hello World&quot;&#x27;</span></span><br><span class="line">Hello World</span><br></pre></td></tr></table></figure>
-  注意例子中exec语句的用法和eval_r(), execfile()是不一样的. exec是一个语句(就象print或while), 而eval_r()和execfile()则是内建函数。</li>
-<li>lambda<br>  在python中使用lambda来创建匿名函数，lambda会创建一个函数对象，但不会把这个函数对象赋给一个标识符，而def则会把函数对象赋值给一个变量。lambda它只是一个表达式，而def则是一个语句。eg:  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">m = <span class="keyword">lambda</span> x,y,z: (x-y)*z</span><br><span class="line"><span class="built_in">print</span> m(<span class="number">3</span>,<span class="number">1</span>,<span class="number">2</span>)</span><br></pre></td></tr></table></figure>
-  lambda一般只用来定义简单的函数。</li>
-<li>yield<br>  它和return差不多的用法，只是最后是返回了一个生成器，当你调用yield所在的那个函数的时候，那个函数并没有运行，只会返回一个生成器的对象，第一次在for中调用生成器的的对象，它将会运行你函数中的代码从最开始一直到到碰到了yield的关键字，然后它会返回循环中的第一个值。然后每一次其他的调用将会运行你在这个函数中所写的循环多一次，并且返回下一个值，知道没有值可以返回了。eg:  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="keyword">def</span> <span class="title function_">createGenerator</span>():</span><br><span class="line"><span class="meta">... </span>   mylist = <span class="built_in">range</span>(<span class="number">3</span>)</span><br><span class="line"><span class="meta">... </span>   <span class="keyword">for</span> i <span class="keyword">in</span> mylist:</span><br><span class="line"><span class="meta">... </span>       <span class="keyword">yield</span> i*i</span><br><span class="line">...</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>mygenerator = createGenerator() <span class="comment"># create a generator</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="built_in">print</span>(mygenerator) <span class="comment"># mygenerator is an object!</span></span><br><span class="line">&lt;generator <span class="built_in">object</span> createGenerator at <span class="number">0xb7555c34</span>&gt;</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="keyword">for</span> i <span class="keyword">in</span> mygenerator:</span><br><span class="line"><span class="meta">... </span>    <span class="built_in">print</span>(i)</span><br><span class="line"><span class="number">0</span></span><br><span class="line"><span class="number">1</span></span><br><span class="line"><span class="number">4</span></span><br></pre></td></tr></table></figure></li>
-</ul>
-<h1 id="Python-VS-C"><a href="#Python-VS-C" class="headerlink" title="Python VS C"></a>Python VS C</h1><table>
-<thead>
-<tr>
-<th align="center">Pytho</th>
-<th align="center">C</th>
-<th align="left">说明</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">字母、数字、下划线组成，不能以数字开头，区分大小写</td>
-<td align="center">字母、数字、下划线组成，不能以数字开头，区分大小写</td>
-<td align="left">标识符</td>
-</tr>
-<tr>
-<td align="center">单下划线开头的代表不能直接访问的类属性，通过类提供的接口访问</td>
-<td align="center"></td>
-<td align="left"></td>
-</tr>
-<tr>
-<td align="center">双下划线开头的代表类的私有成员</td>
-<td align="center"></td>
-<td align="left"></td>
-</tr>
-<tr>
-<td align="center">双下划线开头和结尾的代表特殊方法专用的标识(eg:<strong>init</strong>())</td>
-<td align="center"></td>
-<td align="left"></td>
-</tr>
-<tr>
-<td align="center">“&quot;</td>
-<td align="center">不需要，以”;”结尾</td>
-<td align="left">行继符</td>
-</tr>
-<tr>
-<td align="center">单引号(‘),双引号(“),三引号(‘’’)</td>
-<td align="center">双引号(“)</td>
-<td align="left">字符串</td>
-</tr>
-<tr>
-<td align="center">#</td>
-<td align="center">&#x2F;&#x2F;</td>
-<td align="left">注释</td>
-</tr>
-<tr>
-<td align="center">:</td>
-<td align="center">{}</td>
-<td align="left">代码块</td>
-</tr>
-<tr>
-<td align="center">if</td>
-<td align="center">if</td>
-<td align="left">条件</td>
-</tr>
-<tr>
-<td align="center">elif</td>
-<td align="center">else if</td>
-<td align="left"></td>
-</tr>
-<tr>
-<td align="center">else</td>
-<td align="center">else</td>
-<td align="left"></td>
-</tr>
-<tr>
-<td align="center">a &#x3D; b &#x3D; 1 or a,b&#x3D;1,”Hi”</td>
-<td align="center">int a&#x3D;1 , b&#x3D;2</td>
-<td align="left">多变量赋值</td>
-</tr>
-<tr>
-<td align="center">Numbers, String, List, Tuple, Dictionary</td>
-<td align="center">char, int , float, double, void, point*</td>
-<td align="left">基础数据类型</td>
-</tr>
-<tr>
-<td align="center">list[item1, item2, …  itemN]</td>
-<td align="center"></td>
-<td align="left">列表，允许更新</td>
-</tr>
-<tr>
-<td align="center">tuple(item1, item2, …, itemN)</td>
-<td align="center"></td>
-<td align="left">元组，不允许更新操作</td>
-</tr>
-<tr>
-<td align="center">dict{key1:value1, key2:value2, …, keyN:valueN}</td>
-<td align="center"></td>
-<td align="left">字典，允许更新</td>
-</tr>
-<tr>
-<td align="center">**</td>
-<td align="center"></td>
-<td align="left">幂，a**b a的b次幂</td>
-</tr>
-<tr>
-<td align="center">&#x2F;&#x2F;</td>
-<td align="center">mod</td>
-<td align="left">整除</td>
-</tr>
-<tr>
-<td align="center">“!&#x3D;” , “&lt;&gt;”</td>
-<td align="center">“!&#x3D;”</td>
-<td align="left">不等</td>
-</tr>
-<tr>
-<td align="center">“and”</td>
-<td align="center">“&amp;&amp;”</td>
-<td align="left">逻辑运算</td>
-</tr>
-<tr>
-<td align="center">“or”</td>
-<td align="center">双竖线</td>
-<td align="left"></td>
-</tr>
-<tr>
-<td align="center">“not”</td>
-<td align="center">“!”</td>
-<td align="left"></td>
-</tr>
-<tr>
-<td align="center">“in” , “not in”</td>
-<td align="center"></td>
-<td align="left">判断元素在不在元组或列表中</td>
-</tr>
-<tr>
-<td align="center">“is” , “not is”</td>
-<td align="center"></td>
-<td align="left">判断两个标识符是不是引用自一个对象</td>
-</tr>
-<tr>
-<td align="center">“while”, “for”</td>
-<td align="center">“while”, “for”, “do..while”</td>
-<td align="left">循环, python中可与”else”一起执行条件为false的情况</td>
-</tr>
-<tr>
-<td align="center">“break”, “continue”, “pass”</td>
-<td align="center">“break”, “continue”, “goto”</td>
-<td align="left">循环控制</td>
-</tr>
-</tbody></table>
-<h1 id="Python编译"><a href="#Python编译" class="headerlink" title="Python编译"></a>Python编译</h1><table>
-<thead>
-<tr>
-<th align="left">选项</th>
-<th align="left">描述</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="left">-d</td>
-<td align="left">在解析时显示调试信息</td>
-</tr>
-<tr>
-<td align="left">-O</td>
-<td align="left">生成优化代码 ( .pyo 文件 )</td>
-</tr>
-<tr>
-<td align="left">-S</td>
-<td align="left">启动时不引入查找Python路径的位置</td>
-</tr>
-<tr>
-<td align="left">-c cmd</td>
-<td align="left">执行 Python 脚本，并将运行结果作为 cmd 字符串</td>
-</tr>
-<tr>
-<td align="left">file</td>
-<td align="left">在给定的python文件执行python脚本</td>
-</tr>
-</tbody></table>
-<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a target="_blank" rel="noopener" href="https://www.w3cschool.cn/python/python-basic-syntax.html">Python 基础语法</a></li>
-<li><a target="_blank" rel="noopener" href="http://www.cnblogs.com/edenpans/p/6524966.html">PYTHON YIELD 关键字</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -2180,7 +2028,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">141</span>
+          <span class="site-state-item-count">143</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -2193,7 +2041,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">121</span>
+        <span class="site-state-item-count">122</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>

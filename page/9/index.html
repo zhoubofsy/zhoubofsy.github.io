@@ -188,6 +188,207 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/04/27/container/k8s/k8s-analyze-service-discovery/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2017/04/27/container/k8s/k8s-analyze-service-discovery/" class="post-title-link" itemprop="url">K8s服务发现分析</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2017-04-27 10:23:14" itemprop="dateCreated datePublished" datetime="2017-04-27T10:23:14+08:00">2017-04-27</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/container/" itemprop="url" rel="index"><span itemprop="name">container</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="什么是服务发现"><a href="#什么是服务发现" class="headerlink" title="什么是服务发现"></a>什么是服务发现</h1><p>容器可以对其它容器提供服务，如mysql（数据库服务）、nginx、mangodb等等。这些服务都可以通过IP＋Port方式访问。由于容器会经常重建迁移，所以IP会发生变化，如果调用服务的程序使用IP访问就会很不方便，为此可以使用DNS、zookeeper、etcd等技术实现服务访问与IP的解耦。这种解耦方式叫做服务发现。</p>
+<h1 id="版本"><a href="#版本" class="headerlink" title="版本"></a>版本</h1><ul>
+<li>Kubernetes v1.4.0</li>
+<li>kube-dns 1.9(image tag)</li>
+</ul>
+<h1 id="Kubernetes服务发现概述"><a href="#Kubernetes服务发现概述" class="headerlink" title="Kubernetes服务发现概述"></a>Kubernetes服务发现概述</h1><p><img src="/images/k8s/k8s-service-discovery.png" alt="k8s-service-discovery.png"></p>
+<ul>
+<li>Kube-dns 以容器的形式为K8s集群提供DNS服务</li>
+<li>Etcd用于存储K8s中的服务、容器等信息，Kube-dns的数据也是从Etcd中获取的</li>
+<li>healthz 监控DNS Pod中的Kube-dns、dnsmasq容器</li>
+<li>dnsmasq以代理形式将外部访问转发给Kube-dns容器，走10053端口</li>
+</ul>
+<h1 id="Kube-dns"><a href="#Kube-dns" class="headerlink" title="Kube-dns"></a>Kube-dns</h1><p><img src="/images/k8s/k8s-kube-dns-analysis.png" alt="k8s-kube-dns-analysis.png"></p>
+<ul>
+<li>miekg监听10053端口，接收dnsmasq转发过来的DNS请求</li>
+<li>KubeDNS中的Cache模块从Etcd中获取Service和Namespace信息，用户完成Service域名到Service地址的映射</li>
+<li>SkyDNS Server 完成DNS协议交互逻辑<br>  该模块在KubeDNS启动时将自身注册到miekg中；并实现接口ServeDNS，当miekg收到DNS请求后，将调用该接口进行处理。</li>
+<li>KubeDNS中模块实现了backend接口<br>  在ServeDNS处理DNS请求时，需要调用backend接口的Records和ReverseRecord method，backend接口会比对Cache中的内容，然后返回结果。</li>
+</ul>
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="https://www.kubernetes.org.cn/542.html">Kubernetes（K8S）的服务发现和kube-dns插件</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.kubernetes.org.cn/273.html">Kubernetes(k8s)如何使用kube-dns实现服务发现</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/03/29/container/k8s/k8s-service-expose/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2017/03/29/container/k8s/k8s-service-expose/" class="post-title-link" itemprop="url">k8s service expose</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2017-03-29 11:08:40" itemprop="dateCreated datePublished" datetime="2017-03-29T11:08:40+08:00">2017-03-29</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/container/" itemprop="url" rel="index"><span itemprop="name">container</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>从<code>k8s 1.2</code>版本开始提供Ingress来实现对外暴露服务；目前k8s有三种暴露方式</p>
+<ul>
+<li>LoadBlancer Service</li>
+<li>NodePort Service</li>
+<li>Ingress</li>
+</ul>
+<h1 id="K8s-LBS"><a href="#K8s-LBS" class="headerlink" title="K8s-LBS"></a>K8s-LBS</h1><p>LBS是k8s与云平台深度结合的一个组件，当使用LBS暴露服务时，实际上是通过底层云平台申请创建一个负载均衡器来向外暴露服务。目前LBS支持的云平台有GCE、DigitalOcean、Aliyun、私有云Openstack等等，由于LBS与云平台深度结合，所以只能在这些平台上使用。</p>
+<h1 id="NodePort"><a href="#NodePort" class="headerlink" title="NodePort"></a>NodePort</h1><p><img src="/images/k8s/k8s_nodeport.png" alt="k8s_nodeport"></p>
+<p>k8s的端口分为：</p>
+<ul>
+<li>Port<br>  service上暴露出来的端口，提供给集群(集群指整个容器集群)内部客户访问的端口。</li>
+<li>NodePort<br>  node上暴露的端口，提供给集群外部客户访问的端口。</li>
+<li>TargetPort<br>  endpoint上暴露的端口，也可以当作Pod上暴露的端口，无论从Port或NodePort上来的数据最终都会经过kube-proxy转发到Pod的TargetPort端口上。</li>
+</ul>
+<p>k8s的IP分为：</p>
+<ul>
+<li>ClusterIP<br>  service上虚拟ip地址，它由kube-proxy使用iptables规则重新定向到本地端口，再均衡到后端的Pod上。</li>
+<li>NodeIP<br>  node节点的物理ip地址，它被kube-proxy使用iptables规则重定向到本地端口。</li>
+<li>ContainerIP&#x2F;PodIP<br>  K8s中以Pod为最小部署单位，一个Pod中共享一个网络资源（无论Pod中有几个容器）。每个Pod启动时，会自动创建一个镜像为gcr.io&#x2F;google_containers&#x2F;pause:0.8.0的容器，容器内部与外部的通信经由此容器代理，所以ContainerIP就是PodIP。</li>
+</ul>
+<h2 id="暴露方法及API"><a href="#暴露方法及API" class="headerlink" title="暴露方法及API"></a>暴露方法及API</h2><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Service</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">svc-1</span></span><br><span class="line">  <span class="attr">labels:</span></span><br><span class="line">    <span class="attr">name:</span> <span class="string">svc-1</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">type:</span> <span class="string">NodePort</span></span><br><span class="line">  <span class="attr">ports:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">port:</span> <span class="number">2222</span></span><br><span class="line">      <span class="attr">targetPort:</span> <span class="number">22</span></span><br><span class="line">      <span class="attr">nodePort:</span> <span class="number">30022</span></span><br><span class="line">  <span class="attr">selector:</span></span><br><span class="line">    <span class="attr">name:</span> <span class="string">rc-test</span></span><br></pre></td></tr></table></figure>
+
+<p><a target="_blank" rel="noopener" href="https://kubernetes.io/docs/api-reference/v1.5/#service-v1">API操作</a></p>
+<h2 id="实现原理"><a href="#实现原理" class="headerlink" title="实现原理"></a>实现原理</h2><p>ip地址及端口的暴露都是通过修改iptables规则来实现的。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">iptables -t nat -L -n</span></span><br><span class="line">...</span><br><span class="line">Chain KUBE-NODEPORTS (1 references)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">KUBE-MARK-MASQ  tcp  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-lonely: */ tcp dpt:30023</span><br><span class="line">KUBE-SVC-E6FDK4HG4F4JSB77  tcp  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-lonely: */ tcp dpt:30023</span><br><span class="line">KUBE-MARK-MASQ  tcp  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-tmp: */ tcp dpt:30099</span><br><span class="line">KUBE-SVC-OOWDNB3NCXKPBPZE  tcp  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-tmp: */ tcp dpt:30099</span><br><span class="line">KUBE-MARK-MASQ  tcp  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-1: */ tcp dpt:30022</span><br><span class="line">KUBE-SVC-D25WXD2YSOVKEUTU  tcp  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-1: */ tcp dpt:30022</span><br><span class="line">...</span><br><span class="line">Chain KUBE-SEP-2LNK4QUGPB2C5PDO (2 references)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">KUBE-MARK-MASQ  all  --  192.168.6.110        0.0.0.0/0            /* default/kubernetes:https */</span><br><span class="line">DNAT       tcp  --  0.0.0.0/0            0.0.0.0/0            /* default/kubernetes:https */ recent: SET name: KUBE-SEP-2LNK4QUGPB2C5PDO side: source mask: 255.255.255.255 tcp to:192.168.6.110:6443</span><br><span class="line"></span><br><span class="line">Chain KUBE-SEP-5GTCHBFJM5RAI7LS (1 references)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">KUBE-MARK-MASQ  all  --  10.254.86.9          0.0.0.0/0            /* default/svc-lonely: */</span><br><span class="line">DNAT       tcp  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-lonely: */ tcp to:10.254.86.9:22</span><br><span class="line"></span><br><span class="line">Chain KUBE-SEP-BCYRFQ26LZTOSSU7 (1 references)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">KUBE-MARK-MASQ  all  --  10.254.86.4          0.0.0.0/0            /* default/svc-1: */</span><br><span class="line">DNAT       tcp  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-1: */ tcp to:10.254.86.4:22</span><br><span class="line"></span><br><span class="line">Chain KUBE-SEP-CLKUH4WMQ3CNBJ7K (1 references)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">KUBE-MARK-MASQ  all  --  10.254.86.2          0.0.0.0/0            /* default/svc-1: */</span><br><span class="line">DNAT       tcp  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-1: */ tcp to:10.254.86.2:22</span><br><span class="line"></span><br><span class="line">Chain KUBE-SEP-D3FORTYMXA7BVSDA (1 references)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">KUBE-MARK-MASQ  all  --  10.254.86.8          0.0.0.0/0            /* default/svc-1: */</span><br><span class="line">DNAT       tcp  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-1: */ tcp to:10.254.86.8:22</span><br><span class="line"></span><br><span class="line">Chain KUBE-SEP-F4EJGNTAH3JOOQC6 (1 references)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">KUBE-MARK-MASQ  all  --  10.254.86.3          0.0.0.0/0            /* default/svc-1: */</span><br><span class="line">DNAT       tcp  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-1: */ tcp to:10.254.86.3:22</span><br><span class="line"></span><br><span class="line">Chain KUBE-SEP-HO23WAVQKIB2R4KD (1 references)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">KUBE-MARK-MASQ  all  --  10.254.86.10         0.0.0.0/0            /* default/svc-tmp: */</span><br><span class="line">DNAT       tcp  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-tmp: */ tcp to:10.254.86.10:99</span><br><span class="line"></span><br><span class="line">Chain KUBE-SERVICES (2 references)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">KUBE-SVC-E6FDK4HG4F4JSB77  tcp  --  0.0.0.0/0            10.254.162.24        /* default/svc-lonely: cluster IP */ tcp dpt:2223</span><br><span class="line">KUBE-SVC-OOWDNB3NCXKPBPZE  tcp  --  0.0.0.0/0            10.254.119.86        /* default/svc-tmp: cluster IP */ tcp dpt:9999</span><br><span class="line">KUBE-SVC-NPX46M4PTMTKRN6Y  tcp  --  0.0.0.0/0            10.254.0.1           /* default/kubernetes:https cluster IP */ tcp dpt:443</span><br><span class="line">KUBE-SVC-D25WXD2YSOVKEUTU  tcp  --  0.0.0.0/0            10.254.159.12        /* default/svc-1: cluster IP */ tcp dpt:2222</span><br><span class="line">KUBE-NODEPORTS  all  --  0.0.0.0/0            0.0.0.0/0            /* kubernetes service nodeports; NOTE: this must be the last rule in this chain */ ADDRTYPE match dst-type LOCAL</span><br><span class="line"></span><br><span class="line">Chain KUBE-SVC-D25WXD2YSOVKEUTU (2 references)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">KUBE-SEP-CLKUH4WMQ3CNBJ7K  all  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-1: */ statistic mode random probability 0.25000000000</span><br><span class="line">KUBE-SEP-F4EJGNTAH3JOOQC6  all  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-1: */ statistic mode random probability 0.33332999982</span><br><span class="line">KUBE-SEP-BCYRFQ26LZTOSSU7  all  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-1: */ statistic mode random probability 0.50000000000</span><br><span class="line">KUBE-SEP-D3FORTYMXA7BVSDA  all  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-1: */</span><br><span class="line"></span><br><span class="line">Chain KUBE-SVC-E6FDK4HG4F4JSB77 (2 references)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">KUBE-SEP-5GTCHBFJM5RAI7LS  all  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-lonely: */</span><br><span class="line"></span><br><span class="line">Chain KUBE-SVC-NPX46M4PTMTKRN6Y (1 references)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">KUBE-SEP-2LNK4QUGPB2C5PDO  all  --  0.0.0.0/0            0.0.0.0/0            /* default/kubernetes:https */ recent: CHECK seconds: 180 reap name: KUBE-SEP-2LNK4QUGPB2C5PDO side: source mask: 255.255.255.255</span><br><span class="line">KUBE-SEP-2LNK4QUGPB2C5PDO  all  --  0.0.0.0/0            0.0.0.0/0            /* default/kubernetes:https */</span><br><span class="line"></span><br><span class="line">Chain KUBE-SVC-OOWDNB3NCXKPBPZE (2 references)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">KUBE-SEP-HO23WAVQKIB2R4KD  all  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-tmp: */</span><br></pre></td></tr></table></figure>
+
+<h1 id="Ingress"><a href="#Ingress" class="headerlink" title="Ingress"></a>Ingress</h1><p>Todo…</p>
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="http://www.colabug.com/thread-1703745-1-1.html?pp=2">Traefik-kubernetes 初试</a></li>
+<li><a target="_blank" rel="noopener" href="http://blog.163.com/hk_bs/blog/static/245038011201611149254899/">Kubernetes 中的PodIP、ClusterIP 和外部IP</a></li>
+<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/xinghun_4/article/details/50492041">kubernetes中port、target port、node port的对比分析，以及kube-proxy代理</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/03/03/container/docker/docker-network/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1149,302 +1350,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/01/25/container/docker/docker-resource-separation/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2017/01/25/container/docker/docker-resource-separation/" class="post-title-link" itemprop="url">docker 资源隔离</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2017-01-25 14:44:23" itemprop="dateCreated datePublished" datetime="2017-01-25T14:44:23+08:00">2017-01-25</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/container/" itemprop="url" rel="index"><span itemprop="name">container</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h1><p>docker不是一项新技术，docker是老旧技术的组合，为了更方便使用容器技术，docker提供了简单方便的UI。docker隔离资源主要用到了两种技术namespace、cgroup。</p>
-<h1 id="Namespace"><a href="#Namespace" class="headerlink" title="Namespace"></a>Namespace</h1><p>namespace是linux内核提供的隔离技术，它包括六种资源隔离，UTS（主机名与域名）、IPC（信号量、消息队列和共享内存）、PID（进程编号）、NET（网络设备、网络栈、端口…）、Mount（文件系统、挂载点）、User（用户和用户组）。</p>
-<table>
-<thead>
-<tr>
-<th align="center">Type</th>
-<th align="center">Sys Params</th>
-<th align="center">ker ver</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">UTS</td>
-<td align="center">CLONE_NEWUTS</td>
-<td align="center">2.6.19</td>
-</tr>
-<tr>
-<td align="center">IPC</td>
-<td align="center">CLONE_NEWIPC</td>
-<td align="center">2.6.19</td>
-</tr>
-<tr>
-<td align="center">PID</td>
-<td align="center">CLONE_NEWPID</td>
-<td align="center">2.6.24</td>
-</tr>
-<tr>
-<td align="center">NET</td>
-<td align="center">CLONE_NEWNET</td>
-<td align="center">2.6.29</td>
-</tr>
-<tr>
-<td align="center">Mount</td>
-<td align="center">CLONE_NEWNS</td>
-<td align="center">2.4.19</td>
-</tr>
-<tr>
-<td align="center">User</td>
-<td align="center">CLONE_NEWUSER</td>
-<td align="center">3.8</td>
-</tr>
-</tbody></table>
-<p>操作系统调用接口：</p>
-<ul>
-<li>clone()<br>  创建一个独立的进程独立的namespace</li>
-<li>setns()<br>  使用已有的一个namespace</li>
-<li>unshare()<br>  不启动新进程，在原进程上进行namespace隔离</li>
-</ul>
-<p>docker run中提供了使用namespace的接口:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">docker run --<span class="built_in">help</span> | grep -i namespace</span></span><br><span class="line">--ipc string                  IPC namespace to use</span><br><span class="line">--pid string                  PID namespace to use</span><br><span class="line">--userns string               User namespace to use</span><br><span class="line">--uts string                  UTS namespace to use</span><br></pre></td></tr></table></figure>
-
-<h2 id="UTS"><a href="#UTS" class="headerlink" title="UTS"></a>UTS</h2><p>提供了主机名和域名的隔离，这样每个容器就可以拥有了独立的主机名和域名，在网络上可以被视作一个独立的节点而非宿主机上的一个进程。<br>docker在run或create时，使用<code>-h</code>或<code>--hostname</code>指定hostname</p>
-<h2 id="IPC"><a href="#IPC" class="headerlink" title="IPC"></a>IPC</h2><p>IPC是Unix／linux下进程间通讯的一种方式，包括信号量、消息队列、共享内存。容器内部进程间通信对宿主机来说，实际上是具有相同PID namespace中的进程间通信，因此需要一个唯一的标识符来进行区别。申请IPC资源就申请了这样一个全局唯一的32位ID，所以IPC namespace中实际上包含了系统IPC标识符以及实现POSIX消息队列的文件系统。在同一个IPC namespace下的进程彼此可见，而与其他的IPC namespace下的进程则互相不可见。</p>
-<p>在宿主机上创建IPC（以消息队列为例）：</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">ipcmk -Q</span></span><br><span class="line">消息队列 id：32768</span><br></pre></td></tr></table></figure>
-<p>在宿主机上查询IPC：</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">ipcs</span></span><br><span class="line"></span><br><span class="line">--------- 消息队列 -----------</span><br><span class="line">键        msqid      拥有者  权限     已用字节数 消息</span><br><span class="line">0xabba8164 32768      root       644        0            0</span><br></pre></td></tr></table></figure>
-<p>在容器中查询IPC：</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">docker <span class="built_in">exec</span> -it net_5 ipcs</span></span><br><span class="line"></span><br><span class="line">------ Message Queues --------</span><br><span class="line">key        msqid      owner      perms      used-bytes   messages</span><br><span class="line"></span><br><span class="line">------ Shared Memory Segments --------</span><br><span class="line">key        shmid      owner      perms      bytes      nattch     status</span><br><span class="line"></span><br><span class="line">------ Semaphore Arrays --------</span><br><span class="line">key        semid      owner      perms      nsems</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-
-<h2 id="PID"><a href="#PID" class="headerlink" title="PID"></a>PID</h2><p>它对进程PID重新标号，即两个不同namespace下的进程可以有同一个PID。每个PID namespace都有自己的计数程序。内核为所有的PID namespace维护了一个树状结构，最顶层的是系统初始时创建的，我们称之为root namespace。他创建的新PID namespace就称之为child namespace（树的子节点），而原先的PID namespace就是新创建的PID namespace的parent namespace（树的父节点）。通过这种方式，不同的PID namespaces会形成一个等级体系。所属的父节点可以看到子节点中的进程，并可以通过信号等方式对子节点中的进程产生影响。反过来，子节点不能看到父节点PID namespace中的任何内容。<br>    * 每个PID namespace中的第一个进程“PID 1“，都会像传统Linux中的init进程一样拥有特权，起特殊作用。<br>    * 一个namespace中的进程，不可能通过kill或ptrace影响父节点或者兄弟节点中的进程，因为其他节点的PID在这个namespace中没有任何意义。<br>    * 如果你在新的PID namespace中重新挂载&#x2F;proc文件系统，会发现其下只显示同属一个PID namespace中的其他进程。（挂载&#x2F;proc 文件系统尤为重要）<br>    * 在root namespace中可以看到所有的进程，并且递归包含所有子节点中的进程。</p>
-<p><img src="/images/docker/docker-resource-separation-pid.png" alt="docker-resource-separation-pid"></p>
-<p>以容器的ceph-mon节点为例：</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">宿主机上查看 ceph-mon 进程</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">ps -ef| grep 9184</span></span><br><span class="line">root      9184  3122  0 1月20 ?       00:00:04 docker-containerd-shim be0583fade06df3f6510dd629bde4a636e68c755aa8b0733db6702493b1d0c38 /var/run/docker/libcontainerd/be0583fade06df3f6510dd629bde4a636e68c755aa8b0733db6702493b1d0c38 docker-runc</span><br><span class="line">64045     9200  9184  0 1月20 ?       00:01:03 /usr/bin/ceph-mon --cluster ceph -d -i rhel82 --public-addr 192.168.1.82:6789 --setuser ceph --setgroup ceph</span><br><span class="line">root     21893  9855  0 16:15 pts/5    00:00:00 grep --color=auto 9184</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">容器中查看 ceph-mon 进程</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">docker <span class="built_in">exec</span> -it ceph-mon ps -ef</span></span><br><span class="line">UID        PID  PPID  C STIME TTY          TIME CMD</span><br><span class="line">ceph         1     0  0 Jan20 ?        00:01:03 /usr/bin/ceph-mon --cluster ceph</span><br><span class="line">root        26     0  0 08:15 ?        00:00:00 ps -ef</span><br></pre></td></tr></table></figure>
-
-<h2 id="NET"><a href="#NET" class="headerlink" title="NET"></a>NET</h2><p>Pv4和IPv6协议栈、IP路由表、防火墙、&#x2F;proc&#x2F;net目录、&#x2F;sys&#x2F;class&#x2F;net目录、端口（socket）等等。一个物理的网络设备最多存在在一个network namespace中，你可以通过创建veth pair（虚拟网络设备对：有两端，类似管道，如果数据从一端传入另一端也能接收到，反之亦然）在不同的network namespace间创建通道，以此达到通信的目的。</p>
-<p>一般情况下，物理网络设备都分配在最初的root namespace（表示系统默认的namespace，在PID namespace中已经提及）中。但是如果你有多块物理网卡，也可以把其中一块或多块分配给新创建的network namespace。需要注意的是，当新创建的network namespace被释放时（所有内部的进程都终止并且namespace文件没有被挂载或打开），在这个namespace中的物理网卡会返回到root namespace而非创建该进程的父进程所在的network namespace。</p>
-<p>当我们说到network namespace时，其实我们指的未必是真正的网络隔离，而是把网络独立出来，给外部用户一种透明的感觉，仿佛跟另外一个网络实体在进行通信。为了达到这个目的，容器的经典做法就是创建一个veth pair，一端放置在新的namespace中，通常命名为eth0，一端放在原先的namespace中连接物理网络设备，再通过网桥把别的设备连接进来或者进行路由转发，以此网络实现通信的目的。</p>
-<p><img src="/images/docker/docker-resource-separation-network.png" alt="docker-resource-separation-network"></p>
-<p>可通过<code>ip netns</code>、<code>brctl</code>管理Network Namespace，docker创建的netns路径为<code>/proc/&#123;进程ID&#125;/ns/net</code>，<code>ip netns</code>访问的默认路径为<code>/var/run/netns/</code>。<br>若需要访问其Network Namespace内部，先创建软连接链至<code>ip netns</code>访问路径，然后使用<code>ip netns exec</code>访问该网络内部。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">在ip netns访问路径下创建network namespace的软链接</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash"><span class="built_in">ln</span> -s /proc/7013/ns/net /var/run/netns/net_5</span></span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">使用 ip netns <span class="built_in">exec</span> 访问指定network namespace的网络</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">ip netns <span class="built_in">exec</span> net_5 ip addr</span></span><br><span class="line">1: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu 65536 qdisc noqueue state UNKNOWN group default</span><br><span class="line">  link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00</span><br><span class="line">  inet 127.0.0.1/8 scope host lo</span><br><span class="line">  valid_lft forever preferred_lft forever</span><br><span class="line">  inet6 ::1/128 scope host</span><br><span class="line">  valid_lft forever preferred_lft forever</span><br><span class="line">15: eth0: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc noqueue state UP group default</span><br><span class="line">  link/ether 02:42:ac:11:00:03 brd ff:ff:ff:ff:ff:ff</span><br><span class="line">  inet 172.17.0.3/16 scope global eth0</span><br><span class="line">  valid_lft forever preferred_lft forever</span><br><span class="line">  inet6 fe80::42:acff:fe11:3/64 scope link</span><br><span class="line">  valid_lft forever preferred_lft forever</span><br></pre></td></tr></table></figure>
-
-<h2 id="Mount"><a href="#Mount" class="headerlink" title="Mount"></a>Mount</h2><p>隔离后，不同mount namespace中的文件结构发生变化也互不影响。你可以通过<code>/proc/[pid]/mounts</code>查看到所有挂载在当前namespace中的文件系统，还可以通过<code>/proc/[pid]/mountstats</code>看到mount namespace中文件设备的统计信息，包括挂载文件的名字、文件系统类型、挂载位置等等。（此处用到了<a href="https://zhoubofsy.github.io/2017/01/24/linux/mount-usage/">mount propagation </a> 技术）</p>
-<p><img src="/images/docker/docker-resource-separation-mount.png" alt="docker-resource-separation-mount.png"><br>上图mount挂载方式有待确认。</p>
-<h2 id="USER"><a href="#USER" class="headerlink" title="USER"></a>USER</h2><p>主要隔离了安全相关的标识符（identifiers）和属性（attributes），包括用户ID、用户组ID、root目录、key（指密钥）以及特殊权限。说得通俗一点，一个普通用户的进程通过clone()创建的新进程在新user namespace中可以拥有不同的用户和用户组。这意味着一个进程在容器外属于一个没有特权的普通用户，但是他创建的容器进程却属于拥有所有权限的超级用户，这个技术为容器提供了极大的自由。</p>
-<p>docker通过<code>/proc/&#123;进程ID&#125;/uid_map</code>和<code>/proc/&#123;进程ID&#125;/gid_map</code>把容器中的uid、gid和真实系统的uid、gid给映射在一起，格式为：<code>ID-inside-ns   ID-outside-ns   length</code>。</p>
-<ul>
-<li>ID-inside-ns 表示在容器内显示的uid或gid</li>
-<li>ID-outside-ns 表示在容器外映射的真实的uid或gid</li>
-<li>length 表示映射范围，一般为1，表示一一对应(把ID-outside-ns ~（ID-outside-ns+length） 映射到 ID-inside-ns ～（ID-inside-ns+length）上)</li>
-</ul>
-<h1 id="cgroups"><a href="#cgroups" class="headerlink" title="cgroups"></a>cgroups</h1><p>Control Groups(cgroups)，是Linux 内核提供的一种可以限制、记录、隔离进程组所使用的物理资源(如 cpu、memory、磁盘IO等等) 的机制，被LXC、docker等很多项目用于实现进程资源控制。</p>
-<p>cgroups子系统：</p>
-<ul>
-<li>cpu<br>  使用调度程序提供对 CPU 的 cgroup 任务访问</li>
-<li>cpuset<br>  为cgroup中的任务分配独立CPU（在多核系统）和内存节点</li>
-<li>devices<br>  可允许或者拒绝 cgroup 中的任务访问设备</li>
-<li>blkio<br>  为块设备设定输入&#x2F;输出限制，比如物理设备（磁盘，固态硬盘，USB 等等）</li>
-<li>freezer<br>  挂起或者恢复 cgroup 中的任务</li>
-<li>memory<br>  设定 cgroup 中任务使用的内存限制，并自动生成由那些任务使用的内存资源报告</li>
-<li>net_cls<br>  使用等级识别符（classid）标记网络数据包，可允许 Linux 流量控制程序（tc）识别从具体 cgroup 中生成的数据包</li>
-</ul>
-<h2 id="CPU"><a href="#CPU" class="headerlink" title="CPU"></a>CPU</h2><h3 id="cpu-shares"><a href="#cpu-shares" class="headerlink" title="cpu-shares"></a>cpu-shares</h3><p>在<code>docker create/run</code>容器时可以通过<code>--cpu-shares</code>参数来指定容器所使用的CPU加权值。默认情况下，每个docker容器的cpu-shares值都是1024。单独一个容器的cpu-shares是没有意义的，只在多个容器分配的资源紧缺时，也就是说在需要对容器使用的资源进行限制时，才会生效。配之后，可通过<code>./cgroup/cpu/docker/&lt;容器ID&gt;/cpu.shares</code>查看。</p>
-<h3 id="cpu-period-cpu-quota"><a href="#cpu-period-cpu-quota" class="headerlink" title="cpu-period &amp; cpu-quota"></a>cpu-period &amp; cpu-quota</h3><ul>
-<li>cpu-period 用来指定容器对CPU的使用要在多长时间内做一次重新分配</li>
-<li>cpu-quota 用来指定在这个周期内，最多可以有多少时间用来跑这个容器<br>在<code>docker create/run</code>时使用，参数为<code>--cpu-period</code>和<code>--cpu-quota</code>单位为微秒，cpu-period的默认值为0.1秒（100000 微秒），cpu-quota的默认值为-1(表示不控制)。配置后，可通过<code>./cgroup/cpu/docker/&lt;容器ID&gt;/cpu.cfs_period_us</code>和<code>./cgroup/cpu/docker/&lt;容器ID&gt;/cpu.cfs_quota_us</code>查看。</li>
-</ul>
-<h3 id="cpuset"><a href="#cpuset" class="headerlink" title="cpuset"></a>cpuset</h3><p>docker可使用<code>--cpuset-cpus</code>和<code>--cpuset-mems</code>参数控制容器运行限定使用哪些cpu和内存节点。配之后，可通过<code>./cgroup/cpuset/docker/&lt;容器ID&gt;/cpuset.cpus</code>和<code>./cgroup/cpuset/docker/&lt;容器ID&gt;/cpuset.mems</code>查看。</p>
-<p>*** 注：对于具有NUMA的服务器很重要 ***</p>
-<h2 id="Memory"><a href="#Memory" class="headerlink" title="Memory"></a>Memory</h2><p>在<code>docker create/run</code>时，可以对内存资源加以限制。</p>
-<ul>
-<li>kernel-memory<br>  使用参数<code>--kernel-memory</code>，限制内核内存，该内存不会被交换到swap上。</li>
-<li>memory<br>  使用参数<code>--memory</code>，设置容器使用的最大内存上限。默认单位为byte，可以使用K、G、M等带单位的字符串。</li>
-<li>memory-reservation<br>  使用参数<code>--memory-reservation</code>，启用弹性的内存共享，当宿主机资源充足时，允许容器尽量多地使用内存，当检测到内存竞争或者低内存时，强制将容器的内存降低到memory-reservation所指定的内存大小。不设置此选项时，有可能出现某些容器长时间占用大量内存，导致性能上的损失。</li>
-<li>memory-swap<br>  使用参数<code>--memory-swap</code>，设置总内存大小，相当于内存和swap大小的总和，设置-1时，表示swap分区大小是无限的。默认单位为byte，可以使用K、G、M等带单位的字符串。</li>
-<li>memory-swappiness<br>  使用参数<code>--memory-swappiness</code>，设置控制进程将物理内存交换到swap分区的倾向，系数越小，就越倾向于使用物理内存。值范围为0-100。当值为100时，表示尽量使用swap分区；当值为0时，表示禁用容器 swap 功能(这点不同于宿主机，宿主机 swappiness 设置为 0 也不保证 swap 不会被使用)</li>
-</ul>
-<h2 id="Block-Device"><a href="#Block-Device" class="headerlink" title="Block Device"></a>Block Device</h2><h3 id="I-O"><a href="#I-O" class="headerlink" title="I&#x2F;O"></a>I&#x2F;O</h3><ul>
-<li>device-read-bps<br>  限制此设备上的读速度（bytes per second），单位可以是kb、mb或者gb</li>
-<li>device-read-iops<br>  通过每秒读IO次数来限制指定设备的读速度</li>
-<li>device-write-bps<br>  限制此设备上的写速度（bytes per second），单位可以是kb、mb或者gb</li>
-<li>device-write-iops<br>  通过每秒写IO次数来限制指定设备的写速度</li>
-<li>blkio-weight<br>  容器默认磁盘IO的加权值，有效值范围为10-100。要使<code>-–blkio-weight</code>生效，需要保证IO的调度算法为CFQ<br>  <code>echo &quot;cfq&quot; &gt; /sys/block/&lt;设备名&gt;/queue/scheduler</code></li>
-<li>blkio-weight-device<br>  针对特定设备的IO加权控制。其格式为DEVICE_NAME:WEIGHT</li>
-</ul>
-<h3 id="Volume"><a href="#Volume" class="headerlink" title="Volume"></a>Volume</h3><p>使用参数<code>--storage-opt</code>，传入<code>dm.basesize=&lt;容量大小&gt;</code>可以设置rootfs大小。如果不设置<code>dm.basesize</code>，默认值为10G，若要使<code>dm.basesize</code>生效，storage driver 必须是 device mapper。<br>设置rootfs大小后，需要重启docker服务，并且<code>--storage-opts</code>参数需要在启动docker服务时使用。<br>以RHEL7.2为例，需要修改<code>/etc/systemd/system/multi-user.target.wants/docker.service</code>中<code>/usr/bin/dockerd</code>的参数。</p>
-<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a target="_blank" rel="noopener" href="http://www.infoq.com/cn/articles/docker-kernel-knowledge-namespace-resource-isolation?utm_source=tuicool">Docker背后的内核知识——Namespace资源隔离</a></li>
-<li><a target="_blank" rel="noopener" href="http://www.cnblogs.com/sammyliu/p/5878973.html">理解Docker（3）：Docker 使用 Linux namespace 隔离容器的运行环境</a></li>
-<li><a target="_blank" rel="noopener" href="http://www.cnblogs.com/ilinuxer/p/6188450.html">Linux Namespace 介绍</a></li>
-<li><a target="_blank" rel="noopener" href="https://segmentfault.com/a/1190000006913195">Linux Namespace系列（07）：user namespace (CLONE_NEWUSER) (第一部分)</a></li>
-<li><a target="_blank" rel="noopener" href="http://www.07net01.com/2017/01/1778663.html">理解Docker容器网络之Linux Network Namespace</a></li>
-<li><a target="_blank" rel="noopener" href="http://coolshell.cn/articles/17010.html">DOCKER基础技术：LINUX NAMESPACE（上）</a></li>
-<li><a target="_blank" rel="noopener" href="http://coolshell.cn/articles/17029.html">DOCKER基础技术：LINUX NAMESPACE（下）</a></li>
-<li><a target="_blank" rel="noopener" href="http://blog.chinaunix.net/uid-20788636-id-5029770.html">调整docker中rootfs的分区大小</a></li>
-<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/horsefoot/article/details/51731543">docker容器资源配额控制</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/01/24/linux/mount-usage/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2017/01/24/linux/mount-usage/" class="post-title-link" itemprop="url">mount更多用法</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2017-01-24 10:42:35" itemprop="dateCreated datePublished" datetime="2017-01-24T10:42:35+08:00">2017-01-24</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/linux/" itemprop="url" rel="index"><span itemprop="name">linux</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h1><p>每一个使用linux或类unix系统的人都会用到的命令mount，它用来挂载／卸载文件系统。这是该命令基本功能，除了基本功能该命令还有其它功能。</p>
-<h1 id="更多多多多多多多多多多多多多多多用法"><a href="#更多多多多多多多多多多多多多多多用法" class="headerlink" title="更多多多多多多多多多多多多多多多用法"></a>更多多多多多多多多多多多多多多多用法</h1><h2 id="绑定挂载-bind-mount"><a href="#绑定挂载-bind-mount" class="headerlink" title="绑定挂载(bind mount)"></a>绑定挂载(bind mount)</h2><p>windows的快捷方式、linux的软硬链接，相信你已很熟悉了，下面我来说说mount的绑定挂载<code>--bind</code>。</p>
-<p>linux的软硬链接原理:<br><img src="/images/linux/soft_hard_link.jpg" alt="原理图"></p>
-<ul>
-<li>软连接受应用程序影响，不是所有应用程序都能通过软连接访问资源的</li>
-<li>硬链接只能作用在文件上，不能为文件夹创建硬链接</li>
-</ul>
-<p>bind mount:<br>能成功克服软硬链接的缺点，将文件或文件夹挂载到指定的挂载点上。使对挂载点的操作转移到文件或文件夹上。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"> # </span><span class="language-bash"><span class="built_in">ls</span> -li uts*</span></span><br><span class="line">583819234 -rw-r--r--. 1 root root 4 1月  23 16:55 uts</span><br><span class="line">606248334 -rw-r--r--. 1 root root 2 1月  23 10:44 uts2</span><br><span class="line"><span class="meta prompt_"> # </span><span class="language-bash">mount --<span class="built_in">bind</span> ./uts2 ./uts</span></span><br><span class="line"><span class="meta prompt_"> # </span><span class="language-bash"><span class="built_in">ls</span> -li uts*</span></span><br><span class="line">606248334 -rw-r--r--. 1 root root 2 1月  23 10:44 uts</span><br><span class="line">606248334 -rw-r--r--. 1 root root 2 1月  23 10:44 uts2</span><br></pre></td></tr></table></figure>
-<p>uts的inode变成了，uts2的inode id，所有访问uts的io都会转移到uts2上；并且在mount中能查看到<code>bind mount</code>信息。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"> # </span><span class="language-bash">mount</span></span><br><span class="line">...</span><br><span class="line">/dev/mapper/rhel_rhel82-root on /home/zhoub/uts type xfs (rw,relatime,seclabel,attr2,inode64,noquota)</span><br></pre></td></tr></table></figure>
-<p><code>bind mount</code>是用挂载文件或目录信息遮盖了挂载的文件或目录，当不需要时，可以通过<code>umount</code>卸载，恢复原文件或目录的信息。</p>
-<h2 id="挂载传播-mount-propagation"><a href="#挂载传播-mount-propagation" class="headerlink" title="挂载传播(mount propagation)"></a>挂载传播(mount propagation)</h2><p>执行<code>clone()</code>时，进程拷贝当前文件系统树，此后，新进程就拥有与原进程相同的文件系统树拷贝，两个文件系统树中的任何挂载操作都不会影响另一个拷贝。尽管每个进程使用单独的文件系统名称空间在理论上非常有意义，但完全隔离也会造成较大限制性。进程克隆了系统的文件系统名称空间之后，已经运行的系统守护进程无法为这个用户自动挂载 CD-ROM，因为在原文件系统名称空间中执行的挂载无法影响用户的拷贝。2006 年引入的挂载传播（mount propagation）解决了这个问题，挂载传播定义了挂载对象之间的关系。</p>
-<ul>
-<li>共享挂载(share mount)<br>  如果两个挂载对象具有共享关系，那么一个挂载对象中的挂载事件会传播到另一个挂载对象，反之亦然<br>  <code>mount --make-shared &lt;mount-object&gt;</code><br>  <code>mount --make-rshared &lt;mount-object&gt;</code></li>
-<li>从属挂载(slave mount)<br>  如果两个挂载对象形成从属（slave）关系，那么一个挂载对象中的挂载事件会传播到另一个挂载对象，但是反过来不行；在这种关系中，从属对象是事件的接收者<br>  <code>mount --make-slave &lt;mount-object&gt;</code></li>
-<li>私有挂载(private mount)<br>  既不传播也不接收挂载事件<br>  <code>mount --make-private &lt;mount-object&gt;</code></li>
-<li>不可绑定挂载(unbindable mount)<br>  与私有挂载相似，但是不允许执行绑定挂载<br>  <code>mount --make-unbindable &lt;mount-object&gt;</code></li>
-</ul>
-<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/shengxia1999/article/details/52060354">mount –bind和硬连接的区别</a></li>
-<li><a target="_blank" rel="noopener" href="http://www.ibm.com/developerworks/cn/linux/l-cn-hardandsymb-links/">理解 Linux 的硬链接与软链接</a></li>
-<li><a target="_blank" rel="noopener" href="http://www.ibm.com/developerworks/cn/linux/l-mount-namespaces.html">应用挂载名称空间</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1514,7 +1419,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">141</span>
+          <span class="site-state-item-count">143</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -1527,7 +1432,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">121</span>
+        <span class="site-state-item-count">122</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>

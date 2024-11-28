@@ -188,6 +188,247 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/08/03/storage/gluster/gluster-hello-world/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2017/08/03/storage/gluster/gluster-hello-world/" class="post-title-link" itemprop="url">初尝GlusterFS</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2017-08-03 14:02:36" itemprop="dateCreated datePublished" datetime="2017-08-03T14:02:36+08:00">2017-08-03</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p><img src="/images/gluster/glusterfs-antmascot.png" alt="glusterfs-antmascot"></p>
+<h1 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h1><p>GlusterFS (Gluster File System) 是一个开源的分布式文件系统，主要由 Z RESEARCH 公司负责开发。GlusterFS 是 Scale-Out 存储解决方案 Gluster 的核心，具有强大的横向扩展能力，通过扩展能够支持数PB存储容量和处理数千客户端。GlusterFS 借助 TCP&#x2F;IP 或 InfiniBand RDMA 网络将物理分布的存储资源聚集在一起，使用单一全局命名空间来管理数据。GlusterFS 基于可堆叠的用户空间设计，可为各种不同的数据负载提供优异的性能。</p>
+<p><img src="/images/gluster/glusterfs-frame.png" alt="glusterfs-frame"></p>
+<p>GlusterFS 总体架构与组成，它主要由存储服务器（Brick Server）、客户端以及 NFS&#x2F;Samba 存储网关组成。不难发现，GlusterFS 架构中没有元数据服务器组件，这是其最大的设计这点，对于提升整个系统的性能、可靠性和稳定性都有着决定性的意义。</p>
+<ul>
+<li>GlusterFS 支持 TCP&#x2F;IP 和 InfiniBand RDMA 高速网络互联。</li>
+<li>客户端可通过原生 GlusterFS 协议访问数据，其他没有运行 GlusterFS 客户端的终端可通过 NFS&#x2F;CIFS 标准协议通过存储网关访问数据（存储网关提供弹性卷管理和访问代理功能）。</li>
+<li>存储服务器主要提供基本的数据存储功能，客户端弥补了没有元数据服务器的问题，承担了更多的功能，包括数据卷管理、I&#x2F;O 调度、文件定位、数据缓存等功能，利用 FUSE（File system in User Space）模块将 GlusterFS 挂载到本地文件系统之上，实现 POSIX 兼容的方式来访问系统数据。</li>
+</ul>
+<h2 id="卷类型"><a href="#卷类型" class="headerlink" title="卷类型"></a>卷类型</h2><h3 id="Distribute卷"><a href="#Distribute卷" class="headerlink" title="Distribute卷"></a>Distribute卷</h3><p>分布式卷，基于 Hash 算法将文件分布到所有 brick server，只是扩大了磁盘空间，不具备容错能力。由于distribute volume 使用本地文件系统，因此存取效率并没有提高，相反会因为网络通信的原因使用效率有所降低，另外本地存储设备的容量有限制，因此支持超大型文件会有一定难度。</p>
+<p><img src="/images/gluster/glusterfs-volume-distribute.jpg" alt="glusterfs-volume-distribute"></p>
+<h3 id="Stripe卷"><a href="#Stripe卷" class="headerlink" title="Stripe卷"></a>Stripe卷</h3><p>条带卷，类似 RAID0，文件分成数据块以 Round Robin 方式分布到 brick server 上，并发粒度是数据块，支持超大文件，大文件的读写性能高。</p>
+<p><img src="/images/gluster/glusterfs-volume-stripe.jpg" alt="glusterfs-volume-stripe"></p>
+<h3 id="Replica卷"><a href="#Replica卷" class="headerlink" title="Replica卷"></a>Replica卷</h3><p>复制卷，文件同步复制到多个 brick 上，文件级 RAID1，具有容错能力，写性能下降，读性能提升。Replicated 模式，也称作 AFR（Auto File Replication），相当于 RAID1，即同一文件在多个镜像存储节点上保存多份，每个 replicated 子节点有着相同的目录结构和文件，replica volume 也是在容器存储中较为推崇的一种。</p>
+<p><img src="/images/gluster/glusterfs-volume-replica.jpg" alt="glusterfs-volume-replica"></p>
+<h3 id="Distribute-Stripe卷"><a href="#Distribute-Stripe卷" class="headerlink" title="Distribute Stripe卷"></a>Distribute Stripe卷</h3><p>分布式条带卷，Brick server 数量是条带数的倍数，兼具 distribute 和 stripe 卷的特点。分布式的条带卷，volume 中 brick 所包含的存储服务器数必须是 stripe 的倍数(&gt;&#x3D;2倍)，兼顾分布式和条带式的功能。每个文件分布在四台共享服务器上，通常用于大文件访问处理，最少需要 4 台服务器才能创建分布条带卷。</p>
+<p><img src="/images/gluster/glusterfs-volume-distribute-stripe.jpg" alt="glusterfs-volume-distribute-stripe"></p>
+<h3 id="Distribute-Replica卷"><a href="#Distribute-Replica卷" class="headerlink" title="Distribute Replica卷"></a>Distribute Replica卷</h3><p>分布式复制卷，Brick server 数量是镜像数的倍数，兼具 distribute 和 replica 卷的特点,可以在 2 个或多个节点之间复制数据。分布式的复制卷，volume 中 brick 所包含的存储服务器数必须是 replica 的倍数(&gt;&#x3D;2倍)，兼顾分布式和复制式的功能。</p>
+<p><img src="/images/gluster/glusterfs-volume-distribute-replica.jpg" alt="glusterfs-volume-distribute-replica"></p>
+<h3 id="Stripe-Replica卷"><a href="#Stripe-Replica卷" class="headerlink" title="Stripe Replica卷"></a>Stripe Replica卷</h3><p>条带复制卷，类似 RAID 10，同时具有条带卷和复制卷的特点。</p>
+<p><img src="/images/gluster/glusterfs-volume-stripe-replica.png" alt="glusterfs-volume-stripe-replica"></p>
+<h3 id="Distribute-Stripe-Replica卷"><a href="#Distribute-Stripe-Replica卷" class="headerlink" title="Distribute Stripe Replica卷"></a>Distribute Stripe Replica卷</h3><p>分布式条带复制卷，三种基本卷的复合卷，通常用于类 Map Reduce 应用。</p>
+<p><img src="/images/gluster/glusterfs-volume-distribute-stripe-replica.png" alt="glusterfs-volume-distribute-stripe-replica"></p>
+<h1 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h1><p>使用docker部署GlusterFS，dockerfile如下：</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">FROM</span> centos:<span class="number">7.3</span>.<span class="number">1611</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">MAINTAINER</span> zhoub</span><br><span class="line"></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> yum update -y</span></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> yum install -y centos-release-gluster310.noarch</span></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> yum update -y</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> yum clean all</span></span><br></pre></td></tr></table></figure>
+
+<p>创建GlusterFS镜像</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">docker build -t glusterfs:3.10 -f ./dockerfile .</span></span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+
+<p>创建docker容器脚本<code>mkgfs.sh</code>，创建两个容器，用来组件gluster集群</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">!/bin/sh</span></span><br><span class="line"></span><br><span class="line">count=2</span><br><span class="line">image=glusterfs:3.10</span><br><span class="line"></span><br><span class="line">for((i=1;i&lt;=$count;i++))</span><br><span class="line">do</span><br><span class="line">    docker run -d -e &quot;container=docker&quot; --privileged=true -v /sys/fs/cgroup:/sys/fs/cgroup -h glf-client-$i --name glf_client_$i $&#123;image&#125; /usr/sbin/init</span><br><span class="line">done</span><br></pre></td></tr></table></figure>
+
+<h1 id="部署-使用"><a href="#部署-使用" class="headerlink" title="部署&amp;使用"></a>部署&amp;使用</h1><h2 id="部署"><a href="#部署" class="headerlink" title="部署"></a>部署</h2><p>安装<code>glusterfs-server</code></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">yum install -y glusterfs-server</span></span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+
+<p>准备数据目录</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash"><span class="built_in">mkdir</span> -p /brks/brk1/gv0</span></span><br></pre></td></tr></table></figure>
+<p>(此处不进行数据盘挂载，直接使用系统硬盘)</p>
+<p>启动<code>glusterd</code>服务</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">systemctl <span class="built_in">enable</span> glusterd</span></span><br><span class="line">...</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">systemctl start glusterd</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">systemctl status glusterd</span></span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+
+<p>在容器<code>glf-client-1</code>上添加<code>glf-client-2</code></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gluster peer probe glf-client-2</span><br></pre></td></tr></table></figure>
+<p>(此处省去向<code>/etc/hosts</code>增加ip、域名的映射修改)</p>
+<p>在容器<code>glf-client-2</code>上添加<code>glf-client-1</code></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gluster peer probe glf-client-1</span><br></pre></td></tr></table></figure>
+<p>(此处省去向<code>/etc/hosts</code>增加ip、域名的映射修改)</p>
+<p>在任意一个容器上创建、启动volume</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">gluster volume create gv0 replica 2 glf-client-1:/brks/brk1/gv0 glf-client-2:/brks/brk1/gv0 force</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">gluster volume start gv0</span></span><br></pre></td></tr></table></figure>
+<p>(由于gv0使用的是系统盘，所以在volume创建时，需要指定<code>force</code>参数)<br>创建、启动完volume后可通过<code>gluster volume info</code>和<code>gluster volume status gv0</code>查看状态。</p>
+<h2 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h2><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mount -t glusterfs glf-client-1:gv0 /mnt/</span><br></pre></td></tr></table></figure>
+
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="https://wiki.centos.org/SpecialInterestGroup/Storage/gluster-Quickstart">gluster-Quickstart</a></li>
+<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/luckytanggu/article/details/71514798">容器中使用systemctl命令重启服务</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.ibm.com/developerworks/cn/opensource/os-cn-glusterfs-docker-volume/index.html?lnk=hm">基于 GlusterFS 实现 Docker 集群的分布式存储</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/07/21/devstack-deploy/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2017/07/21/devstack-deploy/" class="post-title-link" itemprop="url">devstack部署</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2017-07-21 15:56:02" itemprop="dateCreated datePublished" datetime="2017-07-21T15:56:02+08:00">2017-07-21</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/other/" itemprop="url" rel="index"><span itemprop="name">other</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>OpenStack（以下简称OPS）是一个很庞大的系统，想要部署一个OPS需要部署很多组件。想必部署之路也是坑坑奇多。所以为了方便使用OPS，需要部署一个“all-in-one”环境的OPS</p>
+<h1 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h1><ul>
+<li>CPU<br>  2U X86_64</li>
+<li>Memory<br>  4G及以上，如果内存过小，会出现各种问题。（整个devstack-Openstack-Ocata + CentOS7.3 1611需要占用3.4G内存）</li>
+<li>OS<br>  CentOS 7.3 1611</li>
+<li>NET<br>  建议创建两个网络，一个用于连接外网用于做管理性工作；一个供neutron使用</li>
+<li>OpenStack版本<br>  Ocata</li>
+</ul>
+<h1 id="部署"><a href="#部署" class="headerlink" title="部署"></a>部署</h1><h2 id="准备"><a href="#准备" class="headerlink" title="准备"></a>准备</h2><h3 id="关闭防火墙"><a href="#关闭防火墙" class="headerlink" title="关闭防火墙"></a>关闭防火墙</h3><h4 id="关闭selinux"><a href="#关闭selinux" class="headerlink" title="关闭selinux"></a>关闭selinux</h4><p>编辑<code>/etc/selinux/config</code>将<code>SELINUX=enforcing</code>改为<code>SELINUX=disabled</code></p>
+<h4 id="关闭iptables"><a href="#关闭iptables" class="headerlink" title="关闭iptables"></a>关闭iptables</h4><p>执行命令<code>sudo systemctl disable iptables</code>，关闭iptables服务</p>
+<p>上诉两处修改若想生效需要重启系统。</p>
+<h3 id="安装依赖软件"><a href="#安装依赖软件" class="headerlink" title="安装依赖软件"></a>安装依赖软件</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo yum install -y epel-release git net-tools</span><br></pre></td></tr></table></figure>
+
+<h3 id="下载Devstack"><a href="#下载Devstack" class="headerlink" title="下载Devstack"></a>下载Devstack</h3><p>从github上下载devstack<code>git clone https://github.com/openstack-dev/devstack.git</code>，然后切换版本到Ocata <code>git checkout stable/ocata</code>，可使用<code>git branch -av</code>查看devstack所处分支</p>
+<h2 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h2><h3 id="创建stack用户"><a href="#创建stack用户" class="headerlink" title="创建stack用户"></a>创建stack用户</h3><ol>
+<li>进入devstack目录 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cd devstack</span><br></pre></td></tr></table></figure></li>
+<li>创建stack用户 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo ./tools/create-stack-user.sh</span><br></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="切换用户"><a href="#切换用户" class="headerlink" title="切换用户"></a>切换用户</h3><ol>
+<li>修改目录owner <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo chown -R stack:stack ./devstack</span><br></pre></td></tr></table></figure></li>
+<li>修改<code>/opt/stack</code>目录访问权限 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo chmod 777 /opt/stack -R</span><br><span class="line">sudo mv ./devstack /opt/stack/</span><br></pre></td></tr></table></figure></li>
+<li>切换用户 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo su - stack</span><br></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="撰写local-conf"><a href="#撰写local-conf" class="headerlink" title="撰写local.conf"></a>撰写local.conf</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br></pre></td><td class="code"><pre><span class="line">[[local|localrc]]</span><br><span class="line"></span><br><span class="line">DEST=/opt/stack/ocata</span><br><span class="line"># use TryStack git mirror</span><br><span class="line">GIT_BASE=http://git.trystack.cn</span><br><span class="line">NOVNC_REPO=http://git.trystack.cn/kanaka/noVNC.git</span><br><span class="line">SPICE_REPO=http://git.trystack.cn/git/spice/spice-html5.git</span><br><span class="line"></span><br><span class="line">#OFFLINE=True</span><br><span class="line">RECLONE=False</span><br><span class="line"></span><br><span class="line"># Define images to be automatically downloaded during the DevStack built process.</span><br><span class="line">DOWNLOAD_DEFAULT_IMAGES=False</span><br><span class="line">IMAGE_URLS=&quot;,https://launchpad.net/cirros/trunk/0.3.0/+download/cirros-0.3.0-x86_64-disk.img&quot;</span><br><span class="line"></span><br><span class="line">HOST_IP=127.0.0.1</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"># Credentials</span><br><span class="line">DATABASE_PASSWORD=pass</span><br><span class="line">ADMIN_PASSWORD=pass</span><br><span class="line">SERVICE_PASSWORD=pass</span><br><span class="line">SERVICE_TOKEN=pass</span><br><span class="line">RABBIT_PASSWORD=pass</span><br><span class="line"></span><br><span class="line">HORIZON_BRANCH=stable/ocata</span><br><span class="line">KEYSTONE_BRANCH=stable/ocata</span><br><span class="line">NOVA_BRANCH=stable/ocata</span><br><span class="line">NEUTRON_BRANCH=stable/ocata</span><br><span class="line">GLANCE_BRANCH=stable/ocata</span><br><span class="line">CINDER_BRANCH=stable/ocata</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">#keystone</span><br><span class="line">KEYSTONE_TOKEN_FORMAT=UUID</span><br><span class="line"></span><br><span class="line">##Heat</span><br><span class="line">HEAT_BRANCH=stable/ocata</span><br><span class="line">enable_service h-eng h-api h-api-cfn h-api-cw</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">## Swift</span><br><span class="line">SWIFT_BRANCH=stable/ocata</span><br><span class="line">ENABLED_SERVICES+=,s-proxy,s-object,s-container,s-account</span><br><span class="line">SWIFT_REPLICAS=1</span><br><span class="line">SWIFT_HASH=011688b44136573e209e</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"># Enabling Neutron (network) Service</span><br><span class="line">disable_service n-net</span><br><span class="line">enable_service q-svc</span><br><span class="line">enable_service q-agt</span><br><span class="line">enable_service q-dhcp</span><br><span class="line">enable_service q-l3</span><br><span class="line">enable_service q-meta</span><br><span class="line">enable_service q-metering</span><br><span class="line">enable_service neutron</span><br><span class="line"></span><br><span class="line">## Neutron options</span><br><span class="line">Q_USE_SECGROUP=True</span><br><span class="line">FLOATING_RANGE=&quot;192.168.36.0/24&quot;</span><br><span class="line">FIXED_RANGE=&quot;10.0.0.0/24&quot;</span><br><span class="line">Q_FLOATING_ALLOCATION_POOL=start=192.168.36.55,end=192.168.36.100</span><br><span class="line">PUBLIC_NETWORK_GATEWAY=&quot;192.168.36.1&quot;</span><br><span class="line">Q_L3_ENABLED=True</span><br><span class="line">PUBLIC_INTERFACE=eth1</span><br><span class="line">Q_USE_PROVIDERNET_FOR_PUBLIC=True</span><br><span class="line">OVS_PHYSICAL_BRIDGE=br-ex</span><br><span class="line">PUBLIC_BRIDGE=br-ex</span><br><span class="line">OVS_BRIDGE_MAPPINGS=public:br-ex</span><br><span class="line"></span><br><span class="line"># #VLAN configuration.</span><br><span class="line">Q_PLUGIN=ml2</span><br><span class="line">ENABLE_TENANT_VLANS=True</span><br><span class="line"></span><br><span class="line"># Logging</span><br><span class="line">LOGFILE=/opt/stack/logs/stack.sh.log</span><br><span class="line">VERBOSE=True</span><br><span class="line">LOG_COLOR=True</span><br><span class="line">SCREEN_LOGDIR=/opt/stack/logs</span><br></pre></td></tr></table></figure>
+<h3 id="安装OPS（all-in-one）"><a href="#安装OPS（all-in-one）" class="headerlink" title="安装OPS（all-in-one）"></a>安装OPS（all-in-one）</h3><p>安装使用<code>stack.sh</code>脚本，卸载使用<code>unstack.sh</code>脚本</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">./stack.sh</span></span><br><span class="line">...</span><br><span class="line"></span><br><span class="line">=========================</span><br><span class="line">DevStack Component Timing</span><br><span class="line">=========================</span><br><span class="line">Total runtime         1254</span><br><span class="line"></span><br><span class="line">run_process            83</span><br><span class="line">test_with_retry         4</span><br><span class="line">pip_install           127</span><br><span class="line">restart_apache_server  29</span><br><span class="line">wait_for_service       19</span><br><span class="line">yum_install            50</span><br><span class="line">=========================</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">This is your host IP address: 127.0.0.1</span><br><span class="line">This is your host IPv6 address: ::1</span><br><span class="line">Horizon is now available at http://127.0.0.1/dashboard</span><br><span class="line">Keystone is serving at http://127.0.0.1/identity/</span><br><span class="line">The default users are: admin and demo</span><br><span class="line">The password: pass</span><br></pre></td></tr></table></figure>
+<p>安装时遇到问题可从两个角度考虑，一个网络不通，一个内存不足。这里再次重申，内存一定要&gt;&#x3D;4G，如果网络不通或延时太大，建议使用国内镜像。</p>
+<p>例如<code>/opt/stack/.pip/pip.conf</code>:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">[global]</span><br><span class="line"></span><br><span class="line">timeout = 6000</span><br><span class="line">index-url = http://pypi.douban.com/simple</span><br><span class="line">trusted-host = pypi.douban.com</span><br></pre></td></tr></table></figure>
+
+<h2 id="horizon"><a href="#horizon" class="headerlink" title="horizon"></a>horizon</h2><p>安装成功后，访问<code>http://x.x.x.x/dashboard</code>, 用户民密码见<code>local.conf</code></p>
+<p><img src="/images/devstack/horizon_login.png" alt="horizon_login"></p>
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/lyjshen/article/details/69467444">Virtuabox中Centos 7.3安装devstack后记</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.fx114.net/qa-7-155510.aspx">Centos7下搭建带有Ceilometer的devstack（mitaka版本）</a></li>
+<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/scucscheng/article/details/51884613">centos 7 devstack 安装 openstack Mitaka</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.chenshake.com/devstack-installation-and-testing/">devstack安装和测试</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/07/12/storage/cosbench-usage/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1104,207 +1345,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/04/27/container/k8s/k8s-analyze-service-discovery/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2017/04/27/container/k8s/k8s-analyze-service-discovery/" class="post-title-link" itemprop="url">K8s服务发现分析</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2017-04-27 10:23:14" itemprop="dateCreated datePublished" datetime="2017-04-27T10:23:14+08:00">2017-04-27</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/container/" itemprop="url" rel="index"><span itemprop="name">container</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="什么是服务发现"><a href="#什么是服务发现" class="headerlink" title="什么是服务发现"></a>什么是服务发现</h1><p>容器可以对其它容器提供服务，如mysql（数据库服务）、nginx、mangodb等等。这些服务都可以通过IP＋Port方式访问。由于容器会经常重建迁移，所以IP会发生变化，如果调用服务的程序使用IP访问就会很不方便，为此可以使用DNS、zookeeper、etcd等技术实现服务访问与IP的解耦。这种解耦方式叫做服务发现。</p>
-<h1 id="版本"><a href="#版本" class="headerlink" title="版本"></a>版本</h1><ul>
-<li>Kubernetes v1.4.0</li>
-<li>kube-dns 1.9(image tag)</li>
-</ul>
-<h1 id="Kubernetes服务发现概述"><a href="#Kubernetes服务发现概述" class="headerlink" title="Kubernetes服务发现概述"></a>Kubernetes服务发现概述</h1><p><img src="/images/k8s/k8s-service-discovery.png" alt="k8s-service-discovery.png"></p>
-<ul>
-<li>Kube-dns 以容器的形式为K8s集群提供DNS服务</li>
-<li>Etcd用于存储K8s中的服务、容器等信息，Kube-dns的数据也是从Etcd中获取的</li>
-<li>healthz 监控DNS Pod中的Kube-dns、dnsmasq容器</li>
-<li>dnsmasq以代理形式将外部访问转发给Kube-dns容器，走10053端口</li>
-</ul>
-<h1 id="Kube-dns"><a href="#Kube-dns" class="headerlink" title="Kube-dns"></a>Kube-dns</h1><p><img src="/images/k8s/k8s-kube-dns-analysis.png" alt="k8s-kube-dns-analysis.png"></p>
-<ul>
-<li>miekg监听10053端口，接收dnsmasq转发过来的DNS请求</li>
-<li>KubeDNS中的Cache模块从Etcd中获取Service和Namespace信息，用户完成Service域名到Service地址的映射</li>
-<li>SkyDNS Server 完成DNS协议交互逻辑<br>  该模块在KubeDNS启动时将自身注册到miekg中；并实现接口ServeDNS，当miekg收到DNS请求后，将调用该接口进行处理。</li>
-<li>KubeDNS中模块实现了backend接口<br>  在ServeDNS处理DNS请求时，需要调用backend接口的Records和ReverseRecord method，backend接口会比对Cache中的内容，然后返回结果。</li>
-</ul>
-<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a target="_blank" rel="noopener" href="https://www.kubernetes.org.cn/542.html">Kubernetes（K8S）的服务发现和kube-dns插件</a></li>
-<li><a target="_blank" rel="noopener" href="https://www.kubernetes.org.cn/273.html">Kubernetes(k8s)如何使用kube-dns实现服务发现</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/03/29/container/k8s/k8s-service-expose/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2017/03/29/container/k8s/k8s-service-expose/" class="post-title-link" itemprop="url">k8s service expose</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2017-03-29 11:08:40" itemprop="dateCreated datePublished" datetime="2017-03-29T11:08:40+08:00">2017-03-29</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/container/" itemprop="url" rel="index"><span itemprop="name">container</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>从<code>k8s 1.2</code>版本开始提供Ingress来实现对外暴露服务；目前k8s有三种暴露方式</p>
-<ul>
-<li>LoadBlancer Service</li>
-<li>NodePort Service</li>
-<li>Ingress</li>
-</ul>
-<h1 id="K8s-LBS"><a href="#K8s-LBS" class="headerlink" title="K8s-LBS"></a>K8s-LBS</h1><p>LBS是k8s与云平台深度结合的一个组件，当使用LBS暴露服务时，实际上是通过底层云平台申请创建一个负载均衡器来向外暴露服务。目前LBS支持的云平台有GCE、DigitalOcean、Aliyun、私有云Openstack等等，由于LBS与云平台深度结合，所以只能在这些平台上使用。</p>
-<h1 id="NodePort"><a href="#NodePort" class="headerlink" title="NodePort"></a>NodePort</h1><p><img src="/images/k8s/k8s_nodeport.png" alt="k8s_nodeport"></p>
-<p>k8s的端口分为：</p>
-<ul>
-<li>Port<br>  service上暴露出来的端口，提供给集群(集群指整个容器集群)内部客户访问的端口。</li>
-<li>NodePort<br>  node上暴露的端口，提供给集群外部客户访问的端口。</li>
-<li>TargetPort<br>  endpoint上暴露的端口，也可以当作Pod上暴露的端口，无论从Port或NodePort上来的数据最终都会经过kube-proxy转发到Pod的TargetPort端口上。</li>
-</ul>
-<p>k8s的IP分为：</p>
-<ul>
-<li>ClusterIP<br>  service上虚拟ip地址，它由kube-proxy使用iptables规则重新定向到本地端口，再均衡到后端的Pod上。</li>
-<li>NodeIP<br>  node节点的物理ip地址，它被kube-proxy使用iptables规则重定向到本地端口。</li>
-<li>ContainerIP&#x2F;PodIP<br>  K8s中以Pod为最小部署单位，一个Pod中共享一个网络资源（无论Pod中有几个容器）。每个Pod启动时，会自动创建一个镜像为gcr.io&#x2F;google_containers&#x2F;pause:0.8.0的容器，容器内部与外部的通信经由此容器代理，所以ContainerIP就是PodIP。</li>
-</ul>
-<h2 id="暴露方法及API"><a href="#暴露方法及API" class="headerlink" title="暴露方法及API"></a>暴露方法及API</h2><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Service</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">svc-1</span></span><br><span class="line">  <span class="attr">labels:</span></span><br><span class="line">    <span class="attr">name:</span> <span class="string">svc-1</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">type:</span> <span class="string">NodePort</span></span><br><span class="line">  <span class="attr">ports:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">port:</span> <span class="number">2222</span></span><br><span class="line">      <span class="attr">targetPort:</span> <span class="number">22</span></span><br><span class="line">      <span class="attr">nodePort:</span> <span class="number">30022</span></span><br><span class="line">  <span class="attr">selector:</span></span><br><span class="line">    <span class="attr">name:</span> <span class="string">rc-test</span></span><br></pre></td></tr></table></figure>
-
-<p><a target="_blank" rel="noopener" href="https://kubernetes.io/docs/api-reference/v1.5/#service-v1">API操作</a></p>
-<h2 id="实现原理"><a href="#实现原理" class="headerlink" title="实现原理"></a>实现原理</h2><p>ip地址及端口的暴露都是通过修改iptables规则来实现的。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">iptables -t nat -L -n</span></span><br><span class="line">...</span><br><span class="line">Chain KUBE-NODEPORTS (1 references)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">KUBE-MARK-MASQ  tcp  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-lonely: */ tcp dpt:30023</span><br><span class="line">KUBE-SVC-E6FDK4HG4F4JSB77  tcp  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-lonely: */ tcp dpt:30023</span><br><span class="line">KUBE-MARK-MASQ  tcp  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-tmp: */ tcp dpt:30099</span><br><span class="line">KUBE-SVC-OOWDNB3NCXKPBPZE  tcp  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-tmp: */ tcp dpt:30099</span><br><span class="line">KUBE-MARK-MASQ  tcp  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-1: */ tcp dpt:30022</span><br><span class="line">KUBE-SVC-D25WXD2YSOVKEUTU  tcp  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-1: */ tcp dpt:30022</span><br><span class="line">...</span><br><span class="line">Chain KUBE-SEP-2LNK4QUGPB2C5PDO (2 references)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">KUBE-MARK-MASQ  all  --  192.168.6.110        0.0.0.0/0            /* default/kubernetes:https */</span><br><span class="line">DNAT       tcp  --  0.0.0.0/0            0.0.0.0/0            /* default/kubernetes:https */ recent: SET name: KUBE-SEP-2LNK4QUGPB2C5PDO side: source mask: 255.255.255.255 tcp to:192.168.6.110:6443</span><br><span class="line"></span><br><span class="line">Chain KUBE-SEP-5GTCHBFJM5RAI7LS (1 references)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">KUBE-MARK-MASQ  all  --  10.254.86.9          0.0.0.0/0            /* default/svc-lonely: */</span><br><span class="line">DNAT       tcp  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-lonely: */ tcp to:10.254.86.9:22</span><br><span class="line"></span><br><span class="line">Chain KUBE-SEP-BCYRFQ26LZTOSSU7 (1 references)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">KUBE-MARK-MASQ  all  --  10.254.86.4          0.0.0.0/0            /* default/svc-1: */</span><br><span class="line">DNAT       tcp  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-1: */ tcp to:10.254.86.4:22</span><br><span class="line"></span><br><span class="line">Chain KUBE-SEP-CLKUH4WMQ3CNBJ7K (1 references)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">KUBE-MARK-MASQ  all  --  10.254.86.2          0.0.0.0/0            /* default/svc-1: */</span><br><span class="line">DNAT       tcp  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-1: */ tcp to:10.254.86.2:22</span><br><span class="line"></span><br><span class="line">Chain KUBE-SEP-D3FORTYMXA7BVSDA (1 references)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">KUBE-MARK-MASQ  all  --  10.254.86.8          0.0.0.0/0            /* default/svc-1: */</span><br><span class="line">DNAT       tcp  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-1: */ tcp to:10.254.86.8:22</span><br><span class="line"></span><br><span class="line">Chain KUBE-SEP-F4EJGNTAH3JOOQC6 (1 references)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">KUBE-MARK-MASQ  all  --  10.254.86.3          0.0.0.0/0            /* default/svc-1: */</span><br><span class="line">DNAT       tcp  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-1: */ tcp to:10.254.86.3:22</span><br><span class="line"></span><br><span class="line">Chain KUBE-SEP-HO23WAVQKIB2R4KD (1 references)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">KUBE-MARK-MASQ  all  --  10.254.86.10         0.0.0.0/0            /* default/svc-tmp: */</span><br><span class="line">DNAT       tcp  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-tmp: */ tcp to:10.254.86.10:99</span><br><span class="line"></span><br><span class="line">Chain KUBE-SERVICES (2 references)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">KUBE-SVC-E6FDK4HG4F4JSB77  tcp  --  0.0.0.0/0            10.254.162.24        /* default/svc-lonely: cluster IP */ tcp dpt:2223</span><br><span class="line">KUBE-SVC-OOWDNB3NCXKPBPZE  tcp  --  0.0.0.0/0            10.254.119.86        /* default/svc-tmp: cluster IP */ tcp dpt:9999</span><br><span class="line">KUBE-SVC-NPX46M4PTMTKRN6Y  tcp  --  0.0.0.0/0            10.254.0.1           /* default/kubernetes:https cluster IP */ tcp dpt:443</span><br><span class="line">KUBE-SVC-D25WXD2YSOVKEUTU  tcp  --  0.0.0.0/0            10.254.159.12        /* default/svc-1: cluster IP */ tcp dpt:2222</span><br><span class="line">KUBE-NODEPORTS  all  --  0.0.0.0/0            0.0.0.0/0            /* kubernetes service nodeports; NOTE: this must be the last rule in this chain */ ADDRTYPE match dst-type LOCAL</span><br><span class="line"></span><br><span class="line">Chain KUBE-SVC-D25WXD2YSOVKEUTU (2 references)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">KUBE-SEP-CLKUH4WMQ3CNBJ7K  all  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-1: */ statistic mode random probability 0.25000000000</span><br><span class="line">KUBE-SEP-F4EJGNTAH3JOOQC6  all  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-1: */ statistic mode random probability 0.33332999982</span><br><span class="line">KUBE-SEP-BCYRFQ26LZTOSSU7  all  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-1: */ statistic mode random probability 0.50000000000</span><br><span class="line">KUBE-SEP-D3FORTYMXA7BVSDA  all  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-1: */</span><br><span class="line"></span><br><span class="line">Chain KUBE-SVC-E6FDK4HG4F4JSB77 (2 references)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">KUBE-SEP-5GTCHBFJM5RAI7LS  all  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-lonely: */</span><br><span class="line"></span><br><span class="line">Chain KUBE-SVC-NPX46M4PTMTKRN6Y (1 references)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">KUBE-SEP-2LNK4QUGPB2C5PDO  all  --  0.0.0.0/0            0.0.0.0/0            /* default/kubernetes:https */ recent: CHECK seconds: 180 reap name: KUBE-SEP-2LNK4QUGPB2C5PDO side: source mask: 255.255.255.255</span><br><span class="line">KUBE-SEP-2LNK4QUGPB2C5PDO  all  --  0.0.0.0/0            0.0.0.0/0            /* default/kubernetes:https */</span><br><span class="line"></span><br><span class="line">Chain KUBE-SVC-OOWDNB3NCXKPBPZE (2 references)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">KUBE-SEP-HO23WAVQKIB2R4KD  all  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-tmp: */</span><br></pre></td></tr></table></figure>
-
-<h1 id="Ingress"><a href="#Ingress" class="headerlink" title="Ingress"></a>Ingress</h1><p>Todo…</p>
-<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a target="_blank" rel="noopener" href="http://www.colabug.com/thread-1703745-1-1.html?pp=2">Traefik-kubernetes 初试</a></li>
-<li><a target="_blank" rel="noopener" href="http://blog.163.com/hk_bs/blog/static/245038011201611149254899/">Kubernetes 中的PodIP、ClusterIP 和外部IP</a></li>
-<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/xinghun_4/article/details/50492041">kubernetes中port、target port、node port的对比分析，以及kube-proxy代理</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1374,7 +1414,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">141</span>
+          <span class="site-state-item-count">143</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -1387,7 +1427,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">121</span>
+        <span class="site-state-item-count">122</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>

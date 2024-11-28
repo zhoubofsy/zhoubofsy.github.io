@@ -188,6 +188,201 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2019/12/12/storage/ceph/ceph-container-build/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2019/12/12/storage/ceph/ceph-container-build/" class="post-title-link" itemprop="url">ceph-container构建</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2019-12-12 13:56:10" itemprop="dateCreated datePublished" datetime="2019-12-12T13:56:10+08:00">2019-12-12</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>使用官方<code>ceph-container</code>工程构建私人定制的<code>ceph/daemon</code>镜像。本文以mimic版本为例，在对mimic进行二次开发后，将生成的rpm包更新到yum源中，再生成新的<code>ceph-release</code>中使用该yum源。</p>
+<h1 id="获取官方ceph-container"><a href="#获取官方ceph-container" class="headerlink" title="获取官方ceph-container"></a>获取官方ceph-container</h1><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git clone git@github.com:ceph/ceph-container.git</span><br></pre></td></tr></table></figure>
+
+<h1 id="安装私有Ceph-repo"><a href="#安装私有Ceph-repo" class="headerlink" title="安装私有Ceph.repo"></a>安装私有Ceph.repo</h1><p>修改获取<code>ceph-release</code>RPM包地址，编辑文件<code>./ceph-releases/ALL/centos/daemon-base/__DOCKERFILE_INSTALL__</code>。</p>
+<p>eg:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line">yum install -y epel-release &amp;&amp; \</span><br><span class="line">yum install -y jq &amp;&amp; \</span><br><span class="line">bash -c &#x27; \</span><br><span class="line">  if [ -n &quot;__GANESHA_PACKAGES__&quot; ]; then \</span><br><span class="line">    echo &quot;[ganesha]&quot; &gt; /etc/yum.repos.d/ganesha.repo ; \</span><br><span class="line">    echo &quot;name=ganesha&quot; &gt;&gt; /etc/yum.repos.d/ganesha.repo ; \</span><br><span class="line">    if [[ &quot;$&#123;CEPH_VERSION&#125;&quot; =~ master|^wip* ]]; then \</span><br><span class="line">      REPO_URL=$(curl -s &quot;https://shaman.ceph.com/api/search/?project=nfs-ganesha&amp;distros=centos/__ENV_[BASEOS_TAG]__&amp;flavor=ceph_master&amp;ref=next&amp;sha1=latest&quot; | jq -a &quot;.[0] | .url&quot;); \</span><br><span class="line">      echo &quot;baseurl=$REPO_URL/\$basearch/&quot; &gt;&gt; /etc/yum.repos.d/ganesha.repo ; \</span><br><span class="line">    elif [[ &quot;$&#123;CEPH_VERSION&#125;&quot; == nautilus ]]; then \</span><br><span class="line">      echo &quot;baseurl=http://download.ceph.com/nfs-ganesha/rpm-V2.8-stable/$CEPH_VERSION/\$basearch/&quot; &gt;&gt; /etc/yum.repos.d/ganesha.repo ; \</span><br><span class="line">    else \</span><br><span class="line">      echo &quot;baseurl=http://download.ceph.com/nfs-ganesha/rpm-V2.7-stable/$CEPH_VERSION/\$basearch/&quot; &gt;&gt; /etc/yum.repos.d/ganesha.repo ; \</span><br><span class="line">    fi ; \</span><br><span class="line">    echo &quot;gpgcheck=0&quot; &gt;&gt; /etc/yum.repos.d/ganesha.repo ; \</span><br><span class="line">    echo &quot;enabled=1&quot; &gt;&gt; /etc/yum.repos.d/ganesha.repo  ; \</span><br><span class="line">  fi ; \</span><br><span class="line">  if [ -n &quot;__ISCSI_PACKAGES__&quot; ]; then \</span><br><span class="line">    for repo in tcmu-runner python-rtslib; do \</span><br><span class="line">      curl -s -L https://shaman.ceph.com/api/repos/$repo/master/latest/__ENV_[BASEOS_REPO]__/__ENV_[BASEOS_TAG]__/repo &gt; /etc/yum.repos.d/$repo.repo ; \</span><br><span class="line">    done ; \</span><br><span class="line">    if [[ &quot;$&#123;CEPH_VERSION&#125;&quot; =~ master|^wip* ]]; then \</span><br><span class="line">      curl -s -L https://shaman.ceph.com/api/repos/ceph-iscsi/master/latest/__ENV_[BASEOS_REPO]__/__ENV_[BASEOS_TAG]__/repo &gt; /etc/yum.repos.d/ceph-iscsi.repo ; \</span><br><span class="line">    elif [[ &quot;$&#123;CEPH_VERSION&#125;&quot; == nautilus ]]; then \</span><br><span class="line">      curl -s -L https://download.ceph.com/ceph-iscsi/3/rpm/el__ENV_[BASEOS_TAG]__/ceph-iscsi.repo -o /etc/yum.repos.d/ceph-iscsi.repo ; \</span><br><span class="line">    else \</span><br><span class="line">      curl -s -L https://download.ceph.com/ceph-iscsi/2/rpm/el__ENV_[BASEOS_TAG]__/ceph-iscsi.repo -o /etc/yum.repos.d/ceph-iscsi.repo ; \</span><br><span class="line">    fi ; \</span><br><span class="line">  fi&#x27; &amp;&amp; \</span><br><span class="line">yum update -y &amp;&amp; \</span><br><span class="line">rpm --import &#x27;https://download.ceph.com/keys/release.asc&#x27; &amp;&amp; \</span><br><span class="line">bash -c &#x27; \</span><br><span class="line">  if [[ &quot;$&#123;CEPH_VERSION&#125;&quot; =~ master|^wip* ]] || $&#123;CEPH_DEVEL&#125;; then \</span><br><span class="line">    REPO_URL=$(curl -s &quot;https://shaman.ceph.com/api/search/?project=ceph&amp;distros=centos/__ENV_[BASEOS_TAG]__&amp;flavor=default&amp;ref=$&#123;CEPH_VERSION&#125;&amp;sha1=latest&quot; | jq -a &quot;.[0] | .url&quot;); \</span><br><span class="line">    RELEASE_VER=0 ;\</span><br><span class="line">  else \</span><br><span class="line">    RELEASE_VER=1 ;\</span><br><span class="line">    REPO_URL=&quot;http://10.100.13.112/rpm-$&#123;CEPH_VERSION&#125;/el__ENV_[BASEOS_TAG]__/&quot;; \</span><br><span class="line">  fi &amp;&amp; \</span><br><span class="line">  rpm -Uvh &quot;$REPO_URL/noarch/ceph-release-1-$&#123;RELEASE_VER&#125;.el__ENV_[BASEOS_TAG]__.noarch.rpm&quot; &#x27; &amp;&amp; \</span><br><span class="line">yum install -y __CEPH_BASE_PACKAGES__ &amp;&amp; \</span><br><span class="line">bash -c &#x27; \</span><br><span class="line">  if [[ &quot;$&#123;CEPH_VERSION&#125;&quot; =~ master|^wip* ]] || $&#123;CEPH_DEVEL&#125;; then \</span><br><span class="line">    yum install -y python-pip ; \</span><br><span class="line">    pip install -U remoto ; \</span><br><span class="line">    yum remove -y python-pip ; \</span><br><span class="line">  fi &#x27;</span><br></pre></td></tr></table></figure>
+<p><code>REPO_URL</code>使用您指定的yum源。</p>
+<h1 id="指定版本构建镜像"><a href="#指定版本构建镜像" class="headerlink" title="指定版本构建镜像"></a>指定版本构建镜像</h1><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">make FLAVORS=mimic-13.2.6-1.gba13b2d.el7,centos,7 build</span><br></pre></td></tr></table></figure>
+
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="https://github.com/ceph/ceph-container">ceph-container</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2019/12/11/storage/ceph/ceph-release-rpm-build/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2019/12/11/storage/ceph/ceph-release-rpm-build/" class="post-title-link" itemprop="url">ceph-release RPM包build</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2019-12-11 17:23:57" itemprop="dateCreated datePublished" datetime="2019-12-11T17:23:57+08:00">2019-12-11</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p><code>ceph-release</code> rpm包用于在<code>/etc/yum.repos.d/</code>目录下安装<code>ceph.repo</code>文件。<br>本人使用容器进行RPM包构建，镜像为<code>centos:7</code>（<code>hub.docker.com</code>下载）</p>
+<h1 id="rpmbuild安装"><a href="#rpmbuild安装" class="headerlink" title="rpmbuild安装"></a>rpmbuild安装</h1><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">yum install -y rpm-build</span><br></pre></td></tr></table></figure>
+
+<h1 id="rpmbuild目录树建立"><a href="#rpmbuild目录树建立" class="headerlink" title="rpmbuild目录树建立"></a>rpmbuild目录树建立</h1><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mkdir -pv ~/rpmbuild/&#123;BUILD,RPMS,SOURCES,SPECS,SRPMS,BUILDROOT&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>SPEC 保存RPM包配置（.spec）文件</li>
+<li>SOURCES 源代码目录,保存源码包（如.tar 包）和所有patch补丁</li>
+<li>BUILD 构建目录,源码包被解压至此，并在该目录的子目录完成编译</li>
+<li>BUILDROOT 最终安装目录,保存 %install 阶段安装的文件,打包好后此目录相关内容会自动删除</li>
+<li>RPMS 标准RPM包目录,生成&#x2F;保存二进制RPM包</li>
+<li>SRPMS 源代码RPM包目录,生成&#x2F;保存源码RPM包(SRPM)</li>
+</ul>
+<h1 id="构建BUILDROOT目录"><a href="#构建BUILDROOT目录" class="headerlink" title="构建BUILDROOT目录"></a>构建BUILDROOT目录</h1><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">mkdir -p ~/rpmbuild/BUILDROOT/ceph-release-1-1.el7.noarch/etc/yum.repos.d/</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">必须建一个你程序名的一个目录</span></span><br></pre></td></tr></table></figure>
+<p>在<code>~/rpmbuild/BUILDROOT/ceph-release-1-1.el7.noarch/etc/yum.repos.d/</code>目录下创建<code>ceph.repo</code>文件，并写入如下内容:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">[Ceph]</span><br><span class="line">name=Ceph packages for $basearch</span><br><span class="line">baseurl=http://10.100.13.112/rpm-mimic/el7/$basearch</span><br><span class="line">enabled=1</span><br><span class="line">gpgcheck=0</span><br><span class="line"></span><br><span class="line">[Ceph-noarch]</span><br><span class="line">name=Ceph noarch packages</span><br><span class="line">baseurl=http://10.100.13.112/rpm-mimic/el7/noarch</span><br><span class="line">enabled=1</span><br><span class="line">gpgcheck=0</span><br></pre></td></tr></table></figure>
+
+<h1 id="编写SPEC文件"><a href="#编写SPEC文件" class="headerlink" title="编写SPEC文件"></a>编写SPEC文件</h1><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">touch ~/rpmbuild/SPEC/ceph-release.spec</span><br></pre></td></tr></table></figure>
+
+<p>内容如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">Name: ceph-release</span><br><span class="line">Version: 1</span><br><span class="line">Release: 1.el7</span><br><span class="line">Summary: Ceph Release</span><br><span class="line">License: GPL</span><br><span class="line">Group: Applications/System</span><br><span class="line">Vendor: zhoub</span><br><span class="line">Buildarch: noarch</span><br><span class="line"></span><br><span class="line">%description</span><br><span class="line">%prep</span><br><span class="line">%build</span><br><span class="line">%pre</span><br><span class="line">%post</span><br><span class="line">%preun</span><br><span class="line">%postun</span><br><span class="line">%files</span><br><span class="line">/etc/yum.repos.d/ceph.repo</span><br><span class="line">%changelog</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>Name 标签就是软件名，Version标签为版本号，而Release是发布编号。</li>
+<li>Summary 标签是简要说明，英文的话第一个字母应大写，以避免rpmlint工具（打包检查工具）警告</li>
+<li>License 标签说明软件包的协议版本，审查软件的License状态是打包者的职责，这可以通过检查源码或LICENSE文件，或与作者沟通来完成。</li>
+<li>Group 标签过去用于按照<code>/usr/share/doc/rpm-/GROUPS</code>分类软件包。目前该标记已丢弃，vim的模板还有这一条，删掉即可，不过添加该标记也不会有任何影响。</li>
+<li>%changelog 标签应包含每个Release所做的更改日志，尤其应包含上游的安全&#x2F;漏洞补丁的说明。Changelog日志可使用<code>rpm --changelog -q &lt;packagename&gt;</code>查询，通过查询可得知已安装的软件是否包含指定漏洞和安全补丁。<code>%changelog</code>条目应包含版本字符串，以避免rpmlint工具警告。</li>
+<li>多行的部分，如<code>%changelog</code>或<code>%description</code>由指令下一行开始，空行结束。</li>
+<li>一些不需要的行(如BuildRequires和Requires)可使用‘#’注释。</li>
+<li><code>%prep</code>、<code>%build</code>、<code>%install</code>、<code>%file</code>暂时用默认的，未做任何修改。</li>
+</ul>
+<h1 id="构建RPM包"><a href="#构建RPM包" class="headerlink" title="构建RPM包"></a>构建RPM包</h1><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">rpmbuild -bb ~/rpmbuild/SPEC/ceph-release.spec</span><br></pre></td></tr></table></figure>
+
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/weixin_44208042/article/details/89216844">centos7使用rpmbuild制作rpm包</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2019/12/11/storage/ceph/ceph-repo/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1073,193 +1268,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2019/09/23/storage/ceph/ceph-deploy-indocker/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2019/09/23/storage/ceph/ceph-deploy-indocker/" class="post-title-link" itemprop="url">Ceph容器部署</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2019-09-23 16:23:53" itemprop="dateCreated datePublished" datetime="2019-09-23T16:23:53+08:00">2019-09-23</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>容器化、容器化、容器化。。。都说重要的事情说三遍，那么Ceph部署有必要容器化吗？</p>
-<p>有必要，非常有必要。容器化以后，不仅不会损失性能，而且对以后更新、回退都很方便。而且一个物理机（或虚拟机）上可以跑多个Ceph集群。对于一个开发人员，修改调试都实在是太方便了～～～～～！</p>
-<p>闲言碎语不要讲，先拉个集群起来看看吧。</p>
-<h1 id="mimic"><a href="#mimic" class="headerlink" title="mimic"></a>mimic</h1><h2 id="镜像"><a href="#镜像" class="headerlink" title="镜像"></a>镜像</h2><p><a target="_blank" rel="noopener" href="https://hub.docker.com/r/ceph/daemon"><code>ceph/daemon:latest-mimic</code></a></p>
-<h2 id="网络"><a href="#网络" class="headerlink" title="网络"></a>网络</h2><p>使用docker bridge网络，每个容器指定静态IP。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker network create --subnet 192.168.44.0/24 cephnet</span><br></pre></td></tr></table></figure>
-
-<h2 id="拉起Ceph集群"><a href="#拉起Ceph集群" class="headerlink" title="拉起Ceph集群"></a>拉起Ceph集群</h2><h3 id="MON"><a href="#MON" class="headerlink" title="MON"></a>MON</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run -d --net cephnet --ip 192.168.44.11 -v /Users/zhoub/temp/etc_ceph/:/etc/ceph -v /Users/zhoub/temp/var_lib_ceph/:/var/lib/ceph -e MON_IP=192.168.44.11 -e CEPH_PUBLIC_NETWORK=192.168.44.0/24 --name mon --hostname mon  ceph/daemon:latest-mimic mon</span><br></pre></td></tr></table></figure>
-
-<h3 id="MGR"><a href="#MGR" class="headerlink" title="MGR"></a>MGR</h3><p>MGR节点很重要，如果没有MGR节点，你就看不到OSD的使用量了。现在的MON真是翻身农奴把歌唱啊，一心只做心跳了。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run -d --net cephnet --ip 192.168.44.12 -v /Users/zhoub/temp/etc_ceph/:/etc/ceph -v /Users/zhoub/temp/var_lib_ceph/:/var/lib/ceph --name mgr --hostname mgr ceph/daemon:latest-mimic mgr</span><br></pre></td></tr></table></figure>
-
-<h3 id="OSD"><a href="#OSD" class="headerlink" title="OSD"></a>OSD</h3><p>OSD有两种部署方式，一种是将硬盘部署；另一种是目录部署。由于本人使用mac版本docker，所以在映射硬盘过程不太方便，所以使用目录部署。后面会给出硬盘部署的方式。</p>
-<h4 id="目录"><a href="#目录" class="headerlink" title="目录"></a>目录</h4><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run -d --net cephnet --ip 192.168.44.13 -v /Users/zhoub/temp/etc_ceph/:/etc/ceph -v /Users/zhoub/temp/var_lib_ceph/:/var/lib/ceph --name osd --hostname osd -e OSD_TYPE=directory ceph/daemon:latest-mimic osd</span><br></pre></td></tr></table></figure>
-
-<p>由于mac上的docker是运行在一个虚拟机中的，目前不太清楚该虚拟机使用的文件系统是什么，所以osd会暴如下错误：</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker logs -f osd</span></span><br><span class="line">2019-09-23 10:59:14  /opt/ceph-container/bin/entrypoint.sh: static: does not generate config</span><br><span class="line">2019-09-23 10:59:14  /opt/ceph-container/bin/entrypoint.sh: Creating osd</span><br><span class="line">2019-09-23 10:59:14  /opt/ceph-container/bin/entrypoint.sh: OSD created with ID: 0</span><br><span class="line">2019-09-23 10:59:14  /opt/ceph-container/bin/entrypoint.sh: created folder /var/lib/ceph/osd/ceph-0/</span><br><span class="line">creating /var/lib/ceph/osd/ceph-0//keyring</span><br><span class="line">added entity osd.0 auth auth(auid = 18446744073709551615 key=AQCCpYhdbE1EGxAAxX2Av3Gzez/5j8sijQg1jQ== with 0 caps)</span><br><span class="line">2019-09-23 10:59:15.014 7f255136fd80 -1 filestore(/var/lib/ceph/osd/ceph-0) WARNING: max attr value size (1024) is smaller than osd_max_object_name_len (2048).  Your backend filesystem appears to not support attrs large enough to handle the configured max rados name size.  You may get unexpected ENAMETOOLONG errors on rados operations or buggy behavior</span><br><span class="line">2019-09-23 10:59:15.084 7f255136fd80 -1 filestore(/var/lib/ceph/osd/ceph-0) mkjournal(1101): error creating journal on /var/lib/ceph/osd/ceph-0//journal: (22) Invalid argument</span><br><span class="line">2019-09-23 10:59:15.084 7f255136fd80 -1 OSD::mkfs: ObjectStore::mkfs failed with error (22) Invalid argument</span><br><span class="line">2019-09-23 10:59:15.084 7f255136fd80 -1  ** ERROR: error creating empty object store in /var/lib/ceph/osd/ceph-0: (22) Invalid argument</span><br></pre></td></tr></table></figure>
-
-<h4 id="硬盘"><a href="#硬盘" class="headerlink" title="硬盘"></a>硬盘</h4><p>在硬盘部署以前，需要先对硬盘进行格式化</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run -d --privileged=true --rm -v /dev/:/dev/ -e OSD_DEVICE=/dev/sdb ceph/daemon:latest-mimic zap_device</span><br></pre></td></tr></table></figure>
-
-<p>格式化后再启动容器</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run -d --net cephnet --ip 192.168.44.13 --hostname osd --name=osd --privileged  -v /Users/zhoub/temp/etc_ceph/:/etc/ceph -v /Users/zhoub/temp/var_lib_ceph/:/var/lib/ceph -v /dev/:/dev/ -e OSD_DEVICE=/dev/sdb ceph/daemon:latest-mimic osd</span><br></pre></td></tr></table></figure>
-
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>集群除OSD服务外其它服务均可以正常容器化</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">[root@mon /]# ceph -s</span><br><span class="line">  cluster:</span><br><span class="line">    id:     61a4f9d8-fdc7-4883-8b71-7f93c2017f86</span><br><span class="line">    health: HEALTH_OK</span><br><span class="line"></span><br><span class="line">  services:</span><br><span class="line">    mon: 1 daemons, quorum mon</span><br><span class="line">    mgr: mgr(active)</span><br><span class="line">    osd: 1 osds: 0 up, 0 in</span><br><span class="line"></span><br><span class="line">  data:</span><br><span class="line">    pools:   0 pools, 0 pgs</span><br><span class="line">    objects: 0  objects, 0 B</span><br><span class="line">    usage:   0 B used, 0 B / 0 B avail</span><br><span class="line">    pgs:</span><br></pre></td></tr></table></figure>
-<p>OSD目录部署不能正常提供服务主要是因为宿主机的文件系统类型未知，若宿主机可正常登录操作，此问题可解；<br>OSD硬盘部署不能正常提供服务主要是因为宿主机不能增加硬盘设备，若宿主机可以添加硬盘，此问题可解。</p>
-<p>综上所述，问题根本在于对宿主机的操作了解不够清晰。</p>
-<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/ff3be28a1015">使用Docker快速部署Ceph集群</a></li>
-<li><a target="_blank" rel="noopener" href="https://hub.docker.com/r/ceph/daemon">ceph&#x2F;daemon</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2019/09/20/linux/linux-env-variable/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2019/09/20/linux/linux-env-variable/" class="post-title-link" itemprop="url">Linux环境变量</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2019-09-20 14:08:09" itemprop="dateCreated datePublished" datetime="2019-09-20T14:08:09+08:00">2019-09-20</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/linux/" itemprop="url" rel="index"><span itemprop="name">linux</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>说起环境变量，可能首先想到的是shell中敲入<code>env</code>所看到的这些。没错，这些的确是环境变量。</p>
-<p>还有吗。。。<br>有！你再试试<code>set</code>命令，看看是不是比<code>env</code>的多啊。是不是有点儿小懵逼。怎么还不一样呢！<code>set</code>看到的是shell变量，那shell变量是环境变量吗？是。</p>
-<p>还有吗。。。<br>有！在你输入<code>set</code>的时候你看到<code>$@</code>、<code>$?</code>这些了吗？貌似没有吧。据说这些属于系统变量。(听说而已。。。)</p>
-<p>还有吗。。。<br>目前为止，我只知道这么多，如果我了解到更多的再补充吧。</p>
-<p>说了这么多，上一张图，就一目了然了。</p>
-<p><img src="/images/linux/linux_env_variable.jpg" alt="linux_env_variable"></p>
-<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/fec33aed017b">Linux:环境变量 - set、env、export</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1329,7 +1337,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">141</span>
+          <span class="site-state-item-count">143</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -1342,7 +1350,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">121</span>
+        <span class="site-state-item-count">122</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>

@@ -188,6 +188,351 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/09/25/language/python/python-encode-decode/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2017/09/25/language/python/python-encode-decode/" class="post-title-link" itemprop="url">encode and decode</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2017-09-25 10:35:14" itemprop="dateCreated datePublished" datetime="2017-09-25T10:35:14+08:00">2017-09-25</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/language/" itemprop="url" rel="index"><span itemprop="name">language</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>计算机只能处理数字，如果要处理文本，就必须先把文本转换为数字才能处理。最早的计算机在设计时采用8个比特（bit）作为一个字节（byte），所以，一个字节能表示的最大的整数就是255（二进制11111111&#x3D;十进制255），如果要表示更大的整数，就必须用更多的字节。比如两个字节可以表示的最大整数是65535，4个字节可以表示的最大整数是4294967295。</p>
+<h2 id="ASCII"><a href="#ASCII" class="headerlink" title="ASCII"></a>ASCII</h2><p>规定了128个字符的编码(准确地说ASCII码是一个编码字符集),比如空格“SPACE”是32（二进制00100000），大写的字母A是65（二进制01000001）。这128个符号（包括32个不能打印出来的控制符号），只占用了一个字节的后面7位，最前面的1位统一规定为0。后128个称为扩展ASCII码，目前许多基于x86的系统都支持使用扩展ASCII码。256个ASCII码中的后128个扩展码可定制用来表示特殊字符和非英语字符，GB2312就是利用这后面的128个扩展字符来表示汉字，[161,254]共94个字符来组成双字节来表示简体汉字字符表。</p>
+<h2 id="Unicode"><a href="#Unicode" class="headerlink" title="Unicode"></a>Unicode</h2><p>光是英语字符ASCII编码字符集是够了，但是如果算上世界上其他的语言的字符，ASCII码显然不够了，于是Unicode编码字符集应运而生。Unicode用数字0-0x10FFFF来映射这些字符，最多可以容纳1114112个字符，或者说有1114112个码位。码位就是可以分配给字符的数字。UTF-8、UTF-16、UTF-32都是将所有Unicode用到的数字转换为程序数据的编码方案。全世界的字符加起来也用不了所有的码位，Unicode 5.0版本中，才用了238605个码位。</p>
+<h2 id="UTF8"><a href="#UTF8" class="headerlink" title="UTF8"></a>UTF8</h2><p>新问题的出现：如果统一成Unicode编码，乱码问题从此消失了。但是，如果你写的文本基本上全部是英文的话，用Unicode编码比ASCII编码需要多一倍的存储空间，在存储和传输上就十分不划算。因此，又出现了把Unicode编码转化为“可变长编码”的UTF-8编码。UTF-8编码把一个Unicode字符根据不同的数字大小编码成1-6个字节，常用的英文字母被编码成1个字节，汉字通常是3个字节，只有很生僻的字符才会被编码成4-6个字节。如果你要传输的文本包含大量英文字符，用UTF-8编码就能节省空间。ASCII编码实际上可以被看成是UTF-8编码的一部分，所以，大量只支持ASCII编码的历史遗留软件可以在UTF-8编码下继续工作。Unicode是字符集，UTF-8、UTF-16等是编码格式，定义“字符对应的数字”如何在以二进制的方式存储。</p>
+<h2 id="GB2312"><a href="#GB2312" class="headerlink" title="GB2312"></a>GB2312</h2><p>规定: 一个小于127的字符的意义与原来相同, 但两个大于127的字符连在一起时, 就表示一个汉字, 前面的一个字节(他称之为高字节)从0xA1用到 0xF7, 后面一个字节(低字节)从0xA1到0xFE, 这样我们就可以组合出大约7000多个简体汉字了. 在这些编码里, 我们还把数学符号,罗马希腊的 字母,日文的假名们都编进去了, 连在 ASCII 里本来就有的数字,标点,字母都统统重新编了两个字节长的编码, 这就是常说的”全角”字符, 而原来在127号以下的那些就叫”半角”字符了。</p>
+<h2 id="GBK"><a href="#GBK" class="headerlink" title="GBK"></a>GBK</h2><p>GBK 包括了 GB2312 的所有内容, 同时又增加了近20000个新的汉字(包括繁体字)和符号。</p>
+<h1 id="转换"><a href="#转换" class="headerlink" title="转换"></a>转换</h1><p>unicode兼容ascii，GBK兼容GB2312，转换也就是unicode与GBK之间的事情了。字符串在Python内部的表示是unicode编码，因此，在做编码转换时，通常需要以unicode作为中间编码，即先将其他编码的字符串解码（decode）成unicode，再从unicode编码（encode）成另一种编码。</p>
+<ul>
+<li>decode的作用是将其他编码的字符串转换成unicode编码，如str1.decode(‘gb2312’)，表示将gb2312编码的字符串转换成unicode编码</li>
+<li>encode的作用是将unicode编码转换成其他编码的字符串，如str2.encode(‘gb2312’)，表示将unicode编码的字符串转换成gb2312编码</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#encoding=utf8</span></span><br><span class="line"></span><br><span class="line">s = <span class="string">&#x27;中文&#x27;</span></span><br><span class="line"><span class="built_in">print</span> <span class="built_in">type</span>(s)</span><br><span class="line"><span class="built_in">print</span> s</span><br><span class="line"></span><br><span class="line">us = s.decode(<span class="string">&#x27;utf8&#x27;</span>)</span><br><span class="line"><span class="built_in">print</span> <span class="built_in">type</span>(us)</span><br><span class="line"><span class="built_in">print</span> s</span><br><span class="line"></span><br><span class="line">gs = us.encode(<span class="string">&#x27;gb2312&#x27;</span>)</span><br><span class="line"><span class="built_in">print</span> <span class="built_in">type</span>(gs)</span><br><span class="line"><span class="built_in">print</span> gs</span><br></pre></td></tr></table></figure>
+
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="http://www.cnblogs.com/yuguangchuan/p/4310952.html">三种常见字符编码简介：ASCII、Unicode和UTF-8</a></li>
+<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/nodeathphoenix/article/details/7057760">Unicode 字符集与它的编码方式</a></li>
+<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/zhao1949/article/details/51198040">字符编码的故事：ASCII，GB2312，Unicode，UTF-8，UTF-16</a></li>
+<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/q_l_s/article/details/51253542">Python字符串的编码与解码(encode与decode)</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/09/19/language/python/python-basic-grammar/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2017/09/19/language/python/python-basic-grammar/" class="post-title-link" itemprop="url">Python基础语法</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2017-09-19 09:44:32" itemprop="dateCreated datePublished" datetime="2017-09-19T09:44:32+08:00">2017-09-19</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/language/" itemprop="url" rel="index"><span itemprop="name">language</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="Python语法概况"><a href="#Python语法概况" class="headerlink" title="Python语法概况"></a>Python语法概况</h1><p><img src="/images/python/grammar.png" alt="grammar"></p>
+<h2 id="关键字"><a href="#关键字" class="headerlink" title="关键字"></a>关键字</h2><p>and , exec , not , assert , finally , or , break , for , pass , class , from , print , countinue , global , raise , def , if , return , del , import , try , elif , in , while , else , is , with , except , lambda , yield</p>
+<ul>
+<li>exec<br>  用来执行储存在字符串或文件中的Python语句。eg：  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="built_in">exec</span> <span class="string">&#x27;print &quot;Hello World&quot;&#x27;</span></span><br><span class="line">Hello World</span><br></pre></td></tr></table></figure>
+  注意例子中exec语句的用法和eval_r(), execfile()是不一样的. exec是一个语句(就象print或while), 而eval_r()和execfile()则是内建函数。</li>
+<li>lambda<br>  在python中使用lambda来创建匿名函数，lambda会创建一个函数对象，但不会把这个函数对象赋给一个标识符，而def则会把函数对象赋值给一个变量。lambda它只是一个表达式，而def则是一个语句。eg:  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">m = <span class="keyword">lambda</span> x,y,z: (x-y)*z</span><br><span class="line"><span class="built_in">print</span> m(<span class="number">3</span>,<span class="number">1</span>,<span class="number">2</span>)</span><br></pre></td></tr></table></figure>
+  lambda一般只用来定义简单的函数。</li>
+<li>yield<br>  它和return差不多的用法，只是最后是返回了一个生成器，当你调用yield所在的那个函数的时候，那个函数并没有运行，只会返回一个生成器的对象，第一次在for中调用生成器的的对象，它将会运行你函数中的代码从最开始一直到到碰到了yield的关键字，然后它会返回循环中的第一个值。然后每一次其他的调用将会运行你在这个函数中所写的循环多一次，并且返回下一个值，知道没有值可以返回了。eg:  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="keyword">def</span> <span class="title function_">createGenerator</span>():</span><br><span class="line"><span class="meta">... </span>   mylist = <span class="built_in">range</span>(<span class="number">3</span>)</span><br><span class="line"><span class="meta">... </span>   <span class="keyword">for</span> i <span class="keyword">in</span> mylist:</span><br><span class="line"><span class="meta">... </span>       <span class="keyword">yield</span> i*i</span><br><span class="line">...</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>mygenerator = createGenerator() <span class="comment"># create a generator</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="built_in">print</span>(mygenerator) <span class="comment"># mygenerator is an object!</span></span><br><span class="line">&lt;generator <span class="built_in">object</span> createGenerator at <span class="number">0xb7555c34</span>&gt;</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="keyword">for</span> i <span class="keyword">in</span> mygenerator:</span><br><span class="line"><span class="meta">... </span>    <span class="built_in">print</span>(i)</span><br><span class="line"><span class="number">0</span></span><br><span class="line"><span class="number">1</span></span><br><span class="line"><span class="number">4</span></span><br></pre></td></tr></table></figure></li>
+</ul>
+<h1 id="Python-VS-C"><a href="#Python-VS-C" class="headerlink" title="Python VS C"></a>Python VS C</h1><table>
+<thead>
+<tr>
+<th align="center">Pytho</th>
+<th align="center">C</th>
+<th align="left">说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">字母、数字、下划线组成，不能以数字开头，区分大小写</td>
+<td align="center">字母、数字、下划线组成，不能以数字开头，区分大小写</td>
+<td align="left">标识符</td>
+</tr>
+<tr>
+<td align="center">单下划线开头的代表不能直接访问的类属性，通过类提供的接口访问</td>
+<td align="center"></td>
+<td align="left"></td>
+</tr>
+<tr>
+<td align="center">双下划线开头的代表类的私有成员</td>
+<td align="center"></td>
+<td align="left"></td>
+</tr>
+<tr>
+<td align="center">双下划线开头和结尾的代表特殊方法专用的标识(eg:<strong>init</strong>())</td>
+<td align="center"></td>
+<td align="left"></td>
+</tr>
+<tr>
+<td align="center">“&quot;</td>
+<td align="center">不需要，以”;”结尾</td>
+<td align="left">行继符</td>
+</tr>
+<tr>
+<td align="center">单引号(‘),双引号(“),三引号(‘’’)</td>
+<td align="center">双引号(“)</td>
+<td align="left">字符串</td>
+</tr>
+<tr>
+<td align="center">#</td>
+<td align="center">&#x2F;&#x2F;</td>
+<td align="left">注释</td>
+</tr>
+<tr>
+<td align="center">:</td>
+<td align="center">{}</td>
+<td align="left">代码块</td>
+</tr>
+<tr>
+<td align="center">if</td>
+<td align="center">if</td>
+<td align="left">条件</td>
+</tr>
+<tr>
+<td align="center">elif</td>
+<td align="center">else if</td>
+<td align="left"></td>
+</tr>
+<tr>
+<td align="center">else</td>
+<td align="center">else</td>
+<td align="left"></td>
+</tr>
+<tr>
+<td align="center">a &#x3D; b &#x3D; 1 or a,b&#x3D;1,”Hi”</td>
+<td align="center">int a&#x3D;1 , b&#x3D;2</td>
+<td align="left">多变量赋值</td>
+</tr>
+<tr>
+<td align="center">Numbers, String, List, Tuple, Dictionary</td>
+<td align="center">char, int , float, double, void, point*</td>
+<td align="left">基础数据类型</td>
+</tr>
+<tr>
+<td align="center">list[item1, item2, …  itemN]</td>
+<td align="center"></td>
+<td align="left">列表，允许更新</td>
+</tr>
+<tr>
+<td align="center">tuple(item1, item2, …, itemN)</td>
+<td align="center"></td>
+<td align="left">元组，不允许更新操作</td>
+</tr>
+<tr>
+<td align="center">dict{key1:value1, key2:value2, …, keyN:valueN}</td>
+<td align="center"></td>
+<td align="left">字典，允许更新</td>
+</tr>
+<tr>
+<td align="center">**</td>
+<td align="center"></td>
+<td align="left">幂，a**b a的b次幂</td>
+</tr>
+<tr>
+<td align="center">&#x2F;&#x2F;</td>
+<td align="center">mod</td>
+<td align="left">整除</td>
+</tr>
+<tr>
+<td align="center">“!&#x3D;” , “&lt;&gt;”</td>
+<td align="center">“!&#x3D;”</td>
+<td align="left">不等</td>
+</tr>
+<tr>
+<td align="center">“and”</td>
+<td align="center">“&amp;&amp;”</td>
+<td align="left">逻辑运算</td>
+</tr>
+<tr>
+<td align="center">“or”</td>
+<td align="center">双竖线</td>
+<td align="left"></td>
+</tr>
+<tr>
+<td align="center">“not”</td>
+<td align="center">“!”</td>
+<td align="left"></td>
+</tr>
+<tr>
+<td align="center">“in” , “not in”</td>
+<td align="center"></td>
+<td align="left">判断元素在不在元组或列表中</td>
+</tr>
+<tr>
+<td align="center">“is” , “not is”</td>
+<td align="center"></td>
+<td align="left">判断两个标识符是不是引用自一个对象</td>
+</tr>
+<tr>
+<td align="center">“while”, “for”</td>
+<td align="center">“while”, “for”, “do..while”</td>
+<td align="left">循环, python中可与”else”一起执行条件为false的情况</td>
+</tr>
+<tr>
+<td align="center">“break”, “continue”, “pass”</td>
+<td align="center">“break”, “continue”, “goto”</td>
+<td align="left">循环控制</td>
+</tr>
+</tbody></table>
+<h1 id="Python编译"><a href="#Python编译" class="headerlink" title="Python编译"></a>Python编译</h1><table>
+<thead>
+<tr>
+<th align="left">选项</th>
+<th align="left">描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">-d</td>
+<td align="left">在解析时显示调试信息</td>
+</tr>
+<tr>
+<td align="left">-O</td>
+<td align="left">生成优化代码 ( .pyo 文件 )</td>
+</tr>
+<tr>
+<td align="left">-S</td>
+<td align="left">启动时不引入查找Python路径的位置</td>
+</tr>
+<tr>
+<td align="left">-c cmd</td>
+<td align="left">执行 Python 脚本，并将运行结果作为 cmd 字符串</td>
+</tr>
+<tr>
+<td align="left">file</td>
+<td align="left">在给定的python文件执行python脚本</td>
+</tr>
+</tbody></table>
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="https://www.w3cschool.cn/python/python-basic-syntax.html">Python 基础语法</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.cnblogs.com/edenpans/p/6524966.html">PYTHON YIELD 关键字</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/09/18/storage/virtual-filesystem-switch/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1358,247 +1703,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/08/03/storage/gluster/gluster-hello-world/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2017/08/03/storage/gluster/gluster-hello-world/" class="post-title-link" itemprop="url">初尝GlusterFS</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2017-08-03 14:02:36" itemprop="dateCreated datePublished" datetime="2017-08-03T14:02:36+08:00">2017-08-03</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p><img src="/images/gluster/glusterfs-antmascot.png" alt="glusterfs-antmascot"></p>
-<h1 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h1><p>GlusterFS (Gluster File System) 是一个开源的分布式文件系统，主要由 Z RESEARCH 公司负责开发。GlusterFS 是 Scale-Out 存储解决方案 Gluster 的核心，具有强大的横向扩展能力，通过扩展能够支持数PB存储容量和处理数千客户端。GlusterFS 借助 TCP&#x2F;IP 或 InfiniBand RDMA 网络将物理分布的存储资源聚集在一起，使用单一全局命名空间来管理数据。GlusterFS 基于可堆叠的用户空间设计，可为各种不同的数据负载提供优异的性能。</p>
-<p><img src="/images/gluster/glusterfs-frame.png" alt="glusterfs-frame"></p>
-<p>GlusterFS 总体架构与组成，它主要由存储服务器（Brick Server）、客户端以及 NFS&#x2F;Samba 存储网关组成。不难发现，GlusterFS 架构中没有元数据服务器组件，这是其最大的设计这点，对于提升整个系统的性能、可靠性和稳定性都有着决定性的意义。</p>
-<ul>
-<li>GlusterFS 支持 TCP&#x2F;IP 和 InfiniBand RDMA 高速网络互联。</li>
-<li>客户端可通过原生 GlusterFS 协议访问数据，其他没有运行 GlusterFS 客户端的终端可通过 NFS&#x2F;CIFS 标准协议通过存储网关访问数据（存储网关提供弹性卷管理和访问代理功能）。</li>
-<li>存储服务器主要提供基本的数据存储功能，客户端弥补了没有元数据服务器的问题，承担了更多的功能，包括数据卷管理、I&#x2F;O 调度、文件定位、数据缓存等功能，利用 FUSE（File system in User Space）模块将 GlusterFS 挂载到本地文件系统之上，实现 POSIX 兼容的方式来访问系统数据。</li>
-</ul>
-<h2 id="卷类型"><a href="#卷类型" class="headerlink" title="卷类型"></a>卷类型</h2><h3 id="Distribute卷"><a href="#Distribute卷" class="headerlink" title="Distribute卷"></a>Distribute卷</h3><p>分布式卷，基于 Hash 算法将文件分布到所有 brick server，只是扩大了磁盘空间，不具备容错能力。由于distribute volume 使用本地文件系统，因此存取效率并没有提高，相反会因为网络通信的原因使用效率有所降低，另外本地存储设备的容量有限制，因此支持超大型文件会有一定难度。</p>
-<p><img src="/images/gluster/glusterfs-volume-distribute.jpg" alt="glusterfs-volume-distribute"></p>
-<h3 id="Stripe卷"><a href="#Stripe卷" class="headerlink" title="Stripe卷"></a>Stripe卷</h3><p>条带卷，类似 RAID0，文件分成数据块以 Round Robin 方式分布到 brick server 上，并发粒度是数据块，支持超大文件，大文件的读写性能高。</p>
-<p><img src="/images/gluster/glusterfs-volume-stripe.jpg" alt="glusterfs-volume-stripe"></p>
-<h3 id="Replica卷"><a href="#Replica卷" class="headerlink" title="Replica卷"></a>Replica卷</h3><p>复制卷，文件同步复制到多个 brick 上，文件级 RAID1，具有容错能力，写性能下降，读性能提升。Replicated 模式，也称作 AFR（Auto File Replication），相当于 RAID1，即同一文件在多个镜像存储节点上保存多份，每个 replicated 子节点有着相同的目录结构和文件，replica volume 也是在容器存储中较为推崇的一种。</p>
-<p><img src="/images/gluster/glusterfs-volume-replica.jpg" alt="glusterfs-volume-replica"></p>
-<h3 id="Distribute-Stripe卷"><a href="#Distribute-Stripe卷" class="headerlink" title="Distribute Stripe卷"></a>Distribute Stripe卷</h3><p>分布式条带卷，Brick server 数量是条带数的倍数，兼具 distribute 和 stripe 卷的特点。分布式的条带卷，volume 中 brick 所包含的存储服务器数必须是 stripe 的倍数(&gt;&#x3D;2倍)，兼顾分布式和条带式的功能。每个文件分布在四台共享服务器上，通常用于大文件访问处理，最少需要 4 台服务器才能创建分布条带卷。</p>
-<p><img src="/images/gluster/glusterfs-volume-distribute-stripe.jpg" alt="glusterfs-volume-distribute-stripe"></p>
-<h3 id="Distribute-Replica卷"><a href="#Distribute-Replica卷" class="headerlink" title="Distribute Replica卷"></a>Distribute Replica卷</h3><p>分布式复制卷，Brick server 数量是镜像数的倍数，兼具 distribute 和 replica 卷的特点,可以在 2 个或多个节点之间复制数据。分布式的复制卷，volume 中 brick 所包含的存储服务器数必须是 replica 的倍数(&gt;&#x3D;2倍)，兼顾分布式和复制式的功能。</p>
-<p><img src="/images/gluster/glusterfs-volume-distribute-replica.jpg" alt="glusterfs-volume-distribute-replica"></p>
-<h3 id="Stripe-Replica卷"><a href="#Stripe-Replica卷" class="headerlink" title="Stripe Replica卷"></a>Stripe Replica卷</h3><p>条带复制卷，类似 RAID 10，同时具有条带卷和复制卷的特点。</p>
-<p><img src="/images/gluster/glusterfs-volume-stripe-replica.png" alt="glusterfs-volume-stripe-replica"></p>
-<h3 id="Distribute-Stripe-Replica卷"><a href="#Distribute-Stripe-Replica卷" class="headerlink" title="Distribute Stripe Replica卷"></a>Distribute Stripe Replica卷</h3><p>分布式条带复制卷，三种基本卷的复合卷，通常用于类 Map Reduce 应用。</p>
-<p><img src="/images/gluster/glusterfs-volume-distribute-stripe-replica.png" alt="glusterfs-volume-distribute-stripe-replica"></p>
-<h1 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h1><p>使用docker部署GlusterFS，dockerfile如下：</p>
-<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">FROM</span> centos:<span class="number">7.3</span>.<span class="number">1611</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">MAINTAINER</span> zhoub</span><br><span class="line"></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> yum update -y</span></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> yum install -y centos-release-gluster310.noarch</span></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> yum update -y</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> yum clean all</span></span><br></pre></td></tr></table></figure>
-
-<p>创建GlusterFS镜像</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">docker build -t glusterfs:3.10 -f ./dockerfile .</span></span><br><span class="line">...</span><br></pre></td></tr></table></figure>
-
-<p>创建docker容器脚本<code>mkgfs.sh</code>，创建两个容器，用来组件gluster集群</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">!/bin/sh</span></span><br><span class="line"></span><br><span class="line">count=2</span><br><span class="line">image=glusterfs:3.10</span><br><span class="line"></span><br><span class="line">for((i=1;i&lt;=$count;i++))</span><br><span class="line">do</span><br><span class="line">    docker run -d -e &quot;container=docker&quot; --privileged=true -v /sys/fs/cgroup:/sys/fs/cgroup -h glf-client-$i --name glf_client_$i $&#123;image&#125; /usr/sbin/init</span><br><span class="line">done</span><br></pre></td></tr></table></figure>
-
-<h1 id="部署-使用"><a href="#部署-使用" class="headerlink" title="部署&amp;使用"></a>部署&amp;使用</h1><h2 id="部署"><a href="#部署" class="headerlink" title="部署"></a>部署</h2><p>安装<code>glusterfs-server</code></p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">yum install -y glusterfs-server</span></span><br><span class="line">...</span><br></pre></td></tr></table></figure>
-
-<p>准备数据目录</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash"><span class="built_in">mkdir</span> -p /brks/brk1/gv0</span></span><br></pre></td></tr></table></figure>
-<p>(此处不进行数据盘挂载，直接使用系统硬盘)</p>
-<p>启动<code>glusterd</code>服务</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">systemctl <span class="built_in">enable</span> glusterd</span></span><br><span class="line">...</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">systemctl start glusterd</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">systemctl status glusterd</span></span><br><span class="line">...</span><br></pre></td></tr></table></figure>
-
-<p>在容器<code>glf-client-1</code>上添加<code>glf-client-2</code></p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gluster peer probe glf-client-2</span><br></pre></td></tr></table></figure>
-<p>(此处省去向<code>/etc/hosts</code>增加ip、域名的映射修改)</p>
-<p>在容器<code>glf-client-2</code>上添加<code>glf-client-1</code></p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gluster peer probe glf-client-1</span><br></pre></td></tr></table></figure>
-<p>(此处省去向<code>/etc/hosts</code>增加ip、域名的映射修改)</p>
-<p>在任意一个容器上创建、启动volume</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">gluster volume create gv0 replica 2 glf-client-1:/brks/brk1/gv0 glf-client-2:/brks/brk1/gv0 force</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">gluster volume start gv0</span></span><br></pre></td></tr></table></figure>
-<p>(由于gv0使用的是系统盘，所以在volume创建时，需要指定<code>force</code>参数)<br>创建、启动完volume后可通过<code>gluster volume info</code>和<code>gluster volume status gv0</code>查看状态。</p>
-<h2 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h2><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mount -t glusterfs glf-client-1:gv0 /mnt/</span><br></pre></td></tr></table></figure>
-
-<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a target="_blank" rel="noopener" href="https://wiki.centos.org/SpecialInterestGroup/Storage/gluster-Quickstart">gluster-Quickstart</a></li>
-<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/luckytanggu/article/details/71514798">容器中使用systemctl命令重启服务</a></li>
-<li><a target="_blank" rel="noopener" href="https://www.ibm.com/developerworks/cn/opensource/os-cn-glusterfs-docker-volume/index.html?lnk=hm">基于 GlusterFS 实现 Docker 集群的分布式存储</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/07/21/devstack-deploy/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2017/07/21/devstack-deploy/" class="post-title-link" itemprop="url">devstack部署</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2017-07-21 15:56:02" itemprop="dateCreated datePublished" datetime="2017-07-21T15:56:02+08:00">2017-07-21</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/other/" itemprop="url" rel="index"><span itemprop="name">other</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>OpenStack（以下简称OPS）是一个很庞大的系统，想要部署一个OPS需要部署很多组件。想必部署之路也是坑坑奇多。所以为了方便使用OPS，需要部署一个“all-in-one”环境的OPS</p>
-<h1 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h1><ul>
-<li>CPU<br>  2U X86_64</li>
-<li>Memory<br>  4G及以上，如果内存过小，会出现各种问题。（整个devstack-Openstack-Ocata + CentOS7.3 1611需要占用3.4G内存）</li>
-<li>OS<br>  CentOS 7.3 1611</li>
-<li>NET<br>  建议创建两个网络，一个用于连接外网用于做管理性工作；一个供neutron使用</li>
-<li>OpenStack版本<br>  Ocata</li>
-</ul>
-<h1 id="部署"><a href="#部署" class="headerlink" title="部署"></a>部署</h1><h2 id="准备"><a href="#准备" class="headerlink" title="准备"></a>准备</h2><h3 id="关闭防火墙"><a href="#关闭防火墙" class="headerlink" title="关闭防火墙"></a>关闭防火墙</h3><h4 id="关闭selinux"><a href="#关闭selinux" class="headerlink" title="关闭selinux"></a>关闭selinux</h4><p>编辑<code>/etc/selinux/config</code>将<code>SELINUX=enforcing</code>改为<code>SELINUX=disabled</code></p>
-<h4 id="关闭iptables"><a href="#关闭iptables" class="headerlink" title="关闭iptables"></a>关闭iptables</h4><p>执行命令<code>sudo systemctl disable iptables</code>，关闭iptables服务</p>
-<p>上诉两处修改若想生效需要重启系统。</p>
-<h3 id="安装依赖软件"><a href="#安装依赖软件" class="headerlink" title="安装依赖软件"></a>安装依赖软件</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo yum install -y epel-release git net-tools</span><br></pre></td></tr></table></figure>
-
-<h3 id="下载Devstack"><a href="#下载Devstack" class="headerlink" title="下载Devstack"></a>下载Devstack</h3><p>从github上下载devstack<code>git clone https://github.com/openstack-dev/devstack.git</code>，然后切换版本到Ocata <code>git checkout stable/ocata</code>，可使用<code>git branch -av</code>查看devstack所处分支</p>
-<h2 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h2><h3 id="创建stack用户"><a href="#创建stack用户" class="headerlink" title="创建stack用户"></a>创建stack用户</h3><ol>
-<li>进入devstack目录 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cd devstack</span><br></pre></td></tr></table></figure></li>
-<li>创建stack用户 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo ./tools/create-stack-user.sh</span><br></pre></td></tr></table></figure></li>
-</ol>
-<h3 id="切换用户"><a href="#切换用户" class="headerlink" title="切换用户"></a>切换用户</h3><ol>
-<li>修改目录owner <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo chown -R stack:stack ./devstack</span><br></pre></td></tr></table></figure></li>
-<li>修改<code>/opt/stack</code>目录访问权限 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo chmod 777 /opt/stack -R</span><br><span class="line">sudo mv ./devstack /opt/stack/</span><br></pre></td></tr></table></figure></li>
-<li>切换用户 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo su - stack</span><br></pre></td></tr></table></figure></li>
-</ol>
-<h3 id="撰写local-conf"><a href="#撰写local-conf" class="headerlink" title="撰写local.conf"></a>撰写local.conf</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br></pre></td><td class="code"><pre><span class="line">[[local|localrc]]</span><br><span class="line"></span><br><span class="line">DEST=/opt/stack/ocata</span><br><span class="line"># use TryStack git mirror</span><br><span class="line">GIT_BASE=http://git.trystack.cn</span><br><span class="line">NOVNC_REPO=http://git.trystack.cn/kanaka/noVNC.git</span><br><span class="line">SPICE_REPO=http://git.trystack.cn/git/spice/spice-html5.git</span><br><span class="line"></span><br><span class="line">#OFFLINE=True</span><br><span class="line">RECLONE=False</span><br><span class="line"></span><br><span class="line"># Define images to be automatically downloaded during the DevStack built process.</span><br><span class="line">DOWNLOAD_DEFAULT_IMAGES=False</span><br><span class="line">IMAGE_URLS=&quot;,https://launchpad.net/cirros/trunk/0.3.0/+download/cirros-0.3.0-x86_64-disk.img&quot;</span><br><span class="line"></span><br><span class="line">HOST_IP=127.0.0.1</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"># Credentials</span><br><span class="line">DATABASE_PASSWORD=pass</span><br><span class="line">ADMIN_PASSWORD=pass</span><br><span class="line">SERVICE_PASSWORD=pass</span><br><span class="line">SERVICE_TOKEN=pass</span><br><span class="line">RABBIT_PASSWORD=pass</span><br><span class="line"></span><br><span class="line">HORIZON_BRANCH=stable/ocata</span><br><span class="line">KEYSTONE_BRANCH=stable/ocata</span><br><span class="line">NOVA_BRANCH=stable/ocata</span><br><span class="line">NEUTRON_BRANCH=stable/ocata</span><br><span class="line">GLANCE_BRANCH=stable/ocata</span><br><span class="line">CINDER_BRANCH=stable/ocata</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">#keystone</span><br><span class="line">KEYSTONE_TOKEN_FORMAT=UUID</span><br><span class="line"></span><br><span class="line">##Heat</span><br><span class="line">HEAT_BRANCH=stable/ocata</span><br><span class="line">enable_service h-eng h-api h-api-cfn h-api-cw</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">## Swift</span><br><span class="line">SWIFT_BRANCH=stable/ocata</span><br><span class="line">ENABLED_SERVICES+=,s-proxy,s-object,s-container,s-account</span><br><span class="line">SWIFT_REPLICAS=1</span><br><span class="line">SWIFT_HASH=011688b44136573e209e</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"># Enabling Neutron (network) Service</span><br><span class="line">disable_service n-net</span><br><span class="line">enable_service q-svc</span><br><span class="line">enable_service q-agt</span><br><span class="line">enable_service q-dhcp</span><br><span class="line">enable_service q-l3</span><br><span class="line">enable_service q-meta</span><br><span class="line">enable_service q-metering</span><br><span class="line">enable_service neutron</span><br><span class="line"></span><br><span class="line">## Neutron options</span><br><span class="line">Q_USE_SECGROUP=True</span><br><span class="line">FLOATING_RANGE=&quot;192.168.36.0/24&quot;</span><br><span class="line">FIXED_RANGE=&quot;10.0.0.0/24&quot;</span><br><span class="line">Q_FLOATING_ALLOCATION_POOL=start=192.168.36.55,end=192.168.36.100</span><br><span class="line">PUBLIC_NETWORK_GATEWAY=&quot;192.168.36.1&quot;</span><br><span class="line">Q_L3_ENABLED=True</span><br><span class="line">PUBLIC_INTERFACE=eth1</span><br><span class="line">Q_USE_PROVIDERNET_FOR_PUBLIC=True</span><br><span class="line">OVS_PHYSICAL_BRIDGE=br-ex</span><br><span class="line">PUBLIC_BRIDGE=br-ex</span><br><span class="line">OVS_BRIDGE_MAPPINGS=public:br-ex</span><br><span class="line"></span><br><span class="line"># #VLAN configuration.</span><br><span class="line">Q_PLUGIN=ml2</span><br><span class="line">ENABLE_TENANT_VLANS=True</span><br><span class="line"></span><br><span class="line"># Logging</span><br><span class="line">LOGFILE=/opt/stack/logs/stack.sh.log</span><br><span class="line">VERBOSE=True</span><br><span class="line">LOG_COLOR=True</span><br><span class="line">SCREEN_LOGDIR=/opt/stack/logs</span><br></pre></td></tr></table></figure>
-<h3 id="安装OPS（all-in-one）"><a href="#安装OPS（all-in-one）" class="headerlink" title="安装OPS（all-in-one）"></a>安装OPS（all-in-one）</h3><p>安装使用<code>stack.sh</code>脚本，卸载使用<code>unstack.sh</code>脚本</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">./stack.sh</span></span><br><span class="line">...</span><br><span class="line"></span><br><span class="line">=========================</span><br><span class="line">DevStack Component Timing</span><br><span class="line">=========================</span><br><span class="line">Total runtime         1254</span><br><span class="line"></span><br><span class="line">run_process            83</span><br><span class="line">test_with_retry         4</span><br><span class="line">pip_install           127</span><br><span class="line">restart_apache_server  29</span><br><span class="line">wait_for_service       19</span><br><span class="line">yum_install            50</span><br><span class="line">=========================</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">This is your host IP address: 127.0.0.1</span><br><span class="line">This is your host IPv6 address: ::1</span><br><span class="line">Horizon is now available at http://127.0.0.1/dashboard</span><br><span class="line">Keystone is serving at http://127.0.0.1/identity/</span><br><span class="line">The default users are: admin and demo</span><br><span class="line">The password: pass</span><br></pre></td></tr></table></figure>
-<p>安装时遇到问题可从两个角度考虑，一个网络不通，一个内存不足。这里再次重申，内存一定要&gt;&#x3D;4G，如果网络不通或延时太大，建议使用国内镜像。</p>
-<p>例如<code>/opt/stack/.pip/pip.conf</code>:</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">[global]</span><br><span class="line"></span><br><span class="line">timeout = 6000</span><br><span class="line">index-url = http://pypi.douban.com/simple</span><br><span class="line">trusted-host = pypi.douban.com</span><br></pre></td></tr></table></figure>
-
-<h2 id="horizon"><a href="#horizon" class="headerlink" title="horizon"></a>horizon</h2><p>安装成功后，访问<code>http://x.x.x.x/dashboard</code>, 用户民密码见<code>local.conf</code></p>
-<p><img src="/images/devstack/horizon_login.png" alt="horizon_login"></p>
-<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/lyjshen/article/details/69467444">Virtuabox中Centos 7.3安装devstack后记</a></li>
-<li><a target="_blank" rel="noopener" href="http://www.fx114.net/qa-7-155510.aspx">Centos7下搭建带有Ceilometer的devstack（mitaka版本）</a></li>
-<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/scucscheng/article/details/51884613">centos 7 devstack 安装 openstack Mitaka</a></li>
-<li><a target="_blank" rel="noopener" href="http://www.chenshake.com/devstack-installation-and-testing/">devstack安装和测试</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1668,7 +1772,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">141</span>
+          <span class="site-state-item-count">143</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -1681,7 +1785,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">121</span>
+        <span class="site-state-item-count">122</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>

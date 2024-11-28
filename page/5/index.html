@@ -188,6 +188,237 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2019/05/05/storage/ceph/rbd-mirror/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2019/05/05/storage/ceph/rbd-mirror/" class="post-title-link" itemprop="url">rbd-mirror 跨集群备份</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2019-05-05 09:30:42" itemprop="dateCreated datePublished" datetime="2019-05-05T09:30:42+08:00">2019-05-05</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h1><p>Todo…</p>
+<h3 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h3><ul>
+<li>增加了RBD Journal的写入操作，是否会产生写放大现象。</li>
+<li>Ceph-RBD-Mirror回放日志的的时间间隔</li>
+<li>RBD Journal的容量大小如何配置</li>
+<li>RBD Journal存储介质是否可以优化</li>
+</ul>
+<h1 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h1><h2 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h2><h4 id="要求"><a href="#要求" class="headerlink" title="要求"></a>要求</h4><ul>
+<li>Ceph版本必须为Jewel及之后版本<br>  RBD-Mirror功能从Jewel版本引入，之前版本不支持该feature。本文以jewel版本为例进行演示。</li>
+<li>RBD feature必须包含<code>journaling</code><br>  RBD-Mirror依赖journal完成工作，类似Mysql的主从同步机制。使用日志回放方法备份数据。</li>
+</ul>
+<h4 id="准备"><a href="#准备" class="headerlink" title="准备"></a>准备</h4><ul>
+<li><p>准备两个集群分别为cls17和cls26<br>  cls17为primary集群，cls26为non-primary集群，将cls17内的RBD数据备份到cls26集群内</p>
+</li>
+<li><p>在这两个集群中创建同名pool——<code>rmp</code>（RBD Mirror Pool）</p>
+</li>
+</ul>
+<h4 id="ceph-rbd-mirror服务"><a href="#ceph-rbd-mirror服务" class="headerlink" title="ceph-rbd-mirror服务"></a>ceph-rbd-mirror服务</h4><p>根据RBD-Mirror的原理，需要在non-primery集群上启动<code>ceph-rbd-mirror</code>服务</p>
+<p>** 安装 **</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">yum install -y rbd-mirror</span></span><br></pre></td></tr></table></figure>
+
+<p>** 启动 **</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">systemctl <span class="built_in">enable</span> ceph-rbd-mirror@admin.service</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">systemctl start ceph-rbd-mirror@admin.service</span></span><br></pre></td></tr></table></figure>
+
+<p><code>@admin</code>是ceph中的<code>client.admin</code>用户，只是这里省略了<code>client.</code>。关于Ceph用户管理相关操作可以使用<code>ceph auth</code>命令。</p>
+<h4 id="Copy-Config-keyring"><a href="#Copy-Config-keyring" class="headerlink" title="Copy Config &amp; keyring"></a>Copy Config &amp; keyring</h4><p>将cls17集群中的<code>ceph.conf</code>和<code>ceph.client.admin.keyring</code>copy到cls26集群的<code>/etc/ceph</code>目录中，并重命名成<code>cls17.conf</code>和<code>cls17.client.admin.keyring</code>。然后在cls26集群中可通过指定<code>--cluster cls17</code>来指定访问集群。</p>
+<h2 id="备份Pool中所有RBD"><a href="#备份Pool中所有RBD" class="headerlink" title="备份Pool中所有RBD"></a>备份Pool中所有RBD</h2><h3 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h3><h4 id="Pool-Mirror-Mode"><a href="#Pool-Mirror-Mode" class="headerlink" title="Pool Mirror Mode"></a>Pool Mirror Mode</h4><p>需要将两个集群的的<code>rmp</code>pool的mirror mode设置成<code>pool</code>。</p>
+<p>集群cls26</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd mirror pool <span class="built_in">enable</span> rmp pool</span></span><br></pre></td></tr></table></figure>
+
+<p>集群cls17</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd mirror pool <span class="built_in">enable</span> rmp pool --cluster cls17</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="Add-Peer"><a href="#Add-Peer" class="headerlink" title="Add Peer"></a>Add Peer</h4><p>将Primary集群信息加入到<code>rmp</code>pool中。</p>
+<p>集群cls26</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd mirror pool peer add rmp client.admin@cls17</span></span><br></pre></td></tr></table></figure>
+<p>查看两个集群的peer信息</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd mirror pool info rmp</span></span><br><span class="line">Mode: pool</span><br><span class="line">Peers:</span><br><span class="line">  UUID                                 NAME  CLIENT</span><br><span class="line">  2c2c1293-0e97-4c57-9bf1-e5f934274758 cls17 client.admin</span><br><span class="line"><span class="meta prompt_">$</span><span class="language-bash"></span></span><br><span class="line"><span class="language-bash">$ rbd mirror pool info rmp --cluster cls17</span></span><br><span class="line">Mode: pool</span><br><span class="line">Peers: none</span><br></pre></td></tr></table></figure>
+
+<p>至此备份Pool中所有RBD的配置操作已经完成，接下来进行验证操作。</p>
+<h3 id="测试"><a href="#测试" class="headerlink" title="测试"></a>测试</h3><p>在集群cls17中<code>rmp</code>pool创建RBD，并查看集群cls26中<code>rmp</code>pool是否有回放操作（RBD是否备份到cls26集群）。由于整个RBD-Mirror依赖于<code>journaling</code>feature，所以创建RBD时需要指定该feature。若对当前<code>rmp</code>pool中存在RBD进行备份，需要先增加<code>jouranling</code>feature，使用<code>rbd feature enable rmp/rd1 journaling</code>命令。</p>
+<p>集群cls17</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd create -p rmp --image-format 2 --image-feature layering,exclusive-lock,object-map,fast-diff,deep-flatten,journaling -s 1G rd1</span></span><br></pre></td></tr></table></figure>
+
+<p>集群cls26</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd -p rmp <span class="built_in">ls</span></span></span><br><span class="line">rd1</span><br></pre></td></tr></table></figure>
+
+<h2 id="备份单个RBD"><a href="#备份单个RBD" class="headerlink" title="备份单个RBD"></a>备份单个RBD</h2><h3 id="配置-1"><a href="#配置-1" class="headerlink" title="配置"></a>配置</h3><h4 id="Pool-Mirror-Mode-1"><a href="#Pool-Mirror-Mode-1" class="headerlink" title="Pool Mirror Mode"></a>Pool Mirror Mode</h4><p>将两个集群的<code>rbd</code>pool的mirror mode设置成<code>image</code>。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd mirror pool <span class="built_in">enable</span> rbd image</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="Add-Peer-1"><a href="#Add-Peer-1" class="headerlink" title="Add Peer"></a>Add Peer</h4><p>将Primary集群信息加入到<code>rbd</code>pool中。具体操作方法，同上。</p>
+<h4 id="Enable-Image-Mirror"><a href="#Enable-Image-Mirror" class="headerlink" title="Enable Image Mirror"></a>Enable Image Mirror</h4><p>集群cls17</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd info rd1</span></span><br><span class="line">rbd image &#x27;rd1&#x27;:</span><br><span class="line">    size 1024 MB in 256 objects</span><br><span class="line">    order 22 (4096 kB objects)</span><br><span class="line">    block_name_prefix: rbd_data.ad616b8b4567</span><br><span class="line">    format: 2</span><br><span class="line">    features: exclusive-lock, journaling</span><br><span class="line">    flags:</span><br><span class="line">    journal: ad616b8b4567</span><br><span class="line">    mirroring state: disabled</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd mirror image <span class="built_in">enable</span> rbd/rd1</span></span><br><span class="line">Mirroring enabled</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd info rd1</span></span><br><span class="line">    rbd image &#x27;rd1&#x27;:</span><br><span class="line">    size 1024 MB in 256 objects</span><br><span class="line">    order 22 (4096 kB objects)</span><br><span class="line">    block_name_prefix: rbd_data.ad616b8b4567</span><br><span class="line">    format: 2</span><br><span class="line">    features: exclusive-lock, journaling</span><br><span class="line">    flags:</span><br><span class="line">    journal: ad616b8b4567</span><br><span class="line">    mirroring state: enabled</span><br><span class="line">    mirroring global id: f0c9972d-7585-4bda-a486-baa9a6f96eb5</span><br><span class="line">    mirroring primary: true</span><br></pre></td></tr></table></figure>
+
+<p>集群cls26</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd info rd1</span></span><br><span class="line">rbd image &#x27;rd1&#x27;:</span><br><span class="line">    size 1024 MB in 256 objects</span><br><span class="line">    order 22 (4096 kB objects)</span><br><span class="line">    block_name_prefix: rbd_data.8587327b23c6</span><br><span class="line">    format: 2</span><br><span class="line">    features: exclusive-lock, journaling</span><br><span class="line">    flags:</span><br><span class="line">    journal: 8587327b23c6</span><br><span class="line">    mirroring state: enabled</span><br><span class="line">    mirroring global id: f0c9972d-7585-4bda-a486-baa9a6f96eb5</span><br><span class="line">    mirroring primary: false</span><br></pre></td></tr></table></figure>
+
+<h3 id="测试-1"><a href="#测试-1" class="headerlink" title="测试"></a>测试</h3><p>(同上)</p>
+<p>*** 无论是全Pool备份，还是单个RBD备份，只要建立mirror关系，只有primary rbd才能处理读写操作 ***</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2019/04/28/storage/ceph/rbd-export-import/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2019/04/28/storage/ceph/rbd-export-import/" class="post-title-link" itemprop="url">RBD备份</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2019-04-28 14:15:47" itemprop="dateCreated datePublished" datetime="2019-04-28T14:15:47+08:00">2019-04-28</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <ul>
+<li>Ceph中的RBD备份分为全量备份和增量备份，恢复也有增全量之分。</li>
+<li>备份和恢复的操作都是基于快照来操作的。</li>
+<li>RBD的format必须为2 （–image-format 2）</li>
+</ul>
+<h1 id="备份"><a href="#备份" class="headerlink" title="备份"></a>备份</h1><p>备份操作流程，先做一个全量备份，然后每隔一段时间做一个快照，并将快照导出。</p>
+<h2 id="准备"><a href="#准备" class="headerlink" title="准备"></a>准备</h2><p>创建一个RBD image</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd create --image-format 2 --size 1G crbd_cls17_1</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="全量"><a href="#全量" class="headerlink" title="全量"></a>全量</h2><p>创建一个快照，然后备份从image创建一直到创建快照之前的全量数据</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd snap create crbd_cls17_1@s1</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd export-diff crbd_cls17_1@s1 ./crbd_base</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="增量"><a href="#增量" class="headerlink" title="增量"></a>增量</h2><p>继续写入一段数据后，再次做快照，并导出增量数据</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd snap create crbd_cls17_1@s2</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd export-diff crbd_cls17_1@s2 --from-snap s1 ./crbd_s1_s2</span></span><br></pre></td></tr></table></figure>
+
+<p>至此，全量和增量备份数据都以导出到文件<code>crbd_base</code>和<code>crbd_s1_s2</code>两个文件中。</p>
+<h1 id="恢复"><a href="#恢复" class="headerlink" title="恢复"></a>恢复</h1><h2 id="准备-1"><a href="#准备-1" class="headerlink" title="准备"></a>准备</h2><p>将之前导出的增全量备份数据<code>crbd_base</code>、<code>crbd_s1_s2</code>拷贝到需要导入的ceph集群上。创建一个rbd image用于导入备份数据。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd create --image-format 2 --size 1G crbd_cls26_1</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="全量-1"><a href="#全量-1" class="headerlink" title="全量"></a>全量</h2><p>恢复全量数据</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd import-diff ./crbd_base crbd_cls26_1</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="增量-1"><a href="#增量-1" class="headerlink" title="增量"></a>增量</h2><p>恢复增量数据</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd import-diff ./crbd_s1_s2 crbd_cls26_1</span></span><br></pre></td></tr></table></figure>
+
+<p>Over!</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2019/03/11/storage/ceph/journal-format/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1212,199 +1443,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/12/01/container/docker/docker-image-untar/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2017/12/01/container/docker/docker-image-untar/" class="post-title-link" itemprop="url">Untar Docker Image</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2017-12-01 09:57:17" itemprop="dateCreated datePublished" datetime="2017-12-01T09:57:17+08:00">2017-12-01</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/container/" itemprop="url" rel="index"><span itemprop="name">container</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>docker中容器的运行离不开image，一个image中都存放有哪些东西呢？这些东西又是以何种方式组织在一起的呢？今天让我们来撕开这层面纱，看看image到底是什么样。</p>
-<h1 id="撕"><a href="#撕" class="headerlink" title="撕"></a>撕</h1><h2 id="导出tar包"><a href="#导出tar包" class="headerlink" title="导出tar包"></a>导出tar包</h2><p>首先我们使用<code>docker save</code>，将一个docker image保存成tar包，我们以<code>nginx官方镜像</code>为例</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker images</span></span><br><span class="line">REPOSITORY                               TAG                 IMAGE ID            CREATED             SIZE</span><br><span class="line">nginx                                   1.11.3              4efb2fcdb1ab        15 months ago       183MB</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker save nginx:1.11.3 -o ./nginx.tar</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">tar -xvf ./nginx.tar -C ./nginx</span></span><br><span class="line">...</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">ls</span> -l ./</span></span><br><span class="line">drwxrwxr-x 5 zhoub zhoub      4096 11月 28 16:55 nginx</span><br><span class="line">-rw------- 1 zhoub zhoub 191400960 11月 28 16:52 nginx.tar</span><br></pre></td></tr></table></figure>
-
-<h2 id="走近nginx目录"><a href="#走近nginx目录" class="headerlink" title="走近nginx目录"></a>走近nginx目录</h2><p>现在<code>nginx.tar</code>已经被解开了，接下来就要进入nginx目录一探究竟了。首先<code>tree</code>一下nginx目录，看看都有什么文件。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">tree -L 2 ./nginx</span></span><br><span class="line">./nginx</span><br><span class="line">├── 01d69dac180439f10b5f2f06b71fa19c9f89fb85cb5fd543dba9bb2ca9b620ef</span><br><span class="line">│   ├── json</span><br><span class="line">│   ├── layer</span><br><span class="line">│   ├── layer.tar</span><br><span class="line">│   └── VERSION</span><br><span class="line">├── 4efb2fcdb1ab05fb03c9435234343c1cc65289eeb016be86193e88d3a5d84f6b.json</span><br><span class="line">├── 80cdba09b091f72276c031bd64488c3da5f82022812bc995f0859abe0855a872</span><br><span class="line">│   ├── json</span><br><span class="line">│   ├── layer</span><br><span class="line">│   ├── layer.tar</span><br><span class="line">│   └── VERSION</span><br><span class="line">├── c575e5db41b92dbf9e1814b8ea9cf989ef650e37cfcef12fa402e630db6a581f</span><br><span class="line">│   ├── json</span><br><span class="line">│   ├── layer</span><br><span class="line">│   ├── layer.tar</span><br><span class="line">│   └── VERSION</span><br><span class="line">├── manifest.json</span><br><span class="line">└── repositories</span><br></pre></td></tr></table></figure>
-<p>从目录结构上来看，有三个总体的描述文件<code>repositories</code>、<code>manifest.json</code>、<code>4efb2fcdb1ab05fb03c9435234343c1cc65289eeb016be86193e88d3a5d84f6b.json</code>，还有三个目录，这三个目录的结构基本相同都由<code>json</code>、<code>layer</code>、<code>VERSION</code>组成。</p>
-<p>通过这些名字，我们先简单猜测一下，image由很多layer组成，上层layer基于下层layer构建而成，下层layer基于基层layer构成。到底image是不是按我们的猜测构成的呢，让我们来看一看总体描述的三个文件。</p>
-<p>manifest.json:</p>
-<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span><span class="attr">&quot;Config&quot;</span><span class="punctuation">:</span><span class="string">&quot;4efb2fcdb1ab05fb03c9435234343c1cc65289eeb016be86193e88d3a5d84f6b.json&quot;</span><span class="punctuation">,</span><span class="attr">&quot;RepoTags&quot;</span><span class="punctuation">:</span><span class="punctuation">[</span><span class="string">&quot;nginx:1.11.3&quot;</span><span class="punctuation">]</span><span class="punctuation">,</span><span class="attr">&quot;Layers&quot;</span><span class="punctuation">:</span><span class="punctuation">[</span><span class="string">&quot;80cdba09b091f72276c031bd64488c3da5f82022812bc995f0859abe0855a872/layer.tar&quot;</span><span class="punctuation">,</span><span class="string">&quot;c575e5db41b92dbf9e1814b8ea9cf989ef650e37cfcef12fa402e630db6a581f/layer.tar&quot;</span><span class="punctuation">,</span><span class="string">&quot;01d69dac180439f10b5f2f06b71fa19c9f89fb85cb5fd543dba9bb2ca9b620ef/layer.tar&quot;</span><span class="punctuation">]</span><span class="punctuation">&#125;</span><span class="punctuation">]</span></span><br></pre></td></tr></table></figure>
-<p>通过<code>manifest.json</code>文件我们可以看出，<code>nginx:1.11.3</code>这个image的配置文件是<code>4efb2fcdb1ab05fb03c9435234343c1cc65289eeb016be86193e88d3a5d84f6b.json</code>，layer一共有三个分别是<code>80cdba09b091f72276c031bd64488c3da5f82022812bc995f0859abe0855a872/layer.tar</code>，<code>c575e5db41b92dbf9e1814b8ea9cf989ef650e37cfcef12fa402e630db6a581f/layer.tar</code>，<code>01d69dac180439f10b5f2f06b71fa19c9f89fb85cb5fd543dba9bb2ca9b620ef/layer.tar</code>。</p>
-<p>image的配置文件中都对image进行了哪些配置呢？让我们来看一看<br>4efb2fcdb1ab05fb03c9435234343c1cc65289eeb016be86193e88d3a5d84f6b.json</p>
-<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;architecture&quot;</span><span class="punctuation">:</span><span class="string">&quot;amd64&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;author&quot;</span><span class="punctuation">:</span><span class="string">&quot;NGINX Docker Maintainers \&quot;docker-maint@nginx.com\&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;config&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;Hostname&quot;</span><span class="punctuation">:</span><span class="string">&quot;2da0903ff372&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Domainname&quot;</span><span class="punctuation">:</span><span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;User&quot;</span><span class="punctuation">:</span><span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;AttachStdin&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;AttachStdout&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;AttachStderr&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;ExposedPorts&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span><span class="attr">&quot;443/tcp&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span><span class="attr">&quot;80/tcp&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span><span class="punctuation">&#125;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Tty&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;OpenStdin&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;StdinOnce&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Env&quot;</span><span class="punctuation">:</span><span class="punctuation">[</span><span class="string">&quot;PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin&quot;</span><span class="punctuation">,</span><span class="string">&quot;NGINX_VERSION=1.11.3-1~jessie&quot;</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Cmd&quot;</span><span class="punctuation">:</span><span class="punctuation">[</span><span class="string">&quot;nginx&quot;</span><span class="punctuation">,</span><span class="string">&quot;-g&quot;</span><span class="punctuation">,</span><span class="string">&quot;daemon off;&quot;</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;ArgsEscaped&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Image&quot;</span><span class="punctuation">:</span><span class="string">&quot;sha256:27ca9d70a764c6955e354f5fdc706b03ed47601213ac9fc638a8943fcc7680f8&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Volumes&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">null</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;WorkingDir&quot;</span><span class="punctuation">:</span><span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Entrypoint&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">null</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;OnBuild&quot;</span><span class="punctuation">:</span><span class="punctuation">[</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Labels&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span><span class="punctuation">&#125;</span></span><br><span class="line">    <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;container&quot;</span><span class="punctuation">:</span><span class="string">&quot;25ab8b143580751e438246801e7ba720f6f84ee9faca3522532e7fbe1ed7021f&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;container_config&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;Hostname&quot;</span><span class="punctuation">:</span><span class="string">&quot;2da0903ff372&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Domainname&quot;</span><span class="punctuation">:</span><span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;User&quot;</span><span class="punctuation">:</span><span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;AttachStdin&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;AttachStdout&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;AttachStderr&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;ExposedPorts&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span><span class="attr">&quot;443/tcp&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span><span class="attr">&quot;80/tcp&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span><span class="punctuation">&#125;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Tty&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;OpenStdin&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;StdinOnce&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Env&quot;</span><span class="punctuation">:</span><span class="punctuation">[</span><span class="string">&quot;PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin&quot;</span><span class="punctuation">,</span><span class="string">&quot;NGINX_VERSION=1.11.3-1~jessie&quot;</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Cmd&quot;</span><span class="punctuation">:</span><span class="punctuation">[</span><span class="string">&quot;/bin/sh&quot;</span><span class="punctuation">,</span><span class="string">&quot;-c&quot;</span><span class="punctuation">,</span><span class="string">&quot;#(nop) CMD [\&quot;nginx\&quot; \&quot;-g\&quot; \&quot;daemon off;\&quot;]&quot;</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;ArgsEscaped&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Image&quot;</span><span class="punctuation">:</span><span class="string">&quot;sha256:27ca9d70a764c6955e354f5fdc706b03ed47601213ac9fc638a8943fcc7680f8&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Volumes&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">null</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;WorkingDir&quot;</span><span class="punctuation">:</span><span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Entrypoint&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">null</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;OnBuild&quot;</span><span class="punctuation">:</span><span class="punctuation">[</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Labels&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span><span class="punctuation">&#125;</span></span><br><span class="line">    <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;created&quot;</span><span class="punctuation">:</span><span class="string">&quot;2016-08-23T18:51:23.709520142Z&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;docker_version&quot;</span><span class="punctuation">:</span><span class="string">&quot;1.10.3&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;history&quot;</span><span class="punctuation">:</span><span class="punctuation">[</span></span><br><span class="line">        <span class="punctuation">&#123;</span><span class="attr">&quot;created&quot;</span><span class="punctuation">:</span><span class="string">&quot;2016-07-28T17:47:54.990622865Z&quot;</span><span class="punctuation">,</span><span class="attr">&quot;created_by&quot;</span><span class="punctuation">:</span><span class="string">&quot;/bin/sh -c #(nop) ADD file:0e0565652aa852f62033d99f84892216020d30f64521ded5e72d4940bc4c9697 in /&quot;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="punctuation">&#123;</span><span class="attr">&quot;created&quot;</span><span class="punctuation">:</span><span class="string">&quot;2016-07-28T17:47:55.809686499Z&quot;</span><span class="punctuation">,</span><span class="attr">&quot;created_by&quot;</span><span class="punctuation">:</span><span class="string">&quot;/bin/sh -c #(nop) CMD [\&quot;/bin/bash\&quot;]&quot;</span><span class="punctuation">,</span><span class="attr">&quot;empty_layer&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">true</span></span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="punctuation">&#123;</span><span class="attr">&quot;created&quot;</span><span class="punctuation">:</span><span class="string">&quot;2016-08-23T18:49:31.945397165Z&quot;</span><span class="punctuation">,</span><span class="attr">&quot;author&quot;</span><span class="punctuation">:</span><span class="string">&quot;NGINX Docker Maintainers \&quot;docker-maint@nginx.com\&quot;&quot;</span><span class="punctuation">,</span><span class="attr">&quot;created_by&quot;</span><span class="punctuation">:</span><span class="string">&quot;/bin/sh -c #(nop) MAINTAINER NGINX Docker Maintainers \&quot;docker-maint@nginx.com\&quot;&quot;</span><span class="punctuation">,</span><span class="attr">&quot;empty_layer&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">true</span></span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="punctuation">&#123;</span><span class="attr">&quot;created&quot;</span><span class="punctuation">:</span><span class="string">&quot;2016-08-23T18:49:33.057946615Z&quot;</span><span class="punctuation">,</span><span class="attr">&quot;author&quot;</span><span class="punctuation">:</span><span class="string">&quot;NGINX Docker Maintainers \&quot;docker-maint@nginx.com\&quot;&quot;</span><span class="punctuation">,</span><span class="attr">&quot;created_by&quot;</span><span class="punctuation">:</span><span class="string">&quot;/bin/sh -c #(nop) ENV NGINX_VERSION=1.11.3-1~jessie&quot;</span><span class="punctuation">,</span><span class="attr">&quot;empty_layer&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">true</span></span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="punctuation">&#123;</span><span class="attr">&quot;created&quot;</span><span class="punctuation">:</span><span class="string">&quot;2016-08-23T18:51:19.236946594Z&quot;</span><span class="punctuation">,</span><span class="attr">&quot;author&quot;</span><span class="punctuation">:</span><span class="string">&quot;NGINX Docker Maintainers \&quot;docker-maint@nginx.com\&quot;&quot;</span><span class="punctuation">,</span><span class="attr">&quot;created_by&quot;</span><span class="punctuation">:</span><span class="string">&quot;/bin/sh -c apt-key adv --keyserver hkp://pgp.mit.edu:80 --recv-keys 573BFD6B3D8FBC641079A6ABABF5BD827BD9BF62 \t\u0026\u0026 echo \&quot;deb http://nginx.org/packages/mainline/debian/ jessie nginx\&quot; \u003e\u003e /etc/apt/sources.list \t\u0026\u0026 apt-get update \t\u0026\u0026 apt-get install --no-install-recommends --no-install-suggests -y \t\t\t\t\t\tca-certificates \t\t\t\t\t\tnginx=$&#123;NGINX_VERSION&#125; \t\t\t\t\t\tnginx-module-xslt \t\t\t\t\t\tnginx-module-geoip \t\t\t\t\t\tnginx-module-image-filter \t\t\t\t\t\tnginx-module-perl \t\t\t\t\t\tnginx-module-njs \t\t\t\t\t\tgettext-base \t\u0026\u0026 rm -rf /var/lib/apt/lists/*&quot;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="punctuation">&#123;</span><span class="attr">&quot;created&quot;</span><span class="punctuation">:</span><span class="string">&quot;2016-08-23T18:51:21.574094006Z&quot;</span><span class="punctuation">,</span><span class="attr">&quot;author&quot;</span><span class="punctuation">:</span><span class="string">&quot;NGINX Docker Maintainers \&quot;docker-maint@nginx.com\&quot;&quot;</span><span class="punctuation">,</span><span class="attr">&quot;created_by&quot;</span><span class="punctuation">:</span><span class="string">&quot;/bin/sh -c ln -sf /dev/stdout /var/log/nginx/access.log \t\u0026\u0026 ln -sf /dev/stderr /var/log/nginx/error.log&quot;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="punctuation">&#123;</span><span class="attr">&quot;created&quot;</span><span class="punctuation">:</span><span class="string">&quot;2016-08-23T18:51:22.632895061Z&quot;</span><span class="punctuation">,</span><span class="attr">&quot;author&quot;</span><span class="punctuation">:</span><span class="string">&quot;NGINX Docker Maintainers \&quot;docker-maint@nginx.com\&quot;&quot;</span><span class="punctuation">,</span><span class="attr">&quot;created_by&quot;</span><span class="punctuation">:</span><span class="string">&quot;/bin/sh -c #(nop) EXPOSE 443/tcp 80/tcp&quot;</span><span class="punctuation">,</span><span class="attr">&quot;empty_layer&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">true</span></span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="punctuation">&#123;</span><span class="attr">&quot;created&quot;</span><span class="punctuation">:</span><span class="string">&quot;2016-08-23T18:51:23.709520142Z&quot;</span><span class="punctuation">,</span><span class="attr">&quot;author&quot;</span><span class="punctuation">:</span><span class="string">&quot;NGINX Docker Maintainers \&quot;docker-maint@nginx.com\&quot;&quot;</span><span class="punctuation">,</span><span class="attr">&quot;created_by&quot;</span><span class="punctuation">:</span><span class="string">&quot;/bin/sh -c #(nop) CMD [\&quot;nginx\&quot; \&quot;-g\&quot; \&quot;daemon off;\&quot;]&quot;</span><span class="punctuation">,</span><span class="attr">&quot;empty_layer&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">true</span></span><span class="punctuation">&#125;</span></span><br><span class="line">    <span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;os&quot;</span><span class="punctuation">:</span><span class="string">&quot;linux&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;rootfs&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;type&quot;</span><span class="punctuation">:</span><span class="string">&quot;layers&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;diff_ids&quot;</span><span class="punctuation">:</span><span class="punctuation">[</span></span><br><span class="line">            <span class="string">&quot;sha256:2f71b45e4e254ddceb187b1467f5471f0e14d7124ac2dd7fdd7ddbc76e13f0e5&quot;</span><span class="punctuation">,</span></span><br><span class="line">            <span class="string">&quot;sha256:d7953e5e5bba5c637ce6eb81a4528a777c4265386cb12e9bff8124ef97538746&quot;</span><span class="punctuation">,</span></span><br><span class="line">            <span class="string">&quot;sha256:69ecf026ff94793ab573754612e6fa40b28331a47c3584de0b32d39a88959c37&quot;</span></span><br><span class="line">        <span class="punctuation">]</span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
-<p>看完这个配置文件我惊到了，如此庞大的一个配置文件告诉我们dockerfile能配的我能配，dockerfile不能配的我也能配。。。这个配置文件具体就不分析了。。。</p>
-<p>刚刚看完那个累心的配置文件，接下来让我们来说说这三个layer，哪一个layer是入口呢？</p>
-<p>repositories:</p>
-<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span><span class="attr">&quot;nginx&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span><span class="attr">&quot;1.11.3&quot;</span><span class="punctuation">:</span><span class="string">&quot;01d69dac180439f10b5f2f06b71fa19c9f89fb85cb5fd543dba9bb2ca9b620ef&quot;</span><span class="punctuation">&#125;</span><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
-<p>我们通过查看<code>repositories</code>可以看出<code>1.11.3</code>这个版本的layer入口是<code>01d69dac180439f10b5f2f06b71fa19c9f89fb85cb5fd543dba9bb2ca9b620ef</code>。那么三个layer之间的依赖关系怎样呢？让我们进入各个layer一探究竟吧。</p>
-<h3 id="layer-01d69dac180439f10b5f2f06b71fa19c9f89fb85cb5fd543dba9bb2ca9b620ef"><a href="#layer-01d69dac180439f10b5f2f06b71fa19c9f89fb85cb5fd543dba9bb2ca9b620ef" class="headerlink" title="layer 01d69dac180439f10b5f2f06b71fa19c9f89fb85cb5fd543dba9bb2ca9b620ef"></a>layer 01d69dac180439f10b5f2f06b71fa19c9f89fb85cb5fd543dba9bb2ca9b620ef</h3><p>该layer中的<code>json</code>文件描述的本layer的配置信息</p>
-<p>json:</p>
-<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;id&quot;</span><span class="punctuation">:</span><span class="string">&quot;01d69dac180439f10b5f2f06b71fa19c9f89fb85cb5fd543dba9bb2ca9b620ef&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;parent&quot;</span><span class="punctuation">:</span><span class="string">&quot;c575e5db41b92dbf9e1814b8ea9cf989ef650e37cfcef12fa402e630db6a581f&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;created&quot;</span><span class="punctuation">:</span><span class="string">&quot;2016-08-23T18:51:23.709520142Z&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;container&quot;</span><span class="punctuation">:</span><span class="string">&quot;25ab8b143580751e438246801e7ba720f6f84ee9faca3522532e7fbe1ed7021f&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;container_config&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;Hostname&quot;</span><span class="punctuation">:</span><span class="string">&quot;2da0903ff372&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Domainname&quot;</span><span class="punctuation">:</span><span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;User&quot;</span><span class="punctuation">:</span><span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;AttachStdin&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;AttachStdout&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;AttachStderr&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;ExposedPorts&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span><span class="attr">&quot;443/tcp&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span><span class="attr">&quot;80/tcp&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span><span class="punctuation">&#125;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Tty&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;OpenStdin&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;StdinOnce&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Env&quot;</span><span class="punctuation">:</span><span class="punctuation">[</span><span class="string">&quot;PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin&quot;</span><span class="punctuation">,</span><span class="string">&quot;NGINX_VERSION=1.11.3-1~jessie&quot;</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Cmd&quot;</span><span class="punctuation">:</span><span class="punctuation">[</span><span class="string">&quot;/bin/sh&quot;</span><span class="punctuation">,</span><span class="string">&quot;-c&quot;</span><span class="punctuation">,</span><span class="string">&quot;#(nop) CMD [\&quot;nginx\&quot; \&quot;-g\&quot; \&quot;daemon off;\&quot;]&quot;</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;ArgsEscaped&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Image&quot;</span><span class="punctuation">:</span><span class="string">&quot;sha256:27ca9d70a764c6955e354f5fdc706b03ed47601213ac9fc638a8943fcc7680f8&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Volumes&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">null</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;WorkingDir&quot;</span><span class="punctuation">:</span><span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Entrypoint&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">null</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;OnBuild&quot;</span><span class="punctuation">:</span><span class="punctuation">[</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Labels&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span><span class="punctuation">&#125;</span></span><br><span class="line">    <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;docker_version&quot;</span><span class="punctuation">:</span><span class="string">&quot;1.10.3&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;author&quot;</span><span class="punctuation">:</span><span class="string">&quot;NGINX Docker Maintainers \&quot;docker-maint@nginx.com\&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;config&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;Hostname&quot;</span><span class="punctuation">:</span><span class="string">&quot;2da0903ff372&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Domainname&quot;</span><span class="punctuation">:</span><span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;User&quot;</span><span class="punctuation">:</span><span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;AttachStdin&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;AttachStdout&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;AttachStderr&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;ExposedPorts&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span><span class="attr">&quot;443/tcp&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span><span class="attr">&quot;80/tcp&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span><span class="punctuation">&#125;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Tty&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;OpenStdin&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;StdinOnce&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Env&quot;</span><span class="punctuation">:</span><span class="punctuation">[</span><span class="string">&quot;PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin&quot;</span><span class="punctuation">,</span><span class="string">&quot;NGINX_VERSION=1.11.3-1~jessie&quot;</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Cmd&quot;</span><span class="punctuation">:</span><span class="punctuation">[</span><span class="string">&quot;nginx&quot;</span><span class="punctuation">,</span><span class="string">&quot;-g&quot;</span><span class="punctuation">,</span><span class="string">&quot;daemon off;&quot;</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;ArgsEscaped&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Image&quot;</span><span class="punctuation">:</span><span class="string">&quot;sha256:27ca9d70a764c6955e354f5fdc706b03ed47601213ac9fc638a8943fcc7680f8&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Volumes&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">null</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;WorkingDir&quot;</span><span class="punctuation">:</span><span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Entrypoint&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">null</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;OnBuild&quot;</span><span class="punctuation">:</span><span class="punctuation">[</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Labels&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span><span class="punctuation">&#125;</span></span><br><span class="line">    <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;architecture&quot;</span><span class="punctuation">:</span><span class="string">&quot;amd64&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;os&quot;</span><span class="punctuation">:</span><span class="string">&quot;linux&quot;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
-<p>我们可以看到<code>parent</code>字段指出了当前layer的父layer是<code>c575e5db41b92dbf9e1814b8ea9cf989ef650e37cfcef12fa402e630db6a581f</code>。<br>当前layer中数据内容请见<code>layer.tar</code></p>
-<p>layer.tar:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">tree ./layer</span></span><br><span class="line">./layer</span><br><span class="line">└── var</span><br><span class="line">    └── log</span><br><span class="line">    └── nginx</span><br><span class="line">        ├── access.log -&gt; /dev/stdout</span><br><span class="line">        └── error.log -&gt; /dev/stderr</span><br></pre></td></tr></table></figure>
-
-<h3 id="layer-c575e5db41b92dbf9e1814b8ea9cf989ef650e37cfcef12fa402e630db6a581f"><a href="#layer-c575e5db41b92dbf9e1814b8ea9cf989ef650e37cfcef12fa402e630db6a581f" class="headerlink" title="layer c575e5db41b92dbf9e1814b8ea9cf989ef650e37cfcef12fa402e630db6a581f"></a>layer c575e5db41b92dbf9e1814b8ea9cf989ef650e37cfcef12fa402e630db6a581f</h3><p>该layer中的<code>json</code>文件描述的本layer的配置信息</p>
-<p>json:</p>
-<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;id&quot;</span><span class="punctuation">:</span><span class="string">&quot;c575e5db41b92dbf9e1814b8ea9cf989ef650e37cfcef12fa402e630db6a581f&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;parent&quot;</span><span class="punctuation">:</span><span class="string">&quot;80cdba09b091f72276c031bd64488c3da5f82022812bc995f0859abe0855a872&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;created&quot;</span><span class="punctuation">:</span><span class="string">&quot;1970-01-01T08:00:00+08:00&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;container_config&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;Hostname&quot;</span><span class="punctuation">:</span><span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Domainname&quot;</span><span class="punctuation">:</span><span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;User&quot;</span><span class="punctuation">:</span><span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;AttachStdin&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;AttachStdout&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;AttachStderr&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Tty&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;OpenStdin&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;StdinOnce&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Env&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">null</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Cmd&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">null</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Image&quot;</span><span class="punctuation">:</span><span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Volumes&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">null</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;WorkingDir&quot;</span><span class="punctuation">:</span><span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Entrypoint&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">null</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;OnBuild&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">null</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Labels&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">null</span></span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
-
-<p>该layer中的父layer是<code>80cdba09b091f72276c031bd64488c3da5f82022812bc995f0859abe0855a872</code><br>当前layer中的数据内容请见<code>layer.tar</code></p>
-<p>layer.tar:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">tree -L 2 ./layer</span></span><br><span class="line">./layer</span><br><span class="line">├── etc</span><br><span class="line">│   ├── alternatives</span><br><span class="line">│   ├── apt</span><br><span class="line">│   ├── ca-certificates</span><br><span class="line">│   ├── ca-certificates.conf</span><br><span class="line">│   ├── default</span><br><span class="line">│   ├── fonts</span><br><span class="line">│   ├── group</span><br><span class="line">│   ├── group-</span><br><span class="line">│   ├── gshadow</span><br><span class="line">│   ├── gshadow-</span><br><span class="line">│   ├── init.d</span><br><span class="line">│   ├── ld.so.cache</span><br><span class="line">│   ├── logrotate.d</span><br><span class="line">│   ├── nginx</span><br><span class="line">│   ├── passwd</span><br><span class="line">│   ├── passwd-</span><br><span class="line">│   ├── perl</span><br><span class="line">│   ├── rc0.d</span><br><span class="line">│   ├── rc1.d</span><br><span class="line">│   ├── rc2.d</span><br><span class="line">│   ├── rc3.d</span><br><span class="line">│   ├── rc4.d</span><br><span class="line">│   ├── rc5.d</span><br><span class="line">│   ├── rc6.d</span><br><span class="line">│   ├── shadow</span><br><span class="line">│   ├── shadow-</span><br><span class="line">│   ├── ssl</span><br><span class="line">│   ├── subgid</span><br><span class="line">│   ├── subgid-</span><br><span class="line">│   ├── subuid</span><br><span class="line">│   ├── subuid-</span><br><span class="line">│   └── ucf.conf</span><br><span class="line">├── lib</span><br><span class="line">│   └── x86_64-linux-gnu</span><br><span class="line">├── tmp</span><br><span class="line">├── usr</span><br><span class="line">│   ├── bin</span><br><span class="line">│   ├── lib</span><br><span class="line">│   ├── local</span><br><span class="line">│   ├── sbin</span><br><span class="line">│   └── share</span><br><span class="line">└── var</span><br><span class="line">    ├── cache</span><br><span class="line">    ├── lib</span><br><span class="line">    └── log</span><br></pre></td></tr></table></figure>
-
-<h3 id="layer-80cdba09b091f72276c031bd64488c3da5f82022812bc995f0859abe0855a872"><a href="#layer-80cdba09b091f72276c031bd64488c3da5f82022812bc995f0859abe0855a872" class="headerlink" title="layer 80cdba09b091f72276c031bd64488c3da5f82022812bc995f0859abe0855a872"></a>layer 80cdba09b091f72276c031bd64488c3da5f82022812bc995f0859abe0855a872</h3><p>该layer中的<code>json</code>文件描述的本layer的配置信息<br>json:</p>
-<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;id&quot;</span><span class="punctuation">:</span><span class="string">&quot;80cdba09b091f72276c031bd64488c3da5f82022812bc995f0859abe0855a872&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;created&quot;</span><span class="punctuation">:</span><span class="string">&quot;1970-01-01T08:00:00+08:00&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;container_config&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;Hostname&quot;</span><span class="punctuation">:</span><span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Domainname&quot;</span><span class="punctuation">:</span><span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;User&quot;</span><span class="punctuation">:</span><span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;AttachStdin&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;AttachStdout&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;AttachStderr&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Tty&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;OpenStdin&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;StdinOnce&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Env&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">null</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Cmd&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">null</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Image&quot;</span><span class="punctuation">:</span><span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Volumes&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">null</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;WorkingDir&quot;</span><span class="punctuation">:</span><span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Entrypoint&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">null</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;OnBuild&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">null</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Labels&quot;</span><span class="punctuation">:</span><span class="literal"><span class="keyword">null</span></span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
-<p>从配置中可以看出，没有<code>parent</code>字段了。说明这个layer应该就是base layer了。(我十分好奇nginx镜像是用哪个基础镜像做出来的?)<br>当前layer中的数据内容请见<code>layer.tar</code><br>layer.tar:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">tree -L 1 ./layer</span></span><br><span class="line">./layer</span><br><span class="line">├── bin</span><br><span class="line">├── boot</span><br><span class="line">├── dev</span><br><span class="line">├── etc</span><br><span class="line">├── home</span><br><span class="line">├── lib</span><br><span class="line">├── lib64</span><br><span class="line">├── media</span><br><span class="line">├── mnt</span><br><span class="line">├── opt</span><br><span class="line">├── proc</span><br><span class="line">├── root</span><br><span class="line">├── run</span><br><span class="line">├── sbin</span><br><span class="line">├── srv</span><br><span class="line">├── sys</span><br><span class="line">├── tmp</span><br><span class="line">├── usr</span><br><span class="line">└── var</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cat</span> ./layer/etc/debian_version</span></span><br><span class="line">8.5</span><br></pre></td></tr></table></figure>
-<p>噢，原来nginx镜像是基于debian 8.5做出来的。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/11/27/storage/ceph/radosgw-arch/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2017/11/27/storage/ceph/radosgw-arch/" class="post-title-link" itemprop="url">俯瞰 RadosGW</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2017-11-27 22:18:29" itemprop="dateCreated datePublished" datetime="2017-11-27T22:18:29+08:00">2017-11-27</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>Ceph号称统一存储，何为统一，就是将块、文件、对象统一到一起。RadosGW（简称RGW）就是Ceph中提供对象存储服务的模块。它能提供S3和Swift两种对象存储接口，当然也是最主流的两种接口。</p>
-<p>本文不打算介绍概念性的东西，只为扒一扒RGW的架构。废话不多讲，直接上图</p>
-<p><img src="/images/ceph/rgw_arch.png" alt="rgw_arch.png"></p>
-<p>我觉得画的挺清楚了，就不细讲了。</p>
-<hr>
-<p>一张图不过瘾，再来一发。</p>
-<p><img src="/images/ceph/rgw_structural.png" alt="rgw_structural"></p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1474,7 +1512,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">141</span>
+          <span class="site-state-item-count">143</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -1487,7 +1525,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">121</span>
+        <span class="site-state-item-count">122</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>

@@ -188,6 +188,338 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2016/12/30/container/docker/dockerfile-write/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2016/12/30/container/docker/dockerfile-write/" class="post-title-link" itemprop="url">Dockerfile</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2016-12-30 10:01:58" itemprop="dateCreated datePublished" datetime="2016-12-30T10:01:58+08:00">2016-12-30</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/container/" itemprop="url" rel="index"><span itemprop="name">container</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h1><p>Dockerfile是docker image构建脚本，是用于生成image。Dockerfile忽略大小写，使用‘#’注释，每行只执行一条指令。Dockerfile指令分为两种，构建指令和设置指令。</p>
+<ul>
+<li>构建指令，用于构建image，不会在image的容器上执行</li>
+<li>设置指令，用于设置image属性，会在image的容器上执行</li>
+</ul>
+<h1 id="Dockerfile指令"><a href="#Dockerfile指令" class="headerlink" title="Dockerfile指令"></a>Dockerfile指令</h1><h2 id="FROM"><a href="#FROM" class="headerlink" title="FROM"></a>FROM</h2><p>构建指令，用于指定基础image。该指令必须指定在Dockerfile其它指令的前面，后面的Dockerfile指令都依赖于该指令指定的image。FROM指令指定的基础image可以是官方docker hub仓库中的，也可以是位于本地仓库中的。</p>
+<p>指令格式：<code>FROM &lt;image&gt;[:&lt;tag&gt;]</code><br>若不指定<code>:&lt;tag&gt;</code>，默认使用<code>:latest</code>。</p>
+<h2 id="MAINTAINER"><a href="#MAINTAINER" class="headerlink" title="MAINTAINER"></a>MAINTAINER</h2><p>构建指令，用于将image的制作者相关信息写入到image中。</p>
+<p>指令格式：<code>MAINTAINER &lt;name&gt;</code></p>
+<h2 id="RUN"><a href="#RUN" class="headerlink" title="RUN"></a>RUN</h2><p>构建指令，可以运行任何被基础image支持的命令。</p>
+<p>指令格式：<code>RUN &lt;command&gt;</code> 或 <code>RUN [&quot;executable&quot;,&quot;param 1&quot;,&quot;param n&quot;]</code><br>一般用于软件安装</p>
+<h2 id="CMD"><a href="#CMD" class="headerlink" title="CMD"></a>CMD</h2><p>设置指令，用于container启动时指定的操作。该操作可以是执行自定义脚本，也可以是执行系统命令。该指令只能在文件中存在一次，如果有多个，则只执行最后一条。</p>
+<p>指令格式：<code>CMD &lt;executable&gt; &lt;param 1&gt; &lt;param n&gt;</code> 或 <code>CMD [&quot;executable&quot;, &quot;param 1&quot;, &quot;param n&quot;]</code></p>
+<h2 id="ENTRYPOINT"><a href="#ENTRYPOINT" class="headerlink" title="ENTRYPOINT"></a>ENTRYPOINT</h2><p>设置指令，指定容器启动时执行的命令，可以多次设置，但是只有最后一个有效。</p>
+<p>指令格式：<code>ENTRYPOINT [&quot;executable&quot;, &quot;param 1&quot;, &quot;param n&quot;]</code> 或 <code>ENTRYPOINT &lt;executable&gt; &lt;param 1&gt; &lt;param n&gt;</code><br>CMD指令和ENTRYPOINT会互相覆盖只有最后一个CMD或者ENTRYPOINT有效。</p>
+<p>和CMD指令配合使用来指定ENTRYPOINT的默认参数，这时CMD指令不是一个完整的可执行命令，仅仅是参数部分。ENTRYPOINT指令只能使用JSON方式指定执行命令，而不能指定参数。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">FROM centos7</span><br><span class="line">CMD [<span class="string">&quot;-l&quot;</span>]</span><br><span class="line">ENTRYPOINT [<span class="string">&quot;/usr/bin/ls&quot;</span>]</span><br></pre></td></tr></table></figure>
+
+<h2 id="USER"><a href="#USER" class="headerlink" title="USER"></a>USER</h2><p>设置指令，设置启动容器的用户，默认是root用户</p>
+<p>指令格式：<code>USER &lt;user name&gt;</code></p>
+<h2 id="EXPOSE"><a href="#EXPOSE" class="headerlink" title="EXPOSE"></a>EXPOSE</h2><p>设置指令，该指令会将容器中的端口映射成宿主机器中的某个端口。需要访问容器的时候，可以不是用容器的IP地址而是使用宿主机器的IP地址和映射后的端口。首先在Dockerfile使用EXPOSE设置需要映射的容器端口，然后在运行容器的时候指定-p选项加上EXPOSE设置的端口，这样EXPOSE设置的端口号会被随机映射成宿主机器中的一个端口号。也可以指定需要映射到宿主机器的那个端口，这时要确保宿主机器上的端口号没有被使用。EXPOSE指令可以一次设置多个端口号，相应的运行容器的时候，可以配套的多次使用-p选项。</p>
+<p>指令格式：<code>EXPOSE &lt;port&gt; [&lt;port&gt;...]</code></p>
+<h2 id="ENV"><a href="#ENV" class="headerlink" title="ENV"></a>ENV</h2><p>构建指令，在image中设置一个环境变量</p>
+<p>指令格式：<code>ENV &lt;key&gt; &lt;value&gt;</code><br>设置了后，后续的RUN命令都可以使用，container启动后，可以通过docker inspect查看这个环境变量，也可以通过在docker run –env key&#x3D;value时设置或修改环境变量。</p>
+<h2 id="ADD"><a href="#ADD" class="headerlink" title="ADD"></a>ADD</h2><p>构建指令，从src复制文件到container的dest路径。</p>
+<p>指令格式：<code>ADD &lt;src&gt; &lt;dest&gt;</code></p>
+<ul>
+<li><code>&lt;src&gt;</code>是相对被构建的源目录的相对路径，可以是文件或目录的路径，也可以是一个远程的文件url</li>
+<li><code>&lt;dest&gt;</code>是container中的绝对路径<br>所有拷贝到container中的文件和文件夹权限为0755，uid和gid为0；如果是一个目录，那么会将该目录下的所有文件添加到container中，不包括目录；如果文件是可识别的压缩格式，则docker会帮忙解压缩（注意压缩格式）；如果<code>&lt;src&gt;</code>是文件且<code>&lt;dest&gt;</code>中不使用斜杠结束，则会将<code>&lt;dest&gt;</code>视为文件，<code>&lt;src&gt;</code>的内容会写入<code>&lt;dest&gt;</code>；如果<code>&lt;src&gt;</code>是文件且<code>&lt;dest&gt;</code>中使用斜杠结束，则会<code>&lt;src&gt;</code>文件拷贝到<code>&lt;dest&gt;</code>目录下。</li>
+</ul>
+<h2 id="VOLUME"><a href="#VOLUME" class="headerlink" title="VOLUME"></a>VOLUME</h2><p>设置指令，指定挂载点。使容器中的一个目录具有持久化存储数据的功能，该目录可以被容器本身使用，也可以共享给其他容器使用。我们知道容器使用的是AUFS，这种文件系统不能持久化数据，当容器关闭后，所有的更改都会丢失。当容器中的应用有持久化数据的需求时可以在Dockerfile中使用该指令。</p>
+<p>指令格式：<code>VOLUME [&quot;&lt;mount point path&gt;&quot;]</code></p>
+<h2 id="WORKDIR"><a href="#WORKDIR" class="headerlink" title="WORKDIR"></a>WORKDIR</h2><p>设置指令，切换目录，可多次切换（相当于cd命令），对<code>RUN</code>、<code>CMD</code>、<code>ENTRYPOINT</code>生效</p>
+<p>指令格式：<code>WORKDIR &lt;path&gt;</code></p>
+<h2 id="ONBUILD"><a href="#ONBUILD" class="headerlink" title="ONBUILD"></a>ONBUILD</h2><p>设置指令，在子镜像中执行，在构建镜像时并不执行，而是在它的子镜像中执行</p>
+<p>指令格式：<code>ONBUILD &lt;Dockerfile指令&gt;</code></p>
+<h1 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h1><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">第一条有效指令必须指出基础镜像</span></span><br><span class="line">FROM my_ubuntu_03:latest</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">作者</span></span><br><span class="line">MAINTAINER zhou bo</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">环境变量</span></span><br><span class="line">ENV BASE_IMAGE=&quot;ubuntu:16&quot;</span><br><span class="line">ENV CURRENT_IMAGE=&quot;Simple Image&quot;</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">安装 ssh server 端程序</span></span><br><span class="line">RUN apt-get update</span><br><span class="line">RUN apt-get install -y openssh-server</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">映射端口22</span></span><br><span class="line">EXPOSE 22</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">启动 ssh 守护进程</span></span><br><span class="line">CMD [&quot;-D&quot;]</span><br><span class="line">ENTRYPOINT [&quot;/usr/sbin/sshd&quot;]</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">在 / 目录下挂在一个 DataFolder 目录</span></span><br><span class="line">VOLUME [&quot;/DataFolder&quot;]</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">在子镜像中执行的指令</span></span><br><span class="line">ONBUILD ENV SON_IAMGE=&quot;你永远是我儿子&quot;</span><br></pre></td></tr></table></figure>
+
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/qinyushuang/article/details/43342553">如何使用Dockerfile构建镜像</a></li>
+<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/i6448038/article/details/50855538">Dockerfile指令详解</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.tuicool.com/articles/YfMFVv6">Dockerfile文件编写</a></li>
+<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/wanglei_storage/article/details/48709255">dockerfile 多端口映射 expose</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2016/12/26/container/docker/docker-usage/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2016/12/26/container/docker/docker-usage/" class="post-title-link" itemprop="url">Docker使用介绍</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2016-12-26 19:32:46" itemprop="dateCreated datePublished" datetime="2016-12-26T19:32:46+08:00">2016-12-26</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/container/" itemprop="url" rel="index"><span itemprop="name">container</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p><img src="/images/docker/docker-vs-vms.jpg" alt="docker-vs-vms"></p>
+<h1 id="Deploy"><a href="#Deploy" class="headerlink" title="Deploy"></a>Deploy</h1><h2 id="Linux部署"><a href="#Linux部署" class="headerlink" title="Linux部署"></a>Linux部署</h2><p>（由于Linux发行版众多，本文以RHEL7.2为例）</p>
+<h3 id="单机版环境docker部署"><a href="#单机版环境docker部署" class="headerlink" title="单机版环境docker部署"></a>单机版环境docker部署</h3><p>通过yum源安装docker，<code>yum install docker</code>。</p>
+<p>安装完成后，使用<code>docker version</code>查看docker客户端和服务端版本号</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker version</span></span><br><span class="line">Client:</span><br><span class="line"> Version:      1.12.5</span><br><span class="line"> API version:  1.24</span><br><span class="line"> Go version:   go1.6.4</span><br><span class="line"> Git commit:   7392c3b</span><br><span class="line"> Built:        Fri Dec 16 02:23:59 2016</span><br><span class="line"> OS/Arch:      linux/amd64</span><br><span class="line"></span><br><span class="line">Server:</span><br><span class="line"> Version:      1.12.5</span><br><span class="line"> API version:  1.24</span><br><span class="line"> Go version:   go1.6.4</span><br><span class="line"> Git commit:   7392c3b</span><br><span class="line"> Built:        Fri Dec 16 02:23:59 2016</span><br><span class="line"> OS/Arch:      linux/amd64</span><br></pre></td></tr></table></figure>
+
+<h3 id="分布式环境docker部署"><a href="#分布式环境docker部署" class="headerlink" title="分布式环境docker部署"></a>分布式环境docker部署</h3><p>详细请见：<a target="_blank" rel="noopener" href="https://docs.docker.com/engine/installation/linux/rhel/">docker官网关于linux环境安装部分</a></p>
+<h2 id="MacOS部署"><a href="#MacOS部署" class="headerlink" title="MacOS部署"></a>MacOS部署</h2><p>从Docker官网上下载<code>Docker.dmg</code>（下载地址：<code>https://www.docker.com/products/docker#/mac</code>），并安装。</p>
+<p>安装完成后，使用<code>docker version</code>查看docker客户端和服务端版本号</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker version</span></span><br><span class="line">Client:</span><br><span class="line"> Version:      1.12.5</span><br><span class="line"> API version:  1.24</span><br><span class="line"> Go version:   go1.6.4</span><br><span class="line"> Git commit:   7392c3b</span><br><span class="line"> Built:        Fri Dec 16 06:14:34 2016</span><br><span class="line"> OS/Arch:      darwin/amd64</span><br><span class="line"></span><br><span class="line">Server:</span><br><span class="line"> Version:      1.12.5</span><br><span class="line"> API version:  1.24</span><br><span class="line"> Go version:   go1.6.4</span><br><span class="line"> Git commit:   7392c3b</span><br><span class="line"> Built:        Fri Dec 16 06:14:34 2016</span><br><span class="line"> OS/Arch:      linux/amd64</span><br></pre></td></tr></table></figure>
+
+<h1 id="Container"><a href="#Container" class="headerlink" title="Container"></a>Container</h1><h2 id="容器创建-删除"><a href="#容器创建-删除" class="headerlink" title="容器创建&amp;删除"></a>容器创建&amp;删除</h2><h3 id="docker-create"><a href="#docker-create" class="headerlink" title="docker create"></a>docker create</h3><p>使用<code>docker create &#123;选项&#125; &#123;镜像ID/镜像名称&#125; &#123;COMMAND&#125;</code>创建容器，返回容器ID</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker create -i -t --name=ubu my_ubuntu_03 /bin/bash</span></span><br><span class="line">1af8ed9b04f8b16d264418038e1f4004b1f5512f229059646a5c9b1d20ed8404</span><br></pre></td></tr></table></figure>
+
+<h3 id="docker-run"><a href="#docker-run" class="headerlink" title="docker run"></a>docker run</h3><p>使用<code>docker run &#123;选项&#125; &#123;镜像ID/镜像名称&#125; &#123;COMMMAND&#125;</code>创建并运行容器，run ＝ create ＋ start。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run -i -t ubuntu /bin/bash</span><br></pre></td></tr></table></figure>
+
+<h3 id="docker-rm"><a href="#docker-rm" class="headerlink" title="docker rm"></a>docker rm</h3><p>使用<code>docker rm &#123;容器ID／容器名称&#125;</code>删除已经停止的容器，使用<code>-f</code>参数，可删除正在运行中的容器。</p>
+<h2 id="容器查询"><a href="#容器查询" class="headerlink" title="容器查询"></a>容器查询</h2><h3 id="docker-ps"><a href="#docker-ps" class="headerlink" title="docker ps"></a>docker ps</h3><p>使用<code>docker ps</code>列出所有运行中的容器，带<code>-a</code>参数，可列出所有容器（包括非运行状态的容器）</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker ps -a</span></span><br><span class="line">CONTAINER ID        IMAGE               COMMAND                CREATED             STATUS                    PORTS                   NAMES</span><br><span class="line">1af8ed9b04f8        my_ubuntu_03        &quot;/bin/bash&quot;            2 minutes ago       Up 3 seconds                                      ubu</span><br><span class="line">ebe0ce381aaf        my_ubuntu_03        &quot;/usr/sbin/sshd -D&quot;    42 hours ago        Up 42 hours               0.0.0.0:50022-&gt;22/tcp   ubu_03_sshd</span><br><span class="line">e69e9d4cdfa3        my_ubuntu_01        &quot;/bin/bash&quot;            43 hours ago        Exited (0) 42 hours ago                           ubu_01</span><br><span class="line">0fa200a32e8e        ceph/daemon         &quot;/entrypoint.sh osd&quot;   47 hours ago        Up 47 hours                                       ceph-osd</span><br><span class="line">be0583fade06        ceph/daemon         &quot;/entrypoint.sh mon&quot;   4 days ago          Up 47 hours                                       ceph-mon</span><br></pre></td></tr></table></figure>
+
+<h3 id="docker-inspect"><a href="#docker-inspect" class="headerlink" title="docker inspect"></a>docker inspect</h3><p>使用<code>docker inspect &#123;容器ID／容器名称&#125;</code>查看容器详细信息(容器详细信息以JSON格式返回)</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker inspect ubu_03_sshd</span></span><br><span class="line">[</span><br><span class="line">    &#123;</span><br><span class="line">            &quot;Id&quot;: &quot;ebe0ce381aafa73ec679ec0dc38e8d54291378693146a65d3655dd574c76ec01&quot;,</span><br><span class="line">            &quot;Created&quot;: &quot;2016-12-26T08:00:56.73955094Z&quot;,</span><br><span class="line">            &quot;Path&quot;: &quot;/usr/sbin/sshd&quot;,</span><br><span class="line">            &quot;Args&quot;: [</span><br><span class="line">                &quot;-D&quot;</span><br><span class="line">            ],</span><br><span class="line">......</span><br><span class="line">]</span><br></pre></td></tr></table></figure>
+
+<h2 id="容器启停"><a href="#容器启停" class="headerlink" title="容器启停"></a>容器启停</h2><p>使用<code>docker start/stop &#123;容器ID／容器名称&#125;</code>启动或停止容器运行。</p>
+<h2 id="容器访问"><a href="#容器访问" class="headerlink" title="容器访问"></a>容器访问</h2><h3 id="在容器内执行命令"><a href="#在容器内执行命令" class="headerlink" title="在容器内执行命令"></a>在容器内执行命令</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker <span class="built_in">exec</span> ubu ps -ef</span></span><br><span class="line">UID        PID  PPID  C STIME TTY          TIME CMD</span><br><span class="line">root         1     0  0 07:01 ?        00:00:00 /bin/bash</span><br><span class="line">root        10     0  0 07:02 ?        00:00:00 ps -ef</span><br></pre></td></tr></table></figure>
+
+<h3 id="Attach-Detach容器"><a href="#Attach-Detach容器" class="headerlink" title="Attach&#x2F;Detach容器"></a>Attach&#x2F;Detach容器</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker attach ubu</span></span><br><span class="line">root@1af8ed9b04f8:/#</span><br></pre></td></tr></table></figure>
+<p>Detach容器时，只要在command line中输入exit即可，但detach时，会导致容器停止运行。所以若不想导致容器停止运行可以使用<code>docker exec -it ubu /bin/bash</code></p>
+<h1 id="Image"><a href="#Image" class="headerlink" title="Image"></a>Image</h1><h2 id="镜像创建"><a href="#镜像创建" class="headerlink" title="镜像创建"></a>镜像创建</h2><h3 id="创建新镜像-Dockerfile"><a href="#创建新镜像-Dockerfile" class="headerlink" title="创建新镜像(Dockerfile)"></a>创建新镜像(Dockerfile)</h3><p>使用Dockerfile创建镜像，首先需要选择基础镜像，然后撰写dockerfile，最后使用<code>docker build -t &#123;new image name&#125;:&#123;new image tag&#125; [-f &#123;dockerfile&#125;] .</code>创建Image</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker build -t new_image_ubu03:v1 -f ./dockerfile/tmp.docker .</span></span><br><span class="line">Sending build context to Docker daemon 317.7 MB</span><br><span class="line">Step 1 : FROM my_ubuntu_03</span><br><span class="line"><span class="meta prompt_"> ---&gt; </span><span class="language-bash">28b69113a240</span></span><br><span class="line">Step 2 : MAINTAINER xxx xx &quot;x.xxx@xxxx.com&quot;</span><br><span class="line"><span class="meta prompt_"> ---&gt; </span><span class="language-bash">Running <span class="keyword">in</span> ae3004ef2bd2</span></span><br><span class="line"><span class="meta prompt_"> ---&gt; </span><span class="language-bash">68ab9a056fbf</span></span><br><span class="line">Removing intermediate container ae3004ef2bd2</span><br><span class="line">Successfully built 68ab9a056fbf</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker images</span></span><br><span class="line">REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE</span><br><span class="line">new_image_ubu03     v1                  68ab9a056fbf        14 seconds ago      304.4 MB</span><br><span class="line">my_ubuntu_01        v1                  e1aace2f9532        46 hours ago        304.4 MB</span><br><span class="line">my_ubu              base                31184d4c3c2c        47 hours ago        317.7 MB</span><br><span class="line">my_ubuntu_03        latest              28b69113a240        3 days ago          304.4 MB</span><br><span class="line">my_ubuntu_01        latest              800c37009cde        3 days ago          270 MB</span><br><span class="line">ubuntu              latest              104bec311bcd        2 weeks ago         128.9 MB</span><br><span class="line">ceph/daemon         latest              c06ccf521c4e        6 weeks ago         1.078 GB</span><br></pre></td></tr></table></figure>
+<p>关于dockerfile的撰写请见<a href="https://zhoubofsy.github.io/2016/12/30/container/docker/dockerfile-write/">《Dockerfile》</a></p>
+<h3 id="基于已有镜像创建新镜像"><a href="#基于已有镜像创建新镜像" class="headerlink" title="基于已有镜像创建新镜像"></a>基于已有镜像创建新镜像</h3><p>使用<code>docker commit &#123;容器名称/容器ID&#125; &#123;RESPOSITORY&#125;&lt;TAG&gt;</code>用已有容器创建镜像。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker commit ubu_01 my_ubuntu_01:v1</span></span><br><span class="line">sha256:e1aace2f953280326b96f31708ddf8f9f02289845e997736fcb1d0342777c72f</span><br></pre></td></tr></table></figure>
+
+<h3 id="从docker-hub上下载新镜像"><a href="#从docker-hub上下载新镜像" class="headerlink" title="从docker hub上下载新镜像"></a>从docker hub上下载新镜像</h3><p>在docker hub上有很多镜像，供使用者下载，用户可以使用<code>docker search</code>查询要下载的镜像，然后使用<code>docker pull</code>下载镜像。 </p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker pull hello-world</span></span><br><span class="line">Using default tag: latest</span><br><span class="line">latest: Pulling from library/hello-world</span><br><span class="line">Digest: sha256:0256e8a36e2070f7bf2d0b0763dbabdd67798512411de4cdcf9431a1feb60fd9</span><br><span class="line">Status: Image is up to date for hello-world:latest</span><br></pre></td></tr></table></figure>
+
+<h2 id="镜像查询"><a href="#镜像查询" class="headerlink" title="镜像查询"></a>镜像查询</h2><h3 id="查询本地镜像"><a href="#查询本地镜像" class="headerlink" title="查询本地镜像"></a>查询本地镜像</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker images</span></span><br><span class="line">REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE</span><br><span class="line">my_ubu              base                31184d4c3c2c        7 seconds ago       317.7 MB</span><br><span class="line">my_ubuntu_03        latest              28b69113a240        47 hours ago        304.4 MB</span><br><span class="line">my_ubuntu_01        latest              800c37009cde        2 days ago          270 MB</span><br><span class="line">ubuntu              latest              104bec311bcd        12 days ago         128.9 MB</span><br><span class="line">ceph/daemon         latest              c06ccf521c4e        5 weeks ago         1.078 GB</span><br><span class="line">hello-world         latest              c54a2cc56cbb        5 months ago        1.848 kB</span><br></pre></td></tr></table></figure>
+
+<h3 id="查询镜像详细信息"><a href="#查询镜像详细信息" class="headerlink" title="查询镜像详细信息"></a>查询镜像详细信息</h3><p>使用<code>docker inspect &#123;IMAGE ID/REPOSITORY&#125;&lt;:&#123;TAG&#125;&gt;</code>查询镜像库的详细信息，TAG默认为“latest”。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker inspect my_ubu:base</span></span><br><span class="line">[</span><br><span class="line">    &#123;</span><br><span class="line">           &quot;Id&quot;: &quot;sha256:31184d4c3c2cbbc56e087dfff68cad2d2d89d628a260f6789baf108345cd6c9b&quot;,</span><br><span class="line">                    &quot;RepoTags&quot;: [</span><br><span class="line">                        &quot;my_ubu:base&quot;</span><br><span class="line">                    ],</span><br><span class="line">           &quot;RepoDigests&quot;: [],</span><br><span class="line">           &quot;Parent&quot;: &quot;&quot;,</span><br><span class="line">           &quot;Comment&quot;: &quot;Imported from -&quot;,</span><br><span class="line">           &quot;Created&quot;: &quot;2016-12-28T07:30:31.500350508Z&quot;,</span><br><span class="line">           &quot;Container&quot;: &quot;&quot;,</span><br><span class="line">           &quot;ContainerConfig&quot;: &#123;</span><br><span class="line">......</span><br><span class="line">]</span><br></pre></td></tr></table></figure>
+
+<h3 id="查询hub上的镜像"><a href="#查询hub上的镜像" class="headerlink" title="查询hub上的镜像"></a>查询hub上的镜像</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker search ceph</span></span><br><span class="line">NAME                        DESCRIPTION                                     STARS     OFFICIAL   AUTOMATED</span><br><span class="line">ceph/daemon                 Image containing all the Ceph daemons           29                   [OK]</span><br><span class="line">ceph/demo                                                                   10                   [OK]</span><br><span class="line">ceph/osd                    Ceph OSD (object storage daemon)                6                    [OK]</span><br><span class="line">ceph/base                   Ceph base image                                 5                    [OK]</span><br><span class="line">ceph/radosgw                Ceph RADOSGW (S3/Swift-like service for Ceph)   4                    [OK]</span><br><span class="line">cdxvirt/ceph-daemon         All-in-one container for cdxvirt ceph core...   2                    [OK]</span><br><span class="line">ceph/config                 Ceph bootstrap (configuration)                  2                    [OK]</span><br><span class="line">ceph/rbd                    Ceph rbd (RADOS block device) CLI tool          2                    [OK]</span><br><span class="line">ceph/mds                    Ceph MDS (metadata server)                      2                    [OK]</span><br><span class="line">ulexus/ceph-osd             DEPRECATED:  development is now at ceph/osd     2                    [OK]</span><br><span class="line">ceph/mon                    Ceph MON (monitor daemon)                       1                    [OK]</span><br><span class="line">h0tbird/ceph                Containerized Ceph distributed file system      1                    [OK]</span><br><span class="line">ceph/rados                  Ceph rados (reliable autonomic distributed...   1                    [OK]</span><br><span class="line">cdxvirt/ceph-base           Ceph base container image                       1                    [OK]</span><br><span class="line">qnib/ceph-base              QNIBTerminal ceph base image                    0                    [OK]</span><br><span class="line">qnib/ceph-mono              Monolithic approach of an CEPH cluster + r...   0                    [OK]</span><br><span class="line">fernandosanchez/ceph-dash   ceph-dash                                       0                    [OK]</span><br><span class="line">ceph/install-utils          Install wrappers for common Ceph utility p...   0                    [OK]</span><br><span class="line">qnib/ceph-mon               QNIBTerminal CEPH monitoring Image              0                    [OK]</span><br><span class="line">cephbuilder/ceph            Docker image for building custom Ceph daem...   0                    [OK]</span><br><span class="line">qnib/d-ceph-fuse            QNIBTerminal image (debian) mounting /ceph...   0                    [OK]</span><br><span class="line">ulexus/ceph-mon             DEPRECATED:  development is now at ceph/mon     0                    [OK]</span><br><span class="line">fmeppo/ceph-daemon          Main container for Ceph in Docker.              0                    [OK]</span><br><span class="line">fmeppo/ceph-base            Base container for Ceph in Docker.              0                    [OK]</span><br><span class="line">xenopathic/ceph-keystone    Automated full-stack Ceph environment with...   0                    [OK]</span><br></pre></td></tr></table></figure>
+
+<h2 id="镜像删除"><a href="#镜像删除" class="headerlink" title="镜像删除"></a>镜像删除</h2><p>使用<code>docker rmi &#123;REPOSITORY/IMAGE ID&#125;</code>删除镜像。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker rmi hello-world</span></span><br><span class="line">Untagged: hello-world:latest</span><br><span class="line">Untagged: hello-world@sha256:0256e8a36e2070f7bf2d0b0763dbabdd67798512411de4cdcf9431a1feb60fd9</span><br><span class="line">Deleted: sha256:c54a2cc56cbb2f04003c1cd4507e118af7c0d340fe7e2720f70976c4b75237dc</span><br><span class="line">Deleted: sha256:a02596fdd012f22b03af6ad7d11fa590c57507558357b079c3e8cebceb4262d7</span><br></pre></td></tr></table></figure>
+
+<h2 id="镜像导出导入"><a href="#镜像导出导入" class="headerlink" title="镜像导出导入"></a>镜像导出导入</h2><h3 id="save-load"><a href="#save-load" class="headerlink" title="save &amp; load"></a>save &amp; load</h3><p>只用于镜像（image）的导入导出文件</p>
+<h3 id="export-import"><a href="#export-import" class="headerlink" title="export &amp; import"></a>export &amp; import</h3><ul>
+<li>export用于容易导出成文件</li>
+<li>import用于文件导入成镜像（image）</li>
+</ul>
+<h3 id="关系图"><a href="#关系图" class="headerlink" title="关系图"></a>关系图</h3><p><img src="/images/docker/docker_save_load_export_import.jpg" alt="import_export"></p>
+<h1 id="Volume"><a href="#Volume" class="headerlink" title="Volume"></a>Volume</h1><h2 id="数据卷创建、删除、查询、权限"><a href="#数据卷创建、删除、查询、权限" class="headerlink" title="数据卷创建、删除、查询、权限"></a>数据卷创建、删除、查询、权限</h2><h3 id="创建-权限"><a href="#创建-权限" class="headerlink" title="创建&amp;权限"></a>创建&amp;权限</h3><p>*** docker在创建容器时，可以创建数据卷；一旦容器运行后，就不能动态添加数据卷。若想添加需要重新创建容器。***</p>
+<h4 id="私有数据卷创建"><a href="#私有数据卷创建" class="headerlink" title="私有数据卷创建"></a>私有数据卷创建</h4><p>在<code>docker run/create</code>时，使用<code>-v &#123;容器内路径&#125;</code>参数在容器内创建指定的目录，并映射到其宿主机<code>/var/lib/docker/volumes/&#123;ID&#125;/_data</code>的路径下。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">数据卷创建</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker run -it --name=ubu2 -v=/home/zhoub/docker/data ubuntu /bin/bash</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">数据卷查询</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">dccker inspect ubu2</span></span><br><span class="line">...</span><br><span class="line">        &quot;Mounts&quot;: [</span><br><span class="line">            &#123;</span><br><span class="line">                &quot;Name&quot;: &quot;95868b7e6fd47927cfb7f54b35057545f4302d69ed92aa73425dffc289527b6b&quot;,</span><br><span class="line">                &quot;Source&quot;: &quot;/var/lib/docker/volumes/95868b7e6fd47927cfb7f54b35057545f4302d69ed92aa73425dffc289527b6b/_data&quot;,</span><br><span class="line">                &quot;Destination&quot;: &quot;/home/zhoub/docker/data&quot;,</span><br><span class="line">                &quot;Driver&quot;: &quot;local&quot;,</span><br><span class="line">                &quot;Mode&quot;: &quot;&quot;,</span><br><span class="line">                &quot;RW&quot;: true,</span><br><span class="line">                &quot;Propagation&quot;: &quot;&quot;</span><br><span class="line">            &#125;</span><br><span class="line">        ],</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+
+<h4 id="共享数据卷创建"><a href="#共享数据卷创建" class="headerlink" title="共享数据卷创建"></a>共享数据卷创建</h4><p>在<code>docker run/create</code>时，使用<code>-v &#123;宿主机路径:容器内路径:访问权限(ro/rw,默认是RW)&#125;</code>参数挂载数据目录或文件到容器内，宿主机与容器共享该目录，无论宿主机还是容器修改该目录后，另一方也能看到改变。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">数据卷创建</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker run -it --name=ubu -v=/home/zhoub/docker/data:/data ubuntu /bin/bash</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">数据卷查询</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker inspect ubu</span></span><br><span class="line">...</span><br><span class="line">        &quot;Mounts&quot;: [</span><br><span class="line">            &#123;</span><br><span class="line">                &quot;Source&quot;: &quot;/home/zhoub/docker/data&quot;,</span><br><span class="line">                &quot;Destination&quot;: &quot;/data&quot;,</span><br><span class="line">                &quot;Mode&quot;: &quot;&quot;,</span><br><span class="line">                &quot;RW&quot;: true,</span><br><span class="line">                &quot;Propagation&quot;: &quot;rprivate&quot;</span><br><span class="line">            &#125;</span><br><span class="line">        ],</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+
+<h3 id="数据卷删除"><a href="#数据卷删除" class="headerlink" title="数据卷删除"></a>数据卷删除</h3><ul>
+<li>仅使用<code>docker rm</code>删除容器，会导致数据卷无法删除，仍占用硬盘空间</li>
+<li>使用<code>docker rm -v</code>删除容器和数据卷</li>
+</ul>
+<h2 id="数据卷容器"><a href="#数据卷容器" class="headerlink" title="数据卷容器"></a>数据卷容器</h2><h3 id="创建数据卷容器"><a href="#创建数据卷容器" class="headerlink" title="创建数据卷容器"></a>创建数据卷容器</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker run -v /vol --name voldata ubuntu <span class="built_in">echo</span> <span class="string">&quot;Data Container&quot;</span></span></span><br></pre></td></tr></table></figure>
+<p>或</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker create -v /vol --name voldata ubuntu <span class="built_in">echo</span> <span class="string">&quot;Data Container&quot;</span></span></span><br></pre></td></tr></table></figure>
+<p>注：</p>
+<ul>
+<li>数据卷容器不需要运行，运行会白浪费系统资源</li>
+<li>不要下载微小镜像创建数据卷容器，只使用本机所带的镜像即可，不需要咱用额外的存储空间。</li>
+</ul>
+<h3 id="使用数据卷容器"><a href="#使用数据卷容器" class="headerlink" title="使用数据卷容器"></a>使用数据卷容器</h3><p>在<code>docker run</code>中使用<code>--volumes-from</code>参数为新建的容器挂载voldata数据卷容器中的<code>/vol</code>目录</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker run --volumes-from voldata -it --name testContainer ubuntu /bin/bash</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="数据卷备份"><a href="#数据卷备份" class="headerlink" title="数据卷备份"></a>数据卷备份</h2><p>将数据卷容器中数据卷里的数据备份到指定目录中</p>
+<p>步骤：</p>
+<ol>
+<li>创建备份目录</li>
+<li>创建容器映射备份目录到容器内，并挂载数据卷容器</li>
+<li>在容器中将数据卷容器中的数据copy到映射的备份目录内</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">mkdir</span> /tmp/backup</span></span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker run --<span class="built_in">rm</span> --volumes-from voldata -v /tmp/backup:/backup ubuntu tar cvf /backup/voldata.tar /vol</span></span><br></pre></td></tr></table></figure>
+
+<p>看到此处估计你已经要骂娘了，什么破Docker，连个卷管理接口都没有！以上是老版本中docker对卷的管理方法。接下来说一下新版本中docker对卷的管理。<br>** 一条华丽的分割线… **</p>
+<h2 id="新的数据卷管理"><a href="#新的数据卷管理" class="headerlink" title="新的数据卷管理"></a>新的数据卷管理</h2><ul>
+<li>卷创建<br>  <code>docker volume create &#123;options&#125;</code>，创建卷，可指定卷名称和访问卷所使用的驱动。目前docker volume plugin支持的驱动包括：blockbridge、convoy、flocker、glusterfs、horcrux、ipfs、netshare、openstorage、quobyte</li>
+<li>卷查询<br>  <code>docker volume ls</code>，显示卷列表<br>  <code>docker volume inspect &#123;volume name&#125;</code>，显示指定卷的详细信息</li>
+<li>卷删除<br>  <code>docker rm &#123;volume name&#125;</code>，删除指定卷，若卷已经被容器所加载，无论容器是否出于运行状态，删除都会失败。</li>
+</ul>
+<p>*** 很可惜docker新版本中还是不支持动态加载卸载数据卷 ***</p>
+<h1 id="Network"><a href="#Network" class="headerlink" title="Network"></a>Network</h1><p>docker 有三种网络bridge、host、none。</p>
+<ul>
+<li>bridge 桥接网络</li>
+<li>host 复制宿主机网络</li>
+<li>none 无网络，容器只有一个回环地址</li>
+</ul>
+<h2 id="网络管理"><a href="#网络管理" class="headerlink" title="网络管理"></a>网络管理</h2><h3 id="网络创建"><a href="#网络创建" class="headerlink" title="网络创建"></a>网络创建</h3><h4 id="bridge"><a href="#bridge" class="headerlink" title="bridge"></a>bridge</h4><p>可通过<code>docker network create --subnet &#123;CIDR&#125; &#123;network name&#125;</code>创建bridge网络 </p>
+<h4 id="host"><a href="#host" class="headerlink" title="host"></a>host</h4><p>默认docker会提供一个host网络，用户不能再手动创建该网络<code>Error response from daemon: only one instance of &quot;host&quot; network is allowed</code></p>
+<h4 id="none"><a href="#none" class="headerlink" title="none"></a>none</h4><p>该网络不可自创建</p>
+<h3 id="网络删除"><a href="#网络删除" class="headerlink" title="网络删除"></a>网络删除</h3><p>可使用<code>docker network rm &#123;network name&#125;</code>删除指定网络</p>
+<h3 id="网络查询"><a href="#网络查询" class="headerlink" title="网络查询"></a>网络查询</h3><p>使用<code>docker network ls</code>查看网络列表</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker network <span class="built_in">ls</span></span></span><br><span class="line">ETWORK ID          NAME                DRIVER              SCOPE</span><br><span class="line">852c90cb4a48        bridge              bridge              local</span><br><span class="line">bebda2efe6dc        host                host                local</span><br><span class="line">6a69c0cd935e        my_net              bridge              local</span><br><span class="line">09cf35b0a2fe        none                null                local</span><br></pre></td></tr></table></figure>
+
+<p>使用<code>docker network inspect &#123;network name&#125;</code>查看指定网络信息</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker network inspect my_net</span></span><br><span class="line">[</span><br><span class="line">    &#123;</span><br><span class="line">        &quot;Name&quot;: &quot;my_net&quot;,</span><br><span class="line">        &quot;Id&quot;: &quot;6a69c0cd935ef315d143f1253634b8cce2b20e8e330ce791d53d26a6a08c387f&quot;,</span><br><span class="line">        &quot;Scope&quot;: &quot;local&quot;,</span><br><span class="line">        &quot;Driver&quot;: &quot;bridge&quot;,</span><br><span class="line">        &quot;EnableIPv6&quot;: false,</span><br><span class="line">        &quot;IPAM&quot;: &#123;</span><br><span class="line">            &quot;Driver&quot;: &quot;default&quot;,</span><br><span class="line">            &quot;Options&quot;: &#123;&#125;,</span><br><span class="line">            &quot;Config&quot;: [</span><br><span class="line">                &#123;</span><br><span class="line">                    &quot;Subnet&quot;: &quot;192.168.100.0/24&quot;,</span><br><span class="line">                    &quot;Gateway&quot;: &quot;192.168.100.1&quot;</span><br><span class="line">                &#125;</span><br><span class="line">            ]</span><br><span class="line">        &#125;,</span><br><span class="line">        &quot;Internal&quot;: false,</span><br><span class="line">        &quot;Containers&quot;: &#123;&#125;,</span><br><span class="line">        &quot;Options&quot;: &#123;</span><br><span class="line">            &quot;com.docker.network.bridge.name&quot;: &quot;my_net&quot;</span><br><span class="line">        &#125;,</span><br><span class="line">        &quot;Labels&quot;: &#123;&#125;</span><br><span class="line">    &#125;</span><br><span class="line">]</span><br></pre></td></tr></table></figure>
+
+<h2 id="网络使用"><a href="#网络使用" class="headerlink" title="网络使用"></a>网络使用</h2><h3 id="with-‘–network’"><a href="#with-‘–network’" class="headerlink" title="with ‘–network’"></a>with ‘–network’</h3><p>在<code>docker create/run</code>时，指定<code>--network &#123;network name&#125;</code>参数，默认网络使用<code>bridge</code>。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker run -it --name net_1 --network my_net my_ubuntu_03 /bin/bash</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="container复制"><a href="#container复制" class="headerlink" title="container复制"></a>container复制</h3><p>使用<code>--network container:&#123;容器名称／容器ID&#125;</code>将指定容器的网络及主机名复制到新容器内。</p>
+<p>创建‘net_4’容器，并复制‘net_1’的network</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker run -it --name net_4 --network container:net_1 my_ubuntu_03 /bin/bash</span></span><br><span class="line">root@5eb98cff1ec6:/# ifconfig</span><br><span class="line">eth0      Link encap:Ethernet  HWaddr 02:42:c0:a8:64:02</span><br><span class="line">          inet addr:192.168.100.2  Bcast:0.0.0.0  Mask:255.255.255.0</span><br><span class="line">          inet6 addr: fe80::42:c0ff:fea8:6402/64 Scope:Link</span><br><span class="line">          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1</span><br><span class="line">          RX packets:8 errors:0 dropped:0 overruns:0 frame:0</span><br><span class="line">          TX packets:8 errors:0 dropped:0 overruns:0 carrier:0</span><br><span class="line">          collisions:0 txqueuelen:0</span><br><span class="line">          RX bytes:648 (648.0 B)  TX bytes:648 (648.0 B)</span><br><span class="line"></span><br><span class="line">lo        Link encap:Local Loopback</span><br><span class="line">          inet addr:127.0.0.1  Mask:255.0.0.0</span><br><span class="line">          inet6 addr: ::1/128 Scope:Host</span><br><span class="line">          UP LOOPBACK RUNNING  MTU:65536  Metric:1</span><br><span class="line">          RX packets:0 errors:0 dropped:0 overruns:0 frame:0</span><br><span class="line">          TX packets:0 errors:0 dropped:0 overruns:0 carrier:0</span><br><span class="line">          collisions:0 txqueuelen:0</span><br><span class="line">          RX bytes:0 (0.0 B)  TX bytes:0 (0.0 B)</span><br></pre></td></tr></table></figure>
+
+<p>容器‘net_1’的网卡信息</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">docker <span class="built_in">exec</span> -it net_1 /bin/bash</span></span><br><span class="line">root@5eb98cff1ec6:/# ifconfig</span><br><span class="line">eth0      Link encap:Ethernet  HWaddr 02:42:c0:a8:64:02</span><br><span class="line">          inet addr:192.168.100.2  Bcast:0.0.0.0  Mask:255.255.255.0</span><br><span class="line">          inet6 addr: fe80::42:c0ff:fea8:6402/64 Scope:Link</span><br><span class="line">          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1</span><br><span class="line">          RX packets:16 errors:0 dropped:0 overruns:0 frame:0</span><br><span class="line">          TX packets:16 errors:0 dropped:0 overruns:0 carrier:0</span><br><span class="line">          collisions:0 txqueuelen:0</span><br><span class="line">          RX bytes:1395 (1.3 KB)  TX bytes:1284 (1.2 KB)</span><br><span class="line"></span><br><span class="line">lo        Link encap:Local Loopback</span><br><span class="line">          inet addr:127.0.0.1  Mask:255.0.0.0</span><br><span class="line">          inet6 addr: ::1/128 Scope:Host</span><br><span class="line">          UP LOOPBACK RUNNING  MTU:65536  Metric:1</span><br><span class="line">          RX packets:4 errors:0 dropped:0 overruns:0 frame:0</span><br><span class="line">          TX packets:4 errors:0 dropped:0 overruns:0 carrier:0</span><br><span class="line">          collisions:0 txqueuelen:0</span><br><span class="line">          RX bytes:375 (375.0 B)  TX bytes:375 (375.0 B)</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>复制主机名</li>
+<li>复制MAC地址</li>
+<li>复制IP地址</li>
+</ul>
+<h1 id="Docker-Remote-API"><a href="#Docker-Remote-API" class="headerlink" title="Docker Remote API"></a>Docker Remote API</h1><h2 id="开启Remote-API"><a href="#开启Remote-API" class="headerlink" title="开启Remote API"></a>开启Remote API</h2><p>以RHEL7.2为例，开启Docker Remote API服务</p>
+<ol>
+<li>修改systemd中的docker.server<br> 找到<code>ExecStart</code>项，增加<code>-H tcp://0.0.0.0:2375</code>允许任意客户端访问；增加<code>-H unix:///var/run/docker.sock</code>保证<code>docker</code>命令能正常使用。<br> 若需要使用HTTPS证书，可以增加<code>--tls=true --tlscert=cert.pem --tlskey=key.pem</code>。<a target="_blank" rel="noopener" href="https://docs.docker.com/engine/admin/">详细请见</a></li>
+<li>增加防火墙规则／关闭防火墙<br> RHEL7.2中防火墙服务为<code>firewalld</code>。<br> eg: <code>sudo systemctl stop firewalld</code></li>
+<li>重启docker服务<br> 重载配置<code>sudo systemctl daemon-reload</code><br> 重启服务<code>sudo systemctl restart docker</code></li>
+</ol>
+<h2 id="API使用说明"><a href="#API使用说明" class="headerlink" title="API使用说明"></a>API使用说明</h2><p>详细请见：<a target="_blank" rel="noopener" href="https://docs.docker.com/engine/reference/api/docker_remote_api_v1.24/">《Docker Remote API v1.24》</a></p>
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="https://www.docker.com/">docker官网</a></li>
+<li><a target="_blank" rel="noopener" href="https://hub.docker.com/">docker hub</a></li>
+<li><a target="_blank" rel="noopener" href="http://wwwbuild.net/dockerone/263124.html">Docker开源组件：HyperKit、VPNKit和DataKit介绍</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.tuicool.com/articles/uAvQRz6">docker save&#x2F;load, export&#x2F;import测试对比</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.cnblogs.com/liuyansheng/p/6097710.html">Docker 数据卷管理</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.tuicool.com/articles/uYzeAnz">深入理解 Docker Volume（一）</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.cnblogs.com/sammyliu/p/5932996.html">理解Docker（8）：Docker 存储之卷（Volume）</a></li>
+<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/halcyonbaby/article/details/42112141">docker的四种网络方式</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.docker.com/engine/reference/api/docker_remote_api/">Docker Remote API</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.zhihu.com/question/24852884">Docker Remote API 如何使用？</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2016/12/08/language/python/python-class-underline/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1000,969 +1332,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2016/09/23/mysql/mysql-priv-mng-md/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2016/09/23/mysql/mysql-priv-mng-md/" class="post-title-link" itemprop="url">MySQL 权限管理</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2016-09-23 00:00:00" itemprop="dateCreated datePublished" datetime="2016-09-23T00:00:00+08:00">2016-09-23</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/mysql/" itemprop="url" rel="index"><span itemprop="name">mysql</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><ul>
-<li>OS Version : rhel 6.4</li>
-<li>MySQL Version : 5.6.31</li>
-</ul>
-<h1 id="权限"><a href="#权限" class="headerlink" title="权限"></a>权限</h1><h2 id="权限列表"><a href="#权限列表" class="headerlink" title="权限列表"></a>权限列表</h2><table>
-<thead>
-<tr>
-<th align="left">Privilege</th>
-<th align="left">Column</th>
-<th align="left">Context</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="left">CREATE</td>
-<td align="left">Create_priv</td>
-<td align="left">databases, tables, or indexes</td>
-</tr>
-<tr>
-<td align="left">DROP</td>
-<td align="left">Drop_priv</td>
-<td align="left">database, tables, or views</td>
-</tr>
-<tr>
-<td align="left">GRANT OPTION</td>
-<td align="left">Grant_priv</td>
-<td align="left">database, tables, or stored routines</td>
-</tr>
-<tr>
-<td align="left">LOCK TABLES</td>
-<td align="left">lock_tables_priv</td>
-<td align="left">databases</td>
-</tr>
-<tr>
-<td align="left">REFERENCES</td>
-<td align="left">References_priv</td>
-<td align="left">databases or tables, columns</td>
-</tr>
-<tr>
-<td align="left">EVENT</td>
-<td align="left">Event_priv</td>
-<td align="left">databases</td>
-</tr>
-<tr>
-<td align="left">ALTER</td>
-<td align="left">Alter_priv</td>
-<td align="left">tables</td>
-</tr>
-<tr>
-<td align="left">DELETE</td>
-<td align="left">Delete_priv</td>
-<td align="left">tables</td>
-</tr>
-<tr>
-<td align="left">INDEX</td>
-<td align="left">Index_priv</td>
-<td align="left">tables</td>
-</tr>
-<tr>
-<td align="left">INSERT</td>
-<td align="left">Insert_priv</td>
-<td align="left">tables or columns</td>
-</tr>
-<tr>
-<td align="left">SELECT</td>
-<td align="left">Select_priv</td>
-<td align="left">tables or columns</td>
-</tr>
-<tr>
-<td align="left">UPDATE</td>
-<td align="left">Update_priv</td>
-<td align="left">tables or columns</td>
-</tr>
-<tr>
-<td align="left">CREATE TEMPORARY TABLES</td>
-<td align="left">Create_tmp_table_priv</td>
-<td align="left">tables</td>
-</tr>
-<tr>
-<td align="left">TRIGGER</td>
-<td align="left">trigger_priv</td>
-<td align="left">tables</td>
-</tr>
-<tr>
-<td align="left">CREATE VIEW</td>
-<td align="left">Create_view_priv</td>
-<td align="left">views</td>
-</tr>
-<tr>
-<td align="left">SHOW VIEW</td>
-<td align="left">Show_view_priv</td>
-<td align="left">views</td>
-</tr>
-<tr>
-<td align="left">ALTER ROUTINE</td>
-<td align="left">alter_routine_priv</td>
-<td align="left">stored routines</td>
-</tr>
-<tr>
-<td align="left">CREATE ROUTINE</td>
-<td align="left">create_routine_priv</td>
-<td align="left">stored routines</td>
-</tr>
-<tr>
-<td align="left">EXECUTE</td>
-<td align="left">execute_priv</td>
-<td align="left">stored routines</td>
-</tr>
-<tr>
-<td align="left">FILE</td>
-<td align="left">file_priv</td>
-<td align="left">file access on server host (Global)</td>
-</tr>
-<tr>
-<td align="left">CREATE TABLESPACE</td>
-<td align="left">create_tablespace_priv</td>
-<td align="left">server administration (Global)</td>
-</tr>
-<tr>
-<td align="left">CREATE USER</td>
-<td align="left">create_user_priv</td>
-<td align="left">server administration (Global)</td>
-</tr>
-<tr>
-<td align="left">PROCESS</td>
-<td align="left">process_priv</td>
-<td align="left">server administration (Global)</td>
-</tr>
-<tr>
-<td align="left">PROXY</td>
-<td align="left">proxy_priv</td>
-<td align="left">server administration (user to user)</td>
-</tr>
-<tr>
-<td align="left">RELOAD</td>
-<td align="left">reload_priv</td>
-<td align="left">server administration (Global)</td>
-</tr>
-<tr>
-<td align="left">REPLICATION CLIENT</td>
-<td align="left">repl_client_priv</td>
-<td align="left">server administration (Global)</td>
-</tr>
-<tr>
-<td align="left">REPLICATION SLAVE</td>
-<td align="left">repl_slave_priv</td>
-<td align="left">server administration (Global)</td>
-</tr>
-<tr>
-<td align="left">SHOW DATABASES</td>
-<td align="left">show_db_priv</td>
-<td align="left">server administration (Global)</td>
-</tr>
-<tr>
-<td align="left">SHUTDOWN</td>
-<td align="left">shutdown_priv</td>
-<td align="left">server administration (Global)</td>
-</tr>
-<tr>
-<td align="left">SUPER</td>
-<td align="left">super_priv</td>
-<td align="left">server administration (Global)</td>
-</tr>
-<tr>
-<td align="left">ALL [PRIVILEGES]</td>
-<td align="left"></td>
-<td align="left">server administration</td>
-</tr>
-<tr>
-<td align="left">USAGE</td>
-<td align="left"></td>
-<td align="left">server administration</td>
-</tr>
-</tbody></table>
-<h2 id="按权限的种类分类"><a href="#按权限的种类分类" class="headerlink" title="按权限的种类分类"></a>按权限的种类分类</h2><ul>
-<li>数据访问相关权限</li>
-<li>库表结构相关权限</li>
-<li>服务相关权限</li>
-</ul>
-<h1 id="权限相关表单"><a href="#权限相关表单" class="headerlink" title="权限相关表单"></a>权限相关表单</h1><p>MySQL权限信息存储在“mysql”数据中<br>其中:</p>
-<ul>
-<li>“user”表负责存储用户信息，及用户本身所拥有的权限；</li>
-<li>“db”表负责存储用户与db的权限关系;</li>
-<li>“tables_priv”负责存在用户与table的权限关系;</li>
-<li>“columns_priv”负责存储用户与column的权限关系;</li>
-</ul>
-<h2 id="user表结构"><a href="#user表结构" class="headerlink" title="user表结构"></a>user表结构</h2><table>
-<thead>
-<tr>
-<th align="left">Field</th>
-<th align="left">Type</th>
-<th align="center">Null</th>
-<th align="center">Key</th>
-<th align="left">Default</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="left">Host</td>
-<td align="left">char(60)</td>
-<td align="center">NO</td>
-<td align="center">PRI</td>
-<td align="left"></td>
-</tr>
-<tr>
-<td align="left">User</td>
-<td align="left">char(16)</td>
-<td align="center">NO</td>
-<td align="center">PRI</td>
-<td align="left"></td>
-</tr>
-<tr>
-<td align="left">Password</td>
-<td align="left">char(41)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left"></td>
-</tr>
-<tr>
-<td align="left">Select_priv</td>
-<td align="left">enum(‘N’,’Y’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">N</td>
-</tr>
-<tr>
-<td align="left">Insert_priv</td>
-<td align="left">enum(‘N’,’Y’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">N</td>
-</tr>
-<tr>
-<td align="left">Update_priv</td>
-<td align="left">enum(‘N’,’Y’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">N</td>
-</tr>
-<tr>
-<td align="left">Delete_priv</td>
-<td align="left">enum(‘N’,’Y’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">N</td>
-</tr>
-<tr>
-<td align="left">Create_priv</td>
-<td align="left">enum(‘N’,’Y’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">N</td>
-</tr>
-<tr>
-<td align="left">Drop_priv</td>
-<td align="left">enum(‘N’,’Y’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">N</td>
-</tr>
-<tr>
-<td align="left">Reload_priv</td>
-<td align="left">enum(‘N’,’Y’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">N</td>
-</tr>
-<tr>
-<td align="left">Shutdown_priv</td>
-<td align="left">enum(‘N’,’Y’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">N</td>
-</tr>
-<tr>
-<td align="left">Process_priv</td>
-<td align="left">enum(‘N’,’Y’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">N</td>
-</tr>
-<tr>
-<td align="left">File_priv</td>
-<td align="left">enum(‘N’,’Y’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">N</td>
-</tr>
-<tr>
-<td align="left">Grant_priv</td>
-<td align="left">enum(‘N’,’Y’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">N</td>
-</tr>
-<tr>
-<td align="left">References_priv</td>
-<td align="left">enum(‘N’,’Y’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">N</td>
-</tr>
-<tr>
-<td align="left">Index_priv</td>
-<td align="left">enum(‘N’,’Y’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">N</td>
-</tr>
-<tr>
-<td align="left">Alter_priv</td>
-<td align="left">enum(‘N’,’Y’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">N</td>
-</tr>
-<tr>
-<td align="left">Show_db_priv</td>
-<td align="left">enum(‘N’,’Y’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">N</td>
-</tr>
-<tr>
-<td align="left">Super_priv</td>
-<td align="left">enum(‘N’,’Y’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">N</td>
-</tr>
-<tr>
-<td align="left">Create_tmp_table_priv</td>
-<td align="left">enum(‘N’,’Y’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">N</td>
-</tr>
-<tr>
-<td align="left">Lock_tables_priv</td>
-<td align="left">enum(‘N’,’Y’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">N</td>
-</tr>
-<tr>
-<td align="left">Execute_priv</td>
-<td align="left">enum(‘N’,’Y’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">N</td>
-</tr>
-<tr>
-<td align="left">Repl_slave_priv</td>
-<td align="left">enum(‘N’,’Y’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">N</td>
-</tr>
-<tr>
-<td align="left">Repl_client_priv</td>
-<td align="left">enum(‘N’,’Y’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">N</td>
-</tr>
-<tr>
-<td align="left">Create_view_priv</td>
-<td align="left">enum(‘N’,’Y’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">N</td>
-</tr>
-<tr>
-<td align="left">Show_view_priv</td>
-<td align="left">enum(‘N’,’Y’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">N</td>
-</tr>
-<tr>
-<td align="left">Create_routine_priv</td>
-<td align="left">enum(‘N’,’Y’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">N</td>
-</tr>
-<tr>
-<td align="left">Alter_routine_priv</td>
-<td align="left">enum(‘N’,’Y’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">N</td>
-</tr>
-<tr>
-<td align="left">Create_user_priv</td>
-<td align="left">enum(‘N’,’Y’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">N</td>
-</tr>
-<tr>
-<td align="left">Event_priv</td>
-<td align="left">enum(‘N’,’Y’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">N</td>
-</tr>
-<tr>
-<td align="left">Trigger_priv</td>
-<td align="left">enum(‘N’,’Y’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">N</td>
-</tr>
-<tr>
-<td align="left">Create_tablespace_priv</td>
-<td align="left">enum(‘N’,’Y’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">N</td>
-</tr>
-<tr>
-<td align="left">ssl_type</td>
-<td align="left">enum(‘’,’ANY’,’X509’,’SPECIFIED’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left"></td>
-</tr>
-<tr>
-<td align="left">ssl_cipher</td>
-<td align="left">blob</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">NULL</td>
-</tr>
-<tr>
-<td align="left">x509_issuer</td>
-<td align="left">blob</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">NULL</td>
-</tr>
-<tr>
-<td align="left">x509_subject</td>
-<td align="left">blob</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">NULL</td>
-</tr>
-<tr>
-<td align="left">max_questions</td>
-<td align="left">int(11) unsigned</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">0</td>
-</tr>
-<tr>
-<td align="left">max_updates</td>
-<td align="left">int(11) unsigned</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">0</td>
-</tr>
-<tr>
-<td align="left">max_connections</td>
-<td align="left">int(11) unsigned</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">0</td>
-</tr>
-<tr>
-<td align="left">max_user_connections</td>
-<td align="left">int(11) unsigned</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">0</td>
-</tr>
-<tr>
-<td align="left">plugin</td>
-<td align="left">char(64)</td>
-<td align="center">YES</td>
-<td align="center"></td>
-<td align="left">mysql_native_password</td>
-</tr>
-<tr>
-<td align="left">authentication_string</td>
-<td align="left">text</td>
-<td align="center">YES</td>
-<td align="center"></td>
-<td align="left">NULL</td>
-</tr>
-<tr>
-<td align="left">password_expired</td>
-<td align="left">enum(‘N’,’Y’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">N</td>
-</tr>
-</tbody></table>
-<h2 id="db表结构"><a href="#db表结构" class="headerlink" title="db表结构"></a>db表结构</h2><table>
-<thead>
-<tr>
-<th align="left">Field</th>
-<th align="left">Type</th>
-<th align="center">Null</th>
-<th align="center">Key</th>
-<th align="left">Default</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="left">Host</td>
-<td align="left">char(60)</td>
-<td align="center">NO</td>
-<td align="center">PRI</td>
-<td align="left"></td>
-</tr>
-<tr>
-<td align="left">Db</td>
-<td align="left">char(64)</td>
-<td align="center">NO</td>
-<td align="center">PRI</td>
-<td align="left"></td>
-</tr>
-<tr>
-<td align="left">User</td>
-<td align="left">char(16)</td>
-<td align="center">NO</td>
-<td align="center">PRI</td>
-<td align="left"></td>
-</tr>
-<tr>
-<td align="left">Select_priv</td>
-<td align="left">enum(‘N’,’Y’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">N</td>
-</tr>
-<tr>
-<td align="left">Insert_priv</td>
-<td align="left">enum(‘N’,’Y’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">N</td>
-</tr>
-<tr>
-<td align="left">Update_priv</td>
-<td align="left">enum(‘N’,’Y’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">N</td>
-</tr>
-<tr>
-<td align="left">Delete_priv</td>
-<td align="left">enum(‘N’,’Y’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">N</td>
-</tr>
-<tr>
-<td align="left">Create_priv</td>
-<td align="left">enum(‘N’,’Y’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">N</td>
-</tr>
-<tr>
-<td align="left">Drop_priv</td>
-<td align="left">enum(‘N’,’Y’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">N</td>
-</tr>
-<tr>
-<td align="left">Grant_priv</td>
-<td align="left">enum(‘N’,’Y’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">N</td>
-</tr>
-<tr>
-<td align="left">References_priv</td>
-<td align="left">enum(‘N’,’Y’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">N</td>
-</tr>
-<tr>
-<td align="left">Index_priv</td>
-<td align="left">enum(‘N’,’Y’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">N</td>
-</tr>
-<tr>
-<td align="left">Alter_priv</td>
-<td align="left">enum(‘N’,’Y’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">N</td>
-</tr>
-<tr>
-<td align="left">Create_tmp_table_priv</td>
-<td align="left">enum(‘N’,’Y’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">N</td>
-</tr>
-<tr>
-<td align="left">Lock_tables_priv</td>
-<td align="left">enum(‘N’,’Y’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">N</td>
-</tr>
-<tr>
-<td align="left">Create_view_priv</td>
-<td align="left">enum(‘N’,’Y’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">N</td>
-</tr>
-<tr>
-<td align="left">Show_view_priv</td>
-<td align="left">enum(‘N’,’Y’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">N</td>
-</tr>
-<tr>
-<td align="left">Create_routine_priv</td>
-<td align="left">enum(‘N’,’Y’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">N</td>
-</tr>
-<tr>
-<td align="left">Alter_routine_priv</td>
-<td align="left">enum(‘N’,’Y’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">N</td>
-</tr>
-<tr>
-<td align="left">Execute_priv</td>
-<td align="left">enum(‘N’,’Y’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">N</td>
-</tr>
-<tr>
-<td align="left">Event_priv</td>
-<td align="left">enum(‘N’,’Y’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">N</td>
-</tr>
-<tr>
-<td align="left">Trigger_priv</td>
-<td align="left">enum(‘N’,’Y’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">N</td>
-</tr>
-</tbody></table>
-<h2 id="tables-priv表结构"><a href="#tables-priv表结构" class="headerlink" title="tables_priv表结构"></a>tables_priv表结构</h2><table>
-<thead>
-<tr>
-<th align="left">Field</th>
-<th align="left">Type</th>
-<th align="center">Null</th>
-<th align="center">Key</th>
-<th align="left">Default</th>
-<th align="left">Extra</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="left">Host</td>
-<td align="left">char(60)</td>
-<td align="center">NO</td>
-<td align="center">PRI</td>
-<td align="left"></td>
-<td align="left"></td>
-</tr>
-<tr>
-<td align="left">Db</td>
-<td align="left">char(64)</td>
-<td align="center">NO</td>
-<td align="center">PRI</td>
-<td align="left"></td>
-<td align="left"></td>
-</tr>
-<tr>
-<td align="left">User</td>
-<td align="left">char(16)</td>
-<td align="center">NO</td>
-<td align="center">PRI</td>
-<td align="left"></td>
-<td align="left"></td>
-</tr>
-<tr>
-<td align="left">Table_name</td>
-<td align="left">char(64)</td>
-<td align="center">NO</td>
-<td align="center">PRI</td>
-<td align="left"></td>
-<td align="left"></td>
-</tr>
-<tr>
-<td align="left">Grantor</td>
-<td align="left">char(77)</td>
-<td align="center">NO</td>
-<td align="center">MUL</td>
-<td align="left"></td>
-<td align="left"></td>
-</tr>
-<tr>
-<td align="left">Timestamp</td>
-<td align="left">timestamp</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">CURRENT_TIMESTAMP</td>
-<td align="left">on update CURRENT_TIMESTAMP</td>
-</tr>
-<tr>
-<td align="left">Table_priv</td>
-<td align="left">set(‘Select’,’Insert’,<br>‘Update’,’Delete’,<br>‘Create’,’Drop’,<br>‘Grant’,’References’,<br>‘Index’,’Alter’,<br>‘Create View’,<br>‘Show view’,’Trigger’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left"></td>
-<td align="left"></td>
-</tr>
-<tr>
-<td align="left">Column_priv</td>
-<td align="left">set(‘Select’,’Insert’,<br>‘Update’,’References’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left"></td>
-<td align="left"><br></td>
-</tr>
-</tbody></table>
-<h2 id="columns-priv表结构"><a href="#columns-priv表结构" class="headerlink" title="columns_priv表结构"></a>columns_priv表结构</h2><table>
-<thead>
-<tr>
-<th align="left">Field</th>
-<th align="left">Type</th>
-<th align="center">Null</th>
-<th align="center">Key</th>
-<th align="left">Default</th>
-<th align="left">Extra</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="left">Host</td>
-<td align="left">char(60)</td>
-<td align="center">NO</td>
-<td align="center">PRI</td>
-<td align="left"></td>
-<td align="left"></td>
-</tr>
-<tr>
-<td align="left">Db</td>
-<td align="left">char(64)</td>
-<td align="center">NO</td>
-<td align="center">PRI</td>
-<td align="left"></td>
-<td align="left"></td>
-</tr>
-<tr>
-<td align="left">User</td>
-<td align="left">char(16)</td>
-<td align="center">NO</td>
-<td align="center">PRI</td>
-<td align="left"></td>
-<td align="left"></td>
-</tr>
-<tr>
-<td align="left">Table_name</td>
-<td align="left">char(64)</td>
-<td align="center">NO</td>
-<td align="center">PRI</td>
-<td align="left"></td>
-<td align="left"></td>
-</tr>
-<tr>
-<td align="left">Column_name</td>
-<td align="left">char(64)</td>
-<td align="center">NO</td>
-<td align="center">PRI</td>
-<td align="left"></td>
-<td align="left"></td>
-</tr>
-<tr>
-<td align="left">Timestamp</td>
-<td align="left">timestamp</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left">CURRENT_TIMESTAMP</td>
-<td align="left">on update <br>CURRENT_TIMESTAMP</td>
-</tr>
-<tr>
-<td align="left">Column_priv</td>
-<td align="left">set(‘Select’,<br>‘Insert’,<br>‘Update’,<br>‘References’)</td>
-<td align="center">NO</td>
-<td align="center"></td>
-<td align="left"></td>
-<td align="left"><br></td>
-</tr>
-</tbody></table>
-<h1 id="验证流程"><a href="#验证流程" class="headerlink" title="验证流程"></a>验证流程</h1><p><img src="/images/mysql/mysql_privilege_flow.png" alt="mysql_privilege_flow"></p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2016/09/23/uwsgi/uwsgi-config-problem-1/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2016/09/23/uwsgi/uwsgi-config-problem-1/" class="post-title-link" itemprop="url">uWSGI中设置“cap = setuid,setpid”导致python脚本权限降低</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2016-09-23 00:00:00" itemprop="dateCreated datePublished" datetime="2016-09-23T00:00:00+08:00">2016-09-23</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/uwsgi/" itemprop="url" rel="index"><span itemprop="name">uwsgi</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="问题发现"><a href="#问题发现" class="headerlink" title="问题发现"></a>问题发现</h1><h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><ul>
-<li>uwsgi version： 2.0.13.1</li>
-<li>python version: 2.6.6</li>
-<li>采用 Nginx + uWSGI + Python 架构，均拥有ROOT权限</li>
-</ul>
-<h3 id="现象"><a href="#现象" class="headerlink" title="现象"></a>现象</h3><p>Python执行os.mkdir操作，提示“Permission Denied”</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">Traceback (most recent call last):</span><br><span class="line">File &quot;/cs/nginx/uwsgi/main.py&quot;, line 24, in application</span><br><span class="line">result = process().entry(environ, start_response)</span><br><span class="line">File &quot;/cs/nginx/uwsgi/rds/base_mng.py&quot;, line 90, in entry</span><br><span class="line">self.process_put_request(env)</span><br><span class="line">File &quot;/cs/nginx/uwsgi/rds/init_rds.py&quot;, line 149, in process_put_request</span><br><span class="line">result = self.do_put_request(env)</span><br><span class="line">File &quot;/cs/nginx/uwsgi/rds/init_rds.py&quot;, line 140, in do_put_request</span><br><span class="line">err_code = op.do()</span><br><span class="line">File &quot;/cs/nginx/uwsgi/rds/init_rds.py&quot;, line 70, in do</span><br><span class="line">if 0 == init_create_mp(mp):</span><br><span class="line">File &quot;/cs/nginx/uwsgi/rds/init/main.py&quot;, line 44, in init_create_mp</span><br><span class="line">os.mkdir(mp,0755)</span><br><span class="line">OSError: [Errno 13] Permission denied: &#x27;/aaab&#x27;</span><br></pre></td></tr></table></figure>
-
-<h1 id="解决"><a href="#解决" class="headerlink" title="解决"></a>解决</h1><p>Python脚本的权限，有uWSGI来决定，所以该错误肯定跟uWSGI有关，通过调整uwsgi.ini文件中的用户和权限相关配置发现，将<code>cap = setuid,setgid</code>去掉，可以正常创建目录。</p>
-<p>但：<em><strong>具体原因不明，可能跟setuid和setgid的使用有关，有可能是个Bug</strong></em></p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -2032,7 +1401,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">141</span>
+          <span class="site-state-item-count">143</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -2045,7 +1414,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">121</span>
+        <span class="site-state-item-count">122</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
