@@ -188,6 +188,179 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2021/09/12/design/pattern/design-structural-patterns/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2021/09/12/design/pattern/design-structural-patterns/" class="post-title-link" itemprop="url">设计模式——结构型模式</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2021-09-12 14:28:28" itemprop="dateCreated datePublished" datetime="2021-09-12T14:28:28+08:00">2021-09-12</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/design/" itemprop="url" rel="index"><span itemprop="name">design</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>书接上文“<a href="https://zhoubofsy.github.io/2021/09/10/design/pattern/design-pattern-creating/">设计模式——创建型模式</a>”，上回说到前人创造出了很多创建型的模式，这回我们说说结构型模式。先以教科书形式介绍一下。</p>
+<p>结构型模式(Structural Pattern)描述如何将类或者对 象结合在一起形成更大的结构，就像搭积木，可以通过 简单积木的组合形成复杂的、功能更为强大的结构。</p>
+<ul>
+<li>类结构型模式<br>  类结构型模式关心类的组合，由多个类可以组合成一个更大的系统，在类结构型模式中一般只存在继承关系和实现关系。</li>
+<li>对象结构型模式<br>  类与对象的组合，通过关联关系使得在一 个类中定义另一个类的实例对象，然后通过该对象调用其方法。</li>
+</ul>
+<p>根据“合成复用原则”，在系统中尽量使用关联关系来替代继 承关系，因此大部分结构型模式都是对象结构型模式。</p>
+<p>能看得懂，但是不够生动。接下来我们让它生动、活泼一下。</p>
+<p>在元祖王朝赛博坦帝国的一个边远矿业基地，矿区提纯运输车形态的矿工钢锁被工作调动到了这个位于某个卫星上的矿厂。本来与世无争的钢锁，遇到了一起恐怖事件，由此改变了他的火种（心灵）变形形态（肉体）人生轨迹（命运）。他就是我们今天的主角变形金刚。变形金刚分为两派，一为博派（Autobots），一为狂派（Decepticons），二者都有变形的能力。</p>
+<p>让我们抽象一下，是否可以将<code>Transforms</code>的变形能力抽化出来，然后再让博派和狂派分别去实现自己的变形方法。</p>
+<p>Example:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Transformer</span> &#123;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">transform</span><span class="params">()</span> </span>= <span class="number">0</span>;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Autobot</span> &#123;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="function"><span class="type">void</span> <span class="title">AutobotsTransform</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;Autobots Transform, Please...\n&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">TransformerAdapter</span> : <span class="keyword">public</span> Transformer &#123;</span><br><span class="line">    <span class="keyword">private</span>:</span><br><span class="line">        Autobot *m_a;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="built_in">TransformerAdapter</span>(Autobot *a) &#123;</span><br><span class="line">            m_a = a;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="function"><span class="type">void</span> <span class="title">transform</span><span class="params">()</span></span>;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>这就是“适配器模式”</p>
+<hr>
+<h2 id="适配器模式"><a href="#适配器模式" class="headerlink" title="适配器模式"></a>适配器模式</h2><p>再教科书一下。。。</p>
+<p><img src="/images/patterns/adapter_1.jpg" alt="adapter_1"></p>
+<p><img src="/images/patterns/adapter_2.jpg" alt="adapter_2"></p>
+<hr>
+<p>刚刚收到一个需求，要为每一个变形金刚做一个自己独有的变形特效，而且在变形的过程中要加入背景音乐。所以我们需要修改一下之前的“适配器”设计模式，增加一层背景效果层，然后将背景效果传递给变形金刚，当变形金刚变形的时候将效果播放出来就好了。</p>
+<p>Example:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Background</span> &#123;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">Display</span><span class="params">()</span> </span>= <span class="number">0</span>;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">TransformBackground</span> : <span class="keyword">public</span> Background &#123;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="function"><span class="type">void</span> <span class="title">Display</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;ki ka ka ka......\n&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Transformer</span> &#123;</span><br><span class="line">    <span class="keyword">protected</span>:</span><br><span class="line">        Background *bg;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">transform</span><span class="params">()</span> </span>= <span class="number">0</span>;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Decepticon</span> : <span class="keyword">public</span> Transformer &#123;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="built_in">Decepticon</span>(Background* b) &#123;</span><br><span class="line">            bg = b;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="function"><span class="type">void</span> <span class="title">transform</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            bg-&gt;<span class="built_in">Display</span>();</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;Decepticon Transform, Please...\n&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>这就是“桥模式”</p>
+<hr>
+<h2 id="桥模式"><a href="#桥模式" class="headerlink" title="桥模式"></a>桥模式</h2><p>再教科书一下。。。</p>
+<p><img src="/images/patterns/bridge_1.jpg" alt="bridge_1"></p>
+<p>** 优点: **</p>
+<ul>
+<li>分离抽象接口及其实现部分。</li>
+<li>桥接模式提高了系统的可扩充性，在两个变化维度中任意扩展一个维度，都不需要修改原有系统。</li>
+<li>实现细节对客户透明，可以对用户隐藏实现细节。</li>
+</ul>
+<p><img src="/images/patterns/bridge_2.jpg" alt="bridge_2"></p>
+<p>** 缺点：**</p>
+<ul>
+<li>桥接模式的引入会增加系统的理解与设计难度，由于聚合关联关系建立在抽象层，要求开发者针对抽象进行设计与编程</li>
+<li>桥接模式要求正确识别出系统中两个独立变化的维度，因此其使用范围具有一定的局限性。</li>
+</ul>
+<hr>
+<p>又来需求了，现在我们需要变形金刚开口说话，以后还需要变形金刚会开炮。总结一下，变形是一个基本的功能，然后先增加一个说话的功能，如果有需要以后还可以增加开炮的功能。每增加一个功能不修改之前的代码，因为修改已经测试过的代码会给程序的稳定性带来隐患。</p>
+<p>Example:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Transformer</span> &#123;</span><br><span class="line">    <span class="keyword">protected</span>:</span><br><span class="line">        Background *bg;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">transform</span><span class="params">()</span> </span>= <span class="number">0</span>;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Bumblebee</span> : <span class="keyword">public</span> Transformer &#123;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="function"><span class="type">void</span> <span class="title">transform</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;Bumblebee Transform, Please...\n&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">TransformerDecorator</span> : <span class="keyword">public</span> Transformer &#123;</span><br><span class="line">    <span class="keyword">protected</span>:</span><br><span class="line">        Transformer* tf;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">transform</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            tf-&gt;<span class="built_in">transform</span>();</span><br><span class="line">        &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">BumblebeeSay</span> : <span class="keyword">public</span> TransformerDecorator &#123;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="built_in">BumblebeeSay</span>(Transformer* t) &#123;</span><br><span class="line">            <span class="keyword">this</span>-&gt;tf = t;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="function"><span class="type">void</span> <span class="title">say</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;wuwuwuwu...\n&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="function"><span class="type">void</span> <span class="title">transform</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            TransformerDecorator::<span class="built_in">transform</span>();</span><br><span class="line">            <span class="built_in">say</span>();</span><br><span class="line">        &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>这就是“装饰模式”</p>
+<hr>
+<h2 id="装饰模式"><a href="#装饰模式" class="headerlink" title="装饰模式"></a>装饰模式</h2><p>再教科书一下。。。</p>
+<p>装饰模式(Decorator Pattern) ：动态地给一个对象增加一些额外的职责(Responsibility)，就增加对象功能来说，装饰模式比生成子类实现更为灵活。</p>
+<p><img src="/images/patterns/decorator_1.jpg" alt="decorator_1"></p>
+<ul>
+<li>装饰模式与继承关系的目的都是要扩展对象的功能，但是装饰模式可以提供比继承更多的灵活性。</li>
+<li>可以通过一种动态的方式来扩展一个对象的功能，通过配置文件可以在运行时选择不同的装饰器，从而实现不同的行为。</li>
+<li>通过使用不同的具体装饰类以及这些装饰类的排列组合，可以创造出很多不同行为的组合。可以使用多个具体装饰类来装饰同一对象，得到功能更为强大的对象。</li>
+<li>具体构件类与具体装饰类可以独立变化，用户可以根据需要增加新的具体构件类和具体装饰类，在使用时再对其进行组合，原有代码无须改变，符合“开闭原则”</li>
+</ul>
+<p><img src="/images/patterns/decorator_2.jpg" alt="decorator_2"></p>
+<ul>
+<li>这种比继承更加灵活机动的特性，也同时意味着装饰模式比继承更加易于出错，排错也很困难，对于多次装饰的对象，调试时寻找错误可能需要逐级排查，较为烦琐。</li>
+</ul>
+<hr>
+<p>战争一触即发，为了取得胜利，我们需要快速的生产变形金刚，需要弄一个map，存储已经创建好的，当有战事发生时，从map里直接取出进行战斗。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Transformer</span> &#123;</span><br><span class="line">    <span class="keyword">protected</span>:</span><br><span class="line">        Background *bg;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">transform</span><span class="params">()</span> </span>= <span class="number">0</span>;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Bumblebee</span> : <span class="keyword">public</span> Transformer &#123;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="function"><span class="type">void</span> <span class="title">transform</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;Bumblebee Transform, Please...\n&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">TransformerFlyweight</span> &#123;</span><br><span class="line">    <span class="keyword">private</span>:</span><br><span class="line">        std::map&lt;std::string,Transformer*&gt; members;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="function">Transformer* <span class="title">get</span><span class="params">(std::string key)</span></span>&#123;</span><br><span class="line">            Transformer* tf = <span class="literal">nullptr</span>;</span><br><span class="line">            <span class="keyword">auto</span> search = members.<span class="built_in">find</span>(key);</span><br><span class="line">            <span class="keyword">if</span>(search != members.<span class="built_in">end</span>()) &#123;</span><br><span class="line">                tf = search-&gt;second;</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="comment">// new</span></span><br><span class="line">                tf = <span class="keyword">new</span> <span class="built_in">Bumblebee</span>();</span><br><span class="line">                members.<span class="built_in">insert</span>(std::<span class="built_in">make_pair</span>(key, tf));</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">return</span> tf;</span><br><span class="line">        &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>这就是“享元模式”</p>
+<hr>
+<h2 id="享元模式"><a href="#享元模式" class="headerlink" title="享元模式"></a>享元模式</h2><p>再教科书一下。。。</p>
+<p>享元模式是一个考虑系统性能的设计模式，通过使用享元模式可以节约内存空间，提高系统的性能。运用共享技术有效地支持大量细粒度对象的复用。系统只使用少量的对象，而这些对象都很相似，状态变化很小，可以实现对象的多次复用。由于享元模式要求能够共享的对象必须是细粒度对象，因此它又称为轻量级模式，它是一种对象结构型模式。</p>
+<p><img src="/images/patterns/flyweight_1.jpg" alt="flyweight_1"></p>
+<p>** 优点 **</p>
+<ul>
+<li>享元模式的优点在于它可以极大减少内存中对象的数量，使得相同对象或相似对象在内存中只保存一份。</li>
+<li>享元模式的外部状态相对独立，而且不会影响其内部状态，从而使得享元对象可以在不同的环境中被共享。</li>
+</ul>
+<p><img src="/images/patterns/flyweight_2.jpg" alt="flyweight_2"></p>
+<p>** 缺点 **</p>
+<ul>
+<li>享元模式使得系统更加复杂，需要分离出内部状态和外部状态，这使得程序的逻辑复杂化。</li>
+</ul>
+<hr>
+<p>变形金刚出了个Bug，若在每次变形过程中收到攻击，变形金刚将毫无防御能力。所以需要增加一个防护罩，在变形前开启，在变形后关闭，这样增加变形金刚的变形过程中的防御能力。</p>
+<p>Example:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Transformer</span> &#123;</span><br><span class="line">    <span class="keyword">protected</span>:</span><br><span class="line">        Background *bg;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">transform</span><span class="params">()</span> </span>= <span class="number">0</span>;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Bumblebee</span> : <span class="keyword">public</span> Transformer &#123;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="function"><span class="type">void</span> <span class="title">transform</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;Bumblebee Transform, Please...\n&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">TransformerProxy</span> : <span class="keyword">public</span> Transformer &#123;</span><br><span class="line">    <span class="keyword">private</span>:</span><br><span class="line">        Transformer *m_tf;</span><br><span class="line">        <span class="function"><span class="type">void</span> <span class="title">save_on</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;saving...\n&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="function"><span class="type">void</span> <span class="title">save_off</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;save done\n&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="built_in">TransformerProxy</span>(Transformer *tf) &#123;</span><br><span class="line">            m_tf = tf;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="function"><span class="type">void</span> <span class="title">transform</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="built_in">save_on</span>();</span><br><span class="line">            m_tf-&gt;<span class="built_in">transform</span>();</span><br><span class="line">            <span class="built_in">save_off</span>();</span><br><span class="line">        &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>这就是“代理模式”</p>
+<hr>
+<h2 id="代理模式"><a href="#代理模式" class="headerlink" title="代理模式"></a>代理模式</h2><p><img src="/images/patterns/proxy_1.jpg" alt="proxy_1"></p>
+<p>** 优点 **</p>
+<ul>
+<li>代理模式能够协调调用者和被调用者，在一定程度上降低了系 统的耦合度。</li>
+<li>远程代理使得客户端可以访问在远程机器上的对象，远程机器 可能具有更好的计算性能与处理速度，可以快速响应并处理客户端请求。</li>
+<li>虚拟代理通过使用一个小对象来代表一个大对象，可以减少系 统资源的消耗，对系统进行优化并提高运行速度。</li>
+<li>保护代理可以控制对真实对象的使用权限。</li>
+</ul>
+<p><img src="/images/patterns/proxy_2.jpg" alt="proxy_2"></p>
+<p>** 缺点 **</p>
+<ul>
+<li>由于在客户端和真实主题之间增加了代理对象，因此 有些类型的代理模式可能会造成请求的处理速度变慢。</li>
+<li>实现代理模式需要额外的工作，有些代理模式的实现 非常复杂。</li>
+</ul>
+<hr>
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="https://design-patterns.readthedocs.io/zh_CN/latest/structural_patterns/structural.html">结构型模式</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2021/09/10/design/pattern/design-pattern-creating/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1283,102 +1456,10 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2019/12/11/storage/ceph/ceph-repo/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2019/12/11/storage/ceph/ceph-repo/" class="post-title-link" itemprop="url">ceph-repo 仓库搭建</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2019-12-11 16:45:20" itemprop="dateCreated datePublished" datetime="2019-12-11T16:45:20+08:00">2019-12-11</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="Yum源"><a href="#Yum源" class="headerlink" title="Yum源"></a>Yum源</h1><h2 id="安装createrepo"><a href="#安装createrepo" class="headerlink" title="安装createrepo"></a>安装createrepo</h2><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">yum install -y createrepo</span><br></pre></td></tr></table></figure>
-
-<h2 id="创建仓库"><a href="#创建仓库" class="headerlink" title="创建仓库"></a>创建仓库</h2><p>使用<code>createrepo</code>工具创建、更新仓库</p>
-<p>按Yum源的规则创建目录树<code>rpm-&lt;ceph版本名称&gt;/&lt;os version&gt;/&lt;arch&gt;</code></p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">mkdir -p ./ceph_repo/rpm-mimic/el7/x86_64/</span><br><span class="line">mkdir -p ./ceph_repo/rpm-mimic/el7/noarch/</span><br></pre></td></tr></table></figure>
-<p>创建完目录树之后，将不同arch的rpm包copy到对应的目录中。然后在创建仓库</p>
-<p>创建仓库</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">createrepo ./ceph_repo/rpm-mimic/el7/x86_64</span><br><span class="line">createrepo ./ceph_repo/rpm-mimic/el7/noarch</span><br></pre></td></tr></table></figure>
-<p>若仓库中RPM有更新、增加、删除，需要更新仓库</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">createrepo --update ./ceph_repo/rpm-mimic/el7/x86_64/</span><br></pre></td></tr></table></figure>
-
-<h2 id="发布仓库"><a href="#发布仓库" class="headerlink" title="发布仓库"></a>发布仓库</h2><p>本示例以docker形式发布仓库</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run -d --net=host --name ceph_repo -v $PWD/ceph_repo:/root/repo -w /root/repo/ --restart=always python:3 python -m http.server 80</span><br></pre></td></tr></table></figure>
-<p>or</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run -d --net=host --name ceph_repo -v $PWD/ceph_repo:/root/repo -w /root/repo/ --restart=always python:3 python -m SimpleHTTPServer 80</span><br></pre></td></tr></table></figure>
-
-<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a target="_blank" rel="noopener" href="https://www.cnblogs.com/mython/p/10898461.html">yum源仓库的三种搭建方式</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/"><i class="fa fa-angle-left" aria-label="Previous page"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><span class="space">&hellip;</span><a class="page-number" href="/page/14/">14</a><a class="extend next" rel="next" href="/page/3/"><i class="fa fa-angle-right" aria-label="Next page"></i></a>
+    <a class="extend prev" rel="prev" href="/"><i class="fa fa-angle-left" aria-label="Previous page"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><span class="space">&hellip;</span><a class="page-number" href="/page/15/">15</a><a class="extend next" rel="next" href="/page/3/"><i class="fa fa-angle-right" aria-label="Next page"></i></a>
   </nav>
 
 
@@ -1444,7 +1525,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">140</span>
+          <span class="site-state-item-count">141</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -1457,7 +1538,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">120</span>
+        <span class="site-state-item-count">121</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
