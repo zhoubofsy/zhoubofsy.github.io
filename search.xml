@@ -10248,7 +10248,234 @@
     <url>/2024/11/28/blockchain/ethereum/solidity-security/</url>
     <content><![CDATA[<p>在编写 Solidity 智能合约时，安全性是最重要的考虑因素之一。以下是开发中常见的安全问题及其解决方法：</p>
 <h1 id="重入攻击（Reentrancy-Attack）"><a href="#重入攻击（Reentrancy-Attack）" class="headerlink" title="重入攻击（Reentrancy Attack）"></a>重入攻击（Reentrancy Attack）</h1><p><a href="https://zhoubofsy.github.io/2024/11/28/blockchain/ethereum/solidity-security-reentrancy-attack/">https://zhoubofsy.github.io/2024/11/28/blockchain/ethereum/solidity-security-reentrancy-attack/</a></p>
-<h1 id="溢出与下溢（Overflow-and-Underflow）"><a href="#溢出与下溢（Overflow-and-Underflow）" class="headerlink" title="溢出与下溢（Overflow and Underflow）"></a>溢出与下溢（Overflow and Underflow）</h1>]]></content>
+<h1 id="溢出与下溢（Overflow-and-Underflow）"><a href="#溢出与下溢（Overflow-and-Underflow）" class="headerlink" title="溢出与下溢（Overflow and Underflow）"></a>溢出与下溢（Overflow and Underflow）</h1><p><strong>溢出（Overflow）和下溢（Underflow）</strong>是指在处理整数运算时，当结果超出数据类型表示范围时，值会“环绕”到另一端。例如，对于 uint8 类型：</p>
+<ul>
+<li>溢出： uint8 的最大值是 255，如果执行 255 + 1，值会变为 0。</li>
+<li>下溢： uint8 的最小值是 0，如果执行 0 - 1，值会变为 255。</li>
+</ul>
+<p>在早期的 Solidity 版本中，这种现象常导致严重漏洞，攻击者可以利用这种行为达到意想不到的目的。自 Solidity 0.8 开始，溢出和下溢会触发异常，但了解它们的历史以及如何防范仍然很重要。虽然Solidity 0.8开始增加了溢出检查，这也会导致Gas费用的增加。</p>
+<p>在 Solidity 0.8+ 中，每次整数加减运算都会隐式包含溢出检查逻辑，而这种检查需要额外的操作指令，因此会增加运行时消耗的 gas。</p>
+<p><strong>Solidity 0.8+</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">pragma solidity ^0.8.0;</span><br><span class="line"></span><br><span class="line">contract OverflowCheck &#123;</span><br><span class="line">    function add(uint256 a, uint256 b) public pure returns (uint256) &#123;</span><br><span class="line">        return a + b; // 含溢出检查</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">0x00    PUSH1  0x60</span><br><span class="line">0x02    MSTORE</span><br><span class="line">0x03    CALLDATALOAD</span><br><span class="line">0x04    CALLDATALOAD</span><br><span class="line">0x05    ADD         // 加法</span><br><span class="line">0x06    JUMPI       // 检查溢出</span><br><span class="line">0x07    REVERT      // 如果溢出，回滚</span><br><span class="line">0x08    RETURN</span><br></pre></td></tr></table></figure>
+
+<p><strong>Solidity 0.7</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">pragma solidity ^0.7.0;</span><br><span class="line"></span><br><span class="line">contract NoOverflowCheck &#123;</span><br><span class="line">    function add(uint256 a, uint256 b) public pure returns (uint256) &#123;</span><br><span class="line">        return a + b; // 无溢出检查</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">0x00    PUSH1  0x60</span><br><span class="line">0x02    MSTORE</span><br><span class="line">0x03    CALLDATALOAD</span><br><span class="line">0x04    CALLDATALOAD</span><br><span class="line">0x05    ADD         // 直接加法</span><br><span class="line">0x06    RETURN</span><br></pre></td></tr></table></figure>
+
+<ol>
+<li>Solidity 0.8 的溢出检查增加了 ~50 gas 的开销。</li>
+<li>增加的开销源于额外的汇编指令（JUMPI 和 REVERT）。</li>
+<li>如果对 gas 成本敏感，可以使用 unchecked 块绕过检查，但需确保逻辑安全。</li>
+</ol>
+<h1 id="未检查的外部调用（Unchecked-External-Call）"><a href="#未检查的外部调用（Unchecked-External-Call）" class="headerlink" title="未检查的外部调用（Unchecked External Call）"></a>未检查的外部调用（Unchecked External Call）</h1><p>“未检查的外部调用”漏洞（Unchecked External Call）是 Solidity 智能合约中的一种常见安全问题。如果智能合约与外部地址交互（比如转账或调用另一个合约的函数）时未检查调用的结果，可能会引发意外的后果和漏洞利用。</p>
+<h2 id="潜在问题"><a href="#潜在问题" class="headerlink" title="潜在问题"></a>潜在问题</h2><ol>
+<li>失败的调用未被检测<br> 如果调用失败但未进行检查，合约可能会继续执行后续逻辑，从而导致不一致状态或意外行为。<br> 示例问题：转账操作失败，但余额已经从发送方扣除。</li>
+<li>错误处理被忽略<br> 外部合约调用可能由于异常（例如合约不存在或代码逻辑错误）而失败。如果不检查返回值，调用方将无法正确处理这些失败。</li>
+<li>逻辑漏洞导致资金损失<br> 如果未检查调用结果的返回值，攻击者可以通过故意设计失败的合约逻辑，扰乱调用方合约的资金或状态管理。</li>
+<li>影响合约的可组合性<br> 在 DeFi 等应用场景中，不同合约之间通常会进行复杂交互。如果未正确检查外部调用的结果，会影响合约间的协作，甚至破坏整个生态系统的安全性。</li>
+</ol>
+<p><strong>漏洞示例代码</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">// SPDX-License-Identifier: MIT</span><br><span class="line">pragma solidity ^0.8.0;</span><br><span class="line"></span><br><span class="line">contract UncheckedExternalCall &#123;</span><br><span class="line">    mapping(address =&gt; uint256) public balances;</span><br><span class="line"></span><br><span class="line">    // 存款功能</span><br><span class="line">    function deposit() public payable &#123;</span><br><span class="line">        balances[msg.sender] += msg.value;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // 提现功能，发送资金给用户</span><br><span class="line">    function withdraw(uint256 amount) public &#123;</span><br><span class="line">        require(balances[msg.sender] &gt;= amount, &quot;Insufficient balance&quot;);</span><br><span class="line"></span><br><span class="line">        // 发送资金，但未检查返回值</span><br><span class="line">        payable(msg.sender).call&#123;value: amount&#125;(&quot;&quot;);</span><br><span class="line"></span><br><span class="line">        // 更新余额</span><br><span class="line">        balances[msg.sender] -= amount;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>恶意示例代码</strong><br>攻击者可以部署一个恶意合约，故意使 call 失败（例如，使用耗尽 gas 的回退函数），从而导致 balances 状态不一致。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">// SPDX-License-Identifier: MIT</span><br><span class="line">pragma solidity ^0.8.0;</span><br><span class="line"></span><br><span class="line">contract Malicious &#123;</span><br><span class="line">    fallback() external payable &#123;</span><br><span class="line">    // 消耗所有 gas，故意让调用失败</span><br><span class="line">        while (true) &#123;&#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="解决方案"><a href="#解决方案" class="headerlink" title="解决方案"></a>解决方案</h2><p>显式检查 call 返回的布尔值，以确保调用成功：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">function withdraw(uint256 amount) public &#123;</span><br><span class="line">    require(balances[msg.sender] &gt;= amount, &quot;Insufficient balance&quot;);</span><br><span class="line"></span><br><span class="line">    // 检查调用结果</span><br><span class="line">    (bool success, ) = payable(msg.sender).call&#123;value: amount&#125;(&quot;&quot;);</span><br><span class="line">    require(success, &quot;Transfer failed&quot;);</span><br><span class="line"></span><br><span class="line">    balances[msg.sender] -= amount;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="随机数生成不安全"><a href="#随机数生成不安全" class="headerlink" title="随机数生成不安全"></a>随机数生成不安全</h1><h2 id="为什么Solidity-中随机数生成不安全？"><a href="#为什么Solidity-中随机数生成不安全？" class="headerlink" title="为什么Solidity 中随机数生成不安全？"></a>为什么Solidity 中随机数生成不安全？</h2><p>在 Solidity 中，常见的随机数生成方式（如依赖区块哈希、时间戳等）容易被攻击者预测或操控：</p>
+<ol>
+<li>区块哈希依赖（blockhash）： 区块哈希是公开信息，矿工可以选择不挖某些区块，进而影响生成的随机数。</li>
+<li>时间戳依赖（block.timestamp）： 矿工可以小幅调整时间戳，使得随机数变为对其有利的值。</li>
+<li>合约状态依赖（msg.sender, block.difficulty 等）： 合约状态和交易上下文的信息可以被预测和操控。</li>
+</ol>
+<p>这些方式在确定性（公开信息和上下文）和可操控性（矿工或攻击者干预）方面不安全。</p>
+<h2 id="如何安全生成随机数？"><a href="#如何安全生成随机数？" class="headerlink" title="如何安全生成随机数？"></a>如何安全生成随机数？</h2><ol>
+<li>Chainlink VRF:<ul>
+<li>可证明公平且可验证的随机数生成器（RNG），它使智能合约能够在不影响安全性或可用性的情况下访问随机值。</li>
+<li>建立区块链游戏和NFT</li>
+<li>随机分配职责和资源。例如，随机分配法官到案件。</li>
+<li>为共识机制选择一个具有代表性的样本。<br> 用法：<a href="https://docs.chain.link/vrf/v2-5/getting-started">https://docs.chain.link/vrf/v2-5/getting-started</a></li>
+</ul>
+</li>
+<li>Off-chain Randomness (链下随机数)：<ul>
+<li>使用链下生成随机数（如通过服务器或 API），然后将结果提交到链上。</li>
+<li>缺点：需要信任链下服务，可能会被操控。</li>
+<li>改进：通过多方签名或可信执行环境（如 Intel SGX）生成。</li>
+</ul>
+</li>
+<li>Threshold Signature Schemes (TSS)：<ul>
+<li>多方合作生成随机数，每方只持有部分秘密信息。</li>
+<li>优势：随机数完全由多方参与生成，无法单点操控。</li>
+<li>使用场景：像 Chainlink 的去中心化预言机网络。</li>
+</ul>
+</li>
+<li>VDF（Verifiable Delay Function）：<ul>
+<li>一种不可预测的随机数生成方式，需要一定时间来计算结果。</li>
+<li>优势：矿工无法提前操控随机数。</li>
+<li>实现：Ethereum 2.0 的随机数生成设计中引入了 VDF。</li>
+</ul>
+</li>
+</ol>
+<h1 id="智能合约升级问题"><a href="#智能合约升级问题" class="headerlink" title="智能合约升级问题"></a>智能合约升级问题</h1><p>智能合约在部署后通常无法直接修改，这可能导致升级和维护困难。如果设计不当，可能需要完全重启项目，从而浪费资源并导致用户信任危机。</p>
+<h2 id="解决方案-1：代理合约（Proxy-Pattern）"><a href="#解决方案-1：代理合约（Proxy-Pattern）" class="headerlink" title="解决方案 1：代理合约（Proxy Pattern）"></a>解决方案 1：代理合约（Proxy Pattern）</h2><h3 id="工作原理"><a href="#工作原理" class="headerlink" title="工作原理"></a>工作原理</h3><p>通过代理模式将合约分为两部分：</p>
+<ol>
+<li>代理合约（Proxy）： 存储状态变量，负责将用户请求委托给逻辑合约。</li>
+<li>逻辑合约（Logic&#x2F;Implementation）： 包含实际的业务逻辑，可以升级和替换。</li>
+</ol>
+<p>用户总是与代理合约交互，代理通过 delegatecall 将调用转发到逻辑合约，使用代理合约的存储保持状态一致。</p>
+<h3 id="具体实现"><a href="#具体实现" class="headerlink" title="具体实现"></a>具体实现</h3><ol>
+<li>UUPS Proxy<ul>
+<li>使用 upgradeTo 方法直接升级逻辑合约。</li>
+<li>更加轻量，但需要实现升级逻辑。</li>
+</ul>
+</li>
+<li>Transparent Proxy<ul>
+<li>避免管理员调用代理时出现冲突。</li>
+<li>管理员可升级逻辑合约，用户调用时自动转发。</li>
+</ul>
+</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">// SPDX-License-Identifier: MIT</span><br><span class="line">pragma solidity ^0.8.0;</span><br><span class="line"></span><br><span class="line">contract Proxy &#123;</span><br><span class="line">    uint256 public number;</span><br><span class="line">    address public implementation;</span><br><span class="line">    address public admin;</span><br><span class="line"></span><br><span class="line">    constructor(address _implementation) &#123;</span><br><span class="line">        admin = msg.sender;</span><br><span class="line">        implementation = _implementation;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    fallback() external &#123;</span><br><span class="line">        (bool success, ) = implementation.delegatecall(msg.data);</span><br><span class="line">        require(success, &quot;Delegatecall failed&quot;);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function upgrade(address newImplementation) external &#123;</span><br><span class="line">        require(msg.sender == admin, &quot;Only admin can upgrade&quot;);</span><br><span class="line">        implementation = newImplementation;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function getData(uint256 _num) public pure returns (bytes memory) &#123;</span><br><span class="line">        return abi.encodeWithSignature(&quot;setNumber(uint256)&quot;, _num);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// Logic contract (v1)</span><br><span class="line">contract LogicV1 &#123;</span><br><span class="line">    uint256 public number;</span><br><span class="line">    address public implementation;</span><br><span class="line">    address public admin;</span><br><span class="line">    uint256 public privateNum;</span><br><span class="line">    </span><br><span class="line">    function setNumber(uint256 _number) public &#123;</span><br><span class="line">        number = _number;</span><br><span class="line">        privateNum = _number;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// Logic contract (v2)</span><br><span class="line">contract LogicV2 &#123;</span><br><span class="line">    uint256 public number;</span><br><span class="line">    address public implementation;</span><br><span class="line">    address public admin;</span><br><span class="line">    uint256 public privateNum;</span><br><span class="line">    </span><br><span class="line">    function setNumber(uint256 _number) public &#123;</span><br><span class="line">        number = _number * 2; // Updated logic</span><br><span class="line">        privateNum = _number * 2;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>优点</strong></p>
+<ul>
+<li>无需重新部署存储状态，升级逻辑灵活。</li>
+<li>用户无感知升级操作。</li>
+</ul>
+<p><strong>缺点</strong></p>
+<ul>
+<li>增加代码复杂度。</li>
+</ul>
+<h2 id="解决方案2：模块化合约（Modular-Contract）"><a href="#解决方案2：模块化合约（Modular-Contract）" class="headerlink" title="解决方案2：模块化合约（Modular Contract）"></a>解决方案2：模块化合约（Modular Contract）</h2><h3 id="工作原理-1"><a href="#工作原理-1" class="headerlink" title="工作原理"></a>工作原理</h3><p>将合约分解为多个独立模块，所有模块通过核心合约（Registry 或 Router）进行管理。每个模块可单独替换而不影响整体功能。</p>
+<h3 id="具体实现-1"><a href="#具体实现-1" class="headerlink" title="具体实现"></a>具体实现</h3><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">// SPDX-License-Identifier: MIT</span><br><span class="line">pragma solidity ^0.8.0;</span><br><span class="line"></span><br><span class="line">interface ILOGIC &#123;</span><br><span class="line">    function setNumber(uint256 _number) external ;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">contract Router &#123;</span><br><span class="line">    mapping(string =&gt; address) public modules;</span><br><span class="line">    address public admin;</span><br><span class="line">    </span><br><span class="line">    constructor() &#123;</span><br><span class="line">        admin = msg.sender;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    function updateModule(string memory moduleName, address moduleAddress) external &#123;</span><br><span class="line">        require(msg.sender == admin, &quot;Only admin can update&quot;);</span><br><span class="line">        modules[moduleName] = moduleAddress;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    function setNumber(string memory moduleName, uint256 _num) external &#123;</span><br><span class="line">        address module = modules[moduleName];</span><br><span class="line">        require(module != address(0), &quot;Module not found&quot;);</span><br><span class="line">        ILOGIC(module).setNumber(_num);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// Logic contract (v1)</span><br><span class="line">contract LogicV1 is ILOGIC &#123;</span><br><span class="line">    uint256 public number;</span><br><span class="line">    uint256 public privateNum;</span><br><span class="line">    </span><br><span class="line">    function setNumber(uint256 _number) public  &#123;</span><br><span class="line">        number = _number;</span><br><span class="line">        privateNum = _number;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// Logic contract (v2)</span><br><span class="line">contract LogicV2 is ILOGIC &#123;</span><br><span class="line">    uint256 public number;</span><br><span class="line">    uint256 public privateNum;</span><br><span class="line">    </span><br><span class="line">    function setNumber(uint256 _number) public &#123;</span><br><span class="line">        number = _number * 2; // Updated logic</span><br><span class="line">        privateNum = _number * 2;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>优点</strong></p>
+<ul>
+<li>便于扩展新功能或模块。</li>
+<li>每个模块的更新不会影响其他部分。</li>
+</ul>
+<p><strong>缺点</strong></p>
+<ul>
+<li>初始设计复杂度较高。</li>
+<li>需要额外存储模块地址。</li>
+</ul>
+<h2 id="解决方案-3：数据分离（Storage-Contract）"><a href="#解决方案-3：数据分离（Storage-Contract）" class="headerlink" title="解决方案 3：数据分离（Storage Contract）"></a>解决方案 3：数据分离（Storage Contract）</h2><h3 id="工作原理-2"><a href="#工作原理-2" class="headerlink" title="工作原理"></a>工作原理</h3><p>将状态数据和业务逻辑分离为两个独立合约：</p>
+<ol>
+<li>存储合约（Storage Contract）： 负责存储状态变量。</li>
+<li>逻辑合约（Logic Contract）： 包含具体逻辑，可单独升级。</li>
+</ol>
+<h3 id="具体实现-2"><a href="#具体实现-2" class="headerlink" title="具体实现"></a>具体实现</h3><p><em>在上一个实现示例的基础上，进行存储合约和逻辑合约的分离。</em></p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">// SPDX-License-Identifier: MIT</span><br><span class="line">pragma solidity ^0.8.0;</span><br><span class="line"></span><br><span class="line">interface ISTORE &#123;</span><br><span class="line">    function setNumber(uint256 _number) external ;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">contract Store is ISTORE &#123;</span><br><span class="line">    uint256 public number;</span><br><span class="line"></span><br><span class="line">    function setNumber(uint256 _number) external &#123;</span><br><span class="line">        number = _number;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">interface ILOGIC &#123;</span><br><span class="line">    function setNumber(uint256 _number, ISTORE store) external ;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">contract Router &#123;</span><br><span class="line">    mapping(string =&gt; address) public modules;</span><br><span class="line">    address public admin;</span><br><span class="line">    ISTORE public store;</span><br><span class="line">    </span><br><span class="line">    constructor() &#123;</span><br><span class="line">        admin = msg.sender;</span><br><span class="line">        store = new Store();</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    function updateModule(string memory moduleName, address moduleAddress) external &#123;</span><br><span class="line">        require(msg.sender == admin, &quot;Only admin can update&quot;);</span><br><span class="line">        modules[moduleName] = moduleAddress;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    function setNumber(string memory moduleName, uint256 _num) external &#123;</span><br><span class="line">        address module = modules[moduleName];</span><br><span class="line">        require(module != address(0), &quot;Module not found&quot;);</span><br><span class="line">        ILOGIC(module).setNumber(_num, store);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// Logic contract (v1)</span><br><span class="line">contract LogicV1 &#123;</span><br><span class="line">    uint256 public privateNum;</span><br><span class="line">    </span><br><span class="line">    function setNumber(uint256 _number, ISTORE store) public  &#123;</span><br><span class="line">        store.setNumber(_number);</span><br><span class="line">        privateNum = _number;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// Logic contract (v2)</span><br><span class="line">contract LogicV2 is ILOGIC &#123;</span><br><span class="line">    uint256 public privateNum;</span><br><span class="line">    </span><br><span class="line">    function setNumber(uint256 _number, ISTORE store) public  &#123;</span><br><span class="line">        store.setNumber(_number * 2);</span><br><span class="line">        privateNum = _number * 2;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>优点</strong></p>
+<ul>
+<li>清晰的数据和逻辑分离。</li>
+<li>升级逻辑时不会影响存储。</li>
+</ul>
+<p><strong>缺点</strong></p>
+<ul>
+<li>初次部署复杂。</li>
+<li>存储和逻辑合约间的交互增加调用成本。</li>
+</ul>
+<h1 id="ERC20中“approve”无限授权的问题"><a href="#ERC20中“approve”无限授权的问题" class="headerlink" title="ERC20中“approve”无限授权的问题"></a>ERC20中“approve”无限授权的问题</h1><h2 id="竞争环境"><a href="#竞争环境" class="headerlink" title="竞争环境"></a>竞争环境</h2><h3 id="ERC20-的授权与竞争"><a href="#ERC20-的授权与竞争" class="headerlink" title="ERC20 的授权与竞争"></a>ERC20 的授权与竞争</h3><p><strong>假设场景</strong></p>
+<p>假设有一个用户 Alice 和一个智能合约 Token，以及一个攻击者 Mallory。Alice 想通过 approve 函数授权 Mallory 代她消费代币。</p>
+<p>初始状态：</p>
+<p>Alice 的账户余额为 1000 个 Token。<br>Mallory 尚未获得任何授权。<br>Token 合约中的 approve 函数允许 Alice 授权 Mallory一定额度的代币。<br>Alice 执行以下两个交易：</p>
+<p>approve(Mallory, 100); —— 授权 100 个代币。<br>想撤销授权后重新授权：approve(Mallory, 200); —— 授权 200 个代币。</p>
+<p><strong>第一种竞争：在授权更新中被抢占</strong></p>
+<p>在区块链网络中，交易可能存在提交和打包的时间差。</p>
+<ol>
+<li>交易流程：<ul>
+<li>Alice 提交第一笔交易 approve(Mallory, 100)。</li>
+<li>此时 Mallory 知道 Alice 即将授权 100，便迅速构造一个调用 transferFrom 的交易，试图转移代币。</li>
+<li>在 Alice 提交第二笔交易 approve(Mallory, 200) 之前，Mallory 的交易被矿工打包处理。</li>
+</ul>
+</li>
+<li>结果：<ul>
+<li>Mallory 调用了 transferFrom，并转移了 100 个代币。</li>
+<li>Alice 的第二笔交易（授权 200）覆盖了第一笔交易。</li>
+<li>最终，Mallory不仅得到了 100，还能再次调用 transferFrom 转移额外的 200 个代币。</li>
+</ul>
+</li>
+</ol>
+<p><strong>第二种竞争：替代攻击</strong></p>
+<p>以太坊允许用户在一笔交易未被确认前，用新的交易替换原交易（这被称为“交易替代”）。攻击者可以利用这种特性引发意外行为。</p>
+<ol>
+<li>交易流程：<ul>
+<li>Alice 提交 approve(Mallory, 100)。</li>
+<li>在这笔交易确认前，Alice 提交了一笔新的高 gas 交易 approve(Mallory, 0)。</li>
+<li>Mallory发送了一笔高优先级 transferFrom 交易，与 Alice 的两笔交易竞争。</li>
+</ul>
+</li>
+<li>结果：<ul>
+<li>如果矿工按照特定顺序处理，Mallory 的 transferFrom 会先于 Alice 的 approve(Mallory, 0)。</li>
+<li>最终，Mallory 成功提取了授权的 100 个代币，尽管 Alice 试图撤销授权。</li>
+</ul>
+</li>
+</ol>
+<p>尽管区块链中交易的执行是严格顺序的，但“竞争”主要源于交易在网络中传播和排序的行为。以下是两个核心原因：</p>
+<ol>
+<li>交易的传播和未确认状态：<ul>
+<li>在用户提交交易后，交易需要传播到网络中，并等待矿工打包。</li>
+<li>在交易被打包前的这段时间，其他用户或智能合约可以通过观察未确认交易，针对交易中暴露的状态进行恶意操作。</li>
+</ul>
+</li>
+<li>矿工的交易排序权：<ul>
+<li>矿工可以根据 gas 费优先级或其他策略排序交易。</li>
+<li>攻击者可以支付更高的 gas，让他们的交易先执行，从而“抢占”状态更新。</li>
+</ul>
+</li>
+</ol>
+<h3 id="解决竞争"><a href="#解决竞争" class="headerlink" title="解决竞争"></a>解决竞争</h3><ol>
+<li>增加原子性操作：<ul>
+<li><p>将 approve 和 transferFrom 的逻辑合并为一个原子操作，避免多笔交易间的时间窗口。</p>
+  <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">function safeTransfer(address to, uint256 amount) public &#123;</span><br><span class="line">    approve(to, amount);</span><br><span class="line">    transferFrom(msg.sender, to, amount);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ul>
+</li>
+<li>使用 increaseAllowance 和 decreaseAllowance：<ul>
+<li>避免覆盖现有授权额度，消除修改竞态。</li>
+</ul>
+</li>
+<li>限时授权：<ul>
+<li>设置一个时间锁，授权只能在一段时间后生效。</li>
+</ul>
+</li>
+</ol>
+<h2 id="“approve”无限授权"><a href="#“approve”无限授权" class="headerlink" title="“approve”无限授权"></a>“approve”无限授权</h2><p>ERC20中“approve”无限授权的问题，其本质并不是单纯由于区块链上的竞争，而是 ERC20标准的设计缺陷与区块链环境特性结合 导致的。这种问题由两个关键因素共同作用引发：</p>
+<ol>
+<li><p>ERC20 标准中的设计缺陷</p>
+<ul>
+<li>在 ERC20 的 approve 方法中，没有提供一种明确的原子操作机制来更新授权额度。</li>
+<li>在用户更改授权额度的过程中（如从 100 改为 200），攻击者可以利用时间窗口，通过 transferFrom 操作，在授权额度发生变化的过渡阶段恶意提取代币。</li>
+</ul>
+<p> <em>这个问题根源在于 approve 和 transferFrom 的设计缺乏配合机制，允许在两个操作之间发生不一致的状态。</em></p>
+</li>
+<li><p>区块链上的竞争特性</p>
+<ul>
+<li>交易传播时间差：当用户试图提交新授权（如 approve(Mallory, 200)），旧授权（如 approve(Mallory, 100)）仍然有效，且存在被利用的时间窗口。</li>
+<li>矿工排序自由：攻击者可以观察到用户提交的 approve 交易，通过支付更高的 gas 优先让他们的交易 transferFrom 被打包，抢在用户的状态更新之前执行。</li>
+</ul>
+<p> <em>这两点特性导致 approve 无法原子更新的问题被放大，从而使攻击成为可能。</em></p>
+</li>
+</ol>
+<h3 id="解决“approve”无限授权问题"><a href="#解决“approve”无限授权问题" class="headerlink" title="解决“approve”无限授权问题"></a>解决“approve”无限授权问题</h3><ol>
+<li>增加 increaseAllowance 和 decreaseAllowance 方法</li>
+</ol>
+<p>通过调整现有额度而不是直接覆盖额度，可以避免授权被覆盖的问题。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">function increaseAllowance(address spender, uint256 addedValue) public returns (bool) &#123;</span><br><span class="line">    allowance[msg.sender][spender] += addedValue;</span><br><span class="line">    emit Approval(msg.sender, spender, allowance[msg.sender][spender]);</span><br><span class="line">    return true;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">function decreaseAllowance(address spender, uint256 subtractedValue) public returns (bool) &#123;</span><br><span class="line">    require(allowance[msg.sender][spender] &gt;= subtractedValue, &quot;Decreased allowance below zero&quot;);</span><br><span class="line">    allowance[msg.sender][spender] -= subtractedValue;</span><br><span class="line">    emit Approval(msg.sender, spender, allowance[msg.sender][spender]);</span><br><span class="line">    return true;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li>原子操作结合转账</li>
+</ol>
+<p>通过单一交易完成授权和转账，避免分离操作引入的时间窗口</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">function safeTransferFrom(address from, address to, uint256 amount) public &#123;</span><br><span class="line">    require(allowance[from][msg.sender] &gt;= amount, &quot;Allowance exceeded&quot;);</span><br><span class="line">    allowance[from][msg.sender] -= amount;</span><br><span class="line">    balanceOf[from] -= amount;</span><br><span class="line">    balanceOf[to] += amount;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>ERC20 中“approve”无限授权的问题，并不完全是由于区块链竞争特性，而是由 授权更新的非原子性设计 和 区块链上交易排序特性 共同导致的。优化方法可以从改进 ERC20 的逻辑（如 increaseAllowance），有效解决这一问题。</p>
+]]></content>
       <categories>
         <category>blockchain</category>
       </categories>
