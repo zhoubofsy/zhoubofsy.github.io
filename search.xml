@@ -10675,6 +10675,9 @@
 <td align="left">需要手动计算字节码和 salt</td>
 </tr>
 </tbody></table>
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a href="https://learnblockchain.cn/article/7656">使用Create2操作码在相同的地址部署不同的代码的合约</a></li>
+</ul>
 ]]></content>
       <categories>
         <category>blockchain</category>
