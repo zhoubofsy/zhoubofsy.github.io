@@ -188,6 +188,219 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2024/12/05/blockchain/ethereum/solidity-contract-creation/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2024/12/05/blockchain/ethereum/solidity-contract-creation/" class="post-title-link" itemprop="url">创建管理合约</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2024-12-05 10:55:39 / Modified: 13:15:00" itemprop="dateCreated datePublished" datetime="2024-12-05T10:55:39+08:00">2024-12-05</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/blockchain/" itemprop="url" rel="index"><span itemprop="name">blockchain</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>在 Solidity 中，一个合约可以通过多种方式在另一个合约中创建和管理另一个合约。</p>
+<h1 id="合约内部部署（创建一个新合约"><a href="#合约内部部署（创建一个新合约" class="headerlink" title="合约内部部署（创建一个新合约"></a>合约内部部署（创建一个新合约</h1><p>Solidity 允许你在一个合约内部部署另一个合约。这通常是通过在合约中创建一个新的合约实例来实现的。你可以在构造函数或其他函数中动态部署一个新合约。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">// SPDX-License-Identifier: MIT</span><br><span class="line">pragma solidity ^0.8.0;</span><br><span class="line"></span><br><span class="line">contract NewContract &#123;</span><br><span class="line">    address public owner;</span><br><span class="line">        </span><br><span class="line">    constructor(address _owner) &#123;</span><br><span class="line">        owner = _owner;</span><br><span class="line">    &#125;</span><br><span class="line">                            </span><br><span class="line">    function getOwner() public view returns (address) &#123;</span><br><span class="line">        return owner;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">contract CreatorContract &#123;</span><br><span class="line">    address public lastCreatedContract;</span><br><span class="line">    </span><br><span class="line">    function createNewContract() public &#123;</span><br><span class="line">        NewContract newContract = new NewContract(msg.sender);</span><br><span class="line">        lastCreatedContract = address(newContract);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>解释：</strong></p>
+<ul>
+<li>CreatorContract 中有一个 createNewContract 函数，它使用 new 关键字创建了一个 NewContract 实例。NewContract 合约的构造函数接收 msg.sender 作为参数，意味着新合约的 owner 将是调用 createNewContract 函数的账户。</li>
+<li>创建的新合约地址会存储在 lastCreatedContract 中。</li>
+</ul>
+<h1 id="合约工厂模式（Factory-Pattern）"><a href="#合约工厂模式（Factory-Pattern）" class="headerlink" title="合约工厂模式（Factory Pattern）"></a>合约工厂模式（Factory Pattern）</h1><p>另一种常见的做法是使用工厂模式，即一个合约作为工厂来部署多个合约实例。工厂合约允许你根据需要创建新合约，并管理这些合约实例。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">// SPDX-License-Identifier: MIT</span><br><span class="line">pragma solidity ^0.8.0;</span><br><span class="line"></span><br><span class="line">contract Item &#123;</span><br><span class="line">    uint public id;</span><br><span class="line">    address public creator;</span><br><span class="line">        </span><br><span class="line">    constructor(uint _id, address _creator) &#123;</span><br><span class="line">        id = _id;</span><br><span class="line">        creator = _creator;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">contract ItemFactory &#123;</span><br><span class="line">    Item[] public items;</span><br><span class="line">    </span><br><span class="line">    function createItem(uint _id) public &#123;</span><br><span class="line">        Item newItem = new Item(_id, msg.sender);</span><br><span class="line">        items.push(newItem);</span><br><span class="line">    &#125;</span><br><span class="line">                                                                    </span><br><span class="line">    function getItems() public view returns (Item[] memory) &#123;</span><br><span class="line">        return items;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>解释：</strong></p>
+<ul>
+<li>ItemFactory 是一个工厂合约，它可以创建多个 Item 合约的实例，每个 Item 合约的创建者是调用工厂合约的账户。</li>
+<li>createItem 函数部署了一个新的 Item 合约，并将它存储在 items 数组中。</li>
+</ul>
+<h1 id="调用外部合约（外部合约部署后实例化）"><a href="#调用外部合约（外部合约部署后实例化）" class="headerlink" title="调用外部合约（外部合约部署后实例化）"></a>调用外部合约（外部合约部署后实例化）</h1><p>有时，合约不需要在自己内部部署其他合约，而是可以通过调用已经部署的外部合约的地址来与其交互。这不是“创建”合约，但却是一种与其他合约交互的方法。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">// SPDX-License-Identifier: MIT</span><br><span class="line">pragma solidity ^0.8.0;</span><br><span class="line"></span><br><span class="line">interface IExternalContract &#123;</span><br><span class="line">    function getOwner() external view returns (address);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">contract ContractInteraction &#123;</span><br><span class="line">    IExternalContract public externalContract;</span><br><span class="line">            </span><br><span class="line">    constructor(address _externalContractAddress) &#123;</span><br><span class="line">        externalContract = IExternalContract(_externalContractAddress);</span><br><span class="line">    &#125;</span><br><span class="line">                                </span><br><span class="line">    function getExternalOwner() public view returns (address) &#123;</span><br><span class="line">        return externalContract.getOwner();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>解释：</strong></p>
+<ul>
+<li>ContractInteraction 合约通过接口与外部合约交互，调用了 IExternalContract 中的 getOwner 函数。</li>
+<li>外部合约已经部署并被传入构造函数，ContractInteraction 合约与它交互。</li>
+</ul>
+<h1 id="使用-create2-来部署合约（指定地址部署）"><a href="#使用-create2-来部署合约（指定地址部署）" class="headerlink" title="使用 create2 来部署合约（指定地址部署）"></a>使用 create2 来部署合约（指定地址部署）</h1><p>create2 是一种更高级的部署方法，它允许你通过指定合约地址来部署合约。使用 create2 可以确保合约在指定的地址上部署，前提是你知道合约的字节码和盐值。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">// SPDX-License-Identifier: MIT</span><br><span class="line">pragma solidity ^0.8.0;</span><br><span class="line"></span><br><span class="line">contract FactoryWithCreate2 &#123;</span><br><span class="line">    event ContractCreated(address contractAddress);</span><br><span class="line"></span><br><span class="line">    function createNewContract(bytes32 salt) public &#123;</span><br><span class="line">        address newContractAddress;</span><br><span class="line">        bytes memory bytecode = type(NewContract).creationCode;</span><br><span class="line">                                        </span><br><span class="line">        assembly &#123;</span><br><span class="line">            newContractAddress := create2(0, add(bytecode, 0x20), mload(bytecode), salt)</span><br><span class="line">        &#125;</span><br><span class="line">                                                                            </span><br><span class="line">        emit ContractCreated(newContractAddress);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">contract NewContract &#123;</span><br><span class="line">    address public creator;</span><br><span class="line">    </span><br><span class="line">    constructor() &#123;</span><br><span class="line">        creator = msg.sender;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>解释：</strong></p>
+<ul>
+<li>createNewContract 函数使用 create2 来部署一个新的 NewContract 合约。</li>
+<li>create2 允许你在部署时指定一个 salt，确保你可以预测到部署合约的地址，前提是知道合约的字节码。</li>
+</ul>
+<h2 id="扩展信息"><a href="#扩展信息" class="headerlink" title="扩展信息"></a>扩展信息</h2><p>在 Solidity 中，type(NewContract).creationCode 是一种用于获取合约字节码的方法，它表示合约的创建代码。合约的字节码（bytecode）是它部署到区块链上的机器代码，其中包含了合约的逻辑和部署时所需的初始化数据。</p>
+<p><strong>合约字节码的组成部分</strong></p>
+<p>合约字节码可以分为以下几个主要部分：</p>
+<ol>
+<li>合约构造函数的初始化字节码</li>
+<li>部署过程中的合约代码</li>
+<li>合约的状态变量初始值</li>
+</ol>
+<h3 id="合约构造函数的初始化字节码"><a href="#合约构造函数的初始化字节码" class="headerlink" title="合约构造函数的初始化字节码"></a>合约构造函数的初始化字节码</h3><ul>
+<li>构造函数的字节码：每个合约在部署时都会执行其构造函数。creationCode 中包含了构造函数的代码部分，它负责初始化合约的状态，通常包括合约的状态变量赋值、事件初始化等操作。</li>
+<li>初始化参数：如果构造函数带有参数（例如合约需要初始化的状态变量），这些参数也会包含在 creationCode 中。部署合约时需要传递这些参数。</li>
+</ul>
+<p>creationCode：合约的“创建代码”，是用于部署合约的字节码，包含了构造函数的执行内容以及初始化步骤。在合约部署时，链上会执行这段创建代码，初始化合约，并且部署合约的 runtimeCode</p>
+<p>type(NewContract).creationCode 提供了一个方法来获取合约的 创建代码（即部署合约时使用的字节码），这段代码由合约的构造函数（constructor）以及合约的初始化部分组成，执行时会将合约的运行时代码存储在区块链上。</p>
+<p>creationCode 是合约创建时所需的字节码，包括构造函数的初始化部分、合约的部署逻辑等。</p>
+<h3 id="部署过程中的合约代码"><a href="#部署过程中的合约代码" class="headerlink" title="部署过程中的合约代码"></a>部署过程中的合约代码</h3><ul>
+<li>字节码本体：合约部署的代码（通常是 runtime code）会在合约创建时存储在链上。这个字节码本体包括了所有的业务逻辑和函数实现。它包含了所有合约的行为和功能，例如状态修改、函数调用等。</li>
+</ul>
+<p>runtimeCode：合约部署后剩余的代码，包含了合约的所有业务逻辑。合约一旦部署完成，它的 runtimeCode 就是唯一存在于区块链上的代码，而 creationCode 则只在合约创建时有作用。</p>
+<h3 id="合约的状态变量初始值"><a href="#合约的状态变量初始值" class="headerlink" title="合约的状态变量初始值"></a>合约的状态变量初始值</h3><ul>
+<li>初始化存储：合约在部署时，通常会有一些状态变量。它们的初始值会作为部署合约时的一部分被编码到创建代码中（如果有默认值）。这些值将在合约部署后存储到合约的状态中。</li>
+</ul>
+<h2 id="create-和-create2"><a href="#create-和-create2" class="headerlink" title="create 和 create2"></a>create 和 create2</h2><p>在 Solidity 中，create 和 create2 是用于部署合约的两种不同方法。二者的主要区别在于如何计算合约地址及其对地址预测的能力。理解这两者的原理及其差异对于优化合约部署和管理合约地址是非常重要的。</p>
+<h3 id="create-的原理"><a href="#create-的原理" class="headerlink" title="create 的原理"></a>create 的原理</h3><p>create 是最常见的合约部署方式，它通过在 Ethereum 网络上发送一笔交易来部署一个新的合约。</p>
+<ul>
+<li>部署过程：合约的字节码通过交易提交到区块链网络，然后在区块链中分配一个新的地址。</li>
+<li>地址计算：create 部署的合约的地址由 创建者的地址（msg.sender） 和 创建交易的nonce 决定。</li>
+</ul>
+<p><strong>合约地址计算公式：</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">address = keccak256(rlp_encode(sender, nonce))[12:]</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>sender：部署合约的账户地址（msg.sender）。</li>
+<li>nonce：msg.sender 的交易计数，即发送交易的次数。</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">address create(uint256 value, bytes memory bytecode, uint256 bytecodeSize)</span><br></pre></td></tr></table></figure>
+
+<ol>
+<li>value（uint256）：该参数表示向新合约发送的以太币数量。在合约部署时，你可以指定一个 value，这部分以太币将转移到新部署的合约中。若不想发送以太币，value 为 0。<br> value 是一个 uint256 类型，表示你要发送到新合约的以太币金额。</li>
+<li>bytecode（bytes memory）：即合约的字节码，它是合约代码的二进制形式。这是通过 type(Contract).creationCode 或其他类似的方法获取的合约字节码。<br> 这段字节码包含了合约的构造函数以及合约的逻辑代码。可以通过 type(MyContract).creationCode 获取。add(bytecode, 0x20) 字节码的存储位置，跳过前 32 字节，指向字节码的实际数据。</li>
+<li>bytecodeSize(uint256) : 它表示合约字节码的长度（通常是 32 字节）。</li>
+</ol>
+<h4 id="使用create"><a href="#使用create" class="headerlink" title="使用create"></a>使用create</h4><p>create 是标准的合约部署方式，适用于常规场景。通常情况下，您无需关心合约的地址，只需让合约被部署到区块链即可。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">pragma solidity ^0.8.0;</span><br><span class="line"></span><br><span class="line">contract NewContract &#123;</span><br><span class="line">    uint256 public value;</span><br><span class="line">    </span><br><span class="line">    constructor(uint256 _value) &#123;</span><br><span class="line">        value = _value;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">contract Factory &#123;</span><br><span class="line">    address public deployedContract;</span><br><span class="line">    </span><br><span class="line">    function deploy(uint256 _value, bytes32 _salt) external &#123;</span><br><span class="line">        bytes memory bytecode = type(NewContract).creationCode;  // 获取合约字节码</span><br><span class="line">        address contractAddress;</span><br><span class="line">        </span><br><span class="line">        assembly &#123;</span><br><span class="line">            contractAddress := create(0, add(bytecode, 0x20), mload(bytecode))</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        deployedContract = contractAddress;  // 记录新合约地址</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在这个例子中，Factory 合约会通过 create 部署一个新的 NewContract 合约。NewContract 的地址由 msg.sender 和 nonce 决定，因此无法在部署前预测。</p>
+<h3 id="create2-的原理"><a href="#create2-的原理" class="headerlink" title="create2 的原理"></a>create2 的原理</h3><p>create2 是 Solidity 0.5.0 引入的一种新的合约部署方式，它为部署合约提供了额外的控制能力，特别是在可预测的合约地址生成方面。与 create 不同，create2 的合约地址不仅由部署者的地址和交易 nonce 决定，还由以下额外的内容决定：</p>
+<ul>
+<li>部署者的地址 (msg.sender)</li>
+<li>salt：一个额外的任意字节值</li>
+<li>合约字节码的哈希：即部署的合约的字节码。</li>
+</ul>
+<p><strong>合约地址计算公式：</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">address = keccak256(0xff ++ sender ++ salt ++ keccak256(bytecode))[12:]</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>0xff 是一个常量，用于确保合约地址计算的唯一性。</li>
+<li>sender 是合约创建者的地址。</li>
+<li>salt 是一个提供给 create2 的自定义值，可以是任意字节。</li>
+<li>bytecode 是合约的字节码。</li>
+</ul>
+<p>create2 使得合约的地址可以在合约部署之前预先计算出来，因此我们可以在部署合约之前预测合约的地址。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">address create2(uint256 value, bytes memory bytecode, uint256 bytecodeSize, bytes32 salt)</span><br></pre></td></tr></table></figure>
+
+<ol>
+<li>value（uint256）：该参数表示向新合约发送的以太币数量。在合约部署时，你可以指定一个 value，这部分以太币将转移到新部署的合约中。若不想发送以太币，value 为 0。<br> value 是一个 uint256 类型，表示你要发送到新合约的以太币金额。</li>
+<li>bytecode（bytes memory）：即合约的字节码，它是合约代码的二进制形式。这是通过 type(Contract).creationCode 或其他类似的方法获取的合约字节码。<br> 这段字节码包含了合约的构造函数以及合约的逻辑代码。可以通过 type(MyContract).creationCode 获取。add(bytecode, 0x20) 字节码的存储位置，跳过前 32 字节，指向字节码的实际数据。</li>
+<li>bytecodeSize(uint256) : 它表示合约字节码的长度（通常是 32 字节）。</li>
+<li>salt（bytes32）：salt 是一个自定义的 bytes32 类型值，它为合约的创建地址提供一个“随机数”。salt 用于确保合约地址计算的唯一性。通过修改 salt 的值，可以控制生成的合约地址，从而为每个合约生成一个独特的地址。<br> salt 是唯一标识合约部署的一部分。你可以通过传入不同的 salt 值来生成不同的合约地址，即使合约字节码完全相同。</li>
+</ol>
+<h4 id="使用create2"><a href="#使用create2" class="headerlink" title="使用create2"></a>使用create2</h4><p>create2 则允许你指定一个 salt 值，进而可以提前计算出部署后的合约地址。这对于某些应用非常有用，例如需要在合约创建之前就知道合约的地址，或者在某些情境下需要复用相同地址的合约。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">pragma solidity ^0.8.0;</span><br><span class="line"></span><br><span class="line">contract NewContract &#123;</span><br><span class="line">    uint256 public value;</span><br><span class="line">    </span><br><span class="line">    constructor(uint256 _value) &#123;</span><br><span class="line">        value = _value;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">contract Factory &#123;</span><br><span class="line">    address public deployedContract;</span><br><span class="line">    </span><br><span class="line">    function deploy(uint256 _value, bytes32 _salt) external &#123;</span><br><span class="line">        bytes memory bytecode = type(NewContract).creationCode;  // 获取合约字节码</span><br><span class="line">        bytes32 salt = _salt;  // 使用用户传入的 salt 值</span><br><span class="line">        address contractAddress;</span><br><span class="line">        </span><br><span class="line">        assembly &#123;</span><br><span class="line">            contractAddress := create2(0, add(bytecode, 0x20), mload(bytecode), salt)</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        deployedContract = contractAddress;  // 记录新合约地址</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在这个例子中，Factory 合约使用 create2 部署一个 NewContract 合约。通过传入 salt 值，create2 会计算出一个特定的合约地址。这样，你可以在合约部署之前预测合约的地址。合约地址的计算基于 bytecode 和 salt 的哈希，因此只要 salt 和 bytecode 不变，生成的地址也将是固定的。</p>
+<h3 id="create-和-create2-的主要区别"><a href="#create-和-create2-的主要区别" class="headerlink" title="create 和 create2 的主要区别"></a>create 和 create2 的主要区别</h3><table>
+<thead>
+<tr>
+<th align="center">特性</th>
+<th align="left">create</th>
+<th align="left">create2</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">地址生成</td>
+<td align="left">由 msg.sender 地址和交易 nonce 决定</td>
+<td align="left">由 msg.sender 地址、salt 和合约字节码的哈希决定</td>
+</tr>
+<tr>
+<td align="center">预测地址</td>
+<td align="left">无法预测合约地址（取决于交易 nonce 和区块时间）</td>
+<td align="left">可以在合约部署前预测合约地址</td>
+</tr>
+<tr>
+<td align="center">灵活性</td>
+<td align="left">地址不可控制，无法提前决定</td>
+<td align="left">可以通过不同的 salt 值控制地址并预先计算</td>
+</tr>
+<tr>
+<td align="center">安全性</td>
+<td align="left">地址依赖于交易 nonce，可能会有一定的不确定性</td>
+<td align="left">地址可由部署者提前确定，减少了竞争条件</td>
+</tr>
+<tr>
+<td align="center">适用场景</td>
+<td align="left">普通合约部署</td>
+<td align="left">需要提前知道合约地址的场景</td>
+</tr>
+<tr>
+<td align="center">使用复杂度</td>
+<td align="left">简单</td>
+<td align="left">需要手动计算字节码和 salt</td>
+</tr>
+</tbody></table>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2024/11/28/blockchain/ethereum/solidity-security-reentrancy-attack/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1936,96 +2149,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2021/09/28/language/cpp/stl-container/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2021/09/28/language/cpp/stl-container/" class="post-title-link" itemprop="url">STL容器们</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2021-09-28 17:03:31" itemprop="dateCreated datePublished" datetime="2021-09-28T17:03:31+08:00">2021-09-28</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/language/" itemprop="url" rel="index"><span itemprop="name">language</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>c++中stl涉及到的容器类（或struct）有很多，具体都是什么原理呢？</p>
-<h2 id="std-array"><a href="#std-array" class="headerlink" title="std::array"></a>std::array</h2><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line">  <span class="keyword">template</span>&lt;<span class="keyword">typename</span> _Tp, std::<span class="type">size_t</span> _Nm&gt;</span><br><span class="line">      <span class="keyword">struct</span> <span class="title class_">__array_traits</span></span><br><span class="line">      &#123;</span><br><span class="line">        <span class="keyword">typedef</span> _Tp _Type[_Nm];</span><br><span class="line">        <span class="keyword">typedef</span> __is_swappable&lt;_Tp&gt; _Is_swappable;</span><br><span class="line">        <span class="keyword">typedef</span> __is_nothrow_swappable&lt;_Tp&gt; _Is_nothrow_swappable;</span><br><span class="line"></span><br><span class="line">        <span class="type">static</span> <span class="keyword">constexpr</span> _Tp&amp;</span><br><span class="line">        _S_ref(<span class="type">const</span> _Type&amp; <span class="type">__t</span>, std::<span class="type">size_t</span> __n) <span class="keyword">noexcept</span></span><br><span class="line">        &#123; <span class="keyword">return</span> <span class="built_in">const_cast</span>&lt;_Tp&amp;&gt;(<span class="type">__t</span>[__n]); &#125;</span><br><span class="line"></span><br><span class="line">        <span class="type">static</span> <span class="keyword">constexpr</span> _Tp*</span><br><span class="line">        _S_ptr(<span class="type">const</span> _Type&amp; <span class="type">__t</span>) <span class="keyword">noexcept</span></span><br><span class="line">        &#123; <span class="keyword">return</span> <span class="built_in">const_cast</span>&lt;_Tp*&gt;(<span class="type">__t</span>); &#125;</span><br><span class="line">      &#125;;</span><br><span class="line">......</span><br><span class="line">  <span class="keyword">template</span>&lt;<span class="keyword">typename</span> _Tp, std::<span class="type">size_t</span> _Nm&gt;</span><br><span class="line">      <span class="keyword">struct</span> <span class="title class_">array</span></span><br><span class="line">      &#123;</span><br><span class="line">        <span class="keyword">typedef</span> _Tp                                     value_type;</span><br><span class="line">        <span class="keyword">typedef</span> value_type*                             pointer;</span><br><span class="line">        <span class="keyword">typedef</span> <span class="type">const</span> value_type*                       const_pointer;</span><br><span class="line">        <span class="keyword">typedef</span> value_type&amp;                             reference;</span><br><span class="line">        <span class="keyword">typedef</span> <span class="type">const</span> value_type&amp;                       const_reference;</span><br><span class="line">        <span class="keyword">typedef</span> value_type*                             iterator;</span><br><span class="line">        <span class="keyword">typedef</span> <span class="type">const</span> value_type*                       const_iterator;</span><br><span class="line">        <span class="keyword">typedef</span> std::<span class="type">size_t</span>                             size_type;</span><br><span class="line">        <span class="keyword">typedef</span> std::<span class="type">ptrdiff_t</span>                          difference_type;</span><br><span class="line">        <span class="keyword">typedef</span> std::reverse_iterator&lt;iterator&gt;         reverse_iterator;</span><br><span class="line">        <span class="keyword">typedef</span> std::reverse_iterator&lt;const_iterator&gt;   const_reverse_iterator;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Support for zero-sized arrays mandatory.</span></span><br><span class="line">        <span class="keyword">typedef</span> _GLIBCXX_STD_C::__array_traits&lt;_Tp, _Nm&gt; _AT_Type;</span><br><span class="line">        <span class="keyword">typename</span> _AT_Type::_Type                         _M_elems;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// No explicit construct/copy/destroy for aggregate type.</span></span><br><span class="line">......</span><br></pre></td></tr></table></figure>
-
-<p>看这里<code>typename _AT_Type::_Type _M_elems;</code>再看这里<code>typedef _Tp _Type[_Nm];</code>。懂了吗，就是在栈上分配一个大小固定的数组。</p>
-<h2 id="std-vector"><a href="#std-vector" class="headerlink" title="std::vector"></a>std::vector</h2><p><code>vector</code>也是一个数组，只是不是分配在栈上的，而是分配在堆上的。</p>
-<p>看这里有一个<code>_Alloc</code>默认使用的是<code>std::allocator&lt;_Tp&gt;</code>，这就是在堆上分配内存用的。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br></pre></td><td class="code"><pre><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">     *  @brief A standard container which offers fixed time access to</span></span><br><span class="line"><span class="comment">     *  individual elements in any order.</span></span><br><span class="line"><span class="comment">     *  </span></span><br><span class="line"><span class="comment">     *  @ingroup sequences</span></span><br><span class="line"><span class="comment">     *  </span></span><br><span class="line"><span class="comment">     *  @tparam _Tp  Type of element.</span></span><br><span class="line"><span class="comment">     *  @tparam _Alloc  Allocator type, defaults to allocator&lt;_Tp&gt;.</span></span><br><span class="line"><span class="comment">     *  </span></span><br><span class="line"><span class="comment">     *  Meets the requirements of a &lt;a href=&quot;tables.html#65&quot;&gt;container&lt;/a&gt;, a</span></span><br><span class="line"><span class="comment">     *  &lt;a href=&quot;tables.html#66&quot;&gt;reversible container&lt;/a&gt;, and a</span></span><br><span class="line"><span class="comment">     *  &lt;a href=&quot;tables.html#67&quot;&gt;sequence&lt;/a&gt;, including the</span></span><br><span class="line"><span class="comment">     *  &lt;a href=&quot;tables.html#68&quot;&gt;optional sequence requirements&lt;/a&gt; with the</span></span><br><span class="line"><span class="comment">     *  %exception of @c push_front and @c pop_front.</span></span><br><span class="line"><span class="comment">     *  </span></span><br><span class="line"><span class="comment">     *  In some terminology a %vector can be described as a dynamic</span></span><br><span class="line"><span class="comment">     *  C-style array, it offers fast and efficient access to individual</span></span><br><span class="line"><span class="comment">     *  elements in any order and saves the user from worrying about</span></span><br><span class="line"><span class="comment">     *  memory and size allocation.  Subscripting ( @c [] ) access is</span></span><br><span class="line"><span class="comment">     *  also provided as with C-style arrays.</span></span><br><span class="line"><span class="comment">  */</span></span><br><span class="line">  <span class="keyword">template</span>&lt;<span class="keyword">typename</span> _Tp, <span class="keyword">typename</span> _Alloc = std::allocator&lt;_Tp&gt; &gt;</span><br><span class="line">  <span class="keyword">class</span> vector : <span class="keyword">protected</span> _Vector_base&lt;_Tp, _Alloc&gt;</span><br><span class="line">  &#123;</span><br><span class="line"><span class="meta">#<span class="keyword">ifdef</span> _GLIBCXX_CONCEPT_CHECKS</span></span><br><span class="line">    <span class="comment">// Concept requirements.</span></span><br><span class="line">    <span class="keyword">typedef</span> <span class="keyword">typename</span> _Alloc::value_type               _Alloc_value_type;</span><br><span class="line"><span class="meta"># <span class="keyword">if</span> __cplusplus &lt; 201103L</span></span><br><span class="line">    __glibcxx_class_requires(_Tp, _SGIAssignableConcept)</span><br><span class="line"><span class="meta"># <span class="keyword">endif</span></span></span><br><span class="line">    __glibcxx_class_requires2(_Tp, _Alloc_value_type, _SameTypeConcept)</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">if</span> __cplusplus &gt;= 201103L</span></span><br><span class="line">    <span class="built_in">static_assert</span>(is_same&lt;<span class="keyword">typename</span> remove_cv&lt;_Tp&gt;::type, _Tp&gt;::value,</span><br><span class="line">        <span class="string">&quot;std::vector must have a non-const, non-volatile value_type&quot;</span>);</span><br><span class="line"><span class="meta"># <span class="keyword">if</span> __cplusplus &gt; 201703L || defined __STRICT_ANSI__</span></span><br><span class="line">    <span class="built_in">static_assert</span>(is_same&lt;<span class="keyword">typename</span> _Alloc::value_type, _Tp&gt;::value,</span><br><span class="line">        <span class="string">&quot;std::vector must have the same value_type as its allocator&quot;</span>);</span><br><span class="line"><span class="meta"># <span class="keyword">endif</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">typedef</span> _Vector_base&lt;_Tp, _Alloc&gt;                 _Base;</span><br><span class="line">    <span class="keyword">typedef</span> <span class="keyword">typename</span> _Base::_Tp_alloc_type            _Tp_alloc_type;</span><br><span class="line">    <span class="keyword">typedef</span> __gnu_cxx::__alloc_traits&lt;_Tp_alloc_type&gt; _Alloc_traits;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="keyword">typedef</span> _Tp                                       value_type;</span><br><span class="line">        <span class="keyword">typedef</span> <span class="keyword">typename</span> _Base::pointer                   pointer;</span><br><span class="line">        <span class="keyword">typedef</span> <span class="keyword">typename</span> _Alloc_traits::const_pointer     const_pointer;</span><br><span class="line">        <span class="keyword">typedef</span> <span class="keyword">typename</span> _Alloc_traits::reference         reference;</span><br><span class="line">        <span class="keyword">typedef</span> <span class="keyword">typename</span> _Alloc_traits::const_reference   const_reference;</span><br><span class="line">        <span class="keyword">typedef</span> __gnu_cxx::__normal_iterator&lt;pointer, vector&gt; iterator;</span><br><span class="line">        <span class="keyword">typedef</span> __gnu_cxx::__normal_iterator&lt;const_pointer, vector&gt;</span><br><span class="line">        const_iterator;</span><br><span class="line">        <span class="keyword">typedef</span> std::reverse_iterator&lt;const_iterator&gt;     const_reverse_iterator;</span><br><span class="line">        <span class="keyword">typedef</span> std::reverse_iterator&lt;iterator&gt;           reverse_iterator;</span><br><span class="line">        <span class="keyword">typedef</span> <span class="type">size_t</span>                                    size_type;</span><br><span class="line">        <span class="keyword">typedef</span> <span class="type">ptrdiff_t</span>                                 difference_type;</span><br><span class="line">        <span class="keyword">typedef</span> _Alloc                                    allocator_type;</span><br><span class="line">......</span><br></pre></td></tr></table></figure>
-<p>再看这里定义了三个指针，用的是<code>typedef typename _Base::pointer pointer;</code>类型。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">namespace</span> std _GLIBCXX_VISIBILITY(<span class="keyword">default</span>)</span><br><span class="line">&#123;</span><br><span class="line">_GLIBCXX_BEGIN_NAMESPACE_VERSION</span><br><span class="line">_GLIBCXX_BEGIN_NAMESPACE_CONTAINER</span><br><span class="line"></span><br><span class="line">  <span class="comment">/// See bits/stl_deque.h&#x27;s _Deque_base for an explanation.</span></span><br><span class="line">  <span class="keyword">template</span>&lt;<span class="keyword">typename</span> _Tp, <span class="keyword">typename</span> _Alloc&gt;</span><br><span class="line">  <span class="keyword">struct</span> <span class="title class_">_Vector_base</span></span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">typedef</span> <span class="keyword">typename</span> __gnu_cxx::__alloc_traits&lt;_Alloc&gt;::<span class="keyword">template</span></span><br><span class="line">      rebind&lt;_Tp&gt;::other _Tp_alloc_type;</span><br><span class="line">    <span class="keyword">typedef</span> <span class="keyword">typename</span> __gnu_cxx::__alloc_traits&lt;_Tp_alloc_type&gt;::pointer</span><br><span class="line">      pointer;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">_Vector_impl_data</span></span><br><span class="line">    &#123;</span><br><span class="line">      pointer _M_start;</span><br><span class="line">      pointer _M_finish;</span><br><span class="line">      pointer _M_end_of_storage;</span><br><span class="line"></span><br><span class="line">      _Vector_impl_data() _GLIBCXX_NOEXCEPT</span><br><span class="line">      : _M_start(), _M_finish(), _M_end_of_storage()</span><br><span class="line">      &#123; &#125;</span><br><span class="line">......</span><br></pre></td></tr></table></figure>
-<p>指针分别叫：<code>pointer _M_start;</code>、<code>pointer _M_finish;</code>、<code>pointer _M_end_of_storage;</code> 之前不叫这个的，现在都改了。。。无所谓了，含义没变。。。</p>
-<p><code>vector</code>在堆上申请了一块内存，用于存放数组元素。用<code>_M_start</code>表示数组开始的位置，用<code>_M_finish</code>数据结束的位置，用<code>_M_end_of_storage</code> 表示这块内存容量结束的位置。</p>
-<ul>
-<li>当<code>vector</code>容量不足时，需要进行扩容，扩容会引发内存拷贝。</li>
-<li>当向<code>vector</code>插入、删除某些元素时，由于采用连续存储方式，也会引发内存拷贝。</li>
-</ul>
-<h3 id="扩容"><a href="#扩容" class="headerlink" title="扩容"></a>扩容</h3><p>刚刚提到了扩容，如果一个<code>vector</code>容量不足了需要扩容，应该扩多少呢？这个根据<code>reserve()</code>的值来决定。如果你没有设置的话，按你存入的数据量进行扩容。如果你设置了这个值，那么每次扩<code>reserve()</code>个。</p>
-<h2 id="list"><a href="#list" class="headerlink" title="list"></a>list</h2><p>To be countinue…</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -2095,7 +2218,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">143</span>
+          <span class="site-state-item-count">144</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

@@ -188,6 +188,260 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2016/06/06/storage/ceph/20160606-osd-config-optimize/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2016/06/06/storage/ceph/20160606-osd-config-optimize/" class="post-title-link" itemprop="url">Ceph集群OSD节点配置优化</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2016-06-06 09:51:13" itemprop="dateCreated datePublished" datetime="2016-06-06T09:51:13+08:00">2016-06-06</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="OSD配置优化"><a href="#OSD配置优化" class="headerlink" title="OSD配置优化"></a>OSD配置优化</h1><h2 id="Filestore"><a href="#Filestore" class="headerlink" title="Filestore"></a>Filestore</h2><table>
+<thead>
+<tr>
+<th>参数名</th>
+<th align="left">描述</th>
+<th align="right">默认值</th>
+<th align="right">推荐值</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>filestore max sync interval</td>
+<td align="left">从日志到数据盘最大同步间隔(秒)</td>
+<td align="right">5</td>
+<td align="right">15</td>
+</tr>
+<tr>
+<td>filestore min sync interval</td>
+<td align="left">从日志到数据盘最小同步间隔(秒)</td>
+<td align="right">0.1</td>
+<td align="right">10</td>
+</tr>
+<tr>
+<td>filestore queue max ops</td>
+<td align="left">最大未完成io数</td>
+<td align="right">50</td>
+<td align="right">25000</td>
+</tr>
+<tr>
+<td>filestore queue max bytes</td>
+<td align="left">最大未完成io字节数(B)</td>
+<td align="right">100 &lt;&lt; 20</td>
+<td align="right">10 &lt;&lt; 20</td>
+</tr>
+<tr>
+<td>filestore queue committing max ops</td>
+<td align="left">数据盘能够commit的操作数</td>
+<td align="right">500</td>
+<td align="right">5000</td>
+</tr>
+<tr>
+<td>filestore queue committing max bytes</td>
+<td align="left">数据盘能够commit的最大字节数（B）</td>
+<td align="right">100 &lt;&lt; 20</td>
+<td align="right">1000 &lt;&lt; 20</td>
+</tr>
+<tr>
+<td>filestore op threads</td>
+<td align="left">并发文件系统操作线程数</td>
+<td align="right">2</td>
+<td align="right">32</td>
+</tr>
+<tr>
+<td>filestore fd cache size</td>
+<td align="left">对象文件句柄缓存大小</td>
+<td align="right">128</td>
+<td align="right">8192</td>
+</tr>
+<tr>
+<td>filestore wbthrottle_xfs_bytes_start_flusher</td>
+<td align="left">xfs文件系统开始执行回刷的脏数据</td>
+<td align="right">41943040</td>
+<td align="right">90 &lt;&lt; 20</td>
+</tr>
+<tr>
+<td>filestore wbthrottle_xfs_bytes_hard_limit</td>
+<td align="left">xfs文件系统允许的最大脏数据</td>
+<td align="right">419430400</td>
+<td align="right">500 &lt;&lt; 20</td>
+</tr>
+</tbody></table>
+<h2 id="Journal"><a href="#Journal" class="headerlink" title="Journal"></a>Journal</h2><table>
+<thead>
+<tr>
+<th>参数名</th>
+<th align="left">描述</th>
+<th align="right">默认值</th>
+<th align="right">推荐值</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>osd journal size</td>
+<td align="left">OSD 日志大小（MB）</td>
+<td align="right">5120</td>
+<td align="right">20000</td>
+</tr>
+<tr>
+<td>journal max write bytes</td>
+<td align="left">日志一次异步io的最大字节数（B）</td>
+<td align="right">10 &lt;&lt; 20</td>
+<td align="right">1 &lt;&lt; 30</td>
+</tr>
+<tr>
+<td>journal max write entries</td>
+<td align="left">日志一次异步io的最大记录数</td>
+<td align="right">100</td>
+<td align="right">10000</td>
+</tr>
+</tbody></table>
+<h2 id="Recovery"><a href="#Recovery" class="headerlink" title="Recovery"></a>Recovery</h2><p>None</p>
+<h2 id="PG"><a href="#PG" class="headerlink" title="PG"></a>PG</h2><p><code>PGs = (Total_number_of_OSD * 100) / max_replication_count</code><br>如果有15个OSD，副本数为3，根据公式计算PGs为500，最接近512，所以需要设置该pool的<code>pg_num</code>和<code>pgp_num</code>都为512</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ceph osd pool set &#123;pool name&#125; pg_num 512</span><br><span class="line">ceph osd pool set &#123;pool name&#125; pgp_num 512</span><br></pre></td></tr></table></figure>
+
+<h2 id="CRUSH-Map"><a href="#CRUSH-Map" class="headerlink" title="CRUSH Map"></a>CRUSH Map</h2><p>Todo…</p>
+<h2 id="Client"><a href="#Client" class="headerlink" title="Client"></a>Client</h2><table>
+<thead>
+<tr>
+<th>参数名</th>
+<th align="left">描述</th>
+<th align="right">默认值</th>
+<th align="right">推荐值</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>objecter inflight ops</td>
+<td align="left">客户端允许的最大未发送io请求数</td>
+<td align="right">1024</td>
+<td align="right">1 &lt;&lt; 20</td>
+</tr>
+<tr>
+<td>objecter inflight op bytes</td>
+<td align="left">客户端允许的最大未发送脏数据</td>
+<td align="right">100 &lt;&lt; 20</td>
+<td align="right">10 &lt;&lt; 30</td>
+</tr>
+</tbody></table>
+<h2 id="Other"><a href="#Other" class="headerlink" title="Other"></a>Other</h2><table>
+<thead>
+<tr>
+<th>参数名</th>
+<th align="left">描述</th>
+<th align="right">默认值</th>
+<th align="right">推荐值</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>osd max write size</td>
+<td align="left">OSD一次可写入的最大值（MB）</td>
+<td align="right">90</td>
+<td align="right">512</td>
+</tr>
+<tr>
+<td>osd client message size</td>
+<td align="left">客户端允许在内存中的最大数据（B）</td>
+<td align="right">500 &lt;&lt; 20</td>
+<td align="right">2 &lt;&lt; 30</td>
+</tr>
+<tr>
+<td>osd deep scrub stride</td>
+<td align="left">在Deep Scrub时允许读取的字节数（B）</td>
+<td align="right">512 &lt;&lt; 10</td>
+<td align="right">128 &lt;&lt; 10</td>
+</tr>
+<tr>
+<td>osd op threads</td>
+<td align="left">OSD进程操作的线程数</td>
+<td align="right">2</td>
+<td align="right">8</td>
+</tr>
+<tr>
+<td>osd disk threads</td>
+<td align="left">OSD恢复和Scrubbing时的线程数</td>
+<td align="right">1</td>
+<td align="right">4</td>
+</tr>
+<tr>
+<td>osd map cache size</td>
+<td align="left">OSD Map 的缓存（MB）</td>
+<td align="right">200</td>
+<td align="right">1024</td>
+</tr>
+<tr>
+<td>ms_dispatch_throttle_bytes</td>
+<td align="left">控制DispatcherQueue队列深度大小</td>
+<td align="right">100 &lt;&lt; 20</td>
+<td align="right">1 &lt;&lt; 30</td>
+</tr>
+</tbody></table>
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="http://xiaoquqi.github.io/blog/2015/06/28/ceph-performance-optimization-summary/">Ceph性能优化总结（v.94）</a></li>
+<li><a target="_blank" rel="noopener" href="http://m.blog.csdn.net/article/details?id=51320138">Ceph性能优化之配置参数调优</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2016/06/02/storage/ceph/20160602-osd-node-optimize/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1112,82 +1366,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2016/04/14/git/git-usage-config-md/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2016/04/14/git/git-usage-config-md/" class="post-title-link" itemprop="url">git使用配置</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2016-04-14 11:28:09" itemprop="dateCreated datePublished" datetime="2016-04-14T11:28:09+08:00">2016-04-14</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/git/" itemprop="url" rel="index"><span itemprop="name">git</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="git配置"><a href="#git配置" class="headerlink" title="git配置"></a>git配置</h2><p>配置文件 ”~&#x2F;.gitconfig“</p>
-<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">[user]</span><br><span class="line">    email = zhoubofsy@hotmail.com</span><br><span class="line">    name = zhoubofsy</span><br><span class="line">[alias]</span><br><span class="line">    lg = log --color --graph --pretty=format:&#x27;%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)&lt;%an&gt;%Creset&#x27; --abbrev-commit</span><br><span class="line">[http]</span><br><span class="line">    proxy = http://127.0.0.1:8087</span><br><span class="line">    sslverify = false</span><br><span class="line">[https]</span><br><span class="line">    proxy = http://127.0.0.1:8087</span><br></pre></td></tr></table></figure>
-
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1257,7 +1435,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">143</span>
+          <span class="site-state-item-count">144</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

@@ -188,6 +188,93 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2019/12/12/language/golang/golang-debug-tools/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2019/12/12/language/golang/golang-debug-tools/" class="post-title-link" itemprop="url">Golang Debug工具集</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2019-12-12 16:44:41" itemprop="dateCreated datePublished" datetime="2019-12-12T16:44:41+08:00">2019-12-12</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/language/" itemprop="url" rel="index"><span itemprop="name">language</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>没钱、没钱、没钱，重要的事情说三遍，因为没钱，所以买不起正版的golang IDE，只能使用免费的轻量级的工具完成golang开发任务。</p>
+<p>那么，Coding可以使用vim。debug呢？以前用gdb，据说出了个dlv，据说这个dlv可以调试goroutine。抱着试试看的心态尝试一下。</p>
+<h1 id="dlv"><a href="#dlv" class="headerlink" title="dlv"></a>dlv</h1><h2 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h2><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">go get -u github.com/derekparker/delve/cmd/dlv</span><br></pre></td></tr></table></figure>
+
+<h2 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h2><p>配置文件在<code>~/.dlv/config.yml</code>，推荐修改其中的<code>max-string-len</code>，此配置为debug时，查看<code>string</code>变量的内容，最大显示多长，对于一些超长的字符串，会显示不下。所以为了看到更为完整的内容，建议将其设置为<code>max-string-len: 640</code>。</p>
+<p>当然，此配置也可以在debug过程中动态修改，详细请见<code>help</code>中的<code>config</code>命令。</p>
+<h2 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h2><p>启动dlv</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">dlv debug *.go</span><br></pre></td></tr></table></figure>
+<p>进入交互界面后，可以使用<code>help</code>查看命令，<code>b</code>设置断点，<code>l</code>list代码，基本使用与gdb很相似，如此用户体验还是不错的。</p>
+<h1 id="gdb"><a href="#gdb" class="headerlink" title="gdb"></a>gdb</h1><p>Todo…</p>
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="https://www.jb51.net/article/158885.htm">Golang命令行进行debug调试操作</a></li>
+<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/weixin_30478757/article/details/97514330">golang的dlv调试工具print打印字符串显示more,无法显示更多</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2019/12/12/storage/ceph/ceph-container-build/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1174,100 +1261,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2019/09/24/linux/gdb-in-docker/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2019/09/24/linux/gdb-in-docker/" class="post-title-link" itemprop="url">Docker中使用GDB调试</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2019-09-24 08:47:18" itemprop="dateCreated datePublished" datetime="2019-09-24T08:47:18+08:00">2019-09-24</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/linux/" itemprop="url" rel="index"><span itemprop="name">linux</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>** 背景 **</p>
-<p>容器是一个很老的技术，但这几年却很火热。好多应用都已经容器化了，只要是在用户空间运行的，几乎都可以被容器化。就是放到docker里运行。</p>
-<p>面对着容器里运行的应用程序它与外界隔离了，这种隔离有优点，也有缺点。今天我们不讲优点，说一说它的一个缺点。。。</p>
-<p>如果你是在linux上写C&#x2F;C++的朋友，你肯定会用到gdb这个神一样的调试工具。在当下这么火爆的容器面前，你的APP可能早就被扔到容器里了。</p>
-<p>有一天，除了一个问题，需要你用gdb去调试一下，我靠，ns完全是隔离的，根本无法调试，火大了吧，别急！我来帮你～v～</p>
-<h1 id="调试方法"><a href="#调试方法" class="headerlink" title="调试方法"></a>调试方法</h1><h2 id="方法一"><a href="#方法一" class="headerlink" title="方法一"></a>方法一</h2><p>其实gdb调试容器内app也不难，只要做到两点就可以成功调试了。</p>
-<ol>
-<li>你所使用的镜像里必须得有gdb工具，没有怎么调试啊。要么做镜像的时候将gdb安装进去，要么使你的gdb与被调试app的容器处于同一命名空间。</li>
-<li>使用一些工具(nsenter)侵入到容器命名空间后再运行gdb调试。eg: <code>sudo nsenter -t &#123;容器的PID&#125; -m -p gdb -p &#123;容器内被调试app的PID&#125;</code></li>
-</ol>
-<h2 id="方法二"><a href="#方法二" class="headerlink" title="方法二"></a>方法二</h2><p>方法二也需要在被调试的容器上先装有gdb，然后在启动容器的时候通过增加一些特权参数。待需要调试的时候直接登录到容器内就可以调试了。</p>
-<ol>
-<li>在启动docker容器的时候需要增加<code>--privileged</code>参数</li>
-<li>由于gdb调试需要的<code>SYS_PTRACE</code>属性被禁止掉了，所以在启动容器时候需要增加这个属性<code>--cap-add sys_ptrace</code></li>
-<li>gdb调试时，需要关闭linux虚拟地址随机化（虚拟地址随机化是为了安全考虑而出现的，gdb调试只是暂时关闭）。关闭有两种方法，一是通过gdb的命令<code>set disable-randomization off</code>关闭。二是通过设置docker的参数<code>--security-opt seccomp=unconfined</code>。</li>
-</ol>
-<p>有此三步，可保gdb无告警，并正常使用。</p>
-<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/1c4476c3d0ee?from=groupmessage">如何在docker中进行gdb调试</a></li>
-<li><a target="_blank" rel="noopener" href="https://yq.aliyun.com/articles/674757">为什么在Docker里使用gdb调试器会报错</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1337,7 +1330,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">143</span>
+          <span class="site-state-item-count">144</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

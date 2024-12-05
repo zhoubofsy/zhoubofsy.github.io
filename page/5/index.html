@@ -188,6 +188,139 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2019/05/13/storage/ceph/backfill_recovery_config/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2019/05/13/storage/ceph/backfill_recovery_config/" class="post-title-link" itemprop="url">Backfill & Recovery 恢复优化</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2019-05-13 14:20:56" itemprop="dateCreated datePublished" datetime="2019-05-13T14:20:56+08:00">2019-05-13</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>Backfill和Recovery都是用来恢复数据的，但二者的区别是Backfill是全量恢复，Recovery是增量恢复。而且在恢复过程中当出现Client访问恢复数据现象时，Backfill不会block client i&#x2F;o，但Recovery会block client i&#x2F;o。但二者如果占用带宽过大，还是会影响client i&#x2F;o的。</p>
+<h1 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h1><p>Ceph Version : Jewel</p>
+<h1 id="优化"><a href="#优化" class="headerlink" title="优化"></a>优化</h1><ul>
+<li>默认情况下将Backfill和Recovery对Client I&#x2F;O的影响降到最小。</li>
+<li>当需要Backfill或Recovery时，要根据集群负载动态调整。若集群负载低，可通过<code>ceph tell &#123;osd.id&#125; injectargs &quot;--config value&quot;</code>的放方式动态调整恢复速度，使其快速完成恢复操作。</li>
+<li>当恢复完成后，再次将Backfill和Recovery调整回默认值，以降低对Client I&#x2F;O的影响。</li>
+</ul>
+<h2 id="Recovery-参数说明"><a href="#Recovery-参数说明" class="headerlink" title="Recovery 参数说明"></a>Recovery 参数说明</h2><table>
+<thead>
+<tr>
+<th align="left">参数</th>
+<th align="left">描述</th>
+<th align="center">默认值</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">osd recovery max active</td>
+<td align="left">每个 OSD 一次处理的活跃恢复请求数量，增大此值能加速恢复，但它们会增加集群负载。</td>
+<td align="center">15</td>
+</tr>
+<tr>
+<td align="left">osd recovery max chunk</td>
+<td align="left">一次推送的数据块的最大尺寸。</td>
+<td align="center">8 &lt;&lt; 20</td>
+</tr>
+<tr>
+<td align="left">osd recovery threads</td>
+<td align="left">数据恢复时的线程数。</td>
+<td align="center">1</td>
+</tr>
+<tr>
+<td align="left">osd recovery thread timeout</td>
+<td align="left">恢复线程最大死亡时值。</td>
+<td align="center">30</td>
+</tr>
+</tbody></table>
+<h2 id="Backfill-参数说明"><a href="#Backfill-参数说明" class="headerlink" title="Backfill 参数说明"></a>Backfill 参数说明</h2><table>
+<thead>
+<tr>
+<th align="left">参数</th>
+<th align="left">描述</th>
+<th align="center">默认值</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">osd max backfills</td>
+<td align="left">单个 OSD 允许的最大回填操作数。</td>
+<td align="center">1</td>
+</tr>
+<tr>
+<td align="left">osd backfill full ratio</td>
+<td align="left">OSD 的占满率达到多少时拒绝接受回填请求</td>
+<td align="center">0.85</td>
+</tr>
+<tr>
+<td align="left">osd backfill retry interval</td>
+<td align="left">重试回填请求前等待秒数</td>
+<td align="center">10.0</td>
+</tr>
+</tbody></table>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2019/05/05/storage/ceph/rbd-mirror/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1360,89 +1493,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/12/07/container/docker/docker-volplugin-nbd-rbd/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2017/12/07/container/docker/docker-volplugin-nbd-rbd/" class="post-title-link" itemprop="url">Docker Volume Plugin 之 NBD-RBD(Ceph)</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2017-12-07 11:04:03" itemprop="dateCreated datePublished" datetime="2017-12-07T11:04:03+08:00">2017-12-07</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/container/" itemprop="url" rel="index"><span itemprop="name">container</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>Ceph官网有一篇<a target="_blank" rel="noopener" href="http://ceph.com/planet/getting-started-with-the-docker-rbd-volume-plugin/">“Getting started with the Docker RBD volume plugin”</a>里面提到了一个驱动<a target="_blank" rel="noopener" href="https://github.com/yp-engineering/rbd-docker-plugin">“github.com&#x2F;yp-engineering&#x2F;rbd-docker-plugin”</a>，此驱动使用的是krbd（kernel RBD）。krbd与librbd相比很多功能被阉割了，如果你只想用Ceph作为backend，那你可以使用这个驱动。如果你不甘心只是简单的使用Ceph，还想体验他的很多特性，那你可以考虑下面这个方案。。。</p>
-<h1 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h1><p>本方案的想法来自于Ceph的一个命令<code>nbd-rbd</code>，只要你的系统支持nbd，并且支持docker，nbd与rbd的通讯方式依然使用socket文件的形式，只是rbd client相关程序需要放置到容器中；因为有些操作系统没有包管理器，不能方便的安装软件包(如：CoreOS)。</p>
-<p><img src="/images/docker/docker_volplugin_nbd_rbd.png" alt="docker_volplugin_nbd_rbd.png"></p>
-<p>图画的这么清晰，还需要再说明吗！好吧，还是再说点儿吧。</p>
-<ul>
-<li>每个nbd设备与rbd设备之间使用一个socket文件进行通讯</li>
-<li>NBDServer用于管理所有nbd设备</li>
-<li>RBDServer用于管理所有rbd设备</li>
-</ul>
-<h1 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h1><p>*** Todo… ***</p>
-<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1>
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1512,7 +1562,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">143</span>
+          <span class="site-state-item-count">144</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

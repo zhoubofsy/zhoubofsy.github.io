@@ -188,6 +188,107 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/01/31/container/k8s/k8s-introduce/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2017/01/31/container/k8s/k8s-introduce/" class="post-title-link" itemprop="url">Kubernetes介绍</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2017-01-31 10:44:57" itemprop="dateCreated datePublished" datetime="2017-01-31T10:44:57+08:00">2017-01-31</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/container/" itemprop="url" rel="index"><span itemprop="name">container</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h1><p>Kubernetes是为生产环境而设计的容器调度管理系统，对于负载均衡、服务发现、高可用、滚动升级、自动伸缩等容器云平台的功能要求有原生支持。由于Kubernetes在K和s间有8个字母，因此常简称K8s。事实上，随着对K8s系统架构与设计理念的了解深入，我们会发现K8s系统正是处处为运行云原生应用而设计考虑；同时，随着对K8s系统使用的加深和加广，也会有越来越多有关云原生应用的设计模式产生出来，使得基于K8s系统设计和开发生产级的复杂云原生应用变得像启动一个单机版容器服务那样简单易用。</p>
+<h1 id="系统架构"><a href="#系统架构" class="headerlink" title="系统架构"></a>系统架构</h1><p>一个K8s集群是由etcd（分布式存储）、Minion&#x2F;node（服务节点）、Master（控制节点）构成的。集群状态都保存在etcd中，Master节点上则运行集群的管理控制模块，多个Master节点以Active&#x2F;Standby方式运行。Minion节点是真正运行应用容器的主机节点，在每个Minion节点上都会运行一个Kubelet代理，控制该节点上的容器、镜像和存储卷等。</p>
+<p><img src="/images/k8s/k8s_frame.png" alt="k8s_frame"></p>
+<h2 id="Master中模块"><a href="#Master中模块" class="headerlink" title="Master中模块"></a>Master中模块</h2><h3 id="API-Server"><a href="#API-Server" class="headerlink" title="API Server"></a>API Server</h3><pre><code>Kubernetes系统的入口，其封装了核心对象的增删改查操作，以RESTful API接口方式提供给外部客户和内部组件调用。维护的REST对象持久化到Etcd中存储。
+</code></pre>
+<h3 id="Scheduler"><a href="#Scheduler" class="headerlink" title="Scheduler"></a>Scheduler</h3><pre><code>为新建立的Pod进行节点选择(即分配机器)，负责集群的资源调度。组件抽离，可以方便替换成其他调度器。
+</code></pre>
+<h3 id="Controller"><a href="#Controller" class="headerlink" title="Controller"></a>Controller</h3><ul>
+<li>Replication Controller(RC)<br>  保证定义的副本数量与实际运行Pod数量一致。</li>
+<li>Node Controller<br>  管理维护Minion／node，定期检查Node的健康状态，标识出(失效|未失效)的节点。</li>
+<li>Namespace Controller<br>  管理维护Namespace，定期清理无效的Namespace。</li>
+<li>Service Controller<br>  Todo…</li>
+<li>EndPoints Controller<br>  Todo…</li>
+<li>Service Account Controller<br>  Todo…</li>
+<li>Persistent Volume Controller<br>  Todo…</li>
+<li>Daemon Set Controller<br>  管理维护Daemon Set，负责创建Daemon Pod，保证指定的Node上正常的运行Daemon Pod。</li>
+<li>Deployment Controller<br>  Todo…</li>
+<li>Job Controller<br>  管理维护Job，为Jod创建一次性任务Pod，保证完成Job指定完成的任务数目</li>
+<li>Pod Autoscaler Controller<br>  实现Pod的自动伸缩，定时获取监控数据，进行策略匹配，当满足条件时执行Pod的伸缩动作。</li>
+</ul>
+<h2 id="Minion中模块"><a href="#Minion中模块" class="headerlink" title="Minion中模块"></a>Minion中模块</h2><h3 id="Kubelet"><a href="#Kubelet" class="headerlink" title="Kubelet"></a>Kubelet</h3><p>负责管控容器，Kubelet会从Kubernetes API Server接收Pod的创建请求，启动和停止容器，监控容器运行状态并汇报给Kubernetes API Server。</p>
+<h3 id="Kube-proxy"><a href="#Kube-proxy" class="headerlink" title="Kube proxy"></a>Kube proxy</h3><p>Kube-proxy是K8s集群内部的负载均衡器。它是一个分布式代理服务器，在K8s的每个节点上都有一个；这一设计体现了它的伸缩性优势，需要访问服务的节点越多，提供负载均衡能力的Kube-proxy就越多，高可用节点也随之增多。</p>
+<h3 id="Pod"><a href="#Pod" class="headerlink" title="Pod"></a>Pod</h3><p>Pod是在K8s集群中运行部署应用或服务的最小单元，它是可以支持多容器的。Pod的设计理念是支持多个容器在一个Pod中共享网络地址和文件系统，可以通过进程间通信和文件共享这种简单高效的方式组合完成服务。Pod对多容器的支持是K8最基础的设计理念。Pod是K8s集群中所有业务类型的基础，目前K8s中的业务主要可以分为长期伺服型（long-running）、批处理型（batch）、节点后台支撑型（node-daemon）和有状态应用型（stateful application），分别对应控制器为Deployment Controller、Job Controller、Daemon Set Controller、Pet Set Controller</p>
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/horsefoot/article/details/52221706">Kubernetes的系统架构与设计理念</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.cnblogs.com/xkops/p/6165565.html">k8s入门系列之介绍篇</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.cnblogs.com/jianyuan/p/5063530.html">Docker系列(八)Kubernetes介绍</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/01/25/container/docker/docker-resource-separation/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1263,89 +1364,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/01/02/raspbarrypi/rpi3-keyboard-configuration/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2017/01/02/raspbarrypi/rpi3-keyboard-configuration/" class="post-title-link" itemprop="url">RPI键盘配置</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2017-01-02 18:55:13" itemprop="dateCreated datePublished" datetime="2017-01-02T18:55:13+08:00">2017-01-02</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/rpi/" itemprop="url" rel="index"><span itemprop="name">rpi</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h1><p>Raspberrypi原产至英国，其语言及键盘布局都是GB版的。而我们目前接触到的都是US版的。所以这里需要对键盘布局进行切换一下。</p>
-<h1 id="版本"><a href="#版本" class="headerlink" title="版本"></a>版本</h1><ul>
-<li>硬件，RaspberryPi3</li>
-<li>OS，raspbian jessie</li>
-</ul>
-<h1 id="键盘配置"><a href="#键盘配置" class="headerlink" title="键盘配置"></a>键盘配置</h1><p>在命令行中输入<code>sudo raspi-config</code>，进入<code>Internationaliation Options</code>，选择<code>Change Keyboard Layout</code>，弹出键盘配置界面。</p>
-<p>然后选择<code>Generic 101-key PC</code>，在layout中选择<code>Other</code>，然后在<code>Country of origin for the keyboard</code>中选择<code>English (US)</code>，再在<code>Keyboard Layout</code>页面中选择<code>English (US, alternative international)</code></p>
-<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/c80486/article/details/8460271">树莓派(raspberry pi)学习4: 更改键盘布局</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1415,7 +1433,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">143</span>
+          <span class="site-state-item-count">144</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

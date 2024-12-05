@@ -188,6 +188,93 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/09/25/language/python/python-thrift-hbase/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2017/09/25/language/python/python-thrift-hbase/" class="post-title-link" itemprop="url">python访问hbase方法</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2017-09-25 14:57:09" itemprop="dateCreated datePublished" datetime="2017-09-25T14:57:09+08:00">2017-09-25</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/language/" itemprop="url" rel="index"><span itemprop="name">language</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h1><p>python不能直接访问hbase，必须通过thrift插件才能访问hbase，下面是对<code>hbase</code>和<code>thrift</code>python插件的安装</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">pip install thrift</span><br><span class="line">pip install hbase-thrift</span><br></pre></td></tr></table></figure>
+
+
+<h1 id="访问hbase"><a href="#访问hbase" class="headerlink" title="访问hbase"></a>访问hbase</h1><p>hbase_client.py</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#!/usr/bin/python</span></span><br><span class="line"><span class="comment">#encoding=utf-8</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">from</span> thrift.transport <span class="keyword">import</span> TSocket</span><br><span class="line"><span class="keyword">from</span> thrift.transport <span class="keyword">import</span> TTransport</span><br><span class="line"><span class="keyword">from</span> thrift.protocol <span class="keyword">import</span> TBinaryProtocol</span><br><span class="line"></span><br><span class="line"><span class="keyword">from</span> hbase <span class="keyword">import</span> Hbase</span><br><span class="line"><span class="keyword">from</span> hbase.ttypes <span class="keyword">import</span> *</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">HbaseClient</span>(<span class="title class_ inherited__">object</span>):</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, host=<span class="string">&#x27;&#x27;</span>, port=<span class="number">9090</span></span>):</span><br><span class="line">        <span class="variable language_">self</span>.sock = TSocket.TSocket(host, port)</span><br><span class="line">        <span class="variable language_">self</span>.transport = TTransport.TBufferedTransport(<span class="variable language_">self</span>.sock)</span><br><span class="line">        <span class="variable language_">self</span>.proto = TBinaryProtocol.TBinaryProtocol(<span class="variable language_">self</span>.transport)</span><br><span class="line">        <span class="variable language_">self</span>.client = Hbase.Client(<span class="variable language_">self</span>.proto)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">get_tables</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="variable language_">self</span>.transport.<span class="built_in">open</span>()</span><br><span class="line">        tables = <span class="variable language_">self</span>.client.getTableNames()</span><br><span class="line">        <span class="variable language_">self</span>.transport.close()</span><br><span class="line">        <span class="keyword">return</span> tables</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">get_column_desp</span>(<span class="params">self, table_name</span>):</span><br><span class="line">        <span class="variable language_">self</span>.transport.<span class="built_in">open</span>()</span><br><span class="line">        column_desp = <span class="variable language_">self</span>.client.getColumnDescriptors(table_name)</span><br><span class="line">        <span class="variable language_">self</span>.transport.close()</span><br><span class="line">        <span class="keyword">return</span> column_desp</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">get_hbase_client</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="keyword">return</span> <span class="variable language_">self</span>.client</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">open</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="variable language_">self</span>.transport.<span class="built_in">open</span>()</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">close</span>(<span class="params">self</span>):</span><br><span class="line">        <span class="variable language_">self</span>.transport.close()</span><br></pre></td></tr></table></figure>
+
+<p>test.py</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> hbase_client <span class="keyword">as</span> hc</span><br><span class="line"></span><br><span class="line">con = hc.HbaseClient(host=<span class="string">&#x27;x.x.x.x&#x27;</span>)</span><br><span class="line">client = con.get_hbase_client()</span><br><span class="line"></span><br><span class="line">con.<span class="built_in">open</span>()</span><br><span class="line">tbls = client.getTableNames()</span><br><span class="line"><span class="built_in">print</span> tbls</span><br><span class="line">mytbls = []</span><br><span class="line"><span class="keyword">for</span> tbl <span class="keyword">in</span> tbls:</span><br><span class="line">    <span class="keyword">if</span> <span class="keyword">not</span> (tbl == <span class="string">&#x27;YJDD:myApp&#x27;</span> <span class="keyword">or</span> tbl == <span class="string">&#x27;YJDD:myAppDetail&#x27;</span>):</span><br><span class="line">        <span class="keyword">continue</span></span><br><span class="line">    <span class="built_in">print</span> <span class="string">&quot;ColumnDescriptors:&quot;</span></span><br><span class="line">    tbl_desp = client.getColumnDescriptors(tbl)</span><br><span class="line">    <span class="built_in">print</span> tbl_desp</span><br><span class="line">    <span class="built_in">print</span> <span class="string">&quot;TableRegions:&quot;</span></span><br><span class="line">    tbl_reg = client.getTableRegions(tbl)</span><br><span class="line">    <span class="built_in">print</span> tbl_reg</span><br><span class="line">    mytbls.append(tbl)</span><br><span class="line">                                            </span><br><span class="line"><span class="built_in">print</span> <span class="string">&quot;============== scannerGet ============&quot;</span></span><br><span class="line"><span class="keyword">for</span> tbl <span class="keyword">in</span> mytbls:</span><br><span class="line">    sid = client.scannerOpen(tbl, <span class="string">&#x27;&#x27;</span>, [<span class="string">&#x27;user&#x27;</span>,<span class="string">&#x27;app&#x27;</span>])</span><br><span class="line">    row_result = client.scannerGet(sid)</span><br><span class="line">    <span class="built_in">print</span> row_result</span><br><span class="line">    <span class="keyword">while</span> row_result:</span><br><span class="line">        row_result = client.scannerGet(sid)</span><br><span class="line">        <span class="keyword">if</span> row_result:</span><br><span class="line">            <span class="built_in">print</span> row_result</span><br><span class="line">    <span class="built_in">print</span> <span class="string">&quot;--------------------------&quot;</span></span><br><span class="line"></span><br><span class="line">    client.scannerClose(sid)</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span> <span class="string">&quot;=============== scannerGetList ============&quot;</span></span><br><span class="line"><span class="keyword">for</span> tbl <span class="keyword">in</span> mytbls:</span><br><span class="line">    sid = client.scannerOpen(tbl, <span class="string">&#x27;&#x27;</span>, [<span class="string">&#x27;user&#x27;</span>,<span class="string">&#x27;app&#x27;</span>])</span><br><span class="line">    row_result = client.scannerGetList(sid, <span class="number">20</span>)</span><br><span class="line">    <span class="built_in">print</span> row_result</span><br><span class="line">    client.scannerClose(sid)</span><br><span class="line">    <span class="built_in">print</span> <span class="string">&quot;--------------------------&quot;</span></span><br><span class="line">con.close()</span><br></pre></td></tr></table></figure>
+
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="http://www.jianshu.com/p/e916815470f1">python 通过thrift访问hbase</a></li>
+<li><a target="_blank" rel="noopener" href="https://wiki.apache.org/hadoop/Hbase/ThriftApi">ThriftAPI</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/09/25/language/python/python-encode-decode/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1629,80 +1716,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/08/28/linux/dist-linux-codename/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2017/08/28/linux/dist-linux-codename/" class="post-title-link" itemprop="url">dist-linux-codename</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2017-08-28 14:33:00" itemprop="dateCreated datePublished" datetime="2017-08-28T14:33:00+08:00">2017-08-28</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/linux/" itemprop="url" rel="index"><span itemprop="name">linux</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="ubuntu"><a href="#ubuntu" class="headerlink" title="ubuntu"></a>ubuntu</h1><h3 id="Xenial-Xerus-好客的非洲地松鼠"><a href="#Xenial-Xerus-好客的非洲地松鼠" class="headerlink" title="Xenial Xerus (好客的非洲地松鼠)"></a>Xenial Xerus (好客的非洲地松鼠)</h3><p>Ubuntu 16.04 的发布代号，简称XX。Canonical和Ubuntu的创始人马克·沙特尔沃思(Mark Shuttleworth) 在他的个人博文中写道：“这是如此的巧合幸运，我们的下个LTS应该为X，因为‘xenial’代表着主人和客人之间融洽的友好关系，而且对于推进Ubuntu OpenStack的LXD和KVM工作起到了非常积极的作用。Xerus则是非洲地松鼠，是我的祖国最为常见的动物。他们在沙漠环境中繁殖，并且以小型团体的方式生活，能够和邻居和谐生活的社会群体。”</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1772,7 +1785,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">143</span>
+          <span class="site-state-item-count">144</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
