@@ -188,6 +188,221 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2019/06/14/storage/ceph/exception-pg-resolve-flow/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2019/06/14/storage/ceph/exception-pg-resolve-flow/" class="post-title-link" itemprop="url">异常PG处理套路</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2019-06-14 14:18:54" itemprop="dateCreated datePublished" datetime="2019-06-14T14:18:54+08:00">2019-06-14</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>PG的全称为Placement Group（放置组），放置顾名思义放置Object的载体。PG的创建是在创建Pool的时候根据指定的数量进行创建。PG的数量与副本数也有关系，比如是3副本的则会有3个相同的pg存在于3个不同的osd上，以filestore为例pg其实在osd的存在形式就是一个目录。其目录的命名规则为 <code>&#123;pool-id&#125;.&#123;pg-id&#125;_head</code> 和 <code>&#123;pool-id&#125;.&#123;pg-id&#125;.TEMP</code>。如果你想找出一个pg对应哪些个osd，可以使用<code>ceph pg map &#123;pgid&#125;</code>的命令。</p>
+<p>eg：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[root@ceph71 ~]# ceph pg map 1.5f</span><br><span class="line">osdmap e30 pg 1.5f (1.5f) -&gt; up [2,0,1] acting [2,0,1]</span><br></pre></td></tr></table></figure>
+
+<p>背景就是介绍这么多吧，接下来说说PG状态。</p>
+<h1 id="状态"><a href="#状态" class="headerlink" title="状态"></a>状态</h1><table>
+<thead>
+<tr>
+<th align="right">状态</th>
+<th align="left">描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="right">active</td>
+<td align="left">当前拥有最新状态数据的pg正在工作中，能正常处理来自客户端的读写请求。</td>
+</tr>
+<tr>
+<td align="right">inactive</td>
+<td align="left">正在等待具有最新数据的OSD出现，即当前具有最新数据的pg不在工作中，不能正常处理来自客户端的读写请求。</td>
+</tr>
+<tr>
+<td align="right">activating</td>
+<td align="left">Peering 已经完成，PG 正在等待所有 PG 实例同步并固化 Peering 的结果 (Info、Log 等)</td>
+</tr>
+<tr>
+<td align="right">clean</td>
+<td align="left">pg所包含的object达到指定的副本数量，即object副本数量正常</td>
+</tr>
+<tr>
+<td align="right">unclean</td>
+<td align="left">PG所包含的object没有达到指定的副本数量，比如一个PG没在工作，另一个PG在工作，object没有复制到另外一个PG中。</td>
+</tr>
+<tr>
+<td align="right">peering</td>
+<td align="left">PG所在的OSD对PG中的对象的状态达成一个共识（维持对象一致性）</td>
+</tr>
+<tr>
+<td align="right">peered</td>
+<td align="left">peering已经完成，但pg当前acting set规模小于存储池规定的最小副本数（min_size）</td>
+</tr>
+<tr>
+<td align="right">degraded</td>
+<td align="left">主osd没有收到副osd的写完成应答，比如某个osd处于down状态</td>
+</tr>
+<tr>
+<td align="right">stale</td>
+<td align="left">主osd未在规定时间内向mon报告其pg状态，或者其它osd向mon报告该主osd无法通信</td>
+</tr>
+<tr>
+<td align="right">inconsistent</td>
+<td align="left">PG中存在某些对象的各个副本的数据不一致，原因可能是数据被修改</td>
+</tr>
+<tr>
+<td align="right">incomplete</td>
+<td align="left">peering过程中，由于无法选出权威日志，通过choose_acting选出的acting set不足以完成数据修复，导致peering无法正常完成</td>
+</tr>
+<tr>
+<td align="right">repair</td>
+<td align="left">pg在scrub过程中发现某些对象不一致，尝试自动修复</td>
+</tr>
+<tr>
+<td align="right">undersized</td>
+<td align="left">pg的副本数少于pg所在池所指定的副本数量，一般是由于osd down的缘故</td>
+</tr>
+<tr>
+<td align="right">scrubbing</td>
+<td align="left">pg对对象meta的一致性进行扫描</td>
+</tr>
+<tr>
+<td align="right">deep</td>
+<td align="left">pg对对象数据的一致性进行扫描</td>
+</tr>
+<tr>
+<td align="right">creating</td>
+<td align="left">pg正在被创建</td>
+</tr>
+<tr>
+<td align="right">recovering</td>
+<td align="left">pg间peering完成后，对pg中不一致的对象执行同步或修复，一般是osd down了或新加入了osd</td>
+</tr>
+<tr>
+<td align="right">recovering-wait</td>
+<td align="left">等待 Recovery 资源预留</td>
+</tr>
+<tr>
+<td align="right">backfilling</td>
+<td align="left">一般是当新的osd加入或移除掉了某个osd后，pg进行迁移或进行全量同步</td>
+</tr>
+<tr>
+<td align="right">down</td>
+<td align="left">包含必备数据的副本挂了，pg此时处理离线状态，不能正常处理来自客户端的读写请求</td>
+</tr>
+<tr>
+<td align="right">remapped</td>
+<td align="left">重新映射态。PG 活动集任何的一个改变，数据发生从老活动集到新活动集的迁移。在迁移期间还是用老的活动集中的主 OSD 处理客户端请求，一旦迁移完成新活动集中的主 OSD 开始处理</td>
+</tr>
+<tr>
+<td align="right">misplaced</td>
+<td align="left">有一些回填的场景：PG被临时映射到一个OSD上。而这种情况实际上不应太久，PG可能仍然处于临时位置而不是正确的位置。这种情况下个PG就是misplaced。这是因为正确的副本数存在但是有个别副本保存在错误的位置上。</td>
+</tr>
+</tbody></table>
+<h1 id="异常"><a href="#异常" class="headerlink" title="异常"></a>异常</h1><h2 id="active-undersized-degraded"><a href="#active-undersized-degraded" class="headerlink" title="active+undersized+degraded"></a>active+undersized+degraded</h2><p>若发现有osd挂掉，先尝试将osd重新拉起来，拉起来后集群会自动重新恢复健康状态。<br>但是也有可能出现这个osd再也起不来了，比如硬盘损坏了，这时多副本就发挥作用了，因为还有其它副本在其它osd上，这时我们可以通过均衡数据的方法来将集群恢复并将该osd踢出集群。</p>
+<p>** 解决 **</p>
+<ol>
+<li>将osd reweight权重置0，将数据分散到其他osd上 <code>ceph osd reweight &#123;osd-id&#125; 0</code></li>
+<li>待集群rebalance后，开始删除osd</li>
+</ol>
+<h2 id="unfound-objects"><a href="#unfound-objects" class="headerlink" title="unfound objects"></a>unfound objects</h2><p>ceph集群知道该对象存在，但无法定位该object在哪时会报这个错误。</p>
+<p>** 解决 **</p>
+<ol>
+<li>尝试让失败的osd起来，如果起来后集群恢复正常，则结束</li>
+<li>试将该pg的unfound对象回滚到上一个版本，<code>ceph pg &#123;pgid&#125; mark_unfound_lost revert</code>如果恢复正常，则结束</li>
+<li>如果还是不行，那只有将该object删除掉了，注意这会导致丢失数据，执行<code>ceph pg &#123;pgid&#125; mark_unfound_lost delete</code>删除unfound对象</li>
+</ol>
+<h2 id="inconsistent-objects"><a href="#inconsistent-objects" class="headerlink" title="inconsistent objects"></a>inconsistent objects</h2><p>pg中保存的object中有些副本数据不一致，有些事伴随着scrub errors错误</p>
+<p>** 解决 **</p>
+<ol>
+<li><code>ceph health detail</code>找出问题pg</li>
+<li>尝试<code>ceph pg repair &#123;pgid&#125;</code>，若成功，则结束；不成功进行如下操作。</li>
+<li>使用<code>ceph pg map &#123;pgid&#125;</code>找出主osd，打开日志查看哪个object不一致</li>
+<li>找出所有该objects所有副本存放的位置，用摘要算法(md5sum,sha256)等计算出其hash值，如果是3副本，删除与其他副本不一致的；如果是2副本，则可能会误删。</li>
+<li>再次执行<code>ceph pg repair &#123;pgid&#125;</code></li>
+</ol>
+<h2 id="stale-pg"><a href="#stale-pg" class="headerlink" title="stale pg"></a>stale pg</h2><p>pg出现stale状态，也就是pg处于僵死状态，该状态是无法处理新的请求了的，新的请求过来只会block，这种情况一般是由于所有副本pg的osd都挂了。<br>Ceph使用心跳来确保主机和进程都在运行，OSD进程如果不能周期性的发送心跳包，那么PG就会变成stuck状态。默认情况下，OSD每半秒钟汇汇报一次PG，up thru,boot, failure statistics等信息，要比心跳包更会频繁一点。如果主OSD不能汇报给MON或者其他OSD汇报主OSD挂了，Monitor会将主OSD上的PG标记为stale。当启动集群后，直到peer过程完成，PG都会处于stale状态。而当集群运行了一段时间后，如果PG卡在stale状态，说明主OSD上的PG挂了或者不能给MON发送信息。</p>
+<p>要模拟其实也很简单，比如设置2副本，然后将2个不同故障域的osd挂掉即可出现，最好的恢复方法当然是重新拉起这两个osd，但有时可能出现这样的情况，两个osd永远也拉不起来了，然后你把这两个osd清理出去了，清理完后这些pg当然就是stale的状态，这时的恢复方法只能是丢掉这个pg里的数据了，重新创建pg。</p>
+<p>** 解决 **</p>
+<ol>
+<li>使用命令<code>ceph pg dump |grep stale</code>找出所有的stale的pg，也可以<code>ceph health detail | grep stale</code></li>
+<li>执行<code>ceph pg force_create_pg &#123;pgid&#125;</code>命令强制重新创建pg，会看到pg转为creating状态</li>
+<li>重启ceph中所有osd服务</li>
+</ol>
+<h2 id="Peered"><a href="#Peered" class="headerlink" title="Peered"></a>Peered</h2><p>Peering 已经完成，但是 PG 当前 Acting Set 规模小于存储池规定的最小副本数 (min_size)。<br>如果pool的副本数为3、min_size&#x3D;2，停掉两个副本所在的osd，此时访问集群的客户端处于blocked状态。</p>
+<p>** 解决 **</p>
+<ol>
+<li>先尝试将down掉的两个osd恢复，或至少恢复一个。</li>
+<li>若不能正常恢复，可修改<code>min_size=1</code>，解除客户端blocked状态</li>
+</ol>
+<h1 id="鸣谢-参考"><a href="#鸣谢-参考" class="headerlink" title="鸣谢&amp;参考"></a>鸣谢&amp;参考</h1><ul>
+<li><a target="_blank" rel="noopener" href="https://www.cnblogs.com/luohaixian/p/9693978.html">Ceph PG介绍及故障状态和修复</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.infoq.cn/article/4N2whf1y1lH_Hd5QYOkW">分布式存储系统 Ceph 之 PG 状态详解</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.xuxiaopang.com/2016/11/11/doc-ceph-table/">Ceph常用表格汇总</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2019/05/13/storage/ceph/backfill_recovery_config/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1366,133 +1581,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/12/18/linux/automake/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2017/12/18/linux/automake/" class="post-title-link" itemprop="url">automake自动生成Makefile文件</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2017-12-18 16:28:06" itemprop="dateCreated datePublished" datetime="2017-12-18T16:28:06+08:00">2017-12-18</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/linux/" itemprop="url" rel="index"><span itemprop="name">linux</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>Linux下编程时，为了方便编译，往往使用Makefile文件自动完成编译，但是Makefile文件本身的书写十分复杂，规则很多。好在Linux为我们提供了自动生成功能完善的Makefile文件的工具autoconf&#x2F;automake。本文讲述如何使用它们生成Makefile文件。</p>
-<h1 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h1><ul>
-<li>OS<br>  ubuntu 16.04</li>
-<li>aclocal<br>  1.15</li>
-<li>autoconf<br>  2.69-9</li>
-<li>automake<br>  1.15</li>
-</ul>
-<h1 id="使用示例"><a href="#使用示例" class="headerlink" title="使用示例"></a>使用示例</h1><h2 id="准备"><a href="#准备" class="headerlink" title="准备"></a>准备</h2><p>创建一个<code>main.c</code>文件</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span>&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Hello automake\n&quot;</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">ls</span></span></span><br><span class="line">main.c </span><br></pre></td></tr></table></figure>
-
-<h2 id="创建configure-in文件"><a href="#创建configure-in文件" class="headerlink" title="创建configure.in文件"></a>创建configure.in文件</h2><p>运行<code>autoscan</code>，自动创建两个文件<code>autoscan.log</code>和<code>configure.scan</code></p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">autoscan</span></span><br><span class="line">Unescaped left brace in regex is deprecated, passed through in regex; marked by &lt;-- HERE in m/\$&#123; &lt;-- HERE [^\&#125;]*&#125;/ at /usr/bin/autoscan line 361.</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">ls</span></span></span><br><span class="line">autoscan.log  configure.scan  main.c</span><br></pre></td></tr></table></figure>
-
-<p>修改<code>configure.scan</code>，AC_INIT里面的参数: AC_INIT(main,1.0, <a href="mailto:&#x74;&#x65;&#x73;&#116;&#x40;&#50;&#54;&#51;&#46;&#x63;&#x6f;&#109;">&#x74;&#x65;&#x73;&#116;&#x40;&#50;&#54;&#51;&#46;&#x63;&#x6f;&#109;</a>)；添加宏AM_INIT_AUTOMAKE, 它是automake所必备的宏，也同前面一样，PACKAGE是所要产生软件套件的名称，VERSION是版本编号；在AC_OUTPUT后添加输出文件Makefile。</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">#                                               -*- Autoconf -*-</span><br><span class="line"># Process this file with autoconf to produce a configure script.</span><br><span class="line"></span><br><span class="line">AC_PREREQ([2.69])</span><br><span class="line">AC_INIT(main, 1.0, main@google.com)</span><br><span class="line">AC_CONFIG_SRCDIR([main.c])</span><br><span class="line">AC_CONFIG_HEADERS([config.h])</span><br><span class="line">AM_INIT_AUTOMAKE(main, 1.0)</span><br><span class="line"></span><br><span class="line"># Checks for programs.</span><br><span class="line">AC_PROG_CC</span><br><span class="line"></span><br><span class="line"># Checks for libraries.</span><br><span class="line"></span><br><span class="line"># Checks for header files.</span><br><span class="line"></span><br><span class="line"># Checks for typedefs, structures, and compiler characteristics.</span><br><span class="line"></span><br><span class="line"># Checks for library functions.</span><br><span class="line"></span><br><span class="line">AC_OUTPUT([Makefile])</span><br></pre></td></tr></table></figure>
-
-<p>将<code>configure.scan</code>重命名成<code>configure.ac</code></p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">ls</span></span></span><br><span class="line">autoscan.log  configure.ac  main.c</span><br></pre></td></tr></table></figure>
-
-<h2 id="生成aclocal相关文件"><a href="#生成aclocal相关文件" class="headerlink" title="生成aclocal相关文件"></a>生成aclocal相关文件</h2><p>运行<code>aclocal</code>，生成文件<code>aclocal.m4</code>、目录<code>autom4te.cache</code>，处理本地的宏定义。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">aclocal</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">ls</span></span></span><br><span class="line">aclocal.m4  autom4te.cache  autoscan.log  configure.ac  main.c</span><br></pre></td></tr></table></figure>
-
-<h2 id="生成configure文件"><a href="#生成configure文件" class="headerlink" title="生成configure文件"></a>生成configure文件</h2><p>运行<code>autoconf</code></p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">autoconf</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">ls</span></span></span><br><span class="line">aclocal.m4  autom4te.cache  autoscan.log  configure  configure.ac  main.c</span><br></pre></td></tr></table></figure>
-
-<h2 id="生成config-h-in文件"><a href="#生成config-h-in文件" class="headerlink" title="生成config.h.in文件"></a>生成config.h.in文件</h2><p>运行<code>autoheader</code>，生成config.h.in，该工具通常会从“acconfig.h”文件中复制用户附加的符号定义，因此此处没有附加符号定义，所以不需要创建“acconfig.h”文件。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">autoheader</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">ls</span></span></span><br><span class="line">aclocal.m4  autom4te.cache  autoscan.log  config.h.in  configure  configure.ac  main.c</span><br></pre></td></tr></table></figure>
-
-<h2 id="运行automake"><a href="#运行automake" class="headerlink" title="运行automake"></a>运行automake</h2><p>运行automake之前先创建一个<code>Makefile.am</code>，这一步是创建Makefile很重要的一步，automake要用的脚本配置文件是<code>Makefile.am</code>，用户需要自己创建相应的文件。之后，automake工具转换成<code>Makefile.in</code>。</p>
-<p>Makefile.am</p>
-<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">AUTOMAKE_OPTIONS=foreign</span><br><span class="line"></span><br><span class="line">bin_PROGRAMS=main</span><br><span class="line">main_SOURCES=main.c</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>AUTOMAKE_OPTIONS为设置automake的选项<br>  由于GNU对自己发布的软件有严格的规范，比如必须附带许可证声明文件COPYING等，否则automake执行时会报错。automake提供了三种软件等级：foreign、gnu和gnits，让用户选择采用，默认等级为gnu。在本例使用foreign等级，它只检测必须的文件。</li>
-<li>bin_PROGRAMS定义要产生的执行文件名<br>  如果要产生多个执行文件，每个文件名用空格隔开。</li>
-<li>main_SOURCES定义“main”这个执行程序所需要的原始文件<br>  如果”main”这个程序是由多个原始文件所产生的，则必须把它所用到的所有原始文件都列出来，并用空格隔开。例如：若目标体“main”需要“main.c”、“sunq.c”、“main.h”三个依赖文件，则定义main_SOURCES&#x3D;main.c sunq.c main.h。要注意的是，如果要定义多个执行文件，则对每个执行程序都要定义相应的file_SOURCES。</li>
-</ul>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">automake --add-missing</span></span><br><span class="line">configure.ac:8: warning: AM_INIT_AUTOMAKE: two- and three-arguments forms are deprecated.  For more info, see:</span><br><span class="line">configure.ac:8: http://www.gnu.org/software/automake/manual/automake.html#Modernize-AM_005fINIT_005fAUTOMAKE-invocation</span><br><span class="line">Makefile.am: installing &#x27;./depcomp&#x27;</span><br></pre></td></tr></table></figure>
-
-<p>使用automake对其生成“configure.in”文件，在这里使用选项“—adding-missing”可以让automake自动添加有一些必需的脚本文件。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">ls</span></span></span><br><span class="line">Makefile.am  Makefile.in  aclocal.m4  autom4te.cache  autoscan.log  compile  config.h.in  configure  configure.ac  depcomp  install-sh  main.c  missing</span><br></pre></td></tr></table></figure>
-
-<h2 id="运行configure生成Makefile"><a href="#运行configure生成Makefile" class="headerlink" title="运行configure生成Makefile"></a>运行configure生成Makefile</h2><p>通过运行自动配置设置文件configure，把Makefile.in变成了最终的Makefile</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">./configure</span></span><br><span class="line">checking for a BSD-compatible install... /usr/bin/install -c</span><br><span class="line">checking whether build environment is sane... yes</span><br><span class="line">checking for a thread-safe mkdir -p... /bin/mkdir -p</span><br><span class="line">checking for gawk... no</span><br><span class="line">checking for mawk... mawk</span><br><span class="line">checking whether make sets $(MAKE)... yes</span><br><span class="line">checking whether make supports nested variables... yes</span><br><span class="line">checking for gcc... gcc</span><br><span class="line">checking whether the C compiler works... yes</span><br><span class="line">checking for C compiler default output file name... a.out</span><br><span class="line">checking for suffix of executables...</span><br><span class="line">checking whether we are cross compiling... no</span><br><span class="line">checking for suffix of object files... o</span><br><span class="line">checking whether we are using the GNU C compiler... yes</span><br><span class="line">checking whether gcc accepts -g... yes</span><br><span class="line">checking for gcc option to accept ISO C89... none needed</span><br><span class="line">checking whether gcc understands -c and -o together... yes</span><br><span class="line">checking for style of include used by make... GNU</span><br><span class="line">checking dependency style of gcc... gcc3</span><br><span class="line">checking that generated files are newer than configure... done</span><br><span class="line">configure: creating ./config.status</span><br><span class="line">config.status: creating Makefile</span><br><span class="line">config.status: creating config.h</span><br><span class="line">config.status: executing depfiles commands</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">ls</span></span></span><br><span class="line">Makefile  Makefile.am  Makefile.in  aclocal.m4  autom4te.cache  autoscan.log  compile  config.h  config.h.in  config.log  config.status  configure  configure.ac  depcomp  install-sh  main.c  missing  stamp-h1</span><br></pre></td></tr></table></figure>
-
-<h2 id="make编译工程"><a href="#make编译工程" class="headerlink" title="make编译工程"></a>make编译工程</h2><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">make</span></span><br><span class="line">make  all-am</span><br><span class="line">make[1]: Entering directory &#x27;/root/automake&#x27;</span><br><span class="line">gcc -DHAVE_CONFIG_H -I.     -g -O2 -MT main.o -MD -MP -MF .deps/main.Tpo -c -o main.o main.c</span><br><span class="line">mv -f .deps/main.Tpo .deps/main.Po</span><br><span class="line">gcc  -g -O2   -o main main.o</span><br><span class="line">make[1]: Leaving directory &#x27;/root/automake&#x27;</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">ls</span></span></span><br><span class="line">Makefile  Makefile.am  Makefile.in  aclocal.m4  autom4te.cache  autoscan.log  compile  config.h  config.h.in  config.log  config.status  configure  configure.ac  depcomp  install-sh  main  main.c  main.o  missing  stamp-h1</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">./main</span></span><br><span class="line">Hello automake</span><br></pre></td></tr></table></figure>
-
-<h1 id="参考鸣谢"><a href="#参考鸣谢" class="headerlink" title="参考鸣谢"></a>参考鸣谢</h1><ul>
-<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/qq_33336155/article/details/52556965">automake自动生成makefile文件</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1562,7 +1650,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">144</span>
+          <span class="site-state-item-count">145</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

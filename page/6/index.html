@@ -188,6 +188,133 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/12/18/linux/automake/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2017/12/18/linux/automake/" class="post-title-link" itemprop="url">automake自动生成Makefile文件</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2017-12-18 16:28:06" itemprop="dateCreated datePublished" datetime="2017-12-18T16:28:06+08:00">2017-12-18</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/linux/" itemprop="url" rel="index"><span itemprop="name">linux</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>Linux下编程时，为了方便编译，往往使用Makefile文件自动完成编译，但是Makefile文件本身的书写十分复杂，规则很多。好在Linux为我们提供了自动生成功能完善的Makefile文件的工具autoconf&#x2F;automake。本文讲述如何使用它们生成Makefile文件。</p>
+<h1 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h1><ul>
+<li>OS<br>  ubuntu 16.04</li>
+<li>aclocal<br>  1.15</li>
+<li>autoconf<br>  2.69-9</li>
+<li>automake<br>  1.15</li>
+</ul>
+<h1 id="使用示例"><a href="#使用示例" class="headerlink" title="使用示例"></a>使用示例</h1><h2 id="准备"><a href="#准备" class="headerlink" title="准备"></a>准备</h2><p>创建一个<code>main.c</code>文件</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span>&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Hello automake\n&quot;</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">ls</span></span></span><br><span class="line">main.c </span><br></pre></td></tr></table></figure>
+
+<h2 id="创建configure-in文件"><a href="#创建configure-in文件" class="headerlink" title="创建configure.in文件"></a>创建configure.in文件</h2><p>运行<code>autoscan</code>，自动创建两个文件<code>autoscan.log</code>和<code>configure.scan</code></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">autoscan</span></span><br><span class="line">Unescaped left brace in regex is deprecated, passed through in regex; marked by &lt;-- HERE in m/\$&#123; &lt;-- HERE [^\&#125;]*&#125;/ at /usr/bin/autoscan line 361.</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">ls</span></span></span><br><span class="line">autoscan.log  configure.scan  main.c</span><br></pre></td></tr></table></figure>
+
+<p>修改<code>configure.scan</code>，AC_INIT里面的参数: AC_INIT(main,1.0, <a href="mailto:&#x74;&#x65;&#x73;&#116;&#x40;&#50;&#54;&#51;&#46;&#x63;&#x6f;&#109;">&#x74;&#x65;&#x73;&#116;&#x40;&#50;&#54;&#51;&#46;&#x63;&#x6f;&#109;</a>)；添加宏AM_INIT_AUTOMAKE, 它是automake所必备的宏，也同前面一样，PACKAGE是所要产生软件套件的名称，VERSION是版本编号；在AC_OUTPUT后添加输出文件Makefile。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">#                                               -*- Autoconf -*-</span><br><span class="line"># Process this file with autoconf to produce a configure script.</span><br><span class="line"></span><br><span class="line">AC_PREREQ([2.69])</span><br><span class="line">AC_INIT(main, 1.0, main@google.com)</span><br><span class="line">AC_CONFIG_SRCDIR([main.c])</span><br><span class="line">AC_CONFIG_HEADERS([config.h])</span><br><span class="line">AM_INIT_AUTOMAKE(main, 1.0)</span><br><span class="line"></span><br><span class="line"># Checks for programs.</span><br><span class="line">AC_PROG_CC</span><br><span class="line"></span><br><span class="line"># Checks for libraries.</span><br><span class="line"></span><br><span class="line"># Checks for header files.</span><br><span class="line"></span><br><span class="line"># Checks for typedefs, structures, and compiler characteristics.</span><br><span class="line"></span><br><span class="line"># Checks for library functions.</span><br><span class="line"></span><br><span class="line">AC_OUTPUT([Makefile])</span><br></pre></td></tr></table></figure>
+
+<p>将<code>configure.scan</code>重命名成<code>configure.ac</code></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">ls</span></span></span><br><span class="line">autoscan.log  configure.ac  main.c</span><br></pre></td></tr></table></figure>
+
+<h2 id="生成aclocal相关文件"><a href="#生成aclocal相关文件" class="headerlink" title="生成aclocal相关文件"></a>生成aclocal相关文件</h2><p>运行<code>aclocal</code>，生成文件<code>aclocal.m4</code>、目录<code>autom4te.cache</code>，处理本地的宏定义。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">aclocal</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">ls</span></span></span><br><span class="line">aclocal.m4  autom4te.cache  autoscan.log  configure.ac  main.c</span><br></pre></td></tr></table></figure>
+
+<h2 id="生成configure文件"><a href="#生成configure文件" class="headerlink" title="生成configure文件"></a>生成configure文件</h2><p>运行<code>autoconf</code></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">autoconf</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">ls</span></span></span><br><span class="line">aclocal.m4  autom4te.cache  autoscan.log  configure  configure.ac  main.c</span><br></pre></td></tr></table></figure>
+
+<h2 id="生成config-h-in文件"><a href="#生成config-h-in文件" class="headerlink" title="生成config.h.in文件"></a>生成config.h.in文件</h2><p>运行<code>autoheader</code>，生成config.h.in，该工具通常会从“acconfig.h”文件中复制用户附加的符号定义，因此此处没有附加符号定义，所以不需要创建“acconfig.h”文件。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">autoheader</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">ls</span></span></span><br><span class="line">aclocal.m4  autom4te.cache  autoscan.log  config.h.in  configure  configure.ac  main.c</span><br></pre></td></tr></table></figure>
+
+<h2 id="运行automake"><a href="#运行automake" class="headerlink" title="运行automake"></a>运行automake</h2><p>运行automake之前先创建一个<code>Makefile.am</code>，这一步是创建Makefile很重要的一步，automake要用的脚本配置文件是<code>Makefile.am</code>，用户需要自己创建相应的文件。之后，automake工具转换成<code>Makefile.in</code>。</p>
+<p>Makefile.am</p>
+<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">AUTOMAKE_OPTIONS=foreign</span><br><span class="line"></span><br><span class="line">bin_PROGRAMS=main</span><br><span class="line">main_SOURCES=main.c</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>AUTOMAKE_OPTIONS为设置automake的选项<br>  由于GNU对自己发布的软件有严格的规范，比如必须附带许可证声明文件COPYING等，否则automake执行时会报错。automake提供了三种软件等级：foreign、gnu和gnits，让用户选择采用，默认等级为gnu。在本例使用foreign等级，它只检测必须的文件。</li>
+<li>bin_PROGRAMS定义要产生的执行文件名<br>  如果要产生多个执行文件，每个文件名用空格隔开。</li>
+<li>main_SOURCES定义“main”这个执行程序所需要的原始文件<br>  如果”main”这个程序是由多个原始文件所产生的，则必须把它所用到的所有原始文件都列出来，并用空格隔开。例如：若目标体“main”需要“main.c”、“sunq.c”、“main.h”三个依赖文件，则定义main_SOURCES&#x3D;main.c sunq.c main.h。要注意的是，如果要定义多个执行文件，则对每个执行程序都要定义相应的file_SOURCES。</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">automake --add-missing</span></span><br><span class="line">configure.ac:8: warning: AM_INIT_AUTOMAKE: two- and three-arguments forms are deprecated.  For more info, see:</span><br><span class="line">configure.ac:8: http://www.gnu.org/software/automake/manual/automake.html#Modernize-AM_005fINIT_005fAUTOMAKE-invocation</span><br><span class="line">Makefile.am: installing &#x27;./depcomp&#x27;</span><br></pre></td></tr></table></figure>
+
+<p>使用automake对其生成“configure.in”文件，在这里使用选项“—adding-missing”可以让automake自动添加有一些必需的脚本文件。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">ls</span></span></span><br><span class="line">Makefile.am  Makefile.in  aclocal.m4  autom4te.cache  autoscan.log  compile  config.h.in  configure  configure.ac  depcomp  install-sh  main.c  missing</span><br></pre></td></tr></table></figure>
+
+<h2 id="运行configure生成Makefile"><a href="#运行configure生成Makefile" class="headerlink" title="运行configure生成Makefile"></a>运行configure生成Makefile</h2><p>通过运行自动配置设置文件configure，把Makefile.in变成了最终的Makefile</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">./configure</span></span><br><span class="line">checking for a BSD-compatible install... /usr/bin/install -c</span><br><span class="line">checking whether build environment is sane... yes</span><br><span class="line">checking for a thread-safe mkdir -p... /bin/mkdir -p</span><br><span class="line">checking for gawk... no</span><br><span class="line">checking for mawk... mawk</span><br><span class="line">checking whether make sets $(MAKE)... yes</span><br><span class="line">checking whether make supports nested variables... yes</span><br><span class="line">checking for gcc... gcc</span><br><span class="line">checking whether the C compiler works... yes</span><br><span class="line">checking for C compiler default output file name... a.out</span><br><span class="line">checking for suffix of executables...</span><br><span class="line">checking whether we are cross compiling... no</span><br><span class="line">checking for suffix of object files... o</span><br><span class="line">checking whether we are using the GNU C compiler... yes</span><br><span class="line">checking whether gcc accepts -g... yes</span><br><span class="line">checking for gcc option to accept ISO C89... none needed</span><br><span class="line">checking whether gcc understands -c and -o together... yes</span><br><span class="line">checking for style of include used by make... GNU</span><br><span class="line">checking dependency style of gcc... gcc3</span><br><span class="line">checking that generated files are newer than configure... done</span><br><span class="line">configure: creating ./config.status</span><br><span class="line">config.status: creating Makefile</span><br><span class="line">config.status: creating config.h</span><br><span class="line">config.status: executing depfiles commands</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">ls</span></span></span><br><span class="line">Makefile  Makefile.am  Makefile.in  aclocal.m4  autom4te.cache  autoscan.log  compile  config.h  config.h.in  config.log  config.status  configure  configure.ac  depcomp  install-sh  main.c  missing  stamp-h1</span><br></pre></td></tr></table></figure>
+
+<h2 id="make编译工程"><a href="#make编译工程" class="headerlink" title="make编译工程"></a>make编译工程</h2><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">make</span></span><br><span class="line">make  all-am</span><br><span class="line">make[1]: Entering directory &#x27;/root/automake&#x27;</span><br><span class="line">gcc -DHAVE_CONFIG_H -I.     -g -O2 -MT main.o -MD -MP -MF .deps/main.Tpo -c -o main.o main.c</span><br><span class="line">mv -f .deps/main.Tpo .deps/main.Po</span><br><span class="line">gcc  -g -O2   -o main main.o</span><br><span class="line">make[1]: Leaving directory &#x27;/root/automake&#x27;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">ls</span></span></span><br><span class="line">Makefile  Makefile.am  Makefile.in  aclocal.m4  autom4te.cache  autoscan.log  compile  config.h  config.h.in  config.log  config.status  configure  configure.ac  depcomp  install-sh  main  main.c  main.o  missing  stamp-h1</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">./main</span></span><br><span class="line">Hello automake</span><br></pre></td></tr></table></figure>
+
+<h1 id="参考鸣谢"><a href="#参考鸣谢" class="headerlink" title="参考鸣谢"></a>参考鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/qq_33336155/article/details/52556965">automake自动生成makefile文件</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/12/07/container/docker/docker-volplugin-nbd-rbd/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1680,281 +1807,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/10/02/language/python/python-exception/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2017/10/02/language/python/python-exception/" class="post-title-link" itemprop="url">Exception</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2017-10-02 23:41:44" itemprop="dateCreated datePublished" datetime="2017-10-02T23:41:44+08:00">2017-10-02</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/language/" itemprop="url" rel="index"><span itemprop="name">language</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="Exception语法"><a href="#Exception语法" class="headerlink" title="Exception语法"></a>Exception语法</h1><h2 id="try-except"><a href="#try-except" class="headerlink" title="try-except"></a>try-except</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span>:</span><br><span class="line">    &lt;语句&gt;</span><br><span class="line"><span class="keyword">except</span> &lt;异常名字&gt;:</span><br><span class="line">    &lt;语句&gt;</span><br><span class="line"><span class="keyword">except</span> &lt;异常名字&gt;, &lt;异常数据变量&gt;:</span><br><span class="line">    &lt;语句&gt;</span><br><span class="line"><span class="keyword">except</span> (&lt;异常名字&gt;,&lt;异常名字&gt;,...)[, &lt;异常数据变量&gt;]:</span><br><span class="line">    &lt;语句&gt;</span><br><span class="line"><span class="keyword">else</span>:</span><br><span class="line">    &lt;语句&gt;</span><br></pre></td></tr></table></figure>
-
-<h2 id="try-finally"><a href="#try-finally" class="headerlink" title="try-finally"></a>try-finally</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span>:</span><br><span class="line">    &lt;语句&gt;</span><br><span class="line"><span class="keyword">finally</span>:</span><br><span class="line">    <span class="comment"># 无论是否发生异常都将执行最后的代码</span></span><br><span class="line">    <span class="comment"># 退出try时总会执行</span></span><br><span class="line">    &lt;语句&gt;</span><br></pre></td></tr></table></figure>
-
-<h2 id="raise"><a href="#raise" class="headerlink" title="raise"></a>raise</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">raise</span> [Exception [, args [, traceback]]]</span><br></pre></td></tr></table></figure>
-
-<p>Exception是异常的类型（例如，NameError）参数是一个异常参数值。该参数是可选的，如果不提供，异常的参数是”None”。最后一个参数是可选的（在实践中很少使用），如果存在，是跟踪异常对象。</p>
-<h1 id="标准异常"><a href="#标准异常" class="headerlink" title="标准异常"></a>标准异常</h1><table>
-<thead>
-<tr>
-<th align="center">异常名称</th>
-<th align="left">描述</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">BaseException</td>
-<td align="left">所有异常的基类</td>
-</tr>
-<tr>
-<td align="center">SystemExit</td>
-<td align="left">解释器请求退出</td>
-</tr>
-<tr>
-<td align="center">KeyboardInterrupt</td>
-<td align="left">用户中断执行(通常是输入^C)</td>
-</tr>
-<tr>
-<td align="center">Exception</td>
-<td align="left">常规错误的基类</td>
-</tr>
-<tr>
-<td align="center">StopIteration</td>
-<td align="left">迭代器没有更多的值</td>
-</tr>
-<tr>
-<td align="center">GeneratorExit</td>
-<td align="left">生成器(generator)发生异常来通知退出</td>
-</tr>
-<tr>
-<td align="center">StandardError</td>
-<td align="left">所有的内建标准异常的基类</td>
-</tr>
-<tr>
-<td align="center">ArithmeticError</td>
-<td align="left">所有数值计算错误的基类</td>
-</tr>
-<tr>
-<td align="center">FloatingPointError</td>
-<td align="left">浮点计算错误</td>
-</tr>
-<tr>
-<td align="center">OverflowError</td>
-<td align="left">数值运算超出最大限制</td>
-</tr>
-<tr>
-<td align="center">ZeroDivisionError</td>
-<td align="left">除(或取模)零 (所有数据类型)</td>
-</tr>
-<tr>
-<td align="center">AssertionError</td>
-<td align="left">断言语句失败</td>
-</tr>
-<tr>
-<td align="center">AttributeError</td>
-<td align="left">对象没有这个属性</td>
-</tr>
-<tr>
-<td align="center">EOFError</td>
-<td align="left">没有内建输入,到达EOF 标记</td>
-</tr>
-<tr>
-<td align="center">EnvironmentError</td>
-<td align="left">操作系统错误的基类</td>
-</tr>
-<tr>
-<td align="center">IOError</td>
-<td align="left">输入&#x2F;输出操作失败</td>
-</tr>
-<tr>
-<td align="center">OSError</td>
-<td align="left">操作系统错误</td>
-</tr>
-<tr>
-<td align="center">WindowsError</td>
-<td align="left">系统调用失败</td>
-</tr>
-<tr>
-<td align="center">ImportError</td>
-<td align="left">导入模块&#x2F;对象失败</td>
-</tr>
-<tr>
-<td align="center">LookupError</td>
-<td align="left">无效数据查询的基类</td>
-</tr>
-<tr>
-<td align="center">IndexError</td>
-<td align="left">序列中没有此索引(index)</td>
-</tr>
-<tr>
-<td align="center">KeyError</td>
-<td align="left">映射中没有这个键</td>
-</tr>
-<tr>
-<td align="center">MemoryError</td>
-<td align="left">内存溢出错误(对于Python 解释器不是致命的)</td>
-</tr>
-<tr>
-<td align="center">NameError</td>
-<td align="left">未声明&#x2F;初始化对象 (没有属性)</td>
-</tr>
-<tr>
-<td align="center">UnboundLocalError</td>
-<td align="left">访问未初始化的本地变量</td>
-</tr>
-<tr>
-<td align="center">ReferenceError</td>
-<td align="left">弱引用(Weak reference)试图访问已经垃圾回收了的对象</td>
-</tr>
-<tr>
-<td align="center">RuntimeError</td>
-<td align="left">一般的运行时错误</td>
-</tr>
-<tr>
-<td align="center">NotImplementedError</td>
-<td align="left">尚未实现的方法</td>
-</tr>
-<tr>
-<td align="center">SyntaxError</td>
-<td align="left">Python 语法错误</td>
-</tr>
-<tr>
-<td align="center">IndentationError</td>
-<td align="left">缩进错误</td>
-</tr>
-<tr>
-<td align="center">TabError</td>
-<td align="left">Tab 和空格混用</td>
-</tr>
-<tr>
-<td align="center">SystemError</td>
-<td align="left">一般的解释器系统错误</td>
-</tr>
-<tr>
-<td align="center">TypeError</td>
-<td align="left">对类型无效的操作</td>
-</tr>
-<tr>
-<td align="center">ValueError</td>
-<td align="left">传入无效的参数</td>
-</tr>
-<tr>
-<td align="center">UnicodeError</td>
-<td align="left">Unicode 相关的错误</td>
-</tr>
-<tr>
-<td align="center">UnicodeDecodeError</td>
-<td align="left">Unicode 解码时的错误</td>
-</tr>
-<tr>
-<td align="center">UnicodeEncodeError</td>
-<td align="left">Unicode 编码时错误</td>
-</tr>
-<tr>
-<td align="center">UnicodeTranslateError</td>
-<td align="left">Unicode 转换时错误</td>
-</tr>
-<tr>
-<td align="center">Warning</td>
-<td align="left">警告的基类</td>
-</tr>
-<tr>
-<td align="center">DeprecationWarning</td>
-<td align="left">关于被弃用的特征的警告</td>
-</tr>
-<tr>
-<td align="center">FutureWarning</td>
-<td align="left">关于构造将来语义会有改变的警告</td>
-</tr>
-<tr>
-<td align="center">OverflowWarning</td>
-<td align="left">旧的关于自动提升为长整型(long)的警告</td>
-</tr>
-<tr>
-<td align="center">PendingDeprecationWarning</td>
-<td align="left">关于特性将会被废弃的警告</td>
-</tr>
-<tr>
-<td align="center">RuntimeWarning</td>
-<td align="left">可疑的运行时行为(runtime behavior)的警告</td>
-</tr>
-<tr>
-<td align="center">SyntaxWarning</td>
-<td align="left">可疑的语法的警告</td>
-</tr>
-<tr>
-<td align="center">UserWarning</td>
-<td align="left">用户代码生成的警告</td>
-</tr>
-</tbody></table>
-<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a target="_blank" rel="noopener" href="http://www.runoob.com/python/python-exceptions.html">Python 异常处理</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -2024,7 +1876,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">144</span>
+          <span class="site-state-item-count">145</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

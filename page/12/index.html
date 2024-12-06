@@ -188,6 +188,92 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2016/11/15/mysql/mysql-password-functions/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2016/11/15/mysql/mysql-password-functions/" class="post-title-link" itemprop="url">MySQL修改密码方法</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2016-11-15 00:00:00" itemprop="dateCreated datePublished" datetime="2016-11-15T00:00:00+08:00">2016-11-15</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/mysql/" itemprop="url" rel="index"><span itemprop="name">mysql</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><ul>
+<li>OS Version : rhel 6.4</li>
+<li>MySQL Version : 5.6.31</li>
+</ul>
+<h1 id="改密权限"><a href="#改密权限" class="headerlink" title="改密权限"></a>改密权限</h1><ul>
+<li>root可以修改所有用户密码</li>
+<li>所有用户在无任何权限情况下可修改自己密码</li>
+<li>获得“update所有库”权限的用户可修改任何用户密码（包括root）</li>
+</ul>
+<p><strong>(以上所诉，均使用<code>set password</code>方法)</strong></p>
+<h1 id="改密三种方法"><a href="#改密三种方法" class="headerlink" title="改密三种方法"></a>改密三种方法</h1><h2 id="Set-Password"><a href="#Set-Password" class="headerlink" title="Set Password"></a>Set Password</h2><p><code>set password for &lt;用户名&gt;@&#123;localhost|%|...&#125; =password(&#39;&lt;密码&gt;&#39;);</code></p>
+<h2 id="grant-…-identified-by"><a href="#grant-…-identified-by" class="headerlink" title="grant … identified by"></a>grant … identified by</h2><p><code>grant &lt;权限&gt; on &lt;数据库&gt;.&lt;数据表&gt; to &lt;user&gt;@&#123;localhost|%|...&#125; identified by &#39;&lt;密码&gt;&#39;;</code></p>
+<h2 id="update"><a href="#update" class="headerlink" title="update"></a>update</h2><p><code>update &lt;库名&gt;.&lt;表名&gt; set password=password(&#39;&lt;密码&gt;&#39;) where user=&#39;&lt;用户名&gt;&#39; and host=&#39;&#123;localhost | % | ...&#125;&#39;;</code></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2016/11/15/vim/vi-bin-text-change/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1848,88 +1934,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2016/06/07/power/20160607-control-usb-power/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2016/06/07/power/20160607-control-usb-power/" class="post-title-link" itemprop="url">控制USB设备的电源</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2016-06-07 10:32:19" itemprop="dateCreated datePublished" datetime="2016-06-07T10:32:19+08:00">2016-06-07</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/power/" itemprop="url" rel="index"><span itemprop="name">power</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="上电"><a href="#上电" class="headerlink" title="上电"></a>上电</h2><p>eg:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">echo &quot;1-4.4.4&quot; &gt; /sys/bus/usb/drivers/usb/bind</span><br></pre></td></tr></table></figure>
-
-<h2 id="下电"><a href="#下电" class="headerlink" title="下电"></a>下电</h2><p>eg:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">echo &quot;1-4.4.4&quot; &gt; /sys/bus/usb/drivers/usb/unbind</span><br></pre></td></tr></table></figure>
-
-<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a target="_blank" rel="noopener" href="http://stackoverflow.com/questions/4702216/controlling-a-usb-power-supply-on-off-with-linux">Controlling a USB power supply(on&#x2F;off) with linux</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1999,7 +2003,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">144</span>
+          <span class="site-state-item-count">145</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

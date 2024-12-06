@@ -188,6 +188,92 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2019/12/17/storage/ceph/rgw-authorization/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2019/12/17/storage/ceph/rgw-authorization/" class="post-title-link" itemprop="url">rgw auth</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2019-12-17 16:31:04" itemprop="dateCreated datePublished" datetime="2019-12-17T16:31:04+08:00">2019-12-17</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p><img src="/images/ceph/radosgw_rgw_auth.png" alt="radosgw_rgw_auth.png"></p>
+<p>** 版本 **<br>mimic-13.2.6</p>
+<h1 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h1><p>RGW认证机制中涉及的类分为两类，Strategy类和Engine类。</p>
+<h2 id="Strategy-认证策略"><a href="#Strategy-认证策略" class="headerlink" title="Strategy(认证策略)"></a>Strategy(认证策略)</h2><ul>
+<li>通过<code>Strategy::add_engine</code>向Strategy注册Engine，注册过程中需要指定<code>Control</code></li>
+<li><code>Control</code> 包括<code>REQUISITE</code>、<code>SUFFICIENT</code>、<code>FALLBACK</code><br>  <code>REQUISITE</code> 表示这个Engine是一个必要条件，若一个注册的Engine返回失败，则立即终止Strategy的认证过程，并且不再对其它注册的Engine进行认证;<br>  <code>SUFFICIENT</code> 表示这个Engine是一个充要条件，若一个注册的Engine返回成功，则Strategy完成。然而一个Engine的失败，不会终止整个Strategy，直到所有Engine都返回失败;<br>  <code>FALLBACK</code> 与<code>SUFFICIENT</code>类似，所有注册的Engine返回失败，返回<code>result_t::deny(reason = -EACCES)</code>;<br>  具体可见<code>strategy_handle_rejected</code>、<code>strategy_handle_denied</code>、<code>strategy_handle_granted</code>三个方法。</li>
+<li>一个Strategy可以包含多个Strategy和Engine。当验证过程遇到Strategy时，会进行递归调用，直到Engine返回验证结果。</li>
+<li>认证的入口为<code>Strategy::apply</code>，由<code>Strategy::apply</code>调用Strategy的<code>authenticate</code>方法开始逐层递归认证。</li>
+</ul>
+<h2 id="Engine-认证引擎"><a href="#Engine-认证引擎" class="headerlink" title="Engine(认证引擎)"></a>Engine(认证引擎)</h2><ul>
+<li>Engine处理具体的认证请求，分为<code>S3AnonymousEngine</code>、<code>LDAPEngine</code>、<code>LocalEngine</code>等</li>
+<li>Engine的认证状态包括<code>DENIED</code>、<code>GRANTED</code>、<code>REJECTED</code><br>  <code>DENIED</code> 没有<code>REJECTED</code>那么强烈的认证失败;<br>  <code>GRANTED</code> 认证成功;<br>  <code>REJECTED</code> 认证失败，不需要再尝试其它Engine了;</li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2019/12/12/language/golang/golang-debug-tools/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1168,99 +1254,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2019/09/24/storage/ceph/rgw-auth-ldap/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2019/09/24/storage/ceph/rgw-auth-ldap/" class="post-title-link" itemprop="url">RGW使用外部认证验证</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2019-09-24 18:35:24" itemprop="dateCreated datePublished" datetime="2019-09-24T18:35:24+08:00">2019-09-24</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>RGW支持很多种认证AWS标准的V2、V4；还有开放的LDAP，MFA，keystone，barbican等。太多了就不一一列举了。</p>
-<h1 id="LDAP"><a href="#LDAP" class="headerlink" title="LDAP"></a>LDAP</h1><p>要想使用LDAP认证，首先你的有个LDAP Server。然后将RGW的LDAP开关打开，LDAP相关配置项配置好。重启RGW，你就可以使用LDAP认证了，简单不！</p>
-<p>关于LDAP的搭建请见<code>参考&amp;鸣谢</code>中的<code>2</code>和<code>3</code>。</p>
-<h2 id="RGW配置"><a href="#RGW配置" class="headerlink" title="RGW配置"></a>RGW配置</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">...</span><br><span class="line">rgw_ldap_uri = ldap://10.100.13.111:389</span><br><span class="line">rgw_ldap_binddn = &quot;cn=Manager,dc=my-domain,dc=com&quot;</span><br><span class="line">rgw_ldap_secret = &quot;/etc/ceph/bindpass&quot;</span><br><span class="line">rgw_ldap_searchdn = &quot;dc=my-domain,dc=com&quot;</span><br><span class="line">rgw_ldap_dnattr = &quot;cn&quot;</span><br><span class="line">rgw_s3_auth_use_ldap = true</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>rgw_ldap_binddn<br>  RGW访问LDAP Server使用的账户名</li>
-<li>rgw_ldap_secret<br>  访问LDAP Server账户名对应的密码，必须放到文件中，这里指定一个访问文件的路径（明文存储文件就行）</li>
-<li>rgw_ldap_searchdn<br>  验证是检索的范围</li>
-<li>rgw_ldap_dnattr<br>  构建检索filter的属性名，RGW在程序中会将需要验证的账户名与之组对儿 eg: <code>cn=ldapuser1</code></li>
-</ul>
-<p>其它别的参数就不用解释了，看不懂可以先测一下智商。</p>
-<p><img src="/images/security/LDAP_Server.png" alt="LDAP_Server"></p>
-<p>截止目前未知，我都依然没有搞清楚什么事 <code>cn</code>,<code>ou</code>,<code>dn</code>,<code>dc</code>。嗯～～～～一头雾水啊！不管了，LDAP相关的自己问度娘去吧。</p>
-<h2 id="验证流程"><a href="#验证流程" class="headerlink" title="验证流程"></a>验证流程</h2><p>Todo…</p>
-<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ol>
-<li><a target="_blank" rel="noopener" href="https://access.redhat.com/documentation/en-us/red_hat_ceph_storage/2/html/ceph_object_gateway_with_ldapad_guide/index">CEPH OBJECT GATEWAY WITH LDAP&#x2F;AD GUIDE</a></li>
-<li><a target="_blank" rel="noopener" href="https://www.linuxidc.com/Linux/2019-05/158733.htm">CentOS 7下安装部署OpenLDAP+phpLDAPadmin</a></li>
-<li><a target="_blank" rel="noopener" href="https://www.cnblogs.com/37Y37/p/9315945.html">LDAP落地实战（一）：OpenLDAP部署及管理维护</a></li>
-</ol>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1330,7 +1323,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">144</span>
+          <span class="site-state-item-count">145</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

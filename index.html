@@ -188,6 +188,147 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2024/12/05/blockchain/ethereum/solidity-reduce-gas/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2024/12/05/blockchain/ethereum/solidity-reduce-gas/" class="post-title-link" itemprop="url">solidity合约中如何减少gas消耗</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-12-05 17:02:46" itemprop="dateCreated datePublished" datetime="2024-12-05T17:02:46+08:00">2024-12-05</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-12-06 10:32:27" itemprop="dateModified" datetime="2024-12-06T10:32:27+08:00">2024-12-06</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/blockchain/" itemprop="url" rel="index"><span itemprop="name">blockchain</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>从设计原则、编码技巧、数据存储优化和具体示例四个方面，系统地讲解如何在 Solidity 合约中节省 Gas 费用。</p>
+<h1 id="设计原则"><a href="#设计原则" class="headerlink" title="设计原则"></a>设计原则</h1><p><strong>减少合约调用次数</strong></p>
+<ul>
+<li>将多个逻辑步骤合并到单一函数中，避免多次外部调用。</li>
+<li>尽量减少合约之间的交互，因为每次外部调用都涉及高 Gas 消耗。</li>
+</ul>
+<p><strong>避免频繁修改状态变量</strong></p>
+<ul>
+<li>修改状态变量（如 storage）比操作本地变量（如 memory）耗费更多 Gas。</li>
+<li>在逻辑中优先使用本地变量，计算完后一次性更新状态变量。</li>
+</ul>
+<p><strong>简化复杂计算</strong></p>
+<ul>
+<li>将复杂计算移到链下处理，通过链上存储结果代替。</li>
+<li>在链下生成哈希值等，只存储结果以减少链上计算开销。</li>
+</ul>
+<h1 id="编码技巧"><a href="#编码技巧" class="headerlink" title="编码技巧"></a>编码技巧</h1><h2 id="使用-view-和-pure-函数"><a href="#使用-view-和-pure-函数" class="headerlink" title="使用 view 和 pure 函数"></a>使用 view 和 pure 函数</h2><p>view 函数不修改状态，pure 函数不依赖链上状态，调用它们不消耗 Gas。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">function add(uint a, uint b) public pure returns (uint) &#123;</span><br><span class="line">    return a + b;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="精简数据类型"><a href="#精简数据类型" class="headerlink" title="精简数据类型"></a>精简数据类型</h2><ul>
+<li>使用适合的数据类型，比如 uint8 而非 uint256（仅当值范围确定小于 256）。</li>
+<li>避免布尔值，因为布尔操作实际存储在 256 位。</li>
+</ul>
+<h2 id="利用-calldata-代替-memory"><a href="#利用-calldata-代替-memory" class="headerlink" title="利用 calldata 代替 memory"></a>利用 calldata 代替 memory</h2><p>函数的外部输入参数可用 calldata，节省内存分配成本。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">function processData(uint[] calldata data) external &#123;</span><br><span class="line">    // calldata 参数直接使用，无需复制</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="事件替代状态变量"><a href="#事件替代状态变量" class="headerlink" title="事件替代状态变量"></a>事件替代状态变量</h2><p>使用 emit 事件记录某些数据，而非存储状态变量。事件存储在日志中，成本低于 storage。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">event DataProcessed(address indexed user, uint amount);</span><br></pre></td></tr></table></figure>
+
+<h2 id="合理使用-immutable-和-constant"><a href="#合理使用-immutable-和-constant" class="headerlink" title="合理使用 immutable 和 constant"></a>合理使用 immutable 和 constant</h2><ul>
+<li>immutable：部署后值不可更改，但比普通变量读取快。</li>
+<li>constant：在编译时决定值，不占用存储空间。</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">uint256 public immutable deployTime = block.timestamp;</span><br><span class="line">uint256 public constant FEE_RATE = 100;</span><br></pre></td></tr></table></figure>
+
+<h1 id="数据存储优化"><a href="#数据存储优化" class="headerlink" title="数据存储优化"></a>数据存储优化</h1><h2 id="批量更新状态变量"><a href="#批量更新状态变量" class="headerlink" title="批量更新状态变量"></a>批量更新状态变量</h2><p>将多次状态变量更新合并为一次。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">// 不推荐</span><br><span class="line">balance = balance + 10;</span><br><span class="line">counter = counter + 1;</span><br><span class="line"></span><br><span class="line">// 推荐</span><br><span class="line">balance += 10;</span><br><span class="line">counter += 1;</span><br></pre></td></tr></table></figure>
+
+<h2 id="使用结构体或映射存储数据"><a href="#使用结构体或映射存储数据" class="headerlink" title="使用结构体或映射存储数据"></a>使用结构体或映射存储数据</h2><p>将多个相关变量合并到一个 struct 或映射中。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">struct User &#123;</span><br><span class="line">    uint256 balance;</span><br><span class="line">    uint256 lastUpdated;</span><br><span class="line">&#125;</span><br><span class="line">mapping(address =&gt; User) users;</span><br></pre></td></tr></table></figure>
+
+<h2 id="减少存储变量数量"><a href="#减少存储变量数量" class="headerlink" title="减少存储变量数量"></a>减少存储变量数量</h2><p>优化存储布局，减少存储槽的使用（每个槽 32 字节）。多个变量可以合并到一个存储槽中。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">// 不推荐</span><br><span class="line">uint128 public var1;</span><br><span class="line">uint128 public var2;</span><br><span class="line"></span><br><span class="line">// 推荐</span><br><span class="line">struct Combined &#123;</span><br><span class="line">    uint128 var1;</span><br><span class="line">    uint128 var2;</span><br><span class="line">&#125;</span><br><span class="line">Combined public data;</span><br></pre></td></tr></table></figure>
+
+<h2 id="删除不必要的状态变量"><a href="#删除不必要的状态变量" class="headerlink" title="删除不必要的状态变量"></a>删除不必要的状态变量</h2><p>使用 delete 删除已用完的存储变量，释放存储空间。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">delete users[userAddress];</span><br></pre></td></tr></table></figure>
+
+<h1 id="其他优化建议"><a href="#其他优化建议" class="headerlink" title="其他优化建议"></a>其他优化建议</h1><ol>
+<li>代码复用</li>
+</ol>
+<ul>
+<li>将重复逻辑封装为内部函数，减少代码重复和部署大小。</li>
+<li>使用库（library）减少代码复制。</li>
+</ul>
+<ol start="2">
+<li>优化循环</li>
+</ol>
+<ul>
+<li>避免大规模循环操作，因为每次迭代都会增加 Gas。</li>
+<li>可以分阶段处理数据，减少单次调用的负载。</li>
+</ul>
+<ol start="3">
+<li>Gas 预言机</li>
+</ol>
+<ul>
+<li>部署前使用工具（如 Remix、Hardhat）模拟和估算 Gas。</li>
+<li>优化部署的 Gas 成本。</li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2024/12/05/blockchain/ethereum/solidity-contract-creation/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -2057,101 +2198,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2021/12/18/storage/ceph/ceph-encode-decode/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2021/12/18/storage/ceph/ceph-encode-decode/" class="post-title-link" itemprop="url">encode和decode</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2021-12-18 15:12:12" itemprop="dateCreated datePublished" datetime="2021-12-18T15:12:12+08:00">2021-12-18</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">object_t</span> &#123;</span><br><span class="line">  std::string name;</span><br><span class="line"></span><br><span class="line">  ......</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="type">void</span> <span class="title">encode</span><span class="params">(ceph::buffer::list &amp;bl)</span> <span class="type">const</span> </span>&#123;</span><br><span class="line">    <span class="keyword">using</span> ceph::encode;</span><br><span class="line">    <span class="built_in">encode</span>(name, bl);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="function"><span class="type">void</span> <span class="title">decode</span><span class="params">(ceph::buffer::list::const_iterator &amp;bl)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">using</span> ceph::decode;</span><br><span class="line">    <span class="built_in">decode</span>(name, bl);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="built_in">WRITE_CLASS_ENCODER</span>(<span class="type">object_t</span>)</span><br></pre></td></tr></table></figure>
-<p>*** From: src&#x2F;include&#x2F;object.h ***</p>
-<p>对于Ceph中的每一种需要存储的资源在进行存储前都要进行<code>encode</code>操作，然后再将其写入硬盘。对于读取同样，在从硬盘获取到数据后需要进行<code>decode</code>操作。而每种需要存储资源如何<code>encode</code>和<code>decode</code>当然要由资源自己来决定。所以在资源的<code>class</code>或<code>struct</code>中要实现<code>encode</code>和<code>decode</code>方法。</p>
-<p><code>WRITE_CLASS_ENCODER(object_t)</code>干了些啥呢。。。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// see denc.h for ENCODE_DUMP_PATH discussion and definition.</span></span><br><span class="line"><span class="meta">#<span class="keyword">ifdef</span> ENCODE_DUMP_PATH</span></span><br><span class="line"><span class="meta"># <span class="keyword">define</span> ENCODE_DUMP_PRE()                      \</span></span><br><span class="line"><span class="meta">  unsigned pre_off = bl.length()</span></span><br><span class="line"><span class="meta"># <span class="keyword">define</span> ENCODE_DUMP_POST(cl)                                           \</span></span><br><span class="line"><span class="meta">  do &#123;                                                                  \</span></span><br><span class="line"><span class="meta">    static int i = 0;                                                   \</span></span><br><span class="line"><span class="meta">    i++;                                                                \</span></span><br><span class="line"><span class="meta">    int bits = 0;                                                       \</span></span><br><span class="line"><span class="meta">    for (unsigned t = i; t; bits++)                                     \</span></span><br><span class="line"><span class="meta">      t &amp;= t - 1;                                                       \</span></span><br><span class="line"><span class="meta">    <span class="keyword">if</span> (bits &gt; 2)                                                       \</span></span><br><span class="line"><span class="meta">      break;                                                            \</span></span><br><span class="line"><span class="meta">    char fn[PATH_MAX];                                                  \</span></span><br><span class="line"><span class="meta">    snprintf(fn, sizeof(fn), ENCODE_STRINGIFY(ENCODE_DUMP_PATH) <span class="string">&quot;/%s__%d.%x&quot;</span>, #cl, getpid(), i++); \</span></span><br><span class="line"><span class="meta">    int fd = ::open(fn, O_WRONLY|O_TRUNC|O_CREAT|O_CLOEXEC|O_BINARY, 0644);             \</span></span><br><span class="line"><span class="meta">    <span class="keyword">if</span> (fd &gt;= 0) &#123;                                                      \</span></span><br><span class="line"><span class="meta">      ::ceph::bufferlist sub;                                           \</span></span><br><span class="line"><span class="meta">      sub.substr_of(bl, pre_off, bl.length() - pre_off);                \</span></span><br><span class="line"><span class="meta">      sub.write_fd(fd);                                                 \</span></span><br><span class="line"><span class="meta">      ::close(fd);                                                      \</span></span><br><span class="line"><span class="meta">    &#125;                                                                   \</span></span><br><span class="line"><span class="meta">  &#125; while (0)</span></span><br><span class="line"><span class="meta">#<span class="keyword">else</span></span></span><br><span class="line"><span class="meta"># <span class="keyword">define</span> ENCODE_DUMP_PRE()</span></span><br><span class="line"><span class="meta"># <span class="keyword">define</span> ENCODE_DUMP_POST(cl)</span></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> WRITE_CLASS_ENCODER(cl)                                         \</span></span><br><span class="line"><span class="meta">  inline void encode(const cl&amp; c, ::ceph::buffer::list &amp;bl, uint64_t features=0) &#123; \</span></span><br><span class="line"><span class="meta">    ENCODE_DUMP_PRE(); c.encode(bl); ENCODE_DUMP_POST(cl); &#125;            \</span></span><br><span class="line"><span class="meta">  inline void decode(cl &amp;c, ::ceph::bufferlist::const_iterator &amp;p) &#123; c.decode(p); &#125;</span></span><br></pre></td></tr></table></figure>
-<p>*** From: src&#x2F;include&#x2F;encoding.h ***</p>
-<p>看了上面的代码应该能了解到<code>WRITE_CLASS_ENCODER(object_t)</code>是对<code>encode</code>和<code>decode</code>函数的重载。这是入口，然后再调用其资源自身<code>encode</code>或<code>decode</code>方法。</p>
-<p>那么对于一些基础类型（如：int、string等）是如果<code>encode</code>和<code>decode</code>的呢？</p>
-<h3 id="int类型"><a href="#int类型" class="headerlink" title="int类型"></a>int类型</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// int types</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> WRITE_INTTYPE_ENCODER(type, etype)                              \</span></span><br><span class="line"><span class="meta">  inline void encode(type v, ::ceph::bufferlist&amp; bl, uint64_t features=0) &#123; \</span></span><br><span class="line"><span class="meta">    ceph_##etype e;                                                     \</span></span><br><span class="line"><span class="meta">    e = v;                                                              \</span></span><br><span class="line"><span class="meta">    ::ceph::encode_raw(e, bl);                                          \</span></span><br><span class="line"><span class="meta">  &#125;                                                                     \</span></span><br><span class="line"><span class="meta">  inline void decode(type &amp;v, ::ceph::bufferlist::const_iterator&amp; p) &#123;  \</span></span><br><span class="line"><span class="meta">    ceph_##etype e;                                                     \</span></span><br><span class="line"><span class="meta">    ::ceph::decode_raw(e, p);                                           \</span></span><br><span class="line"><span class="meta">    v = e;                                                              \</span></span><br><span class="line"><span class="meta">  &#125;</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">WRITE_INTTYPE_ENCODER</span>(<span class="type">uint64_t</span>, le64)</span><br><span class="line"><span class="built_in">WRITE_INTTYPE_ENCODER</span>(<span class="type">int64_t</span>, le64)</span><br><span class="line"><span class="built_in">WRITE_INTTYPE_ENCODER</span>(<span class="type">uint32_t</span>, le32)</span><br><span class="line"><span class="built_in">WRITE_INTTYPE_ENCODER</span>(<span class="type">int32_t</span>, le32)</span><br><span class="line"><span class="built_in">WRITE_INTTYPE_ENCODER</span>(<span class="type">uint16_t</span>, le16)</span><br><span class="line"><span class="built_in">WRITE_INTTYPE_ENCODER</span>(<span class="type">int16_t</span>, le16)</span><br></pre></td></tr></table></figure>
-<p>*** From: src&#x2F;include&#x2F;encoding.h ***</p>
-<p>int类型的<code>encode</code>和<code>decode</code>又调用了<code>encode_raw</code>和<code>decode_raw</code>。真是一层套一层啊～（俄罗斯套娃嘛）～</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// base types</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> T&gt;</span></span><br><span class="line"><span class="function"><span class="keyword">inline</span> <span class="type">void</span> <span class="title">encode_raw</span><span class="params">(<span class="type">const</span> T&amp; t, bufferlist&amp; bl)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  bl.<span class="built_in">append</span>((<span class="type">char</span>*)&amp;t, <span class="built_in">sizeof</span>(t));</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">class</span> T&gt;</span></span><br><span class="line"><span class="function"><span class="keyword">inline</span> <span class="type">void</span> <span class="title">decode_raw</span><span class="params">(T&amp; t, bufferlist::const_iterator &amp;p)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  p.<span class="built_in">copy</span>(<span class="built_in">sizeof</span>(t), (<span class="type">char</span>*)&amp;t);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> WRITE_RAW_ENCODER(type)                                         \</span></span><br><span class="line"><span class="meta">  inline void encode(const type &amp;v, ::ceph::bufferlist&amp; bl, uint64_t features=0) &#123; ::ceph::encode_raw(v, bl); &#125; \</span></span><br><span class="line"><span class="meta">  inline void decode(type &amp;v, ::ceph::bufferlist::const_iterator&amp; p) &#123; ::ceph::decode_raw(v, p); &#125;</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">WRITE_RAW_ENCODER</span>(__u8)</span><br><span class="line"><span class="meta">#<span class="keyword">ifndef</span> _CHAR_IS_SIGNED</span></span><br><span class="line"><span class="built_in">WRITE_RAW_ENCODER</span>(__s8)</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"><span class="built_in">WRITE_RAW_ENCODER</span>(<span class="type">char</span>)</span><br><span class="line"><span class="built_in">WRITE_RAW_ENCODER</span>(ceph_le64)</span><br><span class="line"><span class="built_in">WRITE_RAW_ENCODER</span>(ceph_le32)</span><br><span class="line"><span class="built_in">WRITE_RAW_ENCODER</span>(ceph_le16)</span><br></pre></td></tr></table></figure>
-<p>*** From: src&#x2F;include&#x2F;encoding.h ***</p>
-<p>base比较简单，就是无论int几个字节，都是从低到高一个字节一个字节的写下去，再一个字节一个字节的读出来。。。</p>
-<h3 id="float类型"><a href="#float类型" class="headerlink" title="float类型"></a>float类型</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> WRITE_FLTTYPE_ENCODER(type, itype, etype)                       \</span></span><br><span class="line"><span class="meta">  static_assert(sizeof(type) == sizeof(itype));                         \</span></span><br><span class="line"><span class="meta">  static_assert(std::numeric_limits<span class="string">&lt;type&gt;</span>::is_iec559,                   \</span></span><br><span class="line"><span class="meta">              <span class="string">&quot;floating-point type not using IEEE754 format&quot;</span>);          \</span></span><br><span class="line"><span class="meta">  inline void encode(type v, ::ceph::bufferlist&amp; bl, uint64_t features=0) &#123; \</span></span><br><span class="line"><span class="meta">    ceph_##etype e;                                                     \</span></span><br><span class="line"><span class="meta">    e = *reinterpret_cast<span class="string">&lt;itype *&gt;</span>(&amp;v);                                 \</span></span><br><span class="line"><span class="meta">    ::ceph::encode_raw(e, bl);                                          \</span></span><br><span class="line"><span class="meta">  &#125;                                                                     \</span></span><br><span class="line"><span class="meta">  inline void decode(type &amp;v, ::ceph::bufferlist::const_iterator&amp; p) &#123;  \</span></span><br><span class="line"><span class="meta">    ceph_##etype e;                                                     \</span></span><br><span class="line"><span class="meta">    ::ceph::decode_raw(e, p);                                           \</span></span><br><span class="line"><span class="meta">    *reinterpret_cast<span class="string">&lt;itype *&gt;</span>(&amp;v) = e;                                 \</span></span><br><span class="line"><span class="meta">  &#125;</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">WRITE_FLTTYPE_ENCODER</span>(<span class="type">float</span>, <span class="type">uint32_t</span>, le32)</span><br><span class="line"><span class="built_in">WRITE_FLTTYPE_ENCODER</span>(<span class="type">double</span>, <span class="type">uint64_t</span>, le64)</span><br></pre></td></tr></table></figure>
-<p>*** From: src&#x2F;include&#x2F;encoding.h ***</p>
-<p>float类型关键在于<code>reinterpret_cast</code>将一个浮点数转换为整数。<a target="_blank" rel="noopener" href="https://zh.cppreference.com/w/cpp/language/reinterpret_cast">更多关于<code>reinterpret_cast</code>的内容</a></p>
-<h3 id="string"><a href="#string" class="headerlink" title="string"></a>string</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// string</span></span><br><span class="line"><span class="function"><span class="keyword">inline</span> <span class="type">void</span> <span class="title">encode</span><span class="params">(std::string_view s, bufferlist&amp; bl, <span class="type">uint64_t</span> features=<span class="number">0</span>)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  __u32 len = s.<span class="built_in">length</span>();</span><br><span class="line">  <span class="built_in">encode</span>(len, bl);</span><br><span class="line">  <span class="keyword">if</span> (len)</span><br><span class="line">    bl.<span class="built_in">append</span>(s.<span class="built_in">data</span>(), len);</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">inline</span> <span class="type">void</span> <span class="title">encode</span><span class="params">(<span class="type">const</span> std::string&amp; s, bufferlist&amp; bl, <span class="type">uint64_t</span> features=<span class="number">0</span>)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="built_in">encode</span>(std::<span class="built_in">string_view</span>(s), bl, features);</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">inline</span> <span class="type">void</span> <span class="title">decode</span><span class="params">(std::string&amp; s, bufferlist::const_iterator&amp; p)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  __u32 len;</span><br><span class="line">  <span class="built_in">decode</span>(len, p);</span><br><span class="line">  s.<span class="built_in">clear</span>();</span><br><span class="line">  p.<span class="built_in">copy</span>(len, s);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">inline</span> <span class="type">void</span> <span class="title">encode_nohead</span><span class="params">(std::string_view s, bufferlist&amp; bl)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  bl.<span class="built_in">append</span>(s.<span class="built_in">data</span>(), s.<span class="built_in">length</span>());</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">inline</span> <span class="type">void</span> <span class="title">encode_nohead</span><span class="params">(<span class="type">const</span> std::string&amp; s, bufferlist&amp; bl)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="built_in">encode_nohead</span>(std::<span class="built_in">string_view</span>(s), bl);</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">inline</span> <span class="type">void</span> <span class="title">decode_nohead</span><span class="params">(<span class="type">int</span> len, std::string&amp; s, bufferlist::const_iterator&amp; p)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  s.<span class="built_in">clear</span>();</span><br><span class="line">  p.<span class="built_in">copy</span>(len, s);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// const char* (encode only, string compatible)</span></span><br><span class="line"><span class="function"><span class="keyword">inline</span> <span class="type">void</span> <span class="title">encode</span><span class="params">(<span class="type">const</span> <span class="type">char</span> *s, bufferlist&amp; bl)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="built_in">encode</span>(std::<span class="built_in">string_view</span>(s, <span class="built_in">strlen</span>(s)), bl);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>*** From: src&#x2F;include&#x2F;encoding.h ***</p>
-<p>string的<code>encode</code>和<code>decode</code>分两种，一种是有“害的”(head)，一种是无“害的”。有“害的”需要先记录string的长度，再记录string的内容；无“害的”直接记录内容，单再<code>decode</code>过程中需要制定长度。总之这个长度总要有个人来记。好鸡肋！</p>
-<hr>
-<p>整个的<code>encode</code>和<code>decode</code>的过程用到了一个<code>bufferlist</code>类型，那么这个<code>bufferlist</code>又是个什么结构呢，详细请见<a href="">ceph中的buffer</a></p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -2221,7 +2267,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">144</span>
+          <span class="site-state-item-count">145</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

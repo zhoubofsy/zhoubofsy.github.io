@@ -188,6 +188,281 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/10/02/language/python/python-exception/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2017/10/02/language/python/python-exception/" class="post-title-link" itemprop="url">Exception</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2017-10-02 23:41:44" itemprop="dateCreated datePublished" datetime="2017-10-02T23:41:44+08:00">2017-10-02</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/language/" itemprop="url" rel="index"><span itemprop="name">language</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="Exception语法"><a href="#Exception语法" class="headerlink" title="Exception语法"></a>Exception语法</h1><h2 id="try-except"><a href="#try-except" class="headerlink" title="try-except"></a>try-except</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span>:</span><br><span class="line">    &lt;语句&gt;</span><br><span class="line"><span class="keyword">except</span> &lt;异常名字&gt;:</span><br><span class="line">    &lt;语句&gt;</span><br><span class="line"><span class="keyword">except</span> &lt;异常名字&gt;, &lt;异常数据变量&gt;:</span><br><span class="line">    &lt;语句&gt;</span><br><span class="line"><span class="keyword">except</span> (&lt;异常名字&gt;,&lt;异常名字&gt;,...)[, &lt;异常数据变量&gt;]:</span><br><span class="line">    &lt;语句&gt;</span><br><span class="line"><span class="keyword">else</span>:</span><br><span class="line">    &lt;语句&gt;</span><br></pre></td></tr></table></figure>
+
+<h2 id="try-finally"><a href="#try-finally" class="headerlink" title="try-finally"></a>try-finally</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">try</span>:</span><br><span class="line">    &lt;语句&gt;</span><br><span class="line"><span class="keyword">finally</span>:</span><br><span class="line">    <span class="comment"># 无论是否发生异常都将执行最后的代码</span></span><br><span class="line">    <span class="comment"># 退出try时总会执行</span></span><br><span class="line">    &lt;语句&gt;</span><br></pre></td></tr></table></figure>
+
+<h2 id="raise"><a href="#raise" class="headerlink" title="raise"></a>raise</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">raise</span> [Exception [, args [, traceback]]]</span><br></pre></td></tr></table></figure>
+
+<p>Exception是异常的类型（例如，NameError）参数是一个异常参数值。该参数是可选的，如果不提供，异常的参数是”None”。最后一个参数是可选的（在实践中很少使用），如果存在，是跟踪异常对象。</p>
+<h1 id="标准异常"><a href="#标准异常" class="headerlink" title="标准异常"></a>标准异常</h1><table>
+<thead>
+<tr>
+<th align="center">异常名称</th>
+<th align="left">描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">BaseException</td>
+<td align="left">所有异常的基类</td>
+</tr>
+<tr>
+<td align="center">SystemExit</td>
+<td align="left">解释器请求退出</td>
+</tr>
+<tr>
+<td align="center">KeyboardInterrupt</td>
+<td align="left">用户中断执行(通常是输入^C)</td>
+</tr>
+<tr>
+<td align="center">Exception</td>
+<td align="left">常规错误的基类</td>
+</tr>
+<tr>
+<td align="center">StopIteration</td>
+<td align="left">迭代器没有更多的值</td>
+</tr>
+<tr>
+<td align="center">GeneratorExit</td>
+<td align="left">生成器(generator)发生异常来通知退出</td>
+</tr>
+<tr>
+<td align="center">StandardError</td>
+<td align="left">所有的内建标准异常的基类</td>
+</tr>
+<tr>
+<td align="center">ArithmeticError</td>
+<td align="left">所有数值计算错误的基类</td>
+</tr>
+<tr>
+<td align="center">FloatingPointError</td>
+<td align="left">浮点计算错误</td>
+</tr>
+<tr>
+<td align="center">OverflowError</td>
+<td align="left">数值运算超出最大限制</td>
+</tr>
+<tr>
+<td align="center">ZeroDivisionError</td>
+<td align="left">除(或取模)零 (所有数据类型)</td>
+</tr>
+<tr>
+<td align="center">AssertionError</td>
+<td align="left">断言语句失败</td>
+</tr>
+<tr>
+<td align="center">AttributeError</td>
+<td align="left">对象没有这个属性</td>
+</tr>
+<tr>
+<td align="center">EOFError</td>
+<td align="left">没有内建输入,到达EOF 标记</td>
+</tr>
+<tr>
+<td align="center">EnvironmentError</td>
+<td align="left">操作系统错误的基类</td>
+</tr>
+<tr>
+<td align="center">IOError</td>
+<td align="left">输入&#x2F;输出操作失败</td>
+</tr>
+<tr>
+<td align="center">OSError</td>
+<td align="left">操作系统错误</td>
+</tr>
+<tr>
+<td align="center">WindowsError</td>
+<td align="left">系统调用失败</td>
+</tr>
+<tr>
+<td align="center">ImportError</td>
+<td align="left">导入模块&#x2F;对象失败</td>
+</tr>
+<tr>
+<td align="center">LookupError</td>
+<td align="left">无效数据查询的基类</td>
+</tr>
+<tr>
+<td align="center">IndexError</td>
+<td align="left">序列中没有此索引(index)</td>
+</tr>
+<tr>
+<td align="center">KeyError</td>
+<td align="left">映射中没有这个键</td>
+</tr>
+<tr>
+<td align="center">MemoryError</td>
+<td align="left">内存溢出错误(对于Python 解释器不是致命的)</td>
+</tr>
+<tr>
+<td align="center">NameError</td>
+<td align="left">未声明&#x2F;初始化对象 (没有属性)</td>
+</tr>
+<tr>
+<td align="center">UnboundLocalError</td>
+<td align="left">访问未初始化的本地变量</td>
+</tr>
+<tr>
+<td align="center">ReferenceError</td>
+<td align="left">弱引用(Weak reference)试图访问已经垃圾回收了的对象</td>
+</tr>
+<tr>
+<td align="center">RuntimeError</td>
+<td align="left">一般的运行时错误</td>
+</tr>
+<tr>
+<td align="center">NotImplementedError</td>
+<td align="left">尚未实现的方法</td>
+</tr>
+<tr>
+<td align="center">SyntaxError</td>
+<td align="left">Python 语法错误</td>
+</tr>
+<tr>
+<td align="center">IndentationError</td>
+<td align="left">缩进错误</td>
+</tr>
+<tr>
+<td align="center">TabError</td>
+<td align="left">Tab 和空格混用</td>
+</tr>
+<tr>
+<td align="center">SystemError</td>
+<td align="left">一般的解释器系统错误</td>
+</tr>
+<tr>
+<td align="center">TypeError</td>
+<td align="left">对类型无效的操作</td>
+</tr>
+<tr>
+<td align="center">ValueError</td>
+<td align="left">传入无效的参数</td>
+</tr>
+<tr>
+<td align="center">UnicodeError</td>
+<td align="left">Unicode 相关的错误</td>
+</tr>
+<tr>
+<td align="center">UnicodeDecodeError</td>
+<td align="left">Unicode 解码时的错误</td>
+</tr>
+<tr>
+<td align="center">UnicodeEncodeError</td>
+<td align="left">Unicode 编码时错误</td>
+</tr>
+<tr>
+<td align="center">UnicodeTranslateError</td>
+<td align="left">Unicode 转换时错误</td>
+</tr>
+<tr>
+<td align="center">Warning</td>
+<td align="left">警告的基类</td>
+</tr>
+<tr>
+<td align="center">DeprecationWarning</td>
+<td align="left">关于被弃用的特征的警告</td>
+</tr>
+<tr>
+<td align="center">FutureWarning</td>
+<td align="left">关于构造将来语义会有改变的警告</td>
+</tr>
+<tr>
+<td align="center">OverflowWarning</td>
+<td align="left">旧的关于自动提升为长整型(long)的警告</td>
+</tr>
+<tr>
+<td align="center">PendingDeprecationWarning</td>
+<td align="left">关于特性将会被废弃的警告</td>
+</tr>
+<tr>
+<td align="center">RuntimeWarning</td>
+<td align="left">可疑的运行时行为(runtime behavior)的警告</td>
+</tr>
+<tr>
+<td align="center">SyntaxWarning</td>
+<td align="left">可疑的语法的警告</td>
+</tr>
+<tr>
+<td align="center">UserWarning</td>
+<td align="left">用户代码生成的警告</td>
+</tr>
+</tbody></table>
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="http://www.runoob.com/python/python-exceptions.html">Python 异常处理</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/09/25/language/python/python-thrift-hbase/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1599,123 +1874,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/08/29/bigdata/zeppelin-usage/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2017/08/29/bigdata/zeppelin-usage/" class="post-title-link" itemprop="url">Zeppelin 搭建配置及使用</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2017-08-29 09:43:05" itemprop="dateCreated datePublished" datetime="2017-08-29T09:43:05+08:00">2017-08-29</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Big-Data/" itemprop="url" rel="index"><span itemprop="name">Big-Data</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p><img src="/images/zeppelin/zeppelin_logo.png" alt="zeppelin_logo"></p>
-<p>Apache Zeppelin是一个让交互式数据分析变得可行的基于网页的开源框架。Zeppelin提供了数据分析、数据可视化等功能。Zeppelin 是一个提供交互数据分析且基于Web的笔记本。方便你做出可数据驱动的、可交互且可协作的精美文档，并且支持多种语言，包括 Scala(使用 Apache Spark)、Python(Apache Spark)、SparkSQL、 Hive、 Markdown、Shell等等。</p>
-<h1 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h1><p>采用docker环境部署zeppelin</p>
-<p>OS：CentOS 7.3.1611<br>JAVA：OpenJDK 1.8<br>zeppelin: 0.7.2</p>
-<p>dockerfile:</p>
-<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">FROM</span> centos:<span class="number">7.3</span>.<span class="number">1611</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">MAINTAINER</span> zhoub</span><br><span class="line"></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> yum update -y</span></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> yum install -y java-1.8.0-openjdk.x86_64</span></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> <span class="built_in">echo</span> <span class="string">&quot;JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.141-1.b16.el7_3.x86_64/jre&quot;</span> | <span class="built_in">tee</span> -a /etc/bashrc</span></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> <span class="built_in">echo</span> <span class="string">&quot;export JAVA_HOME&quot;</span> | <span class="built_in">tee</span> -a /etc/bashrc</span></span><br></pre></td></tr></table></figure>
-
-
-<h1 id="下载安装"><a href="#下载安装" class="headerlink" title="下载安装"></a>下载安装</h1><p>从<a target="_blank" rel="noopener" href="http://zeppelin.apache.org/download.html">zeppelin官网</a>或github上下载，推荐下载最新版。解压tar包，然后在准备好的环境中运行<code>zeppelin/bin/zeppelin-daemon.sh start</code></p>
-<p>docker:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">!/bin/sh</span></span><br><span class="line"></span><br><span class="line">cmd=&quot;/root/run/entry.sh&quot;</span><br><span class="line">image=&quot;centos7.3:java1.8&quot;</span><br><span class="line">net=&quot;hadoop_net&quot;</span><br><span class="line"></span><br><span class="line">docker run -d --rm -w /root/ -v $&#123;PWD&#125;/run:/root/run -v $&#123;PWD&#125;/zeppelin:/root/zeppelin -v $&#123;PWD&#125;/hbase:/root/hbase -p 8080 --network $&#123;net&#125; -h zeppelin --name zeppelin $&#123;image&#125; $&#123;cmd&#125;</span><br></pre></td></tr></table></figure>
-
-<p>entry.sh:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">!/bin/sh</span></span><br><span class="line"></span><br><span class="line">/root/zeppelin/bin/zeppelin-daemon.sh start</span><br><span class="line"></span><br><span class="line">while true</span><br><span class="line">do</span><br><span class="line">    sleep 10s</span><br><span class="line">done</span><br></pre></td></tr></table></figure>
-
-<h1 id="架构"><a href="#架构" class="headerlink" title="架构"></a>架构</h1><p><img src="/images/zeppelin/zeppelin_arch.jpg" alt="zeppelin_arch"><br>Zeppelin具有客户端&#x2F;服务器架构，客户端一般就是指浏览器。服务器接收客户端的请求，并将请求通过Thrift协议发送给翻译器组。翻译器组物理表现为JVM进程，负责实际处理客户端的请求并与服务器进行通信。</p>
-<p><img src="/images/zeppelin/zeppelin_interpreter_arch.jpg" alt="zeppelin_interpreter_arch"><br>翻译器是一个插件式的体系结构，允许任何语言&#x2F;后端数据处理程序以插件的形式添加到Zeppelin中。当前的Zeppelin已经支持<a target="_blank" rel="noopener" href="http://zeppelin.apache.org/docs/0.7.2/manual/interpreters.html">很多翻译器</a>。插件式架构允许用户在Zeppelin中使用自己熟悉的特定程序语言或数据处理方式。例如，通过使用%spark翻译器，可以在Zeppelin中使用Scala语言代码。</p>
-<h1 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h1><p>zeppelin的配置主要指interpreter的设置，然后note通过配置好的interpreter进行解释执行。</p>
-<h2 id="JDBC-hive配置"><a href="#JDBC-hive配置" class="headerlink" title="JDBC-hive配置"></a>JDBC-hive配置</h2><p>zeppelin想要通过jdbc连接hive需要对hive、hdfs、zeppelin三者进行配置</p>
-<h3 id="hive"><a href="#hive" class="headerlink" title="hive"></a>hive</h3><p>需要在hive节点上启动<code>hiveserver2</code>服务<code>nohup /shared-disk/apache-hive-2.1.1-bin/bin/hive --service hiveserver2&amp;</code></p>
-<h3 id="zeepelin"><a href="#zeepelin" class="headerlink" title="zeepelin"></a>zeepelin</h3><h4 id="拷贝连接hive-jdbc需要用到的jar包"><a href="#拷贝连接hive-jdbc需要用到的jar包" class="headerlink" title="拷贝连接hive-jdbc需要用到的jar包"></a>拷贝连接hive-jdbc需要用到的jar包</h4><p>将包<code>hive-jdbc-1.1.0+cdh5.9.1+795-1.cdh5.9.1.p0.4.el7.noarch.rpm</code>解开后的jar文件拷贝到<code>zeppelin/lib/interpreter/</code>目录下<br><code>hive-jdbc-1.1.0+cdh5.9.1+795-1.cdh5.9.1.p0.4.el7.noarch.rpm</code>包内容：</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">total 51448</span><br><span class="line">-rw-r--r-- 1 root root    62050 Aug 25 10:18 commons-logging-1.1.3.jar</span><br><span class="line">-rw-r--r-- 1 root root 19386631 Aug 25 10:18 hive-exec-1.1.0-cdh5.9.1.jar</span><br><span class="line">lrwxrwxrwx 1 root root       28 Aug 25 10:18 hive-exec.jar -&gt; hive-exec-1.1.0-cdh5.9.1.jar</span><br><span class="line">-rw-r--r-- 1 root root    96598 Aug 25 10:19 hive-jdbc-1.1.0-cdh5.9.1.jar</span><br><span class="line">-rw-r--r-- 1 root root 23635048 Aug 25 10:19 hive-jdbc-1.1.0-cdh5.9.1-standalone.jar</span><br><span class="line">lrwxrwxrwx 1 root root       28 Aug 25 10:19 hive-jdbc.jar -&gt; hive-jdbc-1.1.0-cdh5.9.1.jar</span><br><span class="line">lrwxrwxrwx 1 root root       39 Aug 25 10:19 hive-jdbc-standalone.jar -&gt; hive-jdbc-1.1.0-cdh5.9.1-standalone.jar</span><br><span class="line">-rw-r--r-- 1 root root  5558969 Aug 25 10:19 hive-metastore-1.1.0-cdh5.9.1.jar</span><br><span class="line">lrwxrwxrwx 1 root root       33 Aug 25 10:19 hive-metastore.jar -&gt; hive-metastore-1.1.0-cdh5.9.1.jar</span><br><span class="line">-rw-r--r-- 1 root root   827980 Aug 25 10:19 hive-serde-1.1.0-cdh5.9.1.jar</span><br><span class="line">lrwxrwxrwx 1 root root       29 Aug 25 10:19 hive-serde.jar -&gt; hive-serde-1.1.0-cdh5.9.1.jar</span><br><span class="line">-rw-r--r-- 1 root root  2058121 Aug 25 10:19 hive-service-1.1.0-cdh5.9.1.jar</span><br><span class="line">lrwxrwxrwx 1 root root       31 Aug 25 10:19 hive-service.jar -&gt; hive-service-1.1.0-cdh5.9.1.jar</span><br><span class="line">-rw-r--r-- 1 root root   313702 Aug 25 10:19 libfb303-0.9.3.jar</span><br><span class="line">-rw-r--r-- 1 root root   234201 Aug 25 10:19 libthrift-0.9.3.jar</span><br><span class="line">-rw-r--r-- 1 root root   481535 Aug 25 10:19 log4j-1.2.16.jar</span><br></pre></td></tr></table></figure>
-
-<h4 id="配置jdbc-interpreter"><a href="#配置jdbc-interpreter" class="headerlink" title="配置jdbc interpreter"></a>配置jdbc interpreter</h4><ul>
-<li>default.driver: org.apache.hive.jdbc.HiveDriver</li>
-<li>default.url: jdbc:hive2:&#x2F;&#x2F;172.26.1.177:10000&#x2F;default<br>  hiveserver2的默认端口为10000</li>
-<li>default.user: root<br>  此处我使用root用户，后文中的hdfs的proxy设置也要用root</li>
-</ul>
-<p><img src="/images/zeppelin/zeppelin_hive_jdbc_setting.png" alt="zeppelin_hive_jdbc_setting"></p>
-<h3 id="hdfs"><a href="#hdfs" class="headerlink" title="hdfs"></a>hdfs</h3><p>若zeppelin使用jdbc连接hive出错，报如下错误：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br></pre></td><td class="code"><pre><span class="line">Could not establish connection to jdbc:hive2://192.168.0.51:10000: Required field &#x27;serverProtocolVersion&#x27; is unset! Struct:TOpenSessionResp(status:TStatus(statusCode:ERROR_STATUS, infoMessages:[*org.apache.hive.service.cli.HiveSQLException:Failed to open new session: java.lang.RuntimeException:</span><br><span class="line">java.lang.RuntimeException:</span><br><span class="line">    org.apache.hadoop.ipc.RemoteException(org.apache.hadoop.security.authorize.AuthorizationException): User: hive is not allowed to impersonate hive:13:12,</span><br><span class="line">    org.apache.hive.service.cli.session.SessionManager:openSession:SessionManager.java:266, </span><br><span class="line">    org.apache.hive.service.cli.CLIService:openSessionWithImpersonation:CLIService.java:202, </span><br><span class="line">    org.apache.hive.service.cli.thrift.ThriftCLIService:getSessionHandle:ThriftCLIService.java:402, </span><br><span class="line">    org.apache.hive.service.cli.thrift.ThriftCLIService:OpenSession:ThriftCLIService.java:297, </span><br><span class="line">    org.apache.hive.service.cli.thrift.TCLIService$Processor$OpenSession:getResult:TCLIService.java:1253, </span><br><span class="line">    org.apache.hive.service.cli.thrift.TCLIService$Processor$OpenSession:getResult:TCLIService.java:1238, </span><br><span class="line">    org.apache.thrift.ProcessFunction:process:ProcessFunction.java:39, </span><br><span class="line">    org.apache.thrift.TBaseProcessor:process:TBaseProcessor.java:39, </span><br><span class="line">    org.apache.hive.service.auth.TSetIpAddressProcessor:process:TSetIpAddressProcessor.java:56, </span><br><span class="line">    org.apache.thrift.server.TThreadPoolServer$WorkerProcess:run:TThreadPoolServer.java:285, </span><br><span class="line">    java.util.concurrent.ThreadPoolExecutor:runWorker:ThreadPoolExecutor.java:1145, </span><br><span class="line">    java.util.concurrent.ThreadPoolExecutor$Worker:run:ThreadPoolExecutor.java:615, </span><br><span class="line">    java.lang.Thread:run:Thread.java:745,</span><br><span class="line">*java.lang.RuntimeException:java.lang.RuntimeException: </span><br><span class="line">    org.apache.hadoop.ipc.RemoteException(org.apache.hadoop.security.authorize.AuthorizationException): User: hive is not allowed to impersonate hive:21:8,</span><br><span class="line">    org.apache.hive.service.cli.session.HiveSessionProxy:invoke:HiveSessionProxy.java:83, </span><br><span class="line">    org.apache.hive.service.cli.session.HiveSessionProxy:access$000:HiveSessionProxy.java:36, </span><br><span class="line">    org.apache.hive.service.cli.session.HiveSessionProxy$1:run:HiveSessionProxy.java:63, </span><br><span class="line">    java.security.AccessController:doPrivileged:AccessController.java:-2, </span><br><span class="line">    javax.security.auth.Subject:doAs:Subject.java:415, </span><br><span class="line">    org.apache.hadoop.security.UserGroupInformation:doAs:UserGroupInformation.java:1657, </span><br><span class="line">    org.apache.hive.service.cli.session.HiveSessionProxy:invoke:HiveSessionProxy.java:59, </span><br><span class="line">    com.sun.proxy.$Proxy19:open::-1, </span><br><span class="line">    org.apache.hive.service.cli.session.SessionManager:openSession:SessionManager.java:258, </span><br><span class="line">*java.lang.RuntimeException:</span><br><span class="line">    org.apache.hadoop.ipc.RemoteException(org.apache.hadoop.security.authorize.AuthorizationException): User: hive is not allowed to impersonate hive:26:5, </span><br><span class="line">    org.apache.hadoop.hive.ql.session.SessionState:start:SessionState.java:494, </span><br><span class="line">    org.apache.hive.service.cli.session.HiveSessionImpl:open:HiveSessionImpl.java:137, </span><br><span class="line">    sun.reflect.GeneratedMethodAccessor11:invoke::-1, </span><br><span class="line">    sun.reflect.DelegatingMethodAccessorImpl:invoke:DelegatingMethodAccessorImpl.java:43, </span><br><span class="line">    java.lang.reflect.Method:invoke:Method.java:606, </span><br><span class="line">    org.apache.hive.service.cli.session.HiveSessionProxy:invoke:HiveSessionProxy.java:78, </span><br><span class="line">    *org.apache.hadoop.ipc.RemoteException:User: hive is not allowed to impersonate hive:45:19, </span><br><span class="line">    org.apache.hadoop.ipc.Client:call:Client.java:1427, </span><br><span class="line">    org.apache.hadoop.ipc.Client:call:Client.java:1358, </span><br><span class="line">    org.apache.hadoop.ipc.ProtobufRpcEngine$Invoker:invoke:ProtobufRpcEngine.java:229, </span><br><span class="line">    com.sun.proxy.$Proxy14:getFileInfo::-1, </span><br><span class="line">    org.apache.hadoop.hdfs.protocolPB.ClientNamenodeProtocolTranslatorPB:getFileInfo:ClientNamenodeProtocolTranslatorPB.java:771, </span><br><span class="line">    sun.reflect.GeneratedMethodAccessor7:invoke::-1, </span><br><span class="line">    sun.reflect.DelegatingMethodAccessorImpl:invoke:DelegatingMethodAccessorImpl.java:43, </span><br><span class="line">    java.lang.reflect.Method:invoke:Method.java:606, </span><br><span class="line">    org.apache.hadoop.io.retry.RetryInvocationHandler:invokeMethod:RetryInvocationHandler.java:252, </span><br><span class="line">    org.apache.hadoop.io.retry.RetryInvocationHandler:invoke:RetryInvocationHandler.java:104, </span><br><span class="line">    com.sun.proxy.$Proxy15:getFileInfo::-1, </span><br><span class="line">    org.apache.hadoop.hdfs.DFSClient:getFileInfo:DFSClient.java:2116, </span><br><span class="line">    org.apache.hadoop.hdfs.DistributedFileSystem$22:doCall:DistributedFileSystem.java:1315, </span><br><span class="line">    org.apache.hadoop.hdfs.DistributedFileSystem$22:doCall:DistributedFileSystem.java:1311, </span><br><span class="line">    org.apache.hadoop.fs.FileSystemLinkResolver:resolve:FileSystemLinkResolver.java:81, </span><br><span class="line">    org.apache.hadoop.hdfs.DistributedFileSystem:getFileStatus:DistributedFileSystem.java:1311, </span><br><span class="line">    org.apache.hadoop.fs.FileSystem:exists:FileSystem.java:1424, </span><br><span class="line">    org.apache.hadoop.hive.ql.session.SessionState:createRootHDFSDir:SessionState.java:568, </span><br><span class="line">    org.apache.hadoop.hive.ql.session.SessionState:createSessionDirs:SessionState.java:526, </span><br><span class="line">    org.apache.hadoop.hive.ql.session.SessionState:start:SessionState.java:480], </span><br><span class="line">errorCode:0, errorMessage:Failed to open new session: java.lang.RuntimeException: java.lang.RuntimeException: org.apache.hadoop.ipc.RemoteException(org.apache.hadoop.security.authorize.AuthorizationException): User: hive is not allowed to impersonate hive), serverProtocolVersion:null)</span><br></pre></td></tr></table></figure>
-
-<p>需要在hdfs <code>core-site.xml</code>中增加配置</p>
-<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">...</span><br><span class="line"><span class="tag">&lt;<span class="name">property</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">name</span>&gt;</span>hadoop.proxyuser.hive.groups<span class="tag">&lt;/<span class="name">name</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">value</span>&gt;</span>*<span class="tag">&lt;/<span class="name">value</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">property</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">property</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">name</span>&gt;</span>hadoop.proxyuser.hive.hosts<span class="tag">&lt;/<span class="name">name</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">value</span>&gt;</span>*<span class="tag">&lt;/<span class="name">value</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">property</span>&gt;</span></span><br><span class="line">...</span><br></pre></td></tr></table></figure>
-
-<p>然后重启<code>hdfs namenode</code></p>
-<h1 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h1><p><img src="/images/zeppelin/zeppelin_main_ui.png" alt="zeppelin_main_ui"></p>
-<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a target="_blank" rel="noopener" href="http://zeppelin.apache.org/docs/0.7.2/">zeppelin</a></li>
-<li><a target="_blank" rel="noopener" href="http://www.2cto.com/database/201608/543466.html">基于hadoop生态圈的数据仓库实践——OLAP与数据可视化（五）</a></li>
-<li><a target="_blank" rel="noopener" href="http://www.aboutyun.com/thread-12278-1-1.html">Hive学习之HiveServer2服务端配置与启动</a></li>
-<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/niityzu/article/details/42639369">Hive用户接口（二）—使用Hive JDBC驱动连接Hive操作实例</a></li>
-<li><a target="_blank" rel="noopener" href="http://www.cnblogs.com/zeppelin/p/6184077.html">Zeppelin 用jdbc连接hive报错</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1785,7 +1943,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">144</span>
+          <span class="site-state-item-count">145</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

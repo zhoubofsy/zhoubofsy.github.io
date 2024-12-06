@@ -10687,4 +10687,84 @@
         <tag>solidity</tag>
       </tags>
   </entry>
+  <entry>
+    <title>solidity合约中如何减少gas消耗</title>
+    <url>/2024/12/05/blockchain/ethereum/solidity-reduce-gas/</url>
+    <content><![CDATA[<p>从设计原则、编码技巧、数据存储优化和具体示例四个方面，系统地讲解如何在 Solidity 合约中节省 Gas 费用。</p>
+<h1 id="设计原则"><a href="#设计原则" class="headerlink" title="设计原则"></a>设计原则</h1><p><strong>减少合约调用次数</strong></p>
+<ul>
+<li>将多个逻辑步骤合并到单一函数中，避免多次外部调用。</li>
+<li>尽量减少合约之间的交互，因为每次外部调用都涉及高 Gas 消耗。</li>
+</ul>
+<p><strong>避免频繁修改状态变量</strong></p>
+<ul>
+<li>修改状态变量（如 storage）比操作本地变量（如 memory）耗费更多 Gas。</li>
+<li>在逻辑中优先使用本地变量，计算完后一次性更新状态变量。</li>
+</ul>
+<p><strong>简化复杂计算</strong></p>
+<ul>
+<li>将复杂计算移到链下处理，通过链上存储结果代替。</li>
+<li>在链下生成哈希值等，只存储结果以减少链上计算开销。</li>
+</ul>
+<h1 id="编码技巧"><a href="#编码技巧" class="headerlink" title="编码技巧"></a>编码技巧</h1><h2 id="使用-view-和-pure-函数"><a href="#使用-view-和-pure-函数" class="headerlink" title="使用 view 和 pure 函数"></a>使用 view 和 pure 函数</h2><p>view 函数不修改状态，pure 函数不依赖链上状态，调用它们不消耗 Gas。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">function add(uint a, uint b) public pure returns (uint) &#123;</span><br><span class="line">    return a + b;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="精简数据类型"><a href="#精简数据类型" class="headerlink" title="精简数据类型"></a>精简数据类型</h2><ul>
+<li>使用适合的数据类型，比如 uint8 而非 uint256（仅当值范围确定小于 256）。</li>
+<li>避免布尔值，因为布尔操作实际存储在 256 位。</li>
+</ul>
+<h2 id="利用-calldata-代替-memory"><a href="#利用-calldata-代替-memory" class="headerlink" title="利用 calldata 代替 memory"></a>利用 calldata 代替 memory</h2><p>函数的外部输入参数可用 calldata，节省内存分配成本。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">function processData(uint[] calldata data) external &#123;</span><br><span class="line">    // calldata 参数直接使用，无需复制</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="事件替代状态变量"><a href="#事件替代状态变量" class="headerlink" title="事件替代状态变量"></a>事件替代状态变量</h2><p>使用 emit 事件记录某些数据，而非存储状态变量。事件存储在日志中，成本低于 storage。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">event DataProcessed(address indexed user, uint amount);</span><br></pre></td></tr></table></figure>
+
+<h2 id="合理使用-immutable-和-constant"><a href="#合理使用-immutable-和-constant" class="headerlink" title="合理使用 immutable 和 constant"></a>合理使用 immutable 和 constant</h2><ul>
+<li>immutable：部署后值不可更改，但比普通变量读取快。</li>
+<li>constant：在编译时决定值，不占用存储空间。</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">uint256 public immutable deployTime = block.timestamp;</span><br><span class="line">uint256 public constant FEE_RATE = 100;</span><br></pre></td></tr></table></figure>
+
+<h1 id="数据存储优化"><a href="#数据存储优化" class="headerlink" title="数据存储优化"></a>数据存储优化</h1><h2 id="批量更新状态变量"><a href="#批量更新状态变量" class="headerlink" title="批量更新状态变量"></a>批量更新状态变量</h2><p>将多次状态变量更新合并为一次。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">// 不推荐</span><br><span class="line">balance = balance + 10;</span><br><span class="line">counter = counter + 1;</span><br><span class="line"></span><br><span class="line">// 推荐</span><br><span class="line">balance += 10;</span><br><span class="line">counter += 1;</span><br></pre></td></tr></table></figure>
+
+<h2 id="使用结构体或映射存储数据"><a href="#使用结构体或映射存储数据" class="headerlink" title="使用结构体或映射存储数据"></a>使用结构体或映射存储数据</h2><p>将多个相关变量合并到一个 struct 或映射中。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">struct User &#123;</span><br><span class="line">    uint256 balance;</span><br><span class="line">    uint256 lastUpdated;</span><br><span class="line">&#125;</span><br><span class="line">mapping(address =&gt; User) users;</span><br></pre></td></tr></table></figure>
+
+<h2 id="减少存储变量数量"><a href="#减少存储变量数量" class="headerlink" title="减少存储变量数量"></a>减少存储变量数量</h2><p>优化存储布局，减少存储槽的使用（每个槽 32 字节）。多个变量可以合并到一个存储槽中。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">// 不推荐</span><br><span class="line">uint128 public var1;</span><br><span class="line">uint128 public var2;</span><br><span class="line"></span><br><span class="line">// 推荐</span><br><span class="line">struct Combined &#123;</span><br><span class="line">    uint128 var1;</span><br><span class="line">    uint128 var2;</span><br><span class="line">&#125;</span><br><span class="line">Combined public data;</span><br></pre></td></tr></table></figure>
+
+<h2 id="删除不必要的状态变量"><a href="#删除不必要的状态变量" class="headerlink" title="删除不必要的状态变量"></a>删除不必要的状态变量</h2><p>使用 delete 删除已用完的存储变量，释放存储空间。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">delete users[userAddress];</span><br></pre></td></tr></table></figure>
+
+<h1 id="其他优化建议"><a href="#其他优化建议" class="headerlink" title="其他优化建议"></a>其他优化建议</h1><ol>
+<li>代码复用</li>
+</ol>
+<ul>
+<li>将重复逻辑封装为内部函数，减少代码重复和部署大小。</li>
+<li>使用库（library）减少代码复制。</li>
+</ul>
+<ol start="2">
+<li>优化循环</li>
+</ol>
+<ul>
+<li>避免大规模循环操作，因为每次迭代都会增加 Gas。</li>
+<li>可以分阶段处理数据，减少单次调用的负载。</li>
+</ul>
+<ol start="3">
+<li>Gas 预言机</li>
+</ol>
+<ul>
+<li>部署前使用工具（如 Remix、Hardhat）模拟和估算 Gas。</li>
+<li>优化部署的 Gas 成本。</li>
+</ul>
+]]></content>
+      <categories>
+        <category>blockchain</category>
+      </categories>
+      <tags>
+        <tag>ethereum</tag>
+        <tag>solidity</tag>
+      </tags>
+  </entry>
 </search>
