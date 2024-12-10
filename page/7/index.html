@@ -188,6 +188,183 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/10/17/storage/fs-ext2/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2017/10/17/storage/fs-ext2/" class="post-title-link" itemprop="url">Ext2</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2017-10-17 11:20:22" itemprop="dateCreated datePublished" datetime="2017-10-17T11:20:22+08:00">2017-10-17</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>一个磁盘可以划分成多个分区，每个分区必须先用格式化工具（例如某种mkfs命令）格式化成某种格式的文件系统，然后才能存储文件，格式化的过程会在磁盘上写一些管理存储布局的信息。</p>
+<h1 id="格式"><a href="#格式" class="headerlink" title="格式"></a>格式</h1><p>文件系统中存储的最小单位是块（Block），一个块究竟多大是在格式化时确定的，例如mke2fs的-b选项可以设定块大小为1024、2048或4096字节。而上图中启动块（Boot Block）的大小是确定的，就是1KB，启动块是由PC标准规定的，用来存储磁盘分区信息和启动信息，任何文件系统都不能使用启动块。启动块之后才是ext2文件系统的开始，ext2文件系统将整个分区划成若干个同样大小的块组（Block Group）</p>
+<p><img src="/images/ext2/fs-ext2layout.png" alt="fs-ext2layout.png"></p>
+<h2 id="做一个EXT2看看"><a href="#做一个EXT2看看" class="headerlink" title="做一个EXT2看看"></a>做一个EXT2看看</h2><p>做一个EXT2的文件系统，然后将其挂载，看看其文件格式。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">dd</span> <span class="keyword">if</span>=/dev/zero of=./img.1m count=256 bs=4K</span></span><br><span class="line">...</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">mke2fs fs</span></span><br><span class="line">...</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> mount -o loop ./img.1m /mnt</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> umount /mnt</span></span><br></pre></td></tr></table></figure>
+
+<p>使用<code>od</code>查看<code>img.1m</code>镜像文件</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">od -tx1 -Ax ./img.1m</span><br></pre></td></tr></table></figure>
+
+<h2 id="Super-Block"><a href="#Super-Block" class="headerlink" title="Super Block"></a>Super Block</h2><p>描述整个分区的文件系统信息，例如块大小、文件系统版本号、上次mount的时间等等。超级块在每个块组的开头都有一份拷贝。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ext2_super_block</span> &#123;</span></span><br><span class="line">    __le32  s_inodes_count;     <span class="comment">/* Inodes count */</span></span><br><span class="line">    __le32  s_blocks_count;     <span class="comment">/* Blocks count */</span></span><br><span class="line">    __le32  s_r_blocks_count;   <span class="comment">/* Reserved blocks count */</span></span><br><span class="line">    __le32  s_free_blocks_count;    <span class="comment">/* Free blocks count */</span></span><br><span class="line">    __le32  s_free_inodes_count;    <span class="comment">/* Free inodes count */</span></span><br><span class="line">    __le32  s_first_data_block; <span class="comment">/* First Data Block */</span></span><br><span class="line">    __le32  s_log_block_size;   <span class="comment">/* Block size */</span></span><br><span class="line">    __le32  s_log_frag_size;    <span class="comment">/* Fragment size */</span></span><br><span class="line">    __le32  s_blocks_per_group; <span class="comment">/* # Blocks per group */</span></span><br><span class="line">    __le32  s_frags_per_group;  <span class="comment">/* # Fragments per group */</span></span><br><span class="line">    __le32  s_inodes_per_group; <span class="comment">/* # Inodes per group */</span></span><br><span class="line">    __le32  s_mtime;        <span class="comment">/* Mount time */</span></span><br><span class="line">    __le32  s_wtime;        <span class="comment">/* Write time */</span></span><br><span class="line">    __le16  s_mnt_count;        <span class="comment">/* Mount count */</span></span><br><span class="line">    __le16  s_max_mnt_count;    <span class="comment">/* Maximal mount count */</span></span><br><span class="line">    __le16  s_magic;        <span class="comment">/* Magic signature */</span></span><br><span class="line">    __le16  s_state;        <span class="comment">/* File system state */</span></span><br><span class="line">    __le16  s_errors;       <span class="comment">/* Behaviour when detecting errors */</span></span><br><span class="line">    __le16  s_minor_rev_level;  <span class="comment">/* minor revision level */</span></span><br><span class="line">    __le32  s_lastcheck;        <span class="comment">/* time of last check */</span></span><br><span class="line">    __le32  s_checkinterval;    <span class="comment">/* max. time between checks */</span></span><br><span class="line">    __le32  s_creator_os;       <span class="comment">/* OS */</span></span><br><span class="line">    __le32  s_rev_level;        <span class="comment">/* Revision level */</span></span><br><span class="line">    __le16  s_def_resuid;       <span class="comment">/* Default uid for reserved blocks */</span></span><br><span class="line">    __le16  s_def_resgid;       <span class="comment">/* Default gid for reserved blocks */</span></span><br><span class="line">    __le32  s_first_ino;        <span class="comment">/* First non-reserved inode */</span></span><br><span class="line">    __le16   s_inode_size;      <span class="comment">/* size of inode structure */</span></span><br><span class="line">    __le16  s_block_group_nr;   <span class="comment">/* block group # of this superblock */</span></span><br><span class="line">    __le32  s_feature_compat;   <span class="comment">/* compatible feature set */</span></span><br><span class="line">    __le32  s_feature_incompat;     <span class="comment">/* incompatible feature set */</span></span><br><span class="line">    __le32  s_feature_ro_compat;    <span class="comment">/* readonly-compatible feature set */</span></span><br><span class="line">    __u8    s_uuid[<span class="number">16</span>];     <span class="comment">/* 128-bit uuid for volume */</span></span><br><span class="line">    <span class="type">char</span>    s_volume_name[<span class="number">16</span>];  <span class="comment">/* volume name */</span></span><br><span class="line">    <span class="type">char</span>    s_last_mounted[<span class="number">64</span>];     <span class="comment">/* directory where last mounted */</span></span><br><span class="line">    __le32  s_algorithm_usage_bitmap; <span class="comment">/* For compression */</span></span><br><span class="line">    __u8    s_prealloc_blocks;  <span class="comment">/* Nr of blocks to try to preallocate*/</span></span><br><span class="line">    __u8    s_prealloc_dir_blocks;  <span class="comment">/* Nr to preallocate for dirs */</span></span><br><span class="line">    __u16   s_padding1;</span><br><span class="line">    <span class="comment">/*</span></span><br><span class="line"><span class="comment">     * Journaling support valid if EXT3_FEATURE_COMPAT_HAS_JOURNAL set.</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    __u8    s_journal_uuid[<span class="number">16</span>]; <span class="comment">/* uuid of journal superblock */</span></span><br><span class="line">    __u32   s_journal_inum;     <span class="comment">/* inode number of journal file */</span></span><br><span class="line">    __u32   s_journal_dev;      <span class="comment">/* device number of journal file */</span></span><br><span class="line">    __u32   s_last_orphan;      <span class="comment">/* start of list of inodes to delete */</span></span><br><span class="line">    __u32   s_hash_seed[<span class="number">4</span>];     <span class="comment">/* HTREE hash seed */</span></span><br><span class="line">    __u8    s_def_hash_version; <span class="comment">/* Default hash version to use */</span></span><br><span class="line">    __u8    s_reserved_char_pad;</span><br><span class="line">    __u16   s_reserved_word_pad;</span><br><span class="line">    __le32  s_default_mount_opts;</span><br><span class="line">    __le32  s_first_meta_bg;    <span class="comment">/* First metablock block group */</span></span><br><span class="line">    __u32   s_reserved[<span class="number">190</span>];    <span class="comment">/* Padding to the end of the block */</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/images/ext2/fs.sb.png" alt="fs.sb.png"></p>
+<p>从000000开始的1KB是启动块，由于这不是一个真正的磁盘分区，启动块的内容全部为零。从000400到0007ff的1KB是超级块，可以对照着<code>dumpe2fs</code>分析。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">dumpe2fs ./img.1m                                                                                                                 1</span> </span><br><span class="line">dumpe2fs 1.42.9 (28-Dec-2013)</span><br><span class="line">Filesystem volume name:   &lt;none&gt;</span><br><span class="line">Last mounted on:          &lt;not available&gt;</span><br><span class="line">Filesystem UUID:          2b8250d9-29fa-459e-9e2d-8b9c887b860b</span><br><span class="line">Filesystem magic number:  0xEF53</span><br><span class="line">Filesystem revision #:    1 (dynamic)</span><br><span class="line">Filesystem features:      ext_attr resize_inode dir_index filetype sparse_super</span><br><span class="line">Filesystem flags:         signed_directory_hash</span><br><span class="line">Default mount options:    user_xattr acl</span><br><span class="line">Filesystem state:         not clean</span><br><span class="line">Errors behavior:          Continue</span><br><span class="line">Filesystem OS type:       Linux</span><br><span class="line">Inode count:              128</span><br><span class="line">Block count:              1024</span><br><span class="line">Reserved block count:     51</span><br><span class="line">Free blocks:              986</span><br><span class="line">Free inodes:              117</span><br><span class="line">First block:              1</span><br><span class="line">Block size:               1024</span><br><span class="line">Fragment size:            1024</span><br><span class="line">Reserved GDT blocks:      3</span><br><span class="line">Blocks per group:         8192</span><br><span class="line">Fragments per group:      8192</span><br><span class="line">Inodes per group:         128</span><br><span class="line">Inode blocks per group:   16</span><br><span class="line">Filesystem created:       Wed Oct 25 09:56:05 2017</span><br><span class="line">Last mount time:          Wed Oct 25 09:56:48 2017</span><br><span class="line">Last write time:          Wed Oct 25 09:56:48 2017</span><br><span class="line">Mount count:              1</span><br><span class="line">Maximum mount count:      -1</span><br><span class="line">Last checked:             Wed Oct 25 09:56:05 2017</span><br><span class="line">Check interval:           0 (&lt;none&gt;)</span><br><span class="line">Reserved blocks uid:      0 (user root)</span><br><span class="line">Reserved blocks gid:      0 (group root)</span><br><span class="line">First inode:              11</span><br><span class="line">Inode size:               128</span><br><span class="line">Default directory hash:   half_md4</span><br><span class="line">Directory Hash Seed:      2feeee23-e3de-4126-a60d-1d05a11b0ab3</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<p>块大小是1024字节，1MB的分区共有1024个块，第0个块是启动块，启动块之后才算ext2文件系统的开始，因此Group 0占据第1个到第1023个块，共1023个块。块位图占一个块，共有1024×8&#x3D;8192个bit，足够表示这1023个块了，因此只要一个块组就够了。默认是每8KB分配一个inode，因此1MB的分区对应128个inode，这些数据都和dumpe2fs的输出吻合。</p>
+<h2 id="GDT-Group-Descriptor-Table"><a href="#GDT-Group-Descriptor-Table" class="headerlink" title="GDT(Group Descriptor Table)"></a>GDT(Group Descriptor Table)</h2><p>由很多块组描述符组成，整个分区分成多少个块组就对应有多少个块组描述符。每个块组描述符（Group Descriptor）存储一个块组的描述信息，例如在这个块组中从哪里开始是inode表，从哪里开始是数据块，空闲的inode和数据块还有多少个等等。和超级块类似，块组描述符表在每个块组的开头也都有一份拷贝，这些信息是非常重要的，一旦超级块意外损坏就会丢失整个分区的数据，一旦块组描述符意外损坏就会丢失整个块组的数据，因此它们都有多份拷贝。通常内核只用到第0个块组中的拷贝，当执行e2fsck检查文件系统一致性时，第0个块组中的超级块和块组描述符表就会拷贝到其它块组，这样当第0个块组的开头意外损坏时就可以用其它拷贝来恢复，从而减少损失。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> * Structure of a blocks group descriptor</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ext2_group_desc</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">    __le32  bg_block_bitmap;        <span class="comment">/* Blocks bitmap block */</span></span><br><span class="line">    __le32  bg_inode_bitmap;        <span class="comment">/* Inodes bitmap block */</span></span><br><span class="line">    __le32  bg_inode_table;     <span class="comment">/* Inodes table block */</span></span><br><span class="line">    __le16  bg_free_blocks_count;   <span class="comment">/* Free blocks count */</span></span><br><span class="line">    __le16  bg_free_inodes_count;   <span class="comment">/* Free inodes count */</span></span><br><span class="line">    __le16  bg_used_dirs_count; <span class="comment">/* Directories count */</span></span><br><span class="line">    __le16  bg_pad;</span><br><span class="line">    __le32  bg_reserved[<span class="number">3</span>];</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/images/ext2/fs.gd.png" alt="fs.gd.png"></p>
+<p>从000800开始是块组描述符表，这个文件系统较小，只有一个块组描述符，对照着dumpe2fs的输出信息分析</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">dumpe2fs ./img.1m                                                                                                                 1</span> </span><br><span class="line">...</span><br><span class="line">Group 0: (Blocks 1-1023)</span><br><span class="line">  主 superblock at 1, Group descriptors at 2-2</span><br><span class="line">  保留的GDT块位于 3-5</span><br><span class="line">  Block bitmap at 6 (+5), Inode bitmap at 7 (+6)</span><br><span class="line">  Inode表位于 8-23 (+7)</span><br><span class="line">  986 free blocks, 117 free inodes, 2 directories</span><br><span class="line">  可用块数: 38-1023</span><br><span class="line">  可用inode数: 12-128k</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+
+<p>整个文件系统是1MB，每个块是1KB，应该有1024个块，除去启动块还有1023个块，分别编号为1-1023，它们全都属于Group 0。其中，Block 1是超级块，接下来的块组描述符指出，块位图是Block 6，因此中间的Block 2-5是块组描述符表，其中Block 3-5保留未用。块组描述符还指出，inode位图是Block 7，inode表是从Block 8开始的，那么inode表到哪个块结束呢？由于超级块中指出每个块组有128个inode，每个inode的大小是128字节，因此共占16个块，inode表的范围是Block 8-23。从Block 24开始就是数据块了。块组描述符中指出，空闲的数据块有986个，由于文件系统是新创建的，空闲块是连续的Block 38-1023，用掉了前面的Block 24-37</p>
+<h2 id="Block-Bitmap"><a href="#Block-Bitmap" class="headerlink" title="Block Bitmap"></a>Block Bitmap</h2><p>一个块组中的块是这样利用的：数据块（Data Block）存储所有文件的数据，比如某个分区的块大小是1024字节，某个文件是2049字节，那么就需要三个数据块来存，即使第三个块只存了一个字节也需要占用一个整块；超级块、块组描述符表、块位图、inode位图、inode表这几部分存储该块组的描述信息。那么如何知道哪些块已经用来存储文件数据或其它描述信息，哪些块仍然空闲可用呢？块位图就是用来描述整个块组中哪些块已用哪些块空闲的，它本身占一个块，其中的每个bit代表本块组中的一个块，这个bit为1表示该块已用，这个bit为0表示该块空闲可用。<br>为什么用df命令统计整个磁盘的已用空间非常快呢？因为只需要查看每个块组的块位图即可，而不需要搜遍整个分区。相反，用du命令查看一个较大目录的已用空间就非常慢，因为不可避免地要搜遍整个目录的所有文件。<br>与此相联系的另一个问题是：在格式化一个分区时究竟会划出多少个块组呢？主要的限制在于块位图本身必须只占一个块。用mke2fs格式化时默认块大小是1024字节，可以用-b参数指定块大小，现在设块大小指定为b字节，那么一个块可以有8b个bit，这样大小的一个块位图就可以表示8b个块的占用情况，因此一个块组最多可以有8b个块，如果整个分区有s个块，那么就可以有s&#x2F;(8b)个块组。格式化时可以用-g参数指定一个块组有多少个块，但是通常不需要手动指定，mke2fs工具会计算出最优的数值。</p>
+<p><img src="/images/ext2/fs_blk_bmp.png" alt="fs_blk_bmp.png"></p>
+<p>从块位图中可以看出，前37位（前4个字节加最后一个字节的低5位）都是1，，就表示Block 1-37已用。在块位图中，Block 38-1023对应的位都是0（一直到001870那一行最后一个字节的低7位），接下来的位已经超出了文件系统的空间，不管是0还是1都没有意义。可见，块位图每个字节中的位应该按从低位到高位的顺序来看。以后随着文件系统的使用和添加删除文件，块位图中的1就变得不连续了。</p>
+<h2 id="Inode-Bitmap"><a href="#Inode-Bitmap" class="headerlink" title="Inode Bitmap"></a>Inode Bitmap</h2><p>和块位图类似，本身占一个块，其中每个bit表示一个inode是否空闲可用。</p>
+<p><img src="/images/ext2/fs_inode_bmp.png" alt="fs_inode_bmp.png"></p>
+<p>块组描述符指出，空闲的inode有117个，由于文件系统是新创建的，空闲的inode也是连续的，inode编号从1到128，空闲的inode编号从12到128。从inode位图可以看出，前11位都是1，表示前11个inode已用。以后随着文件系统的使用和添加删除文件，inode位图中的1就变得不连续了。001c00这一行的128位就表示了所有inode，因此下面的行不管是0还是1都没有意义。已用的11个inode中，前10个inode是被ext2文件系统保留的，其中第2个inode是根目录，第11个inode是lost+found目录，块组描述符也指出该组有两个目录，就是根目录和lost+found。</p>
+<h2 id="Inode-Table"><a href="#Inode-Table" class="headerlink" title="Inode Table"></a>Inode Table</h2><p>一个文件除了数据需要存储之外，一些描述信息也需要存储，例如文件类型（常规、目录、符号链接等），权限，文件大小，创建&#x2F;修改&#x2F;访问时间等，也就是ls -l命令看到的那些信息，这些信息存在inode中而不是数据块中。每个文件都有一个inode，一个块组中的所有inode组成了inode表。<br>inode表占多少个块在格式化时就要决定并写入块组描述符中，mke2fs格式化工具的默认策略是一个块组有多少个8KB就分配多少个inode。由于数据块占了整个块组的绝大部分，也可以近似认为数据块有多少个8KB就分配多少个inode，换句话说，如果平均每个文件的大小是8KB，当分区存满的时候inode表会得到比较充分的利用，数据块也不浪费。如果这个分区存的都是很大的文件（比如电影），则数据块用完的时候inode会有一些浪费，如果这个分区存的都是很小的文件（比如源代码），则有可能数据块还没用完inode就已经用完了，数据块可能有很大的浪费。如果用户在格式化时能够对这个分区以后要存储的文件大小做一个预测，也可以用mke2fs的-i参数手动指定每多少个字节分配一个inode。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> * Structure of an inode on the disk</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ext2_inode</span> &#123;</span></span><br><span class="line">    __le16  i_mode;     <span class="comment">/* File mode */</span></span><br><span class="line">    __le16  i_uid;      <span class="comment">/* Low 16 bits of Owner Uid */</span></span><br><span class="line">    __le32  i_size;     <span class="comment">/* Size in bytes */</span></span><br><span class="line">    __le32  i_atime;    <span class="comment">/* Access time */</span></span><br><span class="line">    __le32  i_ctime;    <span class="comment">/* Creation time */</span></span><br><span class="line">    __le32  i_mtime;    <span class="comment">/* Modification time */</span></span><br><span class="line">    __le32  i_dtime;    <span class="comment">/* Deletion Time */</span></span><br><span class="line">    __le16  i_gid;      <span class="comment">/* Low 16 bits of Group Id */</span></span><br><span class="line">    __le16  i_links_count;  <span class="comment">/* Links count */</span></span><br><span class="line">    __le32  i_blocks;   <span class="comment">/* Blocks count */</span></span><br><span class="line">    __le32  i_flags;    <span class="comment">/* File flags */</span></span><br><span class="line">    <span class="class"><span class="keyword">union</span> &#123;</span></span><br><span class="line">        <span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">            __le32  l_i_reserved1;</span><br><span class="line">        &#125; linux1;</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">            __le32  h_i_translator;</span><br><span class="line">        &#125; hurd1;</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">            __le32  m_i_reserved1;</span><br><span class="line">        &#125; masix1;</span><br><span class="line">    &#125; osd1;             <span class="comment">/* OS dependent 1 */</span></span><br><span class="line">    __le32  i_block[EXT2_N_BLOCKS];<span class="comment">/* Pointers to blocks */</span></span><br><span class="line">    __le32  i_generation;   <span class="comment">/* File version (for NFS) */</span></span><br><span class="line">    __le32  i_file_acl; <span class="comment">/* File ACL */</span></span><br><span class="line">    __le32  i_dir_acl;  <span class="comment">/* Directory ACL */</span></span><br><span class="line">    __le32  i_faddr;    <span class="comment">/* Fragment address */</span></span><br><span class="line">    <span class="class"><span class="keyword">union</span> &#123;</span></span><br><span class="line">        <span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">            __u8    l_i_frag;   <span class="comment">/* Fragment number */</span></span><br><span class="line">            __u8    l_i_fsize;  <span class="comment">/* Fragment size */</span></span><br><span class="line">            __u16   i_pad1;</span><br><span class="line">            __le16  l_i_uid_high;   <span class="comment">/* these 2 fields    */</span></span><br><span class="line">            __le16  l_i_gid_high;   <span class="comment">/* were reserved2[0] */</span></span><br><span class="line">            __u32   l_i_reserved2;</span><br><span class="line">        &#125; linux2;</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">            __u8    h_i_frag;   <span class="comment">/* Fragment number */</span></span><br><span class="line">            __u8    h_i_fsize;  <span class="comment">/* Fragment size */</span></span><br><span class="line">            __le16  h_i_mode_high;</span><br><span class="line">            __le16  h_i_uid_high;</span><br><span class="line">            __le16  h_i_gid_high;</span><br><span class="line">            __le32  h_i_author;</span><br><span class="line">        &#125; hurd2;</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">            __u8    m_i_frag;   <span class="comment">/* Fragment number */</span></span><br><span class="line">            __u8    m_i_fsize;  <span class="comment">/* Fragment size */</span></span><br><span class="line">            __u16   m_pad1;</span><br><span class="line">            __u32   m_i_reserved2[<span class="number">2</span>];</span><br><span class="line">        &#125; masix2;</span><br><span class="line">    &#125; osd2;             <span class="comment">/* OS dependent 2 */</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>根目录inode信息：<br><img src="/images/ext2/fs.rootinode.png" alt="fs.rootinode.png"></p>
+<p>st_mode以八进制表示，包含了文件类型和文件权限，最高位的4表示文件类型为目录（各种文件类型的编码详见stat(2)），低位的755表示权限。Size是1024，说明根目录现在只有一个数据块。Links为3表示根目录有三个硬链接，分别是根目录下的.和..，以及lost+found子目录下的..。注意，虽然我们通常用&#x2F;表示根目录，但是并没有名为&#x2F;的硬链接，事实上，&#x2F;是路径分隔符，不能在文件名中出现。这里的Blockcount是以512字节为一个块来数的，并非格式化文件系统时所指定的块大小，磁盘的最小读写单位称为扇区（Sector），通常是512字节，所以Blockcount是磁盘的物理块数量，而非分区的逻辑块数量。根目录数据块的位置由上图中的Blocks[0]指出，也就是第24个块，它在文件系统中的位置是24×0x400&#x3D;0x6000</p>
+<p>探索文件系统还有一个很有用的工具debugfs，它提供一个命令行界面，可以对文件系统做各种操作，例如查看信息、恢复数据、修正文件系统中的错误。使用<code>debugfs ./img.1m</code>打开文件系统，使用<code>stat ／</code>命令查看根目录inode信息</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">Inode: 2   Type: directory    Mode:  0755   Flags: 0x0</span><br><span class="line">Generation: 0    Version: 0x00000000</span><br><span class="line">User:     0   Group:     0   Size: 1024</span><br><span class="line">File ACL: 0    Directory ACL: 0</span><br><span class="line">Links: 3   Blockcount: 2</span><br><span class="line">Fragment:  Address: 0    Number: 0    Size: 0</span><br><span class="line">ctime: 0x59efef35 -- Wed Oct 25 09:56:05 2017</span><br><span class="line">atime: 0x59efef63 -- Wed Oct 25 09:56:51 2017</span><br><span class="line">mtime: 0x59efef35 -- Wed Oct 25 09:56:05 2017</span><br><span class="line">BLOCKS:</span><br><span class="line">(0):24</span><br><span class="line">TOTAL: 1</span><br></pre></td></tr></table></figure>
+
+<h3 id="数据块寻址"><a href="#数据块寻址" class="headerlink" title="数据块寻址"></a>数据块寻址</h3><p>通过<code>__le32  i_block[EXT2_N_BLOCKS]</code>来完成数据块的寻址。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> * Constants relative to the data blocks</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> EXT2_NDIR_BLOCKS        12</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> EXT2_IND_BLOCK          EXT2_NDIR_BLOCKS</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> EXT2_DIND_BLOCK         (EXT2_IND_BLOCK + 1)</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> EXT2_TIND_BLOCK         (EXT2_DIND_BLOCK + 1)</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> EXT2_N_BLOCKS           (EXT2_TIND_BLOCK + 1)</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><code>EXT2_NDIR_BLOCKS</code><br>  <code>i_block</code>前12项属于直接寻址，直接存储数据块的”block id”。所以总共可记录 12 笔记录，总额大小为12*1k＝12k</li>
+<li><code>EXT2_IND_BLOCK</code><br>  <code>i_block</code>第13项为一级间接寻址，每笔 block 号码的记录会花去 4bytes，因此 1K 的大小能够记录 256 笔记录，因此一个间接可以记录的文件大小为(1k&#x2F;4)*1K&#x3D;256k</li>
+<li><code>EXT2_DIND_BLOCK</code><br>  <code>i_block</code>第14项为二级间接寻址，第一层 block 会指定 256 个第二层，每个第二层可以指定 256 个号码，因此总额大小为256<em>256</em>1k</li>
+<li><code>EXT2_TIND_BLOCK</code><br>  <code>i_block</code>第15项为三级间接寻址，第一层 block 会指定 256 个第二层，每个第二层可以指定 256 个第三层，每个第三层可以指定 256 个号码，因此总额大小为256<em>256</em>256*1k</li>
+</ul>
+<p>*** 总容量为直接寻址＋一级间接＋二级间接＋三级间接＝16.06GB ***</p>
+<p><img src="/images/ext2/fs.datablockaddr.png" alt="fs.datablockaddr.png"></p>
+<h2 id="Blocks"><a href="#Blocks" class="headerlink" title="Blocks"></a>Blocks</h2><ul>
+<li>对于常规文件，文件的数据存储在数据块中。</li>
+<li>对于目录，该目录下的所有文件名和目录名存储在数据块中，注意文件名保存在它所在目录的数据块中，除文件名之外，ls -l命令看到的其它信息都保存在该文件的inode中。注意这个概念：目录也是一种文件，是一种特殊类型的文件。</li>
+<li>对于符号链接，如果目标路径名较短则直接保存在inode中以便更快地查找，如果目标路径名较长则分配一个数据块来保存。</li>
+<li>设备文件、FIFO和socket等特殊文件没有数据块，设备文件的主设备号和次设备号保存在inode中。</li>
+</ul>
+<p>根目录的数据结构</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ext2_dir_entry_2</span> &#123;</span></span><br><span class="line">    __le32  inode;          <span class="comment">/* Inode number */</span></span><br><span class="line">    __le16  rec_len;        <span class="comment">/* Directory entry length */</span></span><br><span class="line">    __u8    name_len;       <span class="comment">/* Name length */</span></span><br><span class="line">    __u8    file_type;</span><br><span class="line">    <span class="type">char</span>    name[];         <span class="comment">/* File name, up to EXT2_NAME_LEN */</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>根目录的数据块<br><img src="/images/ext2/fs.datablock.png" alt="fs.datablock.png"></p>
+<p>根据上文中根目录inode信息找到根目录数据块006000地址，目录的数据块由许多不定长的记录组成，每条记录描述该目录下的一个文件，在上图中用框表示。第一条记录描述inode号为2的文件，也就是根目录本身，该记录的总长度为12字节，其中文件名的长度为1字节，文件类型为2（见下表，注意此处的文件类型编码和st_mode不一致），文件名是<code>.</code>。第二条记录也是描述inode号为2的文件（根目录），该记录总长度为12字节，其中文件名的长度为2字节，文件类型为2，文件名字符串是..。第三条记录一直延续到该数据块的末尾，描述inode号为11的文件（lost+found目录），该记录的总长度为1000字节（和前面两条记录加起来是1024字节），文件类型为2，文件名字符串是lost+found，后面全是0字节。如果要在根目录下创建新的文件，可以把第三条记录截短，在原来的0字节处创建新的记录。如果该目录下的文件名太多，一个数据块不够用，则会分配新的数据块，块编号会填充到inode的Blocks[1]字段。</p>
+<table>
+<thead>
+<tr>
+<th align="center">编码</th>
+<th align="left">文件类型(file type)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">0</td>
+<td align="left">Unknown</td>
+</tr>
+<tr>
+<td align="center">1</td>
+<td align="left">Regular File</td>
+</tr>
+<tr>
+<td align="center">2</td>
+<td align="left">Directory</td>
+</tr>
+<tr>
+<td align="center">3</td>
+<td align="left">Character device</td>
+</tr>
+<tr>
+<td align="center">4</td>
+<td align="left">Block device</td>
+</tr>
+<tr>
+<td align="center">5</td>
+<td align="left">Named pipe</td>
+</tr>
+<tr>
+<td align="center">6</td>
+<td align="left">Socket</td>
+</tr>
+<tr>
+<td align="center">7</td>
+<td align="left">Symbolic link</td>
+</tr>
+</tbody></table>
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="http://docs.linuxtone.org/ebooks/C&CPP/c/ch29s02.html">ext2文件系统</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.cnblogs.com/ggjucheng/archive/2012/08/22/2651641.html#ext2_filesystem">EXT2 文件系统</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.cnblogs.com/f-ck-need-u/p/7016077.html">ext文件系统机制</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/10/02/language/python/python-exception/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1752,128 +1929,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/08/31/apple/xhyve-usage/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2017/08/31/apple/xhyve-usage/" class="post-title-link" itemprop="url">xhyve使用</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2017-08-31 10:38:30" itemprop="dateCreated datePublished" datetime="2017-08-31T10:38:30+08:00">2017-08-31</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/apple/" itemprop="url" rel="index"><span itemprop="name">apple</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p><img src="/images/xhyve/xhyve_logo.png" alt="xhyve_logo"></p>
-<p>FreeBSD 下的虚拟技术 bhyve (The BSD Hypervisor) 是去年1月份正式发布的，包含在了 FreeBSD 10.0 发行版中。今天要玩的这个 xhyve 是基于 bhyve 的 Mac OS X 移植版本，也就是说我们想在 Mac 上运行 Linux 的话除了 VirtualBox, VMware Fusion 外，现在有了第三种选择。</p>
-<p>xhyve is a lightweight virtualization solution for OS X that is capable of running Linux. It is a port of FreeBSD’s bhyve, a KVM+QEMU alternative written by Peter Grehan and Neel Natu.</p>
-<p>特点：</p>
-<ul>
-<li>super lightweight, only 230 KB in size</li>
-<li>completely standalone, no dependencies</li>
-<li>the only BSD-licensed virtualizer on OS X</li>
-<li>does not require a kernel extension (bhyve’s kernel code was ported to user mode code calling into Hypervisor.framework)</li>
-<li>multi-CPU support</li>
-<li>networking support</li>
-<li>can run off-the-shelf Linux distributions (and could be extended to run other operating systems)</li>
-</ul>
-<p>xhyve may make a good solution for running Docker on your Mac, for instance.</p>
-<h1 id="install"><a href="#install" class="headerlink" title="install"></a>install</h1><p>search xhyver:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">brew info xhyve</span></span><br><span class="line">xhyve: stable 0.2.0 (bottled), HEAD</span><br><span class="line">xhyve, lightweight macOS virtualization solution based on FreeBSD&#x27;s bhyve</span><br><span class="line">https://github.com/mist64/xhyve</span><br><span class="line">/usr/local/Cellar/xhyve/HEAD-1f1dbe3 (11 files, 11.2MB) *</span><br><span class="line">  Built from source on 2017-08-24 at 12:12:21</span><br><span class="line">From: https://github.com/Homebrew/homebrew-core/blob/master/Formula/xhyve.rb</span><br><span class="line">==&gt; Requirements</span><br><span class="line">Required: macOS &gt;= 10.10 ✔</span><br></pre></td></tr></table></figure>
-
-<p>install:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">brew install xhyve</span></span><br></pre></td></tr></table></figure>
-
-<h1 id="Ubuntu-16-04-VM"><a href="#Ubuntu-16-04-VM" class="headerlink" title="Ubuntu 16.04 VM"></a>Ubuntu 16.04 VM</h1><p>下载<code>ubuntu-16.04.1-server-amd64.iso</code>，装载该iso，然后将其中的<code>vmlinuz</code>和<code>initrd.gz</code>复制出来，以供xhyve使用。</p>
-<p>在mac系统下直接装载ubuntu的iso会出错</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">hdiutil attach ./ubuntu-16.04.1-server-amd64.iso</span></span><br><span class="line">hdiutil: attach failed - 无可装载的文件系统</span><br></pre></td></tr></table></figure>
-<p>所以需要制作一个新的iso，新的iso文件前预留<code>2KB</code>的空间</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">dd</span> <span class="keyword">if</span>=/dev/zero bs=2k count=1 of=./tmp.iso</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">dd</span> <span class="keyword">if</span>=./ubuntu-16.04.1-server-amd64.iso bs=2k skip=1 &gt;&gt; ./tmp.iso</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">hdiutil attach ./tmp.iso</span></span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cp</span> /Volumes/Ubuntu-Server\ 16/install/vmlinuz .</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cp</span> /Volumes/Ubuntu-Server\ 16/install/initrd.gz .</span></span><br></pre></td></tr></table></figure>
-
-<p>创建一个磁盘映像文件<code>hdd.img</code>，当作虚拟机的虚拟硬盘</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">dd</span> <span class="keyword">if</span>=/dev/zero of=hdd.img bs=1g count=8</span></span><br></pre></td></tr></table></figure>
-
-<p>编写VM创建脚本<code>mk_xhyve.sh</code></p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">!/bin/bash</span></span><br><span class="line"></span><br><span class="line">KERNEL=&quot;vmlinuz&quot;</span><br><span class="line">INITRD=&quot;initrd.gz&quot;</span><br><span class="line">CMDLINE=&quot;earlyprintk=serial console=ttyS0 acpi=off&quot;</span><br><span class="line"></span><br><span class="line">MEM=&quot;-m 1G&quot;</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">SMP=<span class="string">&quot;-c 2&quot;</span></span></span><br><span class="line">NET=&quot;-s 2:0,virtio-net&quot;</span><br><span class="line">IMG_CD=&quot;-s 3,ahci-cd,./ubuntu-16.04.1-server-amd64.iso&quot;</span><br><span class="line">IMG_HDD=&quot;-s 4,virtio-blk,./hdd.img&quot;</span><br><span class="line">PCI_DEV=&quot;-s 0:0,hostbridge -s 31,lpc&quot;</span><br><span class="line">LPC_DEV=&quot;-l com1,stdio&quot;</span><br><span class="line"></span><br><span class="line">xhyve $MEM $SMP $PCI_DEV $LPC_DEV $NET $IMG_CD $IMG_HDD -f kexec,$KERNEL,$INITRD,&quot;$CMDLINE&quot;</span><br></pre></td></tr></table></figure>
-
-<p>运行VM创建脚本<code>sudo sh ./mk_xhyve.sh</code>创建ubuntu虚拟机</p>
-<p><img src="/images/xhyve/xhyve_vm_run.png" alt="xhyve_vm_run"></p>
-<p>按正常系统安装方法安装。。。<br>待成功安装完成后选择<code>&lt;Go Back&gt;</code> &#x3D;&gt; <code>Execute a shell</code>，进入iso的shell界面，然后需要将已经安装好的<code>hdd.img</code>也就是系统中的<code>/dev/vda</code>中的boot目录copy出来，因为要用里面的<code>vmlinuz-4.4.0-31-generic</code>和<code>initrd.img-4.4.0-31-generic</code></p>
-<p>进入shell后先查看一下ip地址</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">BusyBox v1.22.1 (Ubuntu 1:1.22.0-15ubuntu1) built-in shell (ash)</span><br><span class="line">Enter &#x27;help&#x27; for a list of built-in commands.</span><br><span class="line"></span><br><span class="line">~ # ip a</span><br><span class="line">1: lo: &lt;LOOPBACK&gt; mtu 65536 qdisc noop qlen 1</span><br><span class="line">    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00</span><br><span class="line">2: enp0s2: &lt;BROADCAST,MULTICAST&gt; mtu 1500 qdisc noop qlen 1000</span><br><span class="line">    link/ether 82:62:9e:40:cf:32 brd ff:ff:ff:ff:ff:ff</span><br><span class="line">~ #</span><br></pre></td></tr></table></figure>
-<p>发现没有获取到ip地址，此时shell用的是busybox，是没有<code>dhclient</code>的，不过busybox提供<code>udhcpc -i &lt;interface&gt;</code>。<br>获取到ip地址后，vm可以通过<code>tar c ./boot | nc -l -p 1234</code>将boot目录发送给宿主机，宿主机用<code>nc &lt;vm ip&gt; 1234 | tar x</code>接受boot目录。</p>
-<p>获得到boot目录后取出其中的<code>vmlinuz-4.4.0-31-generic</code>和<code>initrd.img-4.4.0-31-generic</code>，然后修改VM创建脚本</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">!/bin/bash</span></span><br><span class="line"></span><br><span class="line">KERNEL=&quot;vmlinuz-4.4.0-31-generic&quot;</span><br><span class="line">INITRD=&quot;initrd.img-4.4.0-31-generic&quot;</span><br><span class="line">CMDLINE=&quot;earlyprintk=serial console=ttyS0 acpi=off root=/dev/vda1&quot;</span><br><span class="line"></span><br><span class="line">MEM=&quot;-m 1G&quot;</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">SMP=<span class="string">&quot;-c 2&quot;</span></span></span><br><span class="line">NET=&quot;-s 2:0,virtio-net&quot;</span><br><span class="line">IMG_CD=&quot;-s 3,ahci-cd,./ubuntu-16.04.1-server-amd64.iso&quot;</span><br><span class="line">IMG_HDD=&quot;-s 4,virtio-blk,./hdd.img&quot;</span><br><span class="line">PCI_DEV=&quot;-s 0:0,hostbridge -s 31,lpc&quot;</span><br><span class="line">LPC_DEV=&quot;-l com1,stdio&quot;</span><br><span class="line"></span><br><span class="line">xhyve $MEM $SMP $PCI_DEV $LPC_DEV $NET $IMG_CD $IMG_HDD -f kexec,$KERNEL,$INITRD,&quot;$CMDLINE&quot;</span><br></pre></td></tr></table></figure>
-<p>并执行<code>sudo sh ./mk_xhyve.sh</code></p>
-<p><img src="/images/xhyve/xhyve_vm_run2.png" alt="xhyve_vm_run2"></p>
-<p>ubuntu 16.04 正常启动了，over！</p>
-<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a target="_blank" rel="noopener" href="https://github.com/mist64/xhyve">xhyve.org</a></li>
-<li><a target="_blank" rel="noopener" href="http://www.pagetable.com/?p=831">xhyve – Lightweight Virtualization on OS X Based on bhyve</a></li>
-<li><a target="_blank" rel="noopener" href="http://www.vpsee.com/2015/06/mac-os-x-hypervisor-xhyve-based-on-bhyve/">Mac OS X 上基于 FreeBSD&#x2F;bhyve 的虚拟技术 xhyve</a></li>
-<li><a target="_blank" rel="noopener" href="https://www.v2ex.com/t/359038">在 Mac OS 的 Xhyve 引擎之上启动 LinuxKit 的玩法</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1943,7 +1998,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">145</span>
+          <span class="site-state-item-count">146</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

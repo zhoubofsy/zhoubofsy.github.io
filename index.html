@@ -188,6 +188,294 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2024/12/09/blockchain/ethereum/solidity-state-layout/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2024/12/09/blockchain/ethereum/solidity-state-layout/" class="post-title-link" itemprop="url">Solidity中的存储布局和内存布局</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-12-09 14:42:13" itemprop="dateCreated datePublished" datetime="2024-12-09T14:42:13+08:00">2024-12-09</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-12-10 13:18:06" itemprop="dateModified" datetime="2024-12-10T13:18:06+08:00">2024-12-10</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/blockchain/" itemprop="url" rel="index"><span itemprop="name">blockchain</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>EVM 的整个空间被逻辑上划分为不同的区域，分别为栈（Stack）、内存（Memory）、存储（Storage）、代码（Code）和常量区域。</p>
+<p><strong>栈区域（Stack）区域</strong></p>
+<ul>
+<li>特点:<ul>
+<li>栈是一个 固定大小 的数据区域，最大为 1024 个字（每个字 32 字节）。</li>
+<li>用于存储操作数、临时值，以及函数调用的返回地址。</li>
+<li>数据只能通过 push 和 pop 操作访问。</li>
+</ul>
+</li>
+<li>作用: 函数内部的临时变量和操作数首先存储在栈中。</li>
+</ul>
+<p><strong>内存 (Memory)区域</strong></p>
+<ul>
+<li>功能: 用于临时存储数据，生命周期仅在交易或调用期间有效。</li>
+<li>地址范围: 逻辑地址从<code>0</code>开始，可以按需扩展，理论上可以扩展到 <code>2^256 - 1</code>。</li>
+<li>特点:<ul>
+<li>按 32 字节（256 位）对齐。</li>
+<li>初始化时为空（零值）。</li>
+<li>按需分配时会增加 gas 消耗。</li>
+</ul>
+</li>
+<li>作用: 用于存储函数的局部变量、动态数组、字符串、函数参数等。</li>
+</ul>
+<p><strong>数据调用区域（Calldata）</strong></p>
+<ul>
+<li>特点:<ul>
+<li>是不可修改的只读区域，用于传递外部函数调用的输入数据。</li>
+<li>效率高，Gas 消耗低。</li>
+</ul>
+</li>
+<li>作用：效率高，Gas 消耗低。</li>
+</ul>
+<p><strong>存储 (Storage)区域</strong></p>
+<ul>
+<li>地址范围：存储区域的地址范围是从 0 到 2^256 - 1。</li>
+<li>存储单元：每个存储槽（storage slot）大小为 32 字节（256 位）。</li>
+<li>访问方式：存储按照 键值对的形式 存储，每个键为 256 位的存储槽地址，每个值为 256 位的存储内容。</li>
+<li>作用：存储合约的全局状态。</li>
+</ul>
+<h1 id="Storage-Layout-存储布局"><a href="#Storage-Layout-存储布局" class="headerlink" title="Storage Layout (存储布局)"></a>Storage Layout (存储布局)</h1><p>存储状态布局涉及 合约的存储变量如何映射到 EVM 的存储空间。EVM 的存储空间是一个巨大的 256 位地址空间，采用键值对形式。每个存储槽（slot）存储 32 字节数据。</p>
+<p>EVM 的存储区域采用 哈希映射结构 存储数据：</p>
+<ul>
+<li>简单变量：直接按照顺序存储，每个变量占用一个或部分存储槽。</li>
+<li>复杂数据结构：<ul>
+<li>数组：第一个槽存储长度，数据存储在 <code>keccak256(slot)</code> 地址开始的连续存储槽中。</li>
+<li>映射：数据存储在 <code>keccak256(key, slot)</code> 地址处，key 是映射键，slot 是映射变量在合约中的存储槽编号。</li>
+<li>结构体：将结构体的成员顺序存储，每个成员分配单独的存储槽。</li>
+</ul>
+</li>
+</ul>
+<h2 id="存储分配规则"><a href="#存储分配规则" class="headerlink" title="存储分配规则"></a>存储分配规则</h2><ol>
+<li><p>基础规则</p>
+<ul>
+<li>变量顺序存储: 每个状态变量按声明顺序分配存储槽，优先填充当前槽剩余空间。</li>
+<li>一个槽的大小为 32 字节。</li>
+<li>如果变量类型大小超过槽大小（如 uint256），则占据一个完整槽。</li>
+<li>较小变量（如 uint8、bool）在同一槽中紧密打包，但不能跨槽。</li>
+</ul>
+</li>
+<li><p>映射（Mapping）</p>
+<ul>
+<li>映射的键值对（key-value）不会紧密打包在槽中。</li>
+<li>每个键（key）对应的值（value）存储在一个唯一的槽中，其地址由<code>keccak256(key, slot)</code> 计算</li>
+<li>键（key）不会存储在存储区域中，键值（key-value）对中的“键（key）”并没有单独存储的槽。所以无法直接遍历Mapping</li>
+</ul>
+</li>
+<li><p>动态数组与字符串</p>
+<ul>
+<li>元数据存储：动态数组的主槽（主存储槽）中存储的是数组的长度。</li>
+<li>数据存储：数组的实际数据存储在与主槽分开的连续存储槽中。<ul>
+<li>数据槽的起始地址由 keccak256(slot) 计算得出，slot 是动态数组的主槽编号。</li>
+<li>数组中的每个元素按照顺序依次存储在数据槽中。</li>
+</ul>
+</li>
+<li>字符串与动态数组处理相似。</li>
+</ul>
+</li>
+<li><p>结构体（Struct）</p>
+<ul>
+<li>结构体的变量按顺序存储。</li>
+<li>结构体变量紧密打包（类似单个槽中存储的变量）。</li>
+</ul>
+</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">pragma solidity ^0.8.0;</span><br><span class="line"></span><br><span class="line">contract StateLayoutExample &#123;</span><br><span class="line">    uint256 public number;         // Slot 0</span><br><span class="line">    bool public flag;              // Slot 1 (packed with `smallValue` if space allows)</span><br><span class="line">    uint16 public smallValue;      // Slot 1</span><br><span class="line">    mapping(uint256 =&gt; uint256) public map; // Data stored at keccak256(key, 2)</span><br><span class="line">    uint256[] public dynamicArray; // Slot 3: array length; data starts at keccak256(3)</span><br><span class="line">    struct MyStruct &#123;</span><br><span class="line">        uint256 largeValue;        // Slot 4</span><br><span class="line">        uint8 smallPart;           // Slot 4 (packed with other struct fields)</span><br><span class="line">    &#125;</span><br><span class="line">    MyStruct public myStruct;      // Struct occupies its own slots</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>执行命令 <code>solc --storage-layout --transient-storage-layout StateLayoutExample.sol</code> 查看合约存储布局 </p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;storage&quot;</span><span class="punctuation">:</span><span class="punctuation">[</span></span><br><span class="line">        <span class="punctuation">&#123;</span><span class="attr">&quot;astId&quot;</span><span class="punctuation">:</span><span class="number">3</span><span class="punctuation">,</span><span class="attr">&quot;contract&quot;</span><span class="punctuation">:</span><span class="string">&quot;StateLayoutExample.sol:StateLayoutExample&quot;</span><span class="punctuation">,</span><span class="attr">&quot;label&quot;</span><span class="punctuation">:</span><span class="string">&quot;number&quot;</span><span class="punctuation">,</span><span class="attr">&quot;offset&quot;</span><span class="punctuation">:</span><span class="number">0</span><span class="punctuation">,</span><span class="attr">&quot;slot&quot;</span><span class="punctuation">:</span><span class="string">&quot;0&quot;</span><span class="punctuation">,</span><span class="attr">&quot;type&quot;</span><span class="punctuation">:</span><span class="string">&quot;t_uint256&quot;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="punctuation">&#123;</span><span class="attr">&quot;astId&quot;</span><span class="punctuation">:</span><span class="number">5</span><span class="punctuation">,</span><span class="attr">&quot;contract&quot;</span><span class="punctuation">:</span><span class="string">&quot;StateLayoutExample.sol:StateLayoutExample&quot;</span><span class="punctuation">,</span><span class="attr">&quot;label&quot;</span><span class="punctuation">:</span><span class="string">&quot;flag&quot;</span><span class="punctuation">,</span><span class="attr">&quot;offset&quot;</span><span class="punctuation">:</span><span class="number">0</span><span class="punctuation">,</span><span class="attr">&quot;slot&quot;</span><span class="punctuation">:</span><span class="string">&quot;1&quot;</span><span class="punctuation">,</span><span class="attr">&quot;type&quot;</span><span class="punctuation">:</span><span class="string">&quot;t_bool&quot;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="punctuation">&#123;</span><span class="attr">&quot;astId&quot;</span><span class="punctuation">:</span><span class="number">7</span><span class="punctuation">,</span><span class="attr">&quot;contract&quot;</span><span class="punctuation">:</span><span class="string">&quot;StateLayoutExample.sol:StateLayoutExample&quot;</span><span class="punctuation">,</span><span class="attr">&quot;label&quot;</span><span class="punctuation">:</span><span class="string">&quot;smallValue&quot;</span><span class="punctuation">,</span><span class="attr">&quot;offset&quot;</span><span class="punctuation">:</span><span class="number">1</span><span class="punctuation">,</span><span class="attr">&quot;slot&quot;</span><span class="punctuation">:</span><span class="string">&quot;1&quot;</span><span class="punctuation">,</span><span class="attr">&quot;type&quot;</span><span class="punctuation">:</span><span class="string">&quot;t_uint16&quot;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="punctuation">&#123;</span><span class="attr">&quot;astId&quot;</span><span class="punctuation">:</span><span class="number">11</span><span class="punctuation">,</span><span class="attr">&quot;contract&quot;</span><span class="punctuation">:</span><span class="string">&quot;StateLayoutExample.sol:StateLayoutExample&quot;</span><span class="punctuation">,</span><span class="attr">&quot;label&quot;</span><span class="punctuation">:</span><span class="string">&quot;map&quot;</span><span class="punctuation">,</span><span class="attr">&quot;offset&quot;</span><span class="punctuation">:</span><span class="number">0</span><span class="punctuation">,</span><span class="attr">&quot;slot&quot;</span><span class="punctuation">:</span><span class="string">&quot;2&quot;</span><span class="punctuation">,</span><span class="attr">&quot;type&quot;</span><span class="punctuation">:</span><span class="string">&quot;t_mapping(t_uint256,t_uint256)&quot;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="punctuation">&#123;</span><span class="attr">&quot;astId&quot;</span><span class="punctuation">:</span><span class="number">14</span><span class="punctuation">,</span><span class="attr">&quot;contract&quot;</span><span class="punctuation">:</span><span class="string">&quot;StateLayoutExample.sol:StateLayoutExample&quot;</span><span class="punctuation">,</span><span class="attr">&quot;label&quot;</span><span class="punctuation">:</span><span class="string">&quot;dynamicArray&quot;</span><span class="punctuation">,</span><span class="attr">&quot;offset&quot;</span><span class="punctuation">:</span><span class="number">0</span><span class="punctuation">,</span><span class="attr">&quot;slot&quot;</span><span class="punctuation">:</span><span class="string">&quot;3&quot;</span><span class="punctuation">,</span><span class="attr">&quot;type&quot;</span><span class="punctuation">:</span><span class="string">&quot;t_array(t_uint256)dyn_storage&quot;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="punctuation">&#123;</span><span class="attr">&quot;astId&quot;</span><span class="punctuation">:</span><span class="number">22</span><span class="punctuation">,</span><span class="attr">&quot;contract&quot;</span><span class="punctuation">:</span><span class="string">&quot;StateLayoutExample.sol:StateLayoutExample&quot;</span><span class="punctuation">,</span><span class="attr">&quot;label&quot;</span><span class="punctuation">:</span><span class="string">&quot;myStruct&quot;</span><span class="punctuation">,</span><span class="attr">&quot;offset&quot;</span><span class="punctuation">:</span><span class="number">0</span><span class="punctuation">,</span><span class="attr">&quot;slot&quot;</span><span class="punctuation">:</span><span class="string">&quot;4&quot;</span><span class="punctuation">,</span><span class="attr">&quot;type&quot;</span><span class="punctuation">:</span><span class="string">&quot;t_struct(MyStruct)19_storage&quot;</span><span class="punctuation">&#125;</span></span><br><span class="line">    <span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;types&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;t_array(t_uint256)dyn_storage&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span><span class="attr">&quot;base&quot;</span><span class="punctuation">:</span><span class="string">&quot;t_uint256&quot;</span><span class="punctuation">,</span><span class="attr">&quot;encoding&quot;</span><span class="punctuation">:</span><span class="string">&quot;dynamic_array&quot;</span><span class="punctuation">,</span><span class="attr">&quot;label&quot;</span><span class="punctuation">:</span><span class="string">&quot;uint256[]&quot;</span><span class="punctuation">,</span><span class="attr">&quot;numberOfBytes&quot;</span><span class="punctuation">:</span><span class="string">&quot;32&quot;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;t_bool&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span><span class="attr">&quot;encoding&quot;</span><span class="punctuation">:</span><span class="string">&quot;inplace&quot;</span><span class="punctuation">,</span><span class="attr">&quot;label&quot;</span><span class="punctuation">:</span><span class="string">&quot;bool&quot;</span><span class="punctuation">,</span><span class="attr">&quot;numberOfBytes&quot;</span><span class="punctuation">:</span><span class="string">&quot;1&quot;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;t_mapping(t_uint256,t_uint256)&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span><span class="attr">&quot;encoding&quot;</span><span class="punctuation">:</span><span class="string">&quot;mapping&quot;</span><span class="punctuation">,</span><span class="attr">&quot;key&quot;</span><span class="punctuation">:</span><span class="string">&quot;t_uint256&quot;</span><span class="punctuation">,</span><span class="attr">&quot;label&quot;</span><span class="punctuation">:</span><span class="string">&quot;mapping(uint256 =&gt; uint256)&quot;</span><span class="punctuation">,</span><span class="attr">&quot;numberOfBytes&quot;</span><span class="punctuation">:</span><span class="string">&quot;32&quot;</span><span class="punctuation">,</span><span class="attr">&quot;value&quot;</span><span class="punctuation">:</span><span class="string">&quot;t_uint256&quot;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;t_struct(MyStruct)19_storage&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span></span><br><span class="line">                <span class="attr">&quot;encoding&quot;</span><span class="punctuation">:</span><span class="string">&quot;inplace&quot;</span><span class="punctuation">,</span></span><br><span class="line">                <span class="attr">&quot;label&quot;</span><span class="punctuation">:</span><span class="string">&quot;struct StateLayoutExample.MyStruct&quot;</span><span class="punctuation">,</span></span><br><span class="line">                <span class="attr">&quot;members&quot;</span><span class="punctuation">:</span><span class="punctuation">[</span></span><br><span class="line">                    <span class="punctuation">&#123;</span><span class="attr">&quot;astId&quot;</span><span class="punctuation">:</span><span class="number">16</span><span class="punctuation">,</span><span class="attr">&quot;contract&quot;</span><span class="punctuation">:</span><span class="string">&quot;StateLayoutExample.sol:StateLayoutExample&quot;</span><span class="punctuation">,</span><span class="attr">&quot;label&quot;</span><span class="punctuation">:</span><span class="string">&quot;largeValue&quot;</span><span class="punctuation">,</span><span class="attr">&quot;offset&quot;</span><span class="punctuation">:</span><span class="number">0</span><span class="punctuation">,</span><span class="attr">&quot;slot&quot;</span><span class="punctuation">:</span><span class="string">&quot;0&quot;</span><span class="punctuation">,</span><span class="attr">&quot;type&quot;</span><span class="punctuation">:</span><span class="string">&quot;t_uint256&quot;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">                    <span class="punctuation">&#123;</span><span class="attr">&quot;astId&quot;</span><span class="punctuation">:</span><span class="number">18</span><span class="punctuation">,</span><span class="attr">&quot;contract&quot;</span><span class="punctuation">:</span><span class="string">&quot;StateLayoutExample.sol:StateLayoutExample&quot;</span><span class="punctuation">,</span><span class="attr">&quot;label&quot;</span><span class="punctuation">:</span><span class="string">&quot;smallPart&quot;</span><span class="punctuation">,</span><span class="attr">&quot;offset&quot;</span><span class="punctuation">:</span><span class="number">0</span><span class="punctuation">,</span><span class="attr">&quot;slot&quot;</span><span class="punctuation">:</span><span class="string">&quot;1&quot;</span><span class="punctuation">,</span><span class="attr">&quot;type&quot;</span><span class="punctuation">:</span><span class="string">&quot;t_uint8&quot;</span><span class="punctuation">&#125;</span></span><br><span class="line">                <span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">                <span class="attr">&quot;numberOfBytes&quot;</span><span class="punctuation">:</span><span class="string">&quot;64&quot;</span></span><br><span class="line">        <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;t_uint16&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span><span class="attr">&quot;encoding&quot;</span><span class="punctuation">:</span><span class="string">&quot;inplace&quot;</span><span class="punctuation">,</span><span class="attr">&quot;label&quot;</span><span class="punctuation">:</span><span class="string">&quot;uint16&quot;</span><span class="punctuation">,</span><span class="attr">&quot;numberOfBytes&quot;</span><span class="punctuation">:</span><span class="string">&quot;2&quot;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;t_uint256&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span><span class="attr">&quot;encoding&quot;</span><span class="punctuation">:</span><span class="string">&quot;inplace&quot;</span><span class="punctuation">,</span><span class="attr">&quot;label&quot;</span><span class="punctuation">:</span><span class="string">&quot;uint256&quot;</span><span class="punctuation">,</span><span class="attr">&quot;numberOfBytes&quot;</span><span class="punctuation">:</span><span class="string">&quot;32&quot;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;t_uint8&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span><span class="attr">&quot;encoding&quot;</span><span class="punctuation">:</span><span class="string">&quot;inplace&quot;</span><span class="punctuation">,</span><span class="attr">&quot;label&quot;</span><span class="punctuation">:</span><span class="string">&quot;uint8&quot;</span><span class="punctuation">,</span><span class="attr">&quot;numberOfBytes&quot;</span><span class="punctuation">:</span><span class="string">&quot;1&quot;</span><span class="punctuation">&#125;</span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>storage</strong></p>
+<p>描述每个状态变量的存储位置：<br>    - <code>slot</code>: 存储槽号。<br>    - <code>offset</code>: 偏移量，表示变量在槽内的起始位置。<br>    - <code>type</code>: 变量的类型标识，与 types 部分中的描述对应。</p>
+<p><strong>types</strong></p>
+<p>定义每种数据类型的详细信息：<br>    - <code>encoding</code>: 数据的存储方式（如 inplace 或 dynamic_array）。<br>    - <code>numberOfBytes</code>: 占用的字节数。<br>    - <code>members</code>: 如果是结构体，列出所有成员及其存储位置。<br>    - <code>base</code>: 如果是数组，表示基础类型。</p>
+<h1 id="Memory-Layout-内存布局"><a href="#Memory-Layout-内存布局" class="headerlink" title="Memory Layout (内存布局)"></a>Memory Layout (内存布局)</h1><p>在 Solidity 中，内存（Memory） 是 EVM 提供的一种线性存储结构，主要用于在函数调用过程中存储临时变量、局部变量和中间计算结果。内存是按需分配的，不同于存储（Storage），内存是 瞬时的，在调用结束后会被释放，且读写成本较低。</p>
+<p>内存是一个 按字节寻址的线性空间，地址范围从 0x00 到无限大（理论上为 2^256 - 1）。但在实际操作中，内存的分配是动态增长的，EVM 会根据需要分配内存，并且以 32 字节（一个字）为单位扩展。</p>
+<pre><code>- 每个内存地址存储一个字节。
+- 每 32 个字节组成一个字（word），这是 EVM 操作的基本单位。
+</code></pre>
+<p>内存布局的设计遵循以下原则：</p>
+<ol>
+<li>按需动态分配:<ul>
+<li>Solidity 会在需要时从内存中分配新的空间。</li>
+<li>起始空闲内存地址存储在 0x40，可通过 mload(0x40) 获取。</li>
+</ul>
+</li>
+<li>按 32 字节对齐:<ul>
+<li>内存分配是以 32 字节为单位对齐的，即使是 bool 等小数据类型也会占用 32 字节。</li>
+</ul>
+</li>
+<li>变量存储位置:<ul>
+<li>固定大小类型直接存储其值。</li>
+<li>动态类型存储一个指针，指向实际数据的内存地址。</li>
+</ul>
+</li>
+</ol>
+<h2 id="固定分配区域"><a href="#固定分配区域" class="headerlink" title="固定分配区域"></a>固定分配区域</h2><p>Solidity保留了四个32字节的插槽，具体的字节范围（包括端点）使用如下：</p>
+<ul>
+<li>0x00 ~ 0x3f（64Byte）<ul>
+<li>用于哈希方法的临时空间</li>
+<li>临时空间可以在语句之间使用（即在内联汇编之中）。</li>
+</ul>
+</li>
+<li>0x40 ~ 0x5f (Free memory pointer 32Byte):<ul>
+<li>mstore(0x40, …) 用于指向当前空闲内存的起始地址。</li>
+<li>Solidity 使用内存时，会从该地址开始分配。</li>
+<li>开发者不需要手动管理，但在使用汇编时，需要注意维护 0x40 的正确值。</li>
+</ul>
+</li>
+<li>0x60 ~ 0x7f（Zero pointer 32Byte):<ul>
+<li>保留一块全零的内存区域，通常用于返回零值。</li>
+<li>0值插槽则用来对动态内存数组进行初始化，且永远不会写入数据 （因而可用的初始内存指针为 0x80）。</li>
+</ul>
+</li>
+</ul>
+<p>Solidity 总会把新对象保存在空闲内存指针的位置， 所以这段内存实际上从来不会空闲（在未来可能会修改这个机制）。</p>
+<h2 id="动态分配区域"><a href="#动态分配区域" class="headerlink" title="动态分配区域"></a>动态分配区域</h2><p>Solidity 的局部变量、动态数组和字符串都从 0x80 开始动态分配，并按照实际需要扩展。</p>
+<p>分配规则：<br>    - 内存分配以 32 字节为单位对齐。<br>    - 临时变量直接写入内存对应的位置。<br>    - 动态类型需要额外存储元数据（如长度和起始地址）。</p>
+<h2 id="内存中的数据类型布局"><a href="#内存中的数据类型布局" class="headerlink" title="内存中的数据类型布局"></a>内存中的数据类型布局</h2><h3 id="固定大小的类型"><a href="#固定大小的类型" class="headerlink" title="固定大小的类型"></a>固定大小的类型</h3><ul>
+<li>包括 uint256、address、bool 等。</li>
+<li>直接按 32 字节对齐存储，例如：<ul>
+<li>uint256 占用 32 字节。</li>
+<li>bool 也占用 32 字节（尽管实际值只需 1 字节）。</li>
+</ul>
+</li>
+</ul>
+<h3 id="动态类型"><a href="#动态类型" class="headerlink" title="动态类型"></a>动态类型</h3><p>动态类型（如 string、bytes 和动态数组）会分为两个部分：</p>
+<ol>
+<li>指针部分：主变量存储的是指向实际数据的偏移量（相对于起始地址 0x80 的偏移量）。</li>
+<li>数据部分：存储动态类型的元数据（如长度）和实际数据。</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">pragma solidity ^0.8.0;</span><br><span class="line"></span><br><span class="line">contract MemoryExample &#123;</span><br><span class="line">    function demo() public pure returns (bytes memory, string memory) &#123;</span><br><span class="line">        bytes memory byteArray = new bytes(10); // 动态字节数组</span><br><span class="line">        string memory str = &quot;Hello, Memory!&quot;;</span><br><span class="line">        return (byteArray, str);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ol>
+<li><code>byteArray</code>:<ul>
+<li>主变量存储数据偏移量，例如 0x80。</li>
+<li>数据存储从 0x80 开始：<ul>
+<li>长度（10 字节）：存储在 0x80。</li>
+<li>实际内容（10 字节）：从 0xA0 开始。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><code>str</code>:<ul>
+<li>主变量存储数据偏移量，例如 0xE0。</li>
+<li>数据存储从 0xE0 开始：<ul>
+<li>长度（14 字节）：存储在 0xE0。</li>
+<li>实际内容（”Hello, Memory!”）：从 0x100 开始。</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<h1 id="State-Layout-和-Memory-Layout-的区别"><a href="#State-Layout-和-Memory-Layout-的区别" class="headerlink" title="State Layout 和 Memory Layout 的区别"></a>State Layout 和 Memory Layout 的区别</h1><table>
+<thead>
+<tr>
+<th align="center">特性</th>
+<th align="left">状态布局 (State Layout)</th>
+<th align="left">内存布局 (Memory Layout)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">存储位置</td>
+<td align="left">持久化存储在 EVM 存储 (Storage) 中</td>
+<td align="left">函数调用时临时存储在 EVM 内存 (Memory) 中</td>
+</tr>
+<tr>
+<td align="center">生命周期</td>
+<td align="left">持久化，合约销毁之前一直存在</td>
+<td align="left">临时，函数执行结束即释放</td>
+</tr>
+<tr>
+<td align="center">成本</td>
+<td align="left">写入存储需要高 Gas 成本</td>
+<td align="left">使用内存成本较低</td>
+</tr>
+<tr>
+<td align="center">用途</td>
+<td align="left">存储合约的持久化数据</td>
+<td align="left">处理临时计算或函数的中间结果</td>
+</tr>
+</tbody></table>
+<p><strong>Gas 优化建议</strong></p>
+<ul>
+<li>状态变量优化<ul>
+<li>紧密打包变量，减少存储槽的使用。</li>
+<li>避免在循环中频繁读写存储。</li>
+</ul>
+</li>
+<li>内存优化<ul>
+<li>使用临时变量代替状态变量进行中间计算。</li>
+<li>适时释放不再使用的内存。</li>
+</ul>
+</li>
+</ul>
+<p> 了解 Solidity 的状态与内存布局，能帮助开发者高效设计合约，同时优化 Gas 成本。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2024/12/05/blockchain/ethereum/solidity-reduce-gas/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -2060,144 +2348,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2022/11/07/blockchain/ethereum/eth-helloworld/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/11/07/blockchain/ethereum/eth-helloworld/" class="post-title-link" itemprop="url">Hello Ethereum</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2022-11-07 16:00:21" itemprop="dateCreated datePublished" datetime="2022-11-07T16:00:21+08:00">2022-11-07</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-11-25 10:59:23" itemprop="dateModified" datetime="2024-11-25T10:59:23+08:00">2024-11-25</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/blockchain/" itemprop="url" rel="index"><span itemprop="name">blockchain</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>问：写一个以太坊智能合约helloworld总共分几步？<br>答：三步，第一步创建以太坊服务环境；第二步撰写、编译、部署helloworld智能合约；第三步运行智能合约</p>
-<h1 id="部署Ethereum环境"><a href="#部署Ethereum环境" class="headerlink" title="部署Ethereum环境"></a>部署Ethereum环境</h1><p>本人使用docker搭建Ethereum环境，拉取<code>ubuntu:20.04</code>镜像。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker pull --platform linux/amd64 ubuntu:20.04</span><br></pre></td></tr></table></figure>
-
-<p>然后，创建容器并开始安装Ethereum</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">docker run -it --name eth_server --net host ubuntu:20.04 /bin/bash</span><br><span class="line">docker run -it --net bridge -p 8545:8545 -p 8551:8551 --name eth_server ubuntu:20.04 /bin/bash</span><br></pre></td></tr></table></figure>
-
-<h2 id="安装Ethereum"><a href="#安装Ethereum" class="headerlink" title="安装Ethereum"></a>安装Ethereum</h2><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">apt update -y</span></span><br><span class="line">...</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">apt install -y software-properties-common</span></span><br><span class="line">...</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">add-apt-repository -y ppa:ethereum/ethereum</span></span><br><span class="line">...</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">apt update -y</span></span><br><span class="line">...</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">apt install -y ethereum</span></span><br></pre></td></tr></table></figure>
-
-<p>安装成功后，确认一下eth版本。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">geth version</span></span><br><span class="line">Geth</span><br><span class="line">Version: 1.10.26-stable</span><br><span class="line">Git Commit: e5eb32acee19cc9fca6a03b10283b7484246b15a</span><br><span class="line">Architecture: amd64</span><br><span class="line">Go Version: go1.18.5</span><br><span class="line">Operating System: linux</span><br><span class="line">GOPATH=</span><br><span class="line">GOROOT=go</span><br></pre></td></tr></table></figure>
-
-<h2 id="初始化"><a href="#初始化" class="headerlink" title="初始化"></a>初始化</h2><h3 id="创建配置文件"><a href="#创建配置文件" class="headerlink" title="创建配置文件"></a>创建配置文件</h3><p>创建一个<code>genesis.json</code>的文件，填充如下内容。</p>
-<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;Config&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;chainId&quot;</span><span class="punctuation">:</span> <span class="number">110</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;homesteadBlock&quot;</span><span class="punctuation">:</span> <span class="number">0</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;byzantiumBlock&quot;</span><span class="punctuation">:</span> <span class="number">0</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;constantinopleBlock&quot;</span><span class="punctuation">:</span> <span class="number">0</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;eip150Block&quot;</span><span class="punctuation">:</span> <span class="number">0</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;eip155Block&quot;</span><span class="punctuation">:</span> <span class="number">0</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;eip158Block&quot;</span><span class="punctuation">:</span> <span class="number">0</span></span><br><span class="line">    <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;difficulty&quot;</span><span class="punctuation">:</span> <span class="string">&quot;0&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;gasLimit&quot;</span><span class="punctuation">:</span> <span class="string">&quot;2100000&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;alloc&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span><span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
-
-<h3 id="初始化Ethereum数据"><a href="#初始化Ethereum数据" class="headerlink" title="初始化Ethereum数据"></a>初始化Ethereum数据</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">geth --datadir ./eth-data --allow-insecure-unlock --http --http.addr 172.17.0.2 --http.api <span class="string">&quot;admin,debug,web3,eth,txpool,personal,ethash,miner,net&quot;</span> --http.corsdomain <span class="string">&quot;*&quot;</span> --dev init genesis.json</span></span><br><span class="line">INFO [11-07|16:04:14.139] Maximum peer count                       ETH=50 LES=0 total=50</span><br><span class="line">INFO [11-07|16:04:14.151] Smartcard socket not found, disabling    err=&quot;stat /run/pcscd/pcscd.comm: no such file or directory&quot;</span><br><span class="line">INFO [11-07|16:04:14.179] Set global gas cap                       cap=50,000,000</span><br><span class="line">INFO [11-07|16:04:14.190] Allocated cache and file handles         database=/root/eth-data/geth/chaindata cache=16.00MiB handles=16</span><br><span class="line">INFO [11-07|16:04:14.224] Opened ancient database                  database=/root/eth-data/geth/chaindata/ancient/chain readonly=false</span><br><span class="line">INFO [11-07|16:04:14.226] Writing custom genesis block</span><br><span class="line">INFO [11-07|16:04:14.230] Persisted trie from memory database      nodes=0 size=0.00B time=&quot;347µs&quot; gcnodes=0 gcsize=0.00B gctime=0s livenodes=1 livesize=0.00B</span><br><span class="line">INFO [11-07|16:04:14.238] Successfully wrote genesis state         database=chaindata                     hash=a697c6..9bf39b</span><br><span class="line">INFO [11-07|16:04:14.238] Allocated cache and file handles         database=/root/eth-data/geth/lightchaindata cache=16.00MiB handles=16</span><br><span class="line">INFO [11-07|16:04:14.259] Opened ancient database                  database=/root/eth-data/geth/lightchaindata/ancient/chain readonly=false</span><br><span class="line">INFO [11-07|16:04:14.259] Writing custom genesis block</span><br><span class="line">INFO [11-07|16:04:14.261] Persisted trie from memory database      nodes=0 size=0.00B time=&quot;21.917µs&quot; gcnodes=0 gcsize=0.00B gctime=0s livenodes=1 livesize=0.00B</span><br><span class="line">INFO [11-07|16:04:14.262] Successfully wrote genesis state         database=lightchaindata                     hash=a697c6..9bf39b</span><br></pre></td></tr></table></figure>
-
-<h2 id="启动节点"><a href="#启动节点" class="headerlink" title="启动节点"></a>启动节点</h2><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">geth --datadir ./eth-data --networkid 110 --allow-insecure-unlock --http --http.addr 172.17.0.2 --http.api <span class="string">&quot;admin,debug,web3,eth,txpool,personal,ethash,miner,net&quot;</span> --http.corsdomain <span class="string">&quot;*&quot;</span> --dev</span></span><br><span class="line">INFO [11-07|16:14:23.231] Starting Geth in ephemeral dev mode...</span><br><span class="line">WARN [11-07|16:14:23.234] You are running Geth in --dev mode. Please note the following:</span><br><span class="line"></span><br><span class="line">  1. This mode is only intended for fast, iterative development without assumptions on</span><br><span class="line">     security or persistence.</span><br><span class="line">  2. The database is created in memory unless specified otherwise. Therefore, shutting down</span><br><span class="line">     your computer or losing power will wipe your entire block data and chain state for</span><br><span class="line">     your dev environment.</span><br><span class="line">  3. A random, pre-allocated developer account will be available and unlocked as</span><br><span class="line">     eth.coinbase, which can be used for testing. The random dev account is temporary,</span><br><span class="line">     stored on a ramdisk, and will be lost if your machine is restarted.</span><br><span class="line">  4. Mining is enabled by default. However, the client will only seal blocks if transactions</span><br><span class="line">     are pending in the mempool. The miner&#x27;s minimum accepted gas price is 1.</span><br><span class="line">  5. Networking is disabled; there is no listen-address, the maximum number of peers is set</span><br><span class="line">     to 0, and discovery is disabled.</span><br><span class="line">INFO [11-07|16:14:23.251] Maximum peer count                       ETH=50 LES=0 total=50</span><br><span class="line">INFO [11-07|16:14:23.261] Smartcard socket not found, disabling    err=&quot;stat /run/pcscd/pcscd.comm: no such file or directory&quot;</span><br><span class="line">INFO [11-07|16:14:23.291] Set global gas cap                       cap=50,000,000</span><br><span class="line">INFO [11-07|16:14:23.649] Using developer account                  address=0xA9CB6DB62D6673ae5CD79D0d29796Dd9DF1d1A5e</span><br><span class="line">INFO [11-07|16:14:23.652] Allocated cache and file handles         database=/root/eth-data/geth/chaindata cache=512.00MiB handles=524,288 readonly=true</span><br><span class="line">INFO [11-07|16:14:23.675] Opened ancient database                  database=/root/eth-data/geth/chaindata/ancient/chain readonly=true</span><br><span class="line">INFO [11-07|16:14:23.691] Allocated trie memory caches             clean=154.00MiB dirty=256.00MiB</span><br><span class="line">INFO [11-07|16:14:23.691] Allocated cache and file handles         database=/root/eth-data/geth/chaindata cache=512.00MiB handles=524,288</span><br><span class="line">INFO [11-07|16:14:23.756] Opened ancient database                  database=/root/eth-data/geth/chaindata/ancient/chain readonly=false</span><br><span class="line">INFO [11-07|16:14:23.763]</span><br><span class="line">INFO [11-07|16:14:23.764] ---------------------------------------------------------------------------------------------------------------------------------------------------------</span><br><span class="line">INFO [11-07|16:14:23.764] Chain ID:  110 (unknown)</span><br><span class="line">INFO [11-07|16:14:23.764] Consensus: unknown</span><br><span class="line">INFO [11-07|16:14:23.764]</span><br><span class="line">INFO [11-07|16:14:23.765] Pre-Merge hard forks:</span><br><span class="line">INFO [11-07|16:14:23.765]  - Homestead:                   0        (https://github.com/ethereum/execution-specs/blob/master/network-upgrades/mainnet-upgrades/homestead.md)</span><br><span class="line">INFO [11-07|16:14:23.765]  - Tangerine Whistle (EIP 150): 0        (https://github.com/ethereum/execution-specs/blob/master/network-upgrades/mainnet-upgrades/tangerine-whistle.md)</span><br><span class="line">INFO [11-07|16:14:23.765]  - Spurious Dragon/1 (EIP 155): 0        (https://github.com/ethereum/execution-specs/blob/master/network-upgrades/mainnet-upgrades/spurious-dragon.md)</span><br><span class="line">INFO [11-07|16:14:23.765]  - Spurious Dragon/2 (EIP 158): 0        (https://github.com/ethereum/execution-specs/blob/master/network-upgrades/mainnet-upgrades/spurious-dragon.md)</span><br><span class="line">INFO [11-07|16:14:23.765]  - Byzantium:                   &lt;nil&gt; (https://github.com/ethereum/execution-specs/blob/master/network-upgrades/mainnet-upgrades/byzantium.md)</span><br><span class="line">INFO [11-07|16:14:23.765]  - Constantinople:              &lt;nil&gt; (https://github.com/ethereum/execution-specs/blob/master/network-upgrades/mainnet-upgrades/constantinople.md)</span><br><span class="line">INFO [11-07|16:14:23.765]  - Petersburg:                  &lt;nil&gt; (https://github.com/ethereum/execution-specs/blob/master/network-upgrades/mainnet-upgrades/petersburg.md)</span><br><span class="line">INFO [11-07|16:14:23.766]  - Istanbul:                    &lt;nil&gt; (https://github.com/ethereum/execution-specs/blob/master/network-upgrades/mainnet-upgrades/istanbul.md)</span><br><span class="line">INFO [11-07|16:14:23.766]  - Berlin:                      &lt;nil&gt; (https://github.com/ethereum/execution-specs/blob/master/network-upgrades/mainnet-upgrades/berlin.md)</span><br><span class="line">INFO [11-07|16:14:23.766]  - London:                      &lt;nil&gt; (https://github.com/ethereum/execution-specs/blob/master/network-upgrades/mainnet-upgrades/london.md)</span><br><span class="line">INFO [11-07|16:14:23.766]</span><br><span class="line">INFO [11-07|16:14:23.766] The Merge is not yet available for this network!</span><br><span class="line">INFO [11-07|16:14:23.766]  - Hard-fork specification: https://github.com/ethereum/execution-specs/blob/master/network-upgrades/mainnet-upgrades/paris.md</span><br><span class="line">INFO [11-07|16:14:23.766] ---------------------------------------------------------------------------------------------------------------------------------------------------------</span><br><span class="line">INFO [11-07|16:14:23.766]</span><br><span class="line">INFO [11-07|16:14:23.768] Disk storage enabled for ethash caches   dir=/root/eth-data/geth/ethash count=3</span><br><span class="line">INFO [11-07|16:14:23.768] Disk storage enabled for ethash DAGs     dir=/root/.ethash              count=2</span><br><span class="line">INFO [11-07|16:14:23.769] Initialising Ethereum protocol           network=1337 dbversion=8</span><br><span class="line">INFO [11-07|16:14:23.779] Loaded most recent local header          number=0 hash=a697c6..9bf39b td=0 age=53y7mo1w</span><br><span class="line">INFO [11-07|16:14:23.780] Loaded most recent local full block      number=0 hash=a697c6..9bf39b td=0 age=53y7mo1w</span><br><span class="line">INFO [11-07|16:14:23.780] Loaded most recent local fast block      number=0 hash=a697c6..9bf39b td=0 age=53y7mo1w</span><br><span class="line">INFO [11-07|16:14:23.786] Loaded local transaction journal         transactions=0 dropped=0</span><br><span class="line">INFO [11-07|16:14:23.786] Regenerated local transaction journal    transactions=0 accounts=0</span><br><span class="line">INFO [11-07|16:14:23.791] Gasprice oracle is ignoring threshold set threshold=2</span><br><span class="line">WARN [11-07|16:14:23.798] Engine API enabled                       protocol=eth</span><br><span class="line">WARN [11-07|16:14:23.798] Engine API started but chain not configured for merge yet</span><br><span class="line">INFO [11-07|16:14:23.802] Starting peer-to-peer node               instance=Geth/v1.10.26-stable-e5eb32ac/linux-amd64/go1.18.5</span><br><span class="line">WARN [11-07|16:14:23.802] P2P server will be useless, neither dialing nor listening</span><br><span class="line">INFO [11-07|16:14:23.843] New local node record                    seq=1,667,808,816,313 id=321fce2047223769 ip=127.0.0.1 udp=0 tcp=0</span><br><span class="line">INFO [11-07|16:14:23.844] Started P2P networking                   self=enode://2d0246c1dd51623d6d8a8581095c033542366037b1e20ff815ad045af396de50df60f4aa9556148c2f4a89673bad5cab5c2ab22f3075d5bacba1b2fbebaf72e5@127.0.0.1:0</span><br><span class="line">INFO [11-07|16:14:23.848] IPC endpoint opened                      url=/root/eth-data/geth.ipc</span><br><span class="line">INFO [11-07|16:14:23.852] Loaded JWT secret file                   path=/root/eth-data/geth/jwtsecret crc32=0xef39c4cb</span><br><span class="line">INFO [11-07|16:14:23.856] HTTP server started                      endpoint=172.17.0.2:8545 auth=false prefix= cors= vhosts=localhost</span><br><span class="line">INFO [11-07|16:14:23.862] WebSocket enabled                        url=ws://127.0.0.1:8551</span><br><span class="line">INFO [11-07|16:14:23.862] HTTP server started                      endpoint=127.0.0.1:8551    auth=true  prefix= cors=localhost vhosts=localhost</span><br><span class="line">INFO [11-07|16:14:23.868] Transaction pool price threshold updated price=0</span><br><span class="line">INFO [11-07|16:14:23.868] Updated mining threads                   threads=0</span><br><span class="line">INFO [11-07|16:14:23.868] Transaction pool price threshold updated price=1</span><br><span class="line">INFO [11-07|16:14:23.868] Etherbase automatically configured       address=0xA9CB6DB62D6673ae5CD79D0d29796Dd9DF1d1A5e</span><br><span class="line">INFO [11-07|16:14:23.875] Commit new sealing work                  number=1 sealhash=6ca53b..19dc17 uncles=0 txs=0 gas=0 fees=0 elapsed=6.285ms</span><br><span class="line">INFO [11-07|16:14:23.877] Commit new sealing work                  number=1 sealhash=6ca53b..19dc17 uncles=0 txs=0 gas=0 fees=0 elapsed=8.056ms</span><br></pre></td></tr></table></figure>
-
-<h3 id="networkid"><a href="#networkid" class="headerlink" title="networkid"></a>networkid</h3><p><code>--networkid</code>参数需要与<code>genesis.json</code>配置文件中的<code>chainId</code>值一致。</p>
-<h3 id="http-api"><a href="#http-api" class="headerlink" title="http.api"></a>http.api</h3><p>若<code>--http.api</code>设置错误会出现如下错误</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ERROR[11-07|16:13:36.346] Unavailable modules in HTTP API list     unavailable=[db] available=&quot;[admin debug web3 eth txpool personal ethash miner net]&quot;</span><br></pre></td></tr></table></figure>
-<p>需要按照<code>available</code>中规定的内容进行配置<code>--http.api</code>参数。</p>
-<h2 id="attach交互"><a href="#attach交互" class="headerlink" title="attach交互"></a>attach交互</h2><p>接下来需要attach到以太坊节点，在geth节点启动过程中有这样一条日志</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">INFO [11-07|16:14:23.848] IPC endpoint opened                      url=/root/eth-data/geth.ipc</span><br></pre></td></tr></table></figure>
-<p>没错，你猜对了，就是要用这个endpoint进行attach</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">geth attach ipc:/root/eth-data/geth.ipc</span></span><br><span class="line">Welcome to the Geth JavaScript console!</span><br><span class="line"></span><br><span class="line">instance: Geth/v1.10.26-stable-e5eb32ac/linux-amd64/go1.18.5</span><br><span class="line">coinbase: 0xa9cb6db62d6673ae5cd79d0d29796dd9df1d1a5e</span><br><span class="line">at block: 0 (Thu Jan 01 1970 08:00:00 GMT+0800 (CST))</span><br><span class="line"> datadir: /root/eth-data</span><br><span class="line"> modules: admin:1.0 debug:1.0 engine:1.0 eth:1.0 ethash:1.0 miner:1.0 net:1.0 personal:1.0 rpc:1.0 txpool:1.0 web3:1.0</span><br><span class="line"></span><br><span class="line">To exit, press ctrl-d or type exit</span><br><span class="line"><span class="meta prompt_">&gt;</span></span><br></pre></td></tr></table></figure>
-
-<p>接下来的<code>创建用户</code>、<code>挖矿</code>等操作都需要在attach状态下进行。</p>
-<h2 id="创建用户"><a href="#创建用户" class="headerlink" title="创建用户"></a>创建用户</h2><p>使用<code>personal.newAccout</code>创建用户，然后可以使用<code>eth.accounts</code>查看用户列表。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">eth.accounts</span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">[<span class="string">&quot;0xa9cb6db62d6673ae5cd79d0d29796dd9df1d1a5e&quot;</span>]</span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">personal.newAccount()</span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">Passphrase:</span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">Repeat passphrase:</span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash"><span class="string">&quot;0x00e70f2bd5a644cdf4432f886bf25473cbe620ac&quot;</span></span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">eth.accounts</span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">[<span class="string">&quot;0xa9cb6db62d6673ae5cd79d0d29796dd9df1d1a5e&quot;</span>, <span class="string">&quot;0x00e70f2bd5a644cdf4432f886bf25473cbe620ac&quot;</span>]</span></span><br></pre></td></tr></table></figure>
-
-<p>若不解锁用户，部署会提示错误<code>creation of HelloWorld errored: authentication needed: password or unlock</code>。解锁用户</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">personal.unlockAccount(eth.accounts[1])</span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">Unlock account 0x00e70f2bd5a644cdf4432f886bf25473cbe620ac</span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">Passphrase:</span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash"><span class="literal">true</span></span></span><br></pre></td></tr></table></figure>
-
-<h2 id="挖矿"><a href="#挖矿" class="headerlink" title="挖矿"></a>挖矿</h2><p>使用<code>miner.start()</code>开始挖矿；使用<code>miner.stop()</code>停止挖矿。</p>
-<p>开始挖矿后，当出现如下日志信息时，说明挖到了。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">INFO [11-07|17:59:54.021] Successfully sealed new block            number=1 sealhash=84eaaa..f4d2c5 hash=925c9a..d8cb75 elapsed=1h30m51.894s</span><br><span class="line">INFO [11-07|17:59:54.022] 🔨 mined potential block                  number=1 hash=925c9a..d8cb75</span><br><span class="line">INFO [11-07|17:59:54.026] Commit new sealing work                  number=2 sealhash=865003..0e32da uncles=0 txs=0 gas=0 fees=0 elapsed=1.991ms</span><br><span class="line">INFO [11-07|17:59:54.027] Commit new sealing work                  number=2 sealhash=865003..0e32da uncles=0 txs=0 gas=0 fees=0 elapsed=3.070ms</span><br><span class="line">INFO [11-07|17:59:54.428] Generating DAG in progress               epoch=1 percentage=0  elapsed=3.563s</span><br><span class="line">INFO [11-07|17:59:56.581] Successfully sealed new block            number=2 sealhash=865003..0e32da hash=f1224d..9dc4b8 elapsed=2.554s</span><br><span class="line">INFO [11-07|17:59:56.582] 🔨 mined potential block                  number=2 hash=f1224d..9dc4b8</span><br><span class="line">INFO [11-07|17:59:56.584] Commit new sealing work                  number=3 sealhash=8de6d6..c8886e uncles=0 txs=0 gas=0 fees=0 elapsed=&quot;906.417µs&quot;</span><br><span class="line">INFO [11-07|17:59:56.585] Commit new sealing work                  number=3 sealhash=8de6d6..c8886e uncles=0 txs=0 gas=0 fees=0 elapsed=2.271ms</span><br><span class="line">INFO [11-07|17:59:57.730] Successfully sealed new block            number=3 sealhash=8de6d6..c8886e hash=42a018..4e7ef3 elapsed=1.146s</span><br><span class="line">INFO [11-07|17:59:57.731] 🔨 mined potential block                  number=3 hash=42a018..4e7ef3</span><br><span class="line">INFO [11-07|17:59:57.733] Commit new sealing work                  number=4 sealhash=26af07..609e57 uncles=0 txs=0 gas=0 fees=0 elapsed=1.165ms</span><br></pre></td></tr></table></figure>
-
-<p>此时使用<code>eth.blockNumber</code>可以查看到当前区块数量，使用<code>eth.getBalance(eth.accounts[0])</code>查看默认用户余额，同理使用<code>eth.getBalance(eth.accounts[1])</code>查看我们创建的用户的余额。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">eth.getBalance(eth.accounts[0])</span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">25000000000000000000</span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">eth.getBalance(eth.accounts[1])</span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">0</span></span><br></pre></td></tr></table></figure>
-
-<p>挖到的奖励都进了默认账户了，我们新建的账户里木有哦。来给我转账吧，嘿嘿嘿….</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">eth.sendTransaction(&#123;from:eth.accounts[0],to:eth.accounts[1],value:web3.toWei(10,<span class="string">&#x27;ether&#x27;</span>)&#125;)</span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash"><span class="string">&quot;0x244da771baf2bd65e5e040c33ee3047b57a2492b85d271564bc90ccd7cb4fa46&quot;</span></span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">eth.getBalance(eth.accounts[1])</span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">5000000000000000000</span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">&gt; eth.getBalance(eth.accounts[0])</span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">1.535e+21</span></span><br></pre></td></tr></table></figure>
-
-<p>哇哦，又挖到矿了。</p>
-<h1 id="智能合约"><a href="#智能合约" class="headerlink" title="智能合约"></a>智能合约</h1><p>环境搭建好了，现在开始编写智能合约。</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">// compiler version must be greater than or equal to 0.8.13 and less than 0.9.0</span><br><span class="line">// SPDX-License-Identifier: MIT</span><br><span class="line">pragma solidity 0.8.13;</span><br><span class="line">contract HelloWorld &#123;</span><br><span class="line">    function sayHelloWorld() public returns (string memory) &#123;</span><br><span class="line">        return &quot;Hello World&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="Remix"><a href="#Remix" class="headerlink" title="Remix"></a>Remix</h2><p>在这里获<a target="_blank" rel="noopener" href="https://remix-project.org/">Remix</a></p>
-<h3 id="编译"><a href="#编译" class="headerlink" title="编译"></a>编译</h3><p><img src="/images/blockchain/solidity_remix_compile.jpg" alt="solidity_remix_compile"></p>
-<h3 id="部署"><a href="#部署" class="headerlink" title="部署"></a>部署</h3><p>点击部署，然后选择外部http provider，并配置我们搭建好的ethereum服务。</p>
-<p><img src="/images/blockchain/solidity_remix_deploy_setting_1.jpg" alt="solidity_remix_deploy_setting_1.jpg"></p>
-<p><img src="/images/blockchain/solidity_remix_deploy_setting_2.jpg" alt="solidity_remix_deploy_setting_2.jpg"></p>
-<p>接下中，选择我们创建好的账户，然后进行部署。</p>
-<p><img src="/images/blockchain/solidity_remix_deploy.jpg" alt="solidity_remix_deploy.jpg"></p>
-<p><img src="/images/blockchain/solidity_remix_deploy_log.jpg" alt="solidity_remix_deploy_log.jpg"></p>
-<h2 id="执行智能合约"><a href="#执行智能合约" class="headerlink" title="执行智能合约"></a>执行智能合约</h2><p>执行智能合约可以选择在Remix中执行，也可选择attach到eth_server控制台执行。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">abi =[&#123;<span class="string">&quot;inputs&quot;</span>:[],<span class="string">&quot;name&quot;</span>:<span class="string">&quot;sayHelloWorld&quot;</span>,<span class="string">&quot;outputs&quot;</span>:[&#123;<span class="string">&quot;internalType&quot;</span>:<span class="string">&quot;string&quot;</span>,<span class="string">&quot;name&quot;</span>:<span class="string">&quot;&quot;</span>,<span class="string">&quot;type&quot;</span>:<span class="string">&quot;string&quot;</span>&#125;],<span class="string">&quot;stateMutability&quot;</span>:<span class="string">&quot;nonpayable&quot;</span>,<span class="string">&quot;type&quot;</span>:<span class="string">&quot;function&quot;</span>&#125;]</span></span><br><span class="line">[&#123;</span><br><span class="line">    inputs: [],</span><br><span class="line">    name: &quot;sayHelloWorld&quot;,</span><br><span class="line">    outputs: [&#123;</span><br><span class="line">        internalType: &quot;string&quot;,</span><br><span class="line">        name: &quot;&quot;,</span><br><span class="line">        type: &quot;string&quot;</span><br><span class="line">    &#125;],</span><br><span class="line">    stateMutability: &quot;nonpayable&quot;,</span><br><span class="line">    type: &quot;function&quot;</span><br><span class="line">&#125;]</span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">hello=eth.contract(abi).at(<span class="string">&#x27;0xCB1B01B40CD752F5d42f5b8dCeE4BE2A637CaAf2&#x27;</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">  abi: [&#123;</span><br><span class="line">      inputs: [],</span><br><span class="line">      name: &quot;sayHelloWorld&quot;,</span><br><span class="line">      outputs: [&#123;...&#125;],</span><br><span class="line">      stateMutability: &quot;nonpayable&quot;,</span><br><span class="line">      type: &quot;function&quot;</span><br><span class="line">  &#125;],</span><br><span class="line">  address: &quot;0xCB1B01B40CD752F5d42f5b8dCeE4BE2A637CaAf2&quot;,</span><br><span class="line">  transactionHash: null,</span><br><span class="line">  allEvents: function bound(),</span><br><span class="line">  sayHelloWorld: function bound()</span><br><span class="line">&#125;</span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">hello.sayHelloWorld.call()</span></span><br><span class="line">&quot;Hello World&quot;</span><br></pre></td></tr></table></figure>
-
-<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/6e739550a349">智能合约 hello world</a></li>
-<li><a target="_blank" rel="noopener" href="https://haofly.net/geth/">Geth 搭建私链 private blockchain</a></li>
-<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/weixin_42822207/article/details/120620731">【geth】Go语言调用智能合约 | 一起来学区块链</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -2267,7 +2417,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">145</span>
+          <span class="site-state-item-count">146</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

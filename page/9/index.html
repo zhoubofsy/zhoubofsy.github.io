@@ -188,6 +188,135 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/05/12/network/iptables-introduce/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2017/05/12/network/iptables-introduce/" class="post-title-link" itemprop="url">iptables</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2017-05-12 09:21:14" itemprop="dateCreated datePublished" datetime="2017-05-12T09:21:14+08:00">2017-05-12</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/network/" itemprop="url" rel="index"><span itemprop="name">network</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>iptables是一个配置Linux内核防火墙的命令行工具，是netfilter项目的一部分。术语iptables也经常代指该内核级防火墙。iptables用于ipv4，ip6tables用于ipv6。<br>( nftables已经包含在Linux kernel 3.13中，以后会取代iptables成为主要的Linux防火墙工具。 )</p>
+<h1 id="版本"><a href="#版本" class="headerlink" title="版本"></a>版本</h1><p>iptables v1.4.21</p>
+<h1 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h1><p>理解 iptables 如何工作的关键是下面这张图。图中在上面的小写字母代表”表”，在下面的大写字母代表”链”。从任何网络端口进来的每一个 IP 数据包都要从上到下的穿过这张图。一种常见的困扰是认为 iptables 对从内部端口进入的数据包和从面向互联网端口进入的数据包采取不同的处理方式，相反，iptabales 对从任何端口进入的数据包都会采取相同的处理方式。可以定义规则使 iptables 采取不同的方式对待从不同端口进入的数据包。当然一些数据包是用于本地进程的，因此在图中表现为从顶端进入，到<code>Local Process</code>停止，而另一些数据包是由本地进程生成的，因此在图中表现为从<code>Local Process</code>发出，一直向下穿过该流程图。</p>
+<p><img src="/images/iptables/iptables_traverse.jpg" alt="iptables_traverse.jpg"></p>
+<ol>
+<li>数据包到达网络接口，比如 eth0</li>
+<li>进入 raw 表的 PREROUTING 链，这个链的作用是赶在连接跟踪之前处理数据包</li>
+<li>如果进行了连接跟踪，在此处理</li>
+<li>进入 mangle 表的 PREROUTING 链，在此可以修改数据包，比如 TOS 等</li>
+<li>进入 nat 表的 PREROUTING 链，可以在此做DNAT，但不要做过滤</li>
+<li>决定路由，看是交给本地主机还是转发给其它主机<br>一种情况是，数据包就是发给本地主机的:</li>
+<li>进入 mangle 表的 INPUT 链，这里是在路由之后，交由本地主机之前，我们也可以进行一些相应的修改</li>
+<li>进入 filter 表的 INPUT 链，在这里我们可以对流入的所有数据包进行过滤，无论它来自哪个网络接口</li>
+<li>交给本地主机的应用程序进行处理</li>
+<li>处理完毕后进行路由决定，看该往那里发出</li>
+<li>进入 raw 表的 OUTPUT 链，这里是在连接跟踪处理本地的数据包之前</li>
+<li>连接跟踪对本地的数据包进行处理</li>
+<li>进入 mangle 表的 OUTPUT 链，在这里我们可以修改数据包，但不要做过滤</li>
+<li>进入 nat 表的 OUTPUT 链，可以对防火墙自己发出的数据做 NAT</li>
+<li>再次进行路由决定</li>
+<li>进入 filter 表的 OUTPUT 链，可以对本地出去的数据包进行过滤</li>
+<li>进入 mangle 表的 POSTROUTING 链，到这里已经做完了所有的路由决定，但数据包仍然在本地主机，我们还可以进行某些修改<br>注意，这里不光对经过防火墙的数据包进行处理，还对防火墙自己产生的数据包进行处理</li>
+<li>进入 nat 表的 POSTROUTING 链，在这里一般都是用来做 SNAT ，不要在这里进行过滤</li>
+<li>进入出去的网络接口<br>一种情况是，数据包要转发给其它主机:</li>
+<li>进入 mangle 表的 FORWARD 链，这里也比较特殊，这是在第一次路由决定之后，在进行最后的路由决定之前，我们仍然可以对数据包进行某些修改</li>
+<li>进入 filter 表的 FORWARD 链，在这里我们可以对所有转发的数据包进行过滤。需要注意的是：经过这里的数据包是转发的，方向是双向的</li>
+<li>进入 mangle 表的 POSTROUTING 链，到这里已经做完了所有的路由决定，但数据包仍然在本地主机，我们还可以进行某些修改</li>
+<li>进入 nat 表的 POSTROUTING 链，在这里一般都是用来做 SNAT ，不要在这里进行过滤</li>
+<li>进入出去的网络接口</li>
+</ol>
+<p>该流程图描述链了在任何接口上收到的网络数据包是按照怎样的顺序穿过表的交通管制链。第一个路由策略包括决定数据包的目的地是本地主机（这种情况下，数据包穿过 INPUT 链），还是其他主机（数据包穿过 FORWARD 链）；中间的路由策略包括决定给传出的数据包使用那个源地址、分配哪个接口；最后一个路由策略存在是因为先前的 mangle 与 nat 链可能会改变数据包的路由信息。数据包通过路径上的每一条链时，链中的每一条规则按顺序匹配；无论何时匹配了一条规则，相应的 target&#x2F;jump 动作将会执行。最常用的3个 target 是 ACCEPT, DROP ,或者 jump 到用户自定义的链。内置的链有默认的策略，但是用户自定义的链没有默认的策略。在 jump 到的链中，若每一条规则都不能提供完全匹配，那么数据包像这张图片描述的一样返回到调用链。在任何时候，若 DROP target 的规则实现完全匹配，那么被匹配的数据包会被丢弃，不会进行进一步处理。如果一个数据包在链中被 ACCEPT，那么它也会被所有的父链 ACCEPT，并且不再遍历其他父链。然而，要注意的是，数据包还会以正常的方式继续遍历其他表中的其他链。</p>
+<p><img src="/images/iptables/iptables_user_kernel_traverse.png" alt="iptables_user_kernel_traverse.png"></p>
+<h2 id="表-Tables"><a href="#表-Tables" class="headerlink" title="表(Tables)"></a>表(Tables)</h2><ul>
+<li>raw 用于配置数据包，raw 中的数据包不会被系统跟踪。<br>  作用：决定数据包是否被状态跟踪机制处理，优先级最高，设置raw时一般是为了不再让iptables做数据包的链接跟踪处理，提高性能<br>  内核模块：iptable_raw<br>  chains：OUTPUT, PREROUTING</li>
+<li>filter 是用于存放所有与防火墙相关操作的默认表。<br>  作用：过滤数据包<br>  内核模块：iptables_filter<br>  chains：INPUT, FORWARD, OUTPUT</li>
+<li>nat 用于网络地址转换（例如：端口转发）。<br>  作用：网络地址转换<br>  内核模块：iptables_nat<br>  chains：PREROUTING, POSTROUTING, OUTPUT</li>
+<li>mangle 用于对特定数据包的修改。<br>  作用：修改数据包的服务类型、TTL、并且可以配置路由实现QOS<br>  内核模块：iptable_mangle<br>  chains：PREROUTING, POSTROUTING, INPUT, OUTPUT, FORWARD</li>
+<li>security 用于强制访问控制网络规则。<br>  Todo…</li>
+</ul>
+<p>表之间的顺序：raw –&gt; mangle –&gt; nat –&gt; filter</p>
+<h2 id="链-Chains"><a href="#链-Chains" class="headerlink" title="链(Chains)"></a>链(Chains)</h2><ul>
+<li>表由链组成，链是一些按顺序排列的规则的列表。<br>  默认的<code>filter</code>表包含<code>INPUT</code>，<code>OUTPUT</code>和<code>FORWARD</code>3条内建的链，这3条链作用于数据包过滤过程中的不同时间点，<code>nat</code>表包含<code>PREROUTING</code>，<code>POSTROUTING</code>和<code>OUTPUT</code>链。</li>
+<li>默认情况下，任何链中都没有规则，可以向链中添加自己想用的规则<br>  链的默认规则通常设置为<code>ACCEPT</code>，如果想确保任何包都不能通过规则集，那么可以重置为<code>DROP</code>。默认的规则总是在一条链的最后生效，所以在默认规则生效前数据包需要通过所有存在的规则。</li>
+<li>用户可以加入自己定义的链，从而使规则集更有效并且易于修改。</li>
+</ul>
+<h2 id="规则-Rules"><a href="#规则-Rules" class="headerlink" title="规则(Rules)"></a>规则(Rules)</h2><p>数据包的过滤基于 规则。规则由一个目标（数据包包匹配所有条件后的动作）和很多匹配（导致该规则可以应用的数据包所满足的条件）指定。一个规则的典型匹配事项是数据包进入的端口（例如：eth0 或者 eth1）、数据包的类型（ICMP, TCP, 或者 UDP）和数据包的目的端口。</p>
+<p>目标使用<code>-j</code>或者<code>--jump</code>选项指定。目标可以是用户定义的链（例如，如果条件匹配，跳转到之后的用户定义的链，继续处理）、一个内置的特定目标或者是一个目标扩展。内置目标是 ACCEPT， DROP， QUEUE 和 RETURN，目标扩展是 REJECT and LOG。如果目标是内置目标，数据包的命运会立刻被决定并且在当前表的数据包的处理过程会停止。如果目标是用户定义的链，并且数据包成功穿过第二条链，目标将移动到原始链中的下一个规则。目标扩展可以被终止（像内置目标一样）或者不终止（像用户定义链一样）。</p>
+<h2 id="策略-police"><a href="#策略-police" class="headerlink" title="策略(police)"></a>策略(police)</h2><h1 id="Usage"><a href="#Usage" class="headerlink" title="Usage"></a>Usage</h1><p><img src="/images/iptables/iptables_usage_main.jpg" alt="iptables_usage_main.jpg"></p>
+<p><img src="/images/iptables/iptables_usage_param.jpg" alt="iptables_usage_param.jpg"></p>
+<h1 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h1><p>Todo…</p>
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="https://wiki.archlinux.org/index.php/Iptables_(%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87)">Iptables (简体中文)</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.ha97.com/4093.html">iptables的基本概念和数据包流程图</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.cnblogs.com/ggjucheng/archive/2012/08/19/2646466.html">linux平台下防火墙iptables原理(转)</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.linuxidc.com/Linux/2012-08/67505.htm">iptables四个表与五个链间的处理关系</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/05/11/works/docker-over-xenserver-plans/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1168,195 +1297,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/02/13/algorithm/analyse-paxos/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2017/02/13/algorithm/analyse-paxos/" class="post-title-link" itemprop="url">Paxos算法分析</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2017-02-13 16:46:25" itemprop="dateCreated datePublished" datetime="2017-02-13T16:46:25+08:00">2017-02-13</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/algorithm/" itemprop="url" rel="index"><span itemprop="name">algorithm</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p><img src="/images/paxos/analyse-paxos-byzantine.jpeg" alt="analyse-paxos-byzantine"></p>
-<p>拜占庭位于如今的土耳其的伊斯坦布尔，是东罗马帝国的首都。由于当时拜占庭罗马帝国国土辽阔，为了防御目的，因此每个军队都分隔很远，将军与将军之间只能靠信差传消息。 在战争的时候，拜占庭军队内所有将军和副官必需达成一致的共识，决定是否有赢的机会才去攻打敌人的阵营。但是，在军队内有可能存有叛徒和敌军的间谍，左右将军们的决定又扰乱整体军队的秩序。在进行共识时，结果并不代表大多数人的意见。这时候，在已知有成员谋反的情况下，其余忠诚的将军在不受叛徒的影响下如何达成一致的协议，拜占庭问题就此形成。</p>
-<p>拜占庭将军问题是一个协议问题，拜占庭帝国军队的将军们必须全体一致的决定是否攻击某一支敌军。问题是这些将军在地理上是分隔开来的，并且将军中存在叛徒。叛徒可以任意行动以达到以下目标：欺骗某些将军采取进攻行动；促成一个不是所有将军都同意的决定，如当将军们不希望进攻时促成进攻行动；或者迷惑某些将军，使他们无法做出决定。如果叛徒达到了这些目的之一，则任何攻击行动的结果都是注定要失败的，只有完全达成一致的努力才能获得胜利。</p>
-<p>拜占庭假设是对现实世界的模型化，由于硬件错误、网络拥塞或断开以及遭到恶意攻击，计算机和网络可能出现不可预料的行为。拜占庭容错协议必须处理这些失效，并且这些协议还要满足所要解决的问题要求的规范。这些算法通常以其弹性t作为特征，t表示算法可以应付的错误进程数。</p>
-<p>很多经典算法问题只有在<code>t&lt;n/3</code>时才有解，如拜占庭将军问题，其中n是系统中进程的总数。</p>
-<p>为了解决拜占庭将军问题，图灵奖大神Leslie Lamport提出了Paxos算法，该算法可以帮助解决分布式系统中的一致性问题。</p>
-<h1 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h1><p>在分布式系统中，为了保证数据的高可用，我们会将数据保留多个副本，这些副本会放置在不同的物理机上。为了对用户提供正确的读写，我们需要保证这些放置在不同物理机上的副本是一致的。</p>
-<p>其中Proposer与Acceptor之间的交互主要有两个阶段、4类消息构成。</p>
-<ul>
-<li>Phase1<br>  本阶段由2类消息构成prepare和promise，Proposer向网络内超过半数的Acceptor发送prepare消息</li>
-<li>Phase2<br>  prepare、promise、accept、accepted。</li>
-</ul>
-<h2 id="角色"><a href="#角色" class="headerlink" title="角色"></a>角色</h2><p>Paxos中有三类角色Proposer、Acceptor、Learner</p>
-<p><img src="/images/paxos/analyse-paxos-members.png" alt="analyse-paxos-members"></p>
-<h2 id="选举流程"><a href="#选举流程" class="headerlink" title="选举流程"></a>选举流程</h2><p>整个Paxos算法流程分为3个阶段</p>
-<ul>
-<li>准备阶段</li>
-<li>决议阶段</li>
-<li>学习阶段</li>
-</ul>
-<p><img src="/images/paxos/analyse-paxos-flow.png" alt="analyse-paxos-flow"></p>
-<h3 id="准备阶段"><a href="#准备阶段" class="headerlink" title="准备阶段"></a>准备阶段</h3><ul>
-<li>Proposer向大多数Acceptor发起自己要发起Proposal(epochNo, value)的Prepare请求</li>
-<li>Acceptor收到Prepare请求，如果epochNo比已经接受的小的，直接拒绝; 如果epochNo比已经接受的大，保证不再接受比该epochNo小的请求，且将已经接受的epochNo最大的Proposal返回给Proposer</li>
-</ul>
-<h3 id="决议阶段"><a href="#决议阶段" class="headerlink" title="决议阶段"></a>决议阶段</h3><ul>
-<li>Proposer收到大多数Acceptor的Prepare应答后，如果已经有被接受的Proposal，就从中选出epochNo最大的Proposal, 发起对该Proposal的Accept请求。如果没有已经接受的Proposal, 就自己提出一个Proposal, 发起Accept请求。</li>
-<li>Acceptor收到Accept请求后，如果该Proposal的epochNo比它最后一次应答的Prepare请求的epochNo要小，那么要拒绝该请求；否则接受该请求。</li>
-</ul>
-<h3 id="学习阶段"><a href="#学习阶段" class="headerlink" title="学习阶段"></a>学习阶段</h3><ul>
-<li>当各个Acceptor达到一致之后，需要将达到一致的结果通知给所有的Learner</li>
-</ul>
-<p><img src="/images/paxos/analyse-paxos-flow-detail.png" alt="analyse-paxos-flow-detail"></p>
-<h3 id="Proposer角色"><a href="#Proposer角色" class="headerlink" title="Proposer角色"></a>Proposer角色</h3><p>(Phase1.a) 向所有的acceptors发送Prepare(i, b)请求；</p>
-<p>(Phase2.a) 如果收到Reject(i，b)消息，那么重新发送Prepare(i，b+n)，n为一个整型值，不同的proposer具有不同的n值，使得proposer之间保持一个偏序关系，保证不同的proposer不会使用相同的b值，即提案编号；</p>
-<p>(Phase2.a) 如果收到acceptors集合的任意一个majority的Promise(i, b, V, VB)回复，那么如果所有的V均为空，proposer可以自由选取一个v(value)，一般为用户提出的请求，回发Accept(i, b, v)；否则回发Accept(i，b，V)；</p>
-<p>(Phase2.b) 如果收到Nack(b)，回到(Phase1.a)发送Prepare(i，b+n)；</p>
-<p>(Phase2.b) 如果收到任意一个majority所有成员的Accepted(i，b，v)消息(表明投票已经完成)。这个过程learner也能收到Accepted消息，learner查看i是否为当前需要确认的iid，如果是则立即执行这个被批准的决议v；否则将该Accepted保存下来。</p>
-<p>Phase2.b阶段完成后，各个角色上对应该实例的状态都将变为closed状态，即该实例已经选出决议，proposer不能再提出新的提案。这样保证一个实例只能选出一个决议。在实际应用过程中，为了简化实现，常常在proposers中选举出一个leader，来充当协调者。当leader选举出来后，系统中只能由leader向acceptors发出Prepare请求，也就是说这能由leader发起提案，而其它的proposers则只干一件事，即定时检测系统中的leader是否还在工作，如果在一定时间内收不到leader的心跳消息，则剩下的proposers发起新一轮leader竞选，选取新的leader。</p>
-<h3 id="Acceptor"><a href="#Acceptor" class="headerlink" title="Acceptor"></a>Acceptor</h3><p>acceptor会维护一个状态记录表，表的每一行维护这样四个数据&lt;iid, B, V, VB&gt;, iid表示实例id。B是一个整数，用来表示同意或接受过的该提案的最高编号。V表示该提案对应的决议，里面保存着客户端发送过来的数据。VB表示已经接受过的提案的编号。</p>
-<p>(Phase 1.b) 接收Prepare(i，b)消息，i为实例id号，b为提案编号。对于同一个i，如果<code>b&gt;B</code>，那么回复Promise(i, b, V, VB)，并设B&#x3D;b；否则，回复Reject(i，b)，其中b&#x3D;B。</p>
-<p>(Phase 2.b) 接收Accept(i, b, v)，如果<code>b&lt;B</code>，那么回复Nack(b)信息，其中b&#x3D;B(暗示该proposer提出提案后至少有一个其它的proposer广播了具有更高编号的提案)；否则设置V&#x3D;v，VB&#x3D;b，并且回复Accepted(i，b，v)消息。</p>
-<p>其中：Promise(i, b, V, VB)表示向proposer保证对于该实例不再接受编号不大于b的相同iid的提案；Accepted表示向learner和proposer发送该提案被通过的消息。</p>
-<h3 id="Learner"><a href="#Learner" class="headerlink" title="Learner"></a>Learner</h3><p>learner的主要任务就是监听来自acceptors的消息，用以最终确认并学习决议(value)，即被批准的提案。当learner收到来自大多数(majority)acceptors的接受消息后，就可以确定该实例(instance)的value已经被最终无歧义的确认。这个时候便可以执行决议里的操作。决议序列在所有learner上顺序都是一致的，每一个提案的发起将会触发一次Paxos过程，每个这样的过程是一个Paxos的实例。而在实际应用中常使用单增的整数来标识每一个实例，即iid(instance id)。iid从1开始，而所有从1开始到当前iid的实例都必须是已经被确认过的，即这些决议都已经被执行过。比如：learner A已经确认了前10个实例，这时iid为11的决议还没有被通过，而iid为12和13的提案已经得到大多数acceptors的接受。此时就会产生一个决议序列缺口(gap)，在这种情况下，A不能跳过11直接确认12和13，而是去询问acceptors是否已经通过11的决议。只有当iid为11的决议被确认后，iid为12和13的决议才能被确认学习。</p>
-<h2 id="活锁问题"><a href="#活锁问题" class="headerlink" title="活锁问题"></a>活锁问题</h2><p>Todo…</p>
-<h1 id="应用"><a href="#应用" class="headerlink" title="应用"></a>应用</h1><p>Paxos在Ceph Monitor应用。Monitor要做的事情很明确了，就是管理、维护和发布集群的状态信息，但是为了避免单点故障或者性能热点问题，一般使用多个Monitor来做这一件事情，也就是管理层有多个成员。集群的正常运行，首先需要管理层达成一致，达成一致就需要有一个能拍板的monitor（leader），大家都听它的就行了。所以要达成一致核心问题就是在众多monitor中选出那个能拍板的monitor。Ceph解决这个问题的方法很简单，有点类似于领导人的选举，即有资格的monitor先形成一个quorum（委员会），然后委员会的成员在quorum这个范围内选出一个leader，集群状态信息的更新以及quorum成员的维护就有这个leader负责。Leader的选取规则也比较简单，每个monitor在初始化的时候都会根据它的IP地址被赋予一个rank值，当选举leader时，rank值最小的monitor胜出当选leader。当quorum成员发生变化时（增加或者减少），都会触发重新选举流程，再选出一个leader。</p>
-<p>monitor的代码目录结构：<br><img src="/images/paxos/analyse-paxos-ceph-monitor-src.png" alt="analyse-paxos-ceph-monitor-src.png"></p>
-<h2 id="架构设计"><a href="#架构设计" class="headerlink" title="架构设计"></a>架构设计</h2><p><img src="/images/paxos/analyse-paxos-ceph-monitor-frame.png" alt="paxos-ceph-monitor-frame.png"></p>
-<ul>
-<li>DBStore层<br>  数据的最终存储组件，以leveldb为例</li>
-<li>Paxos层<br>  在集群上对上层提供一致的数据访问逻辑，在这一层看来所有的数据都是kv；上层的多中PaxosService将不同的组件的map数据序列化为单条value，公用同一个paxos实例</li>
-<li>PaxosService层<br>  每个PaxosService代表集群的一种状态信息。对应的，Ceph Moinitor中包含分别负责OSD Map，Monitor Map, PG Map, CRUSH Map的几种PaxosService。PaxosService负责将自己对应的数据序列化为kv写入Paxos层。Ceph集群所有与Monitor的交互最终都是在调用对应的PaxosSevice功能</li>
-</ul>
-<h2 id="关键流程及结构"><a href="#关键流程及结构" class="headerlink" title="关键流程及结构"></a>关键流程及结构</h2><h3 id="初始化流程"><a href="#初始化流程" class="headerlink" title="初始化流程"></a>初始化流程</h3><p><img src="/images/paxos/analyse-paxos-ceph-monitor-init-flow.png" alt="analyse-paxos-ceph-monitor-init-flow.png"></p>
-<ul>
-<li>自下而上依次初始化上述的三大组成部分：DBStroe，Paxos，PaxoService</li>
-<li>初始化Messager，并向其中注册命令执行回调函数。Messager是Ceph中的网络线程模块，Messager会在收到网络请求后，回调Moniotor在初始化阶段注册命令处理函数</li>
-<li>Bootstrap过程在整个Monitor的生命周期中被反复调用</li>
-</ul>
-<h4 id="Boostrap"><a href="#Boostrap" class="headerlink" title="Boostrap"></a>Boostrap</h4><ol>
-<li>执行Boostrap的Monitor节点会首先进入PROBING状态，并开始向所有monmap中其他节点发送Probing消息</li>
-<li>收到Probing消息的节点执行Boostrap并回复Probing_ack，并给出自己的last_commit以及first_commit，其中first_commit指示当前机器的commit记录中最早的一条，其存在使得单个节点上可以仅保存最近的几条记录</li>
-<li>收到Probing_ack的节点发现commit数据的差距早于对方first_commit，则主动发起全同步，并在之后重新Boostrap</li>
-<li>收到超过半数的ack并不需要全同步时，则进入选主过程</li>
-</ol>
-<p><img src="/images/paxos/analyse-paxos-ceph-monitor-boostrap-1.png" alt="analyse-paxos-ceph-monitor-boostrap-1.png"></p>
-<p>经过boostrap过程，保证可以与半数以上的节点通讯，并且节点间commit数据历史差距不大了。</p>
-<h4 id="select-victory"><a href="#select-victory" class="headerlink" title="select &amp; victory"></a>select &amp; victory</h4><p><img src="/images/paxos/analyse-paxos-ceph-monitor-victory.png" alt="analyse-paxos-ceph-monitor-victory.png"></p>
-<h5 id="select"><a href="#select" class="headerlink" title="select"></a>select</h5><ol>
-<li>将election_epoch加1，向Monmap中的所有其他节点发送Propose消息</li>
-<li>收到Propose消息的节点进入election状态并仅对有更新的election_epoch且rank值大于自己的消息答复Ack。这里的rank简单的由ip大小决定</li>
-<li>发送Propose的节点统计收到的Ack数，超时时间内收到Monmap中大多数的ack后可进入victory过程，这些发送ack的节点形成quorum</li>
-</ol>
-<h5 id="victory"><a href="#victory" class="headerlink" title="victory"></a>victory</h5><ol>
-<li>election_epoch加1，可以看出election_epoch的奇偶可以表示是否在选举轮次</li>
-<li>向quorum中的所有节点发送VICTORY消息，并告知自己的epoch及quorum</li>
-<li>当前节点完成Election，进入Leader状态</li>
-<li>收到VICTORY消息的节点完成Election，进入Peon状态</li>
-</ol>
-<h4 id="recovery"><a href="#recovery" class="headerlink" title="recovery"></a>recovery</h4><p>经过了Boostrap、select、victory，能确定leader和peon角色，以及quorum成员。在recovery阶段将leader和quorum节点间的数据更新到一致。整个集群进入可用状态。</p>
-<p><img src="/images/paxos/analyse-paxos-ceph-monitor-recovery.png" alt="analyse-paxos-ceph-monitor-recovery.png"></p>
-<h3 id="一致性读写流程"><a href="#一致性读写流程" class="headerlink" title="一致性读写流程"></a>一致性读写流程</h3><p>经过了上面的初始化流程，整个集群进入到一个正常状态，可以用Paxos进行一致性读写了。其中读流程比较简单，lease内的所有quorum均可以提供读服务。而所有写都会转发给leader。</p>
-<h4 id="一致性写流程"><a href="#一致性写流程" class="headerlink" title="一致性写流程"></a>一致性写流程</h4><ol>
-<li>leader在本地记录要提交的value，并向quroum中的所有节点发送begin消息，其中携带了要提交的value, accept_pn及last_commit</li>
-<li>peon收到begin消息，如果accept过更高的pn则忽略，否则将value写入db并返回accept消息。同时peon会将当前的lease过期掉，在下一次收到lease前不再提供服务</li>
-<li>leader收到 全部 quorum的accept后进行commit。本地commit后向所有quorum节点发送commit消息</li>
-<li>peon收到commit消息，本地commit数据</li>
-<li>leader通过lease消息将整个集群带入到active状态</li>
-</ol>
-<p><img src="/images/paxos/analyse-paxos-ceph-monitor-rw.png" alt="analyse-paxos-ceph-monitor-rw.png"></p>
-<h2 id="状态转换"><a href="#状态转换" class="headerlink" title="状态转换"></a>状态转换</h2><h3 id="初始化阶段状态转换"><a href="#初始化阶段状态转换" class="headerlink" title="初始化阶段状态转换"></a>初始化阶段状态转换</h3><p><img src="/images/paxos/analyse-paxos-ceph-monitor-status-1.png" alt="analyse-paxos-ceph-monitor-status-1.png"></p>
-<ul>
-<li>STATE_PROBING<br>  boostrap过程中节点间相互探测，发现数据差距</li>
-<li>STATE_SYNCHRONIZING<br>  当数据差距较大无法通过后续机制补齐时，进行全同步</li>
-<li>STATE_ELECTING<br>  Monitor在进行选主</li>
-<li>STATE_LEADER<br>  当前Monitor成为leader</li>
-<li>STATE_PEON<br>  非leader节点</li>
-</ul>
-<h3 id="一致性读写阶段状态转换"><a href="#一致性读写阶段状态转换" class="headerlink" title="一致性读写阶段状态转换"></a>一致性读写阶段状态转换</h3><p><img src="/images/paxos/analyse-paxos-ceph-monitor-status-2.png" alt="analyse-paxos-ceph-monitor-status-2.png"></p>
-<ul>
-<li>STATE_RECOVERING<br>  对应上述RECOVERING过程</li>
-<li>STATE_ACTIVE<br>  leader可以读写或peon拥有lease</li>
-<li>STATE_UPDATING<br>  向quroum发送begin，等待accept</li>
-<li>STATE_WRITING<br>  收到accept</li>
-<li>STATE_REFERSH<br>  本地提交并向quorum发送commit</li>
-</ul>
-<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a target="_blank" rel="noopener" href="http://www.cnblogs.com/ychellboy/archive/2010/01/01/1637265.html">分布式一致性Paxos算法学习笔记（三）：算法的工程化描述</a></li>
-<li><a target="_blank" rel="noopener" href="http://www.cnblogs.com/ychellboy/archive/2010/04/05/1704883.html">分布式一致性Paxos算法学习笔记（四）：算法回顾</a></li>
-<li><a target="_blank" rel="noopener" href="http://www.cppblog.com/kevinlynx/archive/2014/10/15/208580.html">图解分布式一致性协议Paxos</a></li>
-<li><a target="_blank" rel="noopener" href="http://www.tuicool.com/articles/eMnu2aA">我所理解的Paxos</a></li>
-<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/scaleqiao/article/details/52231900">Ceph Monitor源码机制分析（一）—— 概述</a></li>
-<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/scaleqiao/article/details/52242345">Ceph Monitor源码机制分析（二）—— 初始化</a></li>
-<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/scaleqiao/article/details/52315468">Ceph Monitor源码机制分析（三）—— 选举</a></li>
-<li><a target="_blank" rel="noopener" href="http://www.tuicool.com/articles/R3M7JzM">Ceph Monitor实现</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1426,7 +1366,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">145</span>
+          <span class="site-state-item-count">146</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

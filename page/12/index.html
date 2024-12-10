@@ -188,6 +188,80 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2016/11/15/language/python/python-argparse-use/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2016/11/15/language/python/python-argparse-use/" class="post-title-link" itemprop="url">python-argparse-use</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2016-11-15 16:10:53" itemprop="dateCreated datePublished" datetime="2016-11-15T16:10:53+08:00">2016-11-15</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/language/" itemprop="url" rel="index"><span itemprop="name">language</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># -*- coding: utf-8 -*-</span></span><br><span class="line"><span class="keyword">import</span> argparse</span><br><span class="line">args = <span class="string">&quot;-f hello.txt -n 1 2 3 -x 100 -y b -z a -q hello @args.txt i_am_bar -h&quot;</span>.split()</span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用@args.txt要求fromfile_prefix_chars=&quot;@&quot;</span></span><br><span class="line"><span class="comment"># args.txt文件中应该一行一个参数，想改变行为参考convert_arg_line_to_args()</span></span><br><span class="line"><span class="comment"># ArgumentParser参数的简单说明</span></span><br><span class="line"><span class="comment">## description - 命令行帮助的开始文字，大部分情况下，我们只会用到这个参数</span></span><br><span class="line"><span class="comment"># epilog - 命令行帮助的结尾文字</span></span><br><span class="line"><span class="comment"># prog - (default: sys.argv[0])程序的名字，一般不需要修改，另外，如果你需要在help中使用到程序的名字，可以使用%(prog)s</span></span><br><span class="line"><span class="comment"># prefix_chars - 命令的前缀，默认是-，例如-f/--file。有些程序可能希望支持/f这样的选项，可以使用prefix_chars=&quot;/&quot;</span></span><br><span class="line"><span class="comment"># fromfile_prefix_chars - (default: None)如果你希望命令行参数可以从文件中读取，就可能用到。例如，如果fromfile_prefix_chars=&#x27;@&#x27;,命令行参数中有一个为&quot;@args.txt&quot;，args.txt的内容会作为命令行参数</span></span><br><span class="line"><span class="comment"># add_help - 是否增加-h/-help选项 (default: True)，一般help信息都是必须的，所以不用设置啦。</span></span><br><span class="line"><span class="comment">## parents - 类型是list，如果这个parser的一些选项跟其他某些parser的选项一样，可以用parents来实现继承，例如parents=[parent_parser]</span></span><br><span class="line"><span class="comment">## formatter_class - 自定义帮助信息的格式（description和epilog）。默认情况下会将长的帮助信息进行&lt;自动换行和消除多个连续空白&gt;。</span></span><br><span class="line"><span class="comment">#三个允许的值：</span></span><br><span class="line"><span class="comment"># class argparse.RawDescriptionHelpFormatter 直接输出description和epilog的原始形式（不进行自动换行和消除空白的操作）</span></span><br><span class="line"><span class="comment"># class argparse.RawTextHelpFormatter 直接输出description和epilog以及add_argument中的help字符串的原始形式（不进行自动换行和消除空白的操作）</span></span><br><span class="line"><span class="comment">## class argparse.ArgumentDefaultsHelpFormatter 在每个选项的帮助信息后面输出他们对应的缺省值，如果有设置的话。这个最常用吧！</span></span><br><span class="line"><span class="comment"># argument_default - (default: None)设置一个全局的选项的缺省值，一般每个选项单独设置，所以这个参数用得少，不细说</span></span><br><span class="line"><span class="comment"># usage - (default: generated)如果你需要修改usage的信息（usage: PROG [-h] [--foo [FOO]] bar [bar ...]），那么可以修改这个，一般不要修改。</span></span><br><span class="line"><span class="comment"># conflict_handler - 不建议使用。这个在极端情况下才会用到，主要是定义两个add_argument中添加的选项的名字发生冲突时怎么处理，默认处理是抛出异常。</span></span><br><span class="line"><span class="comment">#注释一行有##表示这几个参数比较常用</span></span><br><span class="line">parser = argparse.ArgumentParser(description=<span class="string">&quot;This is a description of %(prog)s&quot;</span>, epilog=<span class="string">&quot;This is a epilog of %(prog)s&quot;</span>, prefix_chars=<span class="string">&quot;-+&quot;</span>, fromfile_prefix_chars=<span class="string">&quot;@&quot;</span>, formatter_class=argparse.ArgumentDefaultsHelpFormatter)</span><br><span class="line"></span><br><span class="line"><span class="comment"># ArgumentParser.add_argument(name or flags...[, action][, nargs][, const][, default][, type][, choices][, required][, help][, metavar][, dest])</span></span><br><span class="line"><span class="comment"># add_argument的参数是比较复杂的。。。</span></span><br><span class="line"><span class="comment"># name or flags - 指定参数的形式，想写几个写几个，不过我们一般就写两个，一个短参数，一个长参数，看下面的例子&quot;-f&quot;, &quot;--file&quot;</span></span><br><span class="line"><span class="comment"># 可选的选项，位置不固定，想怎么写就怎么写，默认是可选的</span></span><br><span class="line">parser.add_argument(<span class="string">&quot;-f&quot;</span>, <span class="string">&quot;--file&quot;</span>, <span class="built_in">help</span>=<span class="string">&quot;test test test&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 位置固定的选项，例如&quot;prog i_am_bar&quot;，这样子的话，i_am_bar就是bar选项的值啦，默认是必须有的</span></span><br><span class="line">parser.add_argument(<span class="string">&quot;bar&quot;</span>, <span class="built_in">help</span>=<span class="string">&quot;test test test&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># nargs - 指定这个参数后面的value有多少个，例如，我们希望使用-n 1 2 3 4，来设置n的值为[1, 2, 3, 4]</span></span><br><span class="line">parser.add_argument(<span class="string">&quot;-n&quot;</span>, <span class="string">&quot;--num&quot;</span>, nargs=<span class="string">&quot;+&quot;</span>, <span class="built_in">type</span>=<span class="built_in">int</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 这里nargs=&quot;+&quot;表示，如果你指定了-n选项，那么-n后面至少要跟一个参数，+表示至少一个,?表示一个或0个,*0个或多个，</span></span><br><span class="line"><span class="comment"># default - 如果命令行没有出现这个选项，那么使用default指定的默认值</span></span><br><span class="line">parser.add_argument(<span class="string">&quot;+g&quot;</span>, <span class="string">&quot;++gold&quot;</span>, <span class="built_in">help</span>=<span class="string">&quot;test test test&quot;</span>, default=<span class="string">&quot;test_gold&quot;</span>)<span class="comment">#需要prefix_chars包含&quot;+&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># type - 如果希望传进来的参数是指定的类型（例如 float, int or file等可以从字符串转化过来的类型），可以使用</span></span><br><span class="line">parser.add_argument(<span class="string">&quot;-x&quot;</span>, <span class="built_in">type</span>=<span class="built_in">int</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># choices - 设置参数值的范围，如果choices中的类型不是字符串，记得指定type哦</span></span><br><span class="line">parser.add_argument(<span class="string">&quot;-y&quot;</span>, choices=[<span class="string">&#x27;a&#x27;</span>, <span class="string">&#x27;b&#x27;</span>, <span class="string">&#x27;d&#x27;</span>])</span><br><span class="line"></span><br><span class="line"><span class="comment"># required - 通常-f这样的选项是可选的，但是如果required=True那么就是必须的了</span></span><br><span class="line">parser.add_argument(<span class="string">&quot;-z&quot;</span>, choices=[<span class="string">&#x27;a&#x27;</span>, <span class="string">&#x27;b&#x27;</span>, <span class="string">&#x27;d&#x27;</span>], required=<span class="literal">True</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># metavar - 参数的名字，在显示 帮助信息时才用到.</span></span><br><span class="line">parser.add_argument(<span class="string">&quot;-o&quot;</span>, metavar=<span class="string">&quot;OOOOOO&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># help - 设置这个选项的帮助信息</span></span><br><span class="line"><span class="comment"># dest - 设置这个选项的值就是解析出来后放到哪个属性中</span></span><br><span class="line">parser.add_argument(<span class="string">&quot;-q&quot;</span>, dest=<span class="string">&quot;world&quot;</span>)</span><br><span class="line"></span><br><span class="line">args = parser.parse_args(args) <span class="comment"># 如果你没有args参数，那么就使用sys.argv，也就是命令行参数啦。有这个参数，就方便我们调试啊</span></span><br><span class="line"><span class="comment"># args.world就是-q的值啦</span></span><br><span class="line"><span class="comment"># action - The basic type of action to be taken when this argument is encountered at the command line.</span></span><br><span class="line"><span class="comment"># const - A constant value required by some action and nargs selections.</span></span><br><span class="line"><span class="comment"># 这两个自己看帮助文档啦，比较复杂</span></span><br><span class="line"><span class="comment"># http://docs.python.org/library/argparse.html</span></span><br><span class="line"><span class="built_in">print</span> args</span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2016/11/15/mysql/mysql-password-functions/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1827,113 +1901,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2016/06/23/storage/ceph/persistence-calculation/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2016/06/23/storage/ceph/persistence-calculation/" class="post-title-link" itemprop="url">Ceph 持久性计算</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2016-06-23 14:23:33" itemprop="dateCreated datePublished" datetime="2016-06-23T14:23:33+08:00">2016-06-23</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="持久性"><a href="#持久性" class="headerlink" title="持久性"></a>持久性</h1><p>持久性是数据丢失的概率，可以用于度量一个存储系统的可靠性，俗称 “多少个9”。数据的放置(DataPlacement)决定了数据持久性，而Ceph的CRUSH MAP又决定了数据的放置，因此CRUSH MAP的设置决定了数据持久性。</p>
-<h1 id="数学模型"><a href="#数学模型" class="headerlink" title="数学模型"></a>数学模型</h1><h2 id="公式"><a href="#公式" class="headerlink" title="公式"></a>公式</h2><p><code>P = Pr x M / C（R，N）</code></p>
-<h2 id="解释"><a href="#解释" class="headerlink" title="解释"></a>解释</h2><h3 id="P"><a href="#P" class="headerlink" title="P"></a>P</h3><p>P为丢失数据的概率，持久性，可用1-P来计算。</p>
-<h3 id="Pr"><a href="#Pr" class="headerlink" title="Pr"></a>Pr</h3><p><code>Pr = P1（any） x P2（any） x P3（any）</code></p>
-<p>Pr为一年内R（ceph副本数）个OSD发生故障的概率。</p>
-<ul>
-<li><p>P1（any）为一年内第一个OSD发生故障的概率<br>硬盘在一定时间内的失败概率符合Possion（伯松）分布 <code>Pn（入,t）</code>(<code>入</code>为lamda)，由于我们不太容易直接计算任意一个OSD顺坏的概率，但可以计算出没有OSD出现故障的概率，再用1减去无OSD节点故障的概率，就得到了<code>P1（any）</code><br><code>入=FIT x N</code> ，<code>FIT=AFR/（24×365）</code>，AFR为硬盘年故障概率;<br><code>t</code>为一年的小时数，24x365</p>
-</li>
-<li><p>P2（any）为一个OSD恢复周期内第二个OSD发生故障的概率<br><code>入</code>中的N为N-1<br><code>t</code> 为一个OSD恢复周期，<code>OSD恢复周期 = 恢复数据量 / 恢复速度</code>；<code>恢复数据量 = 硬盘容量 x 使用率</code>；<code>恢复速度 = 每个OSD写速度 x 参与恢复的OSD数量</code></p>
-</li>
-<li><p>P3（any）为一个OSD恢复周期内第三个OSD发生故障的概率<br><code>入</code>中的N为N-2<br><code>t</code> 为一个OSD恢复周期，算法同上</p>
-</li>
-</ul>
-<h3 id="M"><a href="#M" class="headerlink" title="M"></a>M</h3><p>Copy Set个数，copy set上至少有一个PG的所有副本。<br>丢失数据必须是主副本数据同时丢失，数据不可恢复才算。而一个copy set，包含一个PG的所有主副本数据，所以一个copy set损坏（或丢失）导致至少一个PG的主副本数据丢失，数据不可恢复。</p>
-<h3 id="C（R，N）"><a href="#C（R，N）" class="headerlink" title="C（R，N）"></a>C（R，N）</h3><p>N为OSD数量（一个OSD对应一个硬盘），R为副本数，C（R，N）为N个OSD中任意挑选R个OSD的组合数。</p>
-<h2 id="优化"><a href="#优化" class="headerlink" title="优化"></a>优化</h2><p>综上所述，我们能调节的参数包括：</p>
-<ul>
-<li>OSD恢复周期（recovery time）<br>  增加<code>参与恢复的OSD数量</code>可以缩短<code>OSD恢复周期</code>，从而降低丢失数据的概率</li>
-<li>copy set个数<br>  减少copy set个数，可以降低丢失数据的概率</li>
-</ul>
-<p>以上优化需要修改Crush map</p>
-<h1 id="使用prmc计算持久性"><a href="#使用prmc计算持久性" class="headerlink" title="使用prmc计算持久性"></a>使用prmc计算持久性</h1><h2 id="获取prmc"><a href="#获取prmc" class="headerlink" title="获取prmc"></a>获取prmc</h2><p>从github上下载prmc代码</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git clone https://github.com/zhoubofsy/persistence_calculation.git</span><br></pre></td></tr></table></figure>
-
-<h2 id="配置输入参数"><a href="#配置输入参数" class="headerlink" title="配置输入参数"></a>配置输入参数</h2><p>修改<code>config.py</code>文件中的<code>prmc</code>字典</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">算法名称</span></span><br><span class="line">name = &#x27;prmc&#x27;</span><br><span class="line"></span><br><span class="line">prmc = &#123;</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">副本数</span></span><br><span class="line">&#x27;replica_num&#x27; : 3, </span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">集群OSD总数数量</span></span><br><span class="line">&#x27;osd_num&#x27; : 14,</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">AFR(硬盘年故障率)</span></span><br><span class="line">&#x27;disk_afr&#x27; : 0.017,</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">磁盘平均容量（MB）</span></span><br><span class="line">&#x27;disk_capacity&#x27; : 1000.0,</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">磁盘平均写速度（MB/s）</span></span><br><span class="line">&#x27;disk_writerate&#x27; : 50.0,</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">磁盘使用率</span></span><br><span class="line">&#x27;disk_usage&#x27; : 0.75,</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">一个Host中OSD的数量</span></span><br><span class="line">&#x27;num_osd_in_host&#x27; : 4, </span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">一个副本域的host数量</span></span><br><span class="line">&#x27;num_host_in_replic_domain&#x27; : 1,</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">rack数量</span></span><br><span class="line">&#x27;num_rack_in_root&#x27; : 4, </span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">副本域数量</span></span><br><span class="line">&#x27;num_replic_domain_in_root&#x27; : 1</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>程序会根据<code>name</code>的设置，选择相关的算法，不同的算法会采用不同的配置参数，目前只支持<code>prmc</code>算法</p>
-<h2 id="执行计算"><a href="#执行计算" class="headerlink" title="执行计算"></a>执行计算</h2><p>执行<code>main.py</code>进行计算持久性</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./main.py</span><br></pre></td></tr></table></figure>
-
-<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a target="_blank" rel="noopener" href="https://www.ustack.com/blog/build-block-storage-service/">打造高性能高可靠块存储系统</a></li>
-<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/xiaoquqi/article/details/43055031#0-tsina-1-70142-397232819ff9a47a7b7e80a40613cfe1">CEPH可靠性的计算方法分析</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -2003,7 +1970,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">145</span>
+          <span class="site-state-item-count">146</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

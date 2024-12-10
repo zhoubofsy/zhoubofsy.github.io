@@ -188,6 +188,128 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/08/31/apple/xhyve-usage/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2017/08/31/apple/xhyve-usage/" class="post-title-link" itemprop="url">xhyve使用</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2017-08-31 10:38:30" itemprop="dateCreated datePublished" datetime="2017-08-31T10:38:30+08:00">2017-08-31</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/apple/" itemprop="url" rel="index"><span itemprop="name">apple</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p><img src="/images/xhyve/xhyve_logo.png" alt="xhyve_logo"></p>
+<p>FreeBSD 下的虚拟技术 bhyve (The BSD Hypervisor) 是去年1月份正式发布的，包含在了 FreeBSD 10.0 发行版中。今天要玩的这个 xhyve 是基于 bhyve 的 Mac OS X 移植版本，也就是说我们想在 Mac 上运行 Linux 的话除了 VirtualBox, VMware Fusion 外，现在有了第三种选择。</p>
+<p>xhyve is a lightweight virtualization solution for OS X that is capable of running Linux. It is a port of FreeBSD’s bhyve, a KVM+QEMU alternative written by Peter Grehan and Neel Natu.</p>
+<p>特点：</p>
+<ul>
+<li>super lightweight, only 230 KB in size</li>
+<li>completely standalone, no dependencies</li>
+<li>the only BSD-licensed virtualizer on OS X</li>
+<li>does not require a kernel extension (bhyve’s kernel code was ported to user mode code calling into Hypervisor.framework)</li>
+<li>multi-CPU support</li>
+<li>networking support</li>
+<li>can run off-the-shelf Linux distributions (and could be extended to run other operating systems)</li>
+</ul>
+<p>xhyve may make a good solution for running Docker on your Mac, for instance.</p>
+<h1 id="install"><a href="#install" class="headerlink" title="install"></a>install</h1><p>search xhyver:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">brew info xhyve</span></span><br><span class="line">xhyve: stable 0.2.0 (bottled), HEAD</span><br><span class="line">xhyve, lightweight macOS virtualization solution based on FreeBSD&#x27;s bhyve</span><br><span class="line">https://github.com/mist64/xhyve</span><br><span class="line">/usr/local/Cellar/xhyve/HEAD-1f1dbe3 (11 files, 11.2MB) *</span><br><span class="line">  Built from source on 2017-08-24 at 12:12:21</span><br><span class="line">From: https://github.com/Homebrew/homebrew-core/blob/master/Formula/xhyve.rb</span><br><span class="line">==&gt; Requirements</span><br><span class="line">Required: macOS &gt;= 10.10 ✔</span><br></pre></td></tr></table></figure>
+
+<p>install:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">brew install xhyve</span></span><br></pre></td></tr></table></figure>
+
+<h1 id="Ubuntu-16-04-VM"><a href="#Ubuntu-16-04-VM" class="headerlink" title="Ubuntu 16.04 VM"></a>Ubuntu 16.04 VM</h1><p>下载<code>ubuntu-16.04.1-server-amd64.iso</code>，装载该iso，然后将其中的<code>vmlinuz</code>和<code>initrd.gz</code>复制出来，以供xhyve使用。</p>
+<p>在mac系统下直接装载ubuntu的iso会出错</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">hdiutil attach ./ubuntu-16.04.1-server-amd64.iso</span></span><br><span class="line">hdiutil: attach failed - 无可装载的文件系统</span><br></pre></td></tr></table></figure>
+<p>所以需要制作一个新的iso，新的iso文件前预留<code>2KB</code>的空间</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">dd</span> <span class="keyword">if</span>=/dev/zero bs=2k count=1 of=./tmp.iso</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">dd</span> <span class="keyword">if</span>=./ubuntu-16.04.1-server-amd64.iso bs=2k skip=1 &gt;&gt; ./tmp.iso</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">hdiutil attach ./tmp.iso</span></span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cp</span> /Volumes/Ubuntu-Server\ 16/install/vmlinuz .</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cp</span> /Volumes/Ubuntu-Server\ 16/install/initrd.gz .</span></span><br></pre></td></tr></table></figure>
+
+<p>创建一个磁盘映像文件<code>hdd.img</code>，当作虚拟机的虚拟硬盘</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">dd</span> <span class="keyword">if</span>=/dev/zero of=hdd.img bs=1g count=8</span></span><br></pre></td></tr></table></figure>
+
+<p>编写VM创建脚本<code>mk_xhyve.sh</code></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">!/bin/bash</span></span><br><span class="line"></span><br><span class="line">KERNEL=&quot;vmlinuz&quot;</span><br><span class="line">INITRD=&quot;initrd.gz&quot;</span><br><span class="line">CMDLINE=&quot;earlyprintk=serial console=ttyS0 acpi=off&quot;</span><br><span class="line"></span><br><span class="line">MEM=&quot;-m 1G&quot;</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">SMP=<span class="string">&quot;-c 2&quot;</span></span></span><br><span class="line">NET=&quot;-s 2:0,virtio-net&quot;</span><br><span class="line">IMG_CD=&quot;-s 3,ahci-cd,./ubuntu-16.04.1-server-amd64.iso&quot;</span><br><span class="line">IMG_HDD=&quot;-s 4,virtio-blk,./hdd.img&quot;</span><br><span class="line">PCI_DEV=&quot;-s 0:0,hostbridge -s 31,lpc&quot;</span><br><span class="line">LPC_DEV=&quot;-l com1,stdio&quot;</span><br><span class="line"></span><br><span class="line">xhyve $MEM $SMP $PCI_DEV $LPC_DEV $NET $IMG_CD $IMG_HDD -f kexec,$KERNEL,$INITRD,&quot;$CMDLINE&quot;</span><br></pre></td></tr></table></figure>
+
+<p>运行VM创建脚本<code>sudo sh ./mk_xhyve.sh</code>创建ubuntu虚拟机</p>
+<p><img src="/images/xhyve/xhyve_vm_run.png" alt="xhyve_vm_run"></p>
+<p>按正常系统安装方法安装。。。<br>待成功安装完成后选择<code>&lt;Go Back&gt;</code> &#x3D;&gt; <code>Execute a shell</code>，进入iso的shell界面，然后需要将已经安装好的<code>hdd.img</code>也就是系统中的<code>/dev/vda</code>中的boot目录copy出来，因为要用里面的<code>vmlinuz-4.4.0-31-generic</code>和<code>initrd.img-4.4.0-31-generic</code></p>
+<p>进入shell后先查看一下ip地址</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">BusyBox v1.22.1 (Ubuntu 1:1.22.0-15ubuntu1) built-in shell (ash)</span><br><span class="line">Enter &#x27;help&#x27; for a list of built-in commands.</span><br><span class="line"></span><br><span class="line">~ # ip a</span><br><span class="line">1: lo: &lt;LOOPBACK&gt; mtu 65536 qdisc noop qlen 1</span><br><span class="line">    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00</span><br><span class="line">2: enp0s2: &lt;BROADCAST,MULTICAST&gt; mtu 1500 qdisc noop qlen 1000</span><br><span class="line">    link/ether 82:62:9e:40:cf:32 brd ff:ff:ff:ff:ff:ff</span><br><span class="line">~ #</span><br></pre></td></tr></table></figure>
+<p>发现没有获取到ip地址，此时shell用的是busybox，是没有<code>dhclient</code>的，不过busybox提供<code>udhcpc -i &lt;interface&gt;</code>。<br>获取到ip地址后，vm可以通过<code>tar c ./boot | nc -l -p 1234</code>将boot目录发送给宿主机，宿主机用<code>nc &lt;vm ip&gt; 1234 | tar x</code>接受boot目录。</p>
+<p>获得到boot目录后取出其中的<code>vmlinuz-4.4.0-31-generic</code>和<code>initrd.img-4.4.0-31-generic</code>，然后修改VM创建脚本</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">!/bin/bash</span></span><br><span class="line"></span><br><span class="line">KERNEL=&quot;vmlinuz-4.4.0-31-generic&quot;</span><br><span class="line">INITRD=&quot;initrd.img-4.4.0-31-generic&quot;</span><br><span class="line">CMDLINE=&quot;earlyprintk=serial console=ttyS0 acpi=off root=/dev/vda1&quot;</span><br><span class="line"></span><br><span class="line">MEM=&quot;-m 1G&quot;</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">SMP=<span class="string">&quot;-c 2&quot;</span></span></span><br><span class="line">NET=&quot;-s 2:0,virtio-net&quot;</span><br><span class="line">IMG_CD=&quot;-s 3,ahci-cd,./ubuntu-16.04.1-server-amd64.iso&quot;</span><br><span class="line">IMG_HDD=&quot;-s 4,virtio-blk,./hdd.img&quot;</span><br><span class="line">PCI_DEV=&quot;-s 0:0,hostbridge -s 31,lpc&quot;</span><br><span class="line">LPC_DEV=&quot;-l com1,stdio&quot;</span><br><span class="line"></span><br><span class="line">xhyve $MEM $SMP $PCI_DEV $LPC_DEV $NET $IMG_CD $IMG_HDD -f kexec,$KERNEL,$INITRD,&quot;$CMDLINE&quot;</span><br></pre></td></tr></table></figure>
+<p>并执行<code>sudo sh ./mk_xhyve.sh</code></p>
+<p><img src="/images/xhyve/xhyve_vm_run2.png" alt="xhyve_vm_run2"></p>
+<p>ubuntu 16.04 正常启动了，over！</p>
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="https://github.com/mist64/xhyve">xhyve.org</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.pagetable.com/?p=831">xhyve – Lightweight Virtualization on OS X Based on bhyve</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.vpsee.com/2015/06/mac-os-x-hypervisor-xhyve-based-on-bhyve/">Mac OS X 上基于 FreeBSD&#x2F;bhyve 的虚拟技术 xhyve</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.v2ex.com/t/359038">在 Mac OS 的 Xhyve 引擎之上启动 LinuxKit 的玩法</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/08/29/bigdata/zeppelin-usage/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1188,135 +1310,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/05/12/network/iptables-introduce/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2017/05/12/network/iptables-introduce/" class="post-title-link" itemprop="url">iptables</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2017-05-12 09:21:14" itemprop="dateCreated datePublished" datetime="2017-05-12T09:21:14+08:00">2017-05-12</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/network/" itemprop="url" rel="index"><span itemprop="name">network</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>iptables是一个配置Linux内核防火墙的命令行工具，是netfilter项目的一部分。术语iptables也经常代指该内核级防火墙。iptables用于ipv4，ip6tables用于ipv6。<br>( nftables已经包含在Linux kernel 3.13中，以后会取代iptables成为主要的Linux防火墙工具。 )</p>
-<h1 id="版本"><a href="#版本" class="headerlink" title="版本"></a>版本</h1><p>iptables v1.4.21</p>
-<h1 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h1><p>理解 iptables 如何工作的关键是下面这张图。图中在上面的小写字母代表”表”，在下面的大写字母代表”链”。从任何网络端口进来的每一个 IP 数据包都要从上到下的穿过这张图。一种常见的困扰是认为 iptables 对从内部端口进入的数据包和从面向互联网端口进入的数据包采取不同的处理方式，相反，iptabales 对从任何端口进入的数据包都会采取相同的处理方式。可以定义规则使 iptables 采取不同的方式对待从不同端口进入的数据包。当然一些数据包是用于本地进程的，因此在图中表现为从顶端进入，到<code>Local Process</code>停止，而另一些数据包是由本地进程生成的，因此在图中表现为从<code>Local Process</code>发出，一直向下穿过该流程图。</p>
-<p><img src="/images/iptables/iptables_traverse.jpg" alt="iptables_traverse.jpg"></p>
-<ol>
-<li>数据包到达网络接口，比如 eth0</li>
-<li>进入 raw 表的 PREROUTING 链，这个链的作用是赶在连接跟踪之前处理数据包</li>
-<li>如果进行了连接跟踪，在此处理</li>
-<li>进入 mangle 表的 PREROUTING 链，在此可以修改数据包，比如 TOS 等</li>
-<li>进入 nat 表的 PREROUTING 链，可以在此做DNAT，但不要做过滤</li>
-<li>决定路由，看是交给本地主机还是转发给其它主机<br>一种情况是，数据包就是发给本地主机的:</li>
-<li>进入 mangle 表的 INPUT 链，这里是在路由之后，交由本地主机之前，我们也可以进行一些相应的修改</li>
-<li>进入 filter 表的 INPUT 链，在这里我们可以对流入的所有数据包进行过滤，无论它来自哪个网络接口</li>
-<li>交给本地主机的应用程序进行处理</li>
-<li>处理完毕后进行路由决定，看该往那里发出</li>
-<li>进入 raw 表的 OUTPUT 链，这里是在连接跟踪处理本地的数据包之前</li>
-<li>连接跟踪对本地的数据包进行处理</li>
-<li>进入 mangle 表的 OUTPUT 链，在这里我们可以修改数据包，但不要做过滤</li>
-<li>进入 nat 表的 OUTPUT 链，可以对防火墙自己发出的数据做 NAT</li>
-<li>再次进行路由决定</li>
-<li>进入 filter 表的 OUTPUT 链，可以对本地出去的数据包进行过滤</li>
-<li>进入 mangle 表的 POSTROUTING 链，到这里已经做完了所有的路由决定，但数据包仍然在本地主机，我们还可以进行某些修改<br>注意，这里不光对经过防火墙的数据包进行处理，还对防火墙自己产生的数据包进行处理</li>
-<li>进入 nat 表的 POSTROUTING 链，在这里一般都是用来做 SNAT ，不要在这里进行过滤</li>
-<li>进入出去的网络接口<br>一种情况是，数据包要转发给其它主机:</li>
-<li>进入 mangle 表的 FORWARD 链，这里也比较特殊，这是在第一次路由决定之后，在进行最后的路由决定之前，我们仍然可以对数据包进行某些修改</li>
-<li>进入 filter 表的 FORWARD 链，在这里我们可以对所有转发的数据包进行过滤。需要注意的是：经过这里的数据包是转发的，方向是双向的</li>
-<li>进入 mangle 表的 POSTROUTING 链，到这里已经做完了所有的路由决定，但数据包仍然在本地主机，我们还可以进行某些修改</li>
-<li>进入 nat 表的 POSTROUTING 链，在这里一般都是用来做 SNAT ，不要在这里进行过滤</li>
-<li>进入出去的网络接口</li>
-</ol>
-<p>该流程图描述链了在任何接口上收到的网络数据包是按照怎样的顺序穿过表的交通管制链。第一个路由策略包括决定数据包的目的地是本地主机（这种情况下，数据包穿过 INPUT 链），还是其他主机（数据包穿过 FORWARD 链）；中间的路由策略包括决定给传出的数据包使用那个源地址、分配哪个接口；最后一个路由策略存在是因为先前的 mangle 与 nat 链可能会改变数据包的路由信息。数据包通过路径上的每一条链时，链中的每一条规则按顺序匹配；无论何时匹配了一条规则，相应的 target&#x2F;jump 动作将会执行。最常用的3个 target 是 ACCEPT, DROP ,或者 jump 到用户自定义的链。内置的链有默认的策略，但是用户自定义的链没有默认的策略。在 jump 到的链中，若每一条规则都不能提供完全匹配，那么数据包像这张图片描述的一样返回到调用链。在任何时候，若 DROP target 的规则实现完全匹配，那么被匹配的数据包会被丢弃，不会进行进一步处理。如果一个数据包在链中被 ACCEPT，那么它也会被所有的父链 ACCEPT，并且不再遍历其他父链。然而，要注意的是，数据包还会以正常的方式继续遍历其他表中的其他链。</p>
-<p><img src="/images/iptables/iptables_user_kernel_traverse.png" alt="iptables_user_kernel_traverse.png"></p>
-<h2 id="表-Tables"><a href="#表-Tables" class="headerlink" title="表(Tables)"></a>表(Tables)</h2><ul>
-<li>raw 用于配置数据包，raw 中的数据包不会被系统跟踪。<br>  作用：决定数据包是否被状态跟踪机制处理，优先级最高，设置raw时一般是为了不再让iptables做数据包的链接跟踪处理，提高性能<br>  内核模块：iptable_raw<br>  chains：OUTPUT, PREROUTING</li>
-<li>filter 是用于存放所有与防火墙相关操作的默认表。<br>  作用：过滤数据包<br>  内核模块：iptables_filter<br>  chains：INPUT, FORWARD, OUTPUT</li>
-<li>nat 用于网络地址转换（例如：端口转发）。<br>  作用：网络地址转换<br>  内核模块：iptables_nat<br>  chains：PREROUTING, POSTROUTING, OUTPUT</li>
-<li>mangle 用于对特定数据包的修改。<br>  作用：修改数据包的服务类型、TTL、并且可以配置路由实现QOS<br>  内核模块：iptable_mangle<br>  chains：PREROUTING, POSTROUTING, INPUT, OUTPUT, FORWARD</li>
-<li>security 用于强制访问控制网络规则。<br>  Todo…</li>
-</ul>
-<p>表之间的顺序：raw –&gt; mangle –&gt; nat –&gt; filter</p>
-<h2 id="链-Chains"><a href="#链-Chains" class="headerlink" title="链(Chains)"></a>链(Chains)</h2><ul>
-<li>表由链组成，链是一些按顺序排列的规则的列表。<br>  默认的<code>filter</code>表包含<code>INPUT</code>，<code>OUTPUT</code>和<code>FORWARD</code>3条内建的链，这3条链作用于数据包过滤过程中的不同时间点，<code>nat</code>表包含<code>PREROUTING</code>，<code>POSTROUTING</code>和<code>OUTPUT</code>链。</li>
-<li>默认情况下，任何链中都没有规则，可以向链中添加自己想用的规则<br>  链的默认规则通常设置为<code>ACCEPT</code>，如果想确保任何包都不能通过规则集，那么可以重置为<code>DROP</code>。默认的规则总是在一条链的最后生效，所以在默认规则生效前数据包需要通过所有存在的规则。</li>
-<li>用户可以加入自己定义的链，从而使规则集更有效并且易于修改。</li>
-</ul>
-<h2 id="规则-Rules"><a href="#规则-Rules" class="headerlink" title="规则(Rules)"></a>规则(Rules)</h2><p>数据包的过滤基于 规则。规则由一个目标（数据包包匹配所有条件后的动作）和很多匹配（导致该规则可以应用的数据包所满足的条件）指定。一个规则的典型匹配事项是数据包进入的端口（例如：eth0 或者 eth1）、数据包的类型（ICMP, TCP, 或者 UDP）和数据包的目的端口。</p>
-<p>目标使用<code>-j</code>或者<code>--jump</code>选项指定。目标可以是用户定义的链（例如，如果条件匹配，跳转到之后的用户定义的链，继续处理）、一个内置的特定目标或者是一个目标扩展。内置目标是 ACCEPT， DROP， QUEUE 和 RETURN，目标扩展是 REJECT and LOG。如果目标是内置目标，数据包的命运会立刻被决定并且在当前表的数据包的处理过程会停止。如果目标是用户定义的链，并且数据包成功穿过第二条链，目标将移动到原始链中的下一个规则。目标扩展可以被终止（像内置目标一样）或者不终止（像用户定义链一样）。</p>
-<h2 id="策略-police"><a href="#策略-police" class="headerlink" title="策略(police)"></a>策略(police)</h2><h1 id="Usage"><a href="#Usage" class="headerlink" title="Usage"></a>Usage</h1><p><img src="/images/iptables/iptables_usage_main.jpg" alt="iptables_usage_main.jpg"></p>
-<p><img src="/images/iptables/iptables_usage_param.jpg" alt="iptables_usage_param.jpg"></p>
-<h1 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h1><p>Todo…</p>
-<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a target="_blank" rel="noopener" href="https://wiki.archlinux.org/index.php/Iptables_(%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87)">Iptables (简体中文)</a></li>
-<li><a target="_blank" rel="noopener" href="http://www.ha97.com/4093.html">iptables的基本概念和数据包流程图</a></li>
-<li><a target="_blank" rel="noopener" href="http://www.cnblogs.com/ggjucheng/archive/2012/08/19/2646466.html">linux平台下防火墙iptables原理(转)</a></li>
-<li><a target="_blank" rel="noopener" href="http://www.linuxidc.com/Linux/2012-08/67505.htm">iptables四个表与五个链间的处理关系</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1386,7 +1379,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">145</span>
+          <span class="site-state-item-count">146</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

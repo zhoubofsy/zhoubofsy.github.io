@@ -188,6 +188,98 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2016/04/27/storage/ceph/20160427-map-rbd-kernel-without-ceph-common-md/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2016/04/27/storage/ceph/20160427-map-rbd-kernel-without-ceph-common-md/" class="post-title-link" itemprop="url">不使用ceph-common 进行内核映射 rbd 块设备</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2016-04-27 16:04:57" itemprop="dateCreated datePublished" datetime="2016-04-27T16:04:57+08:00">2016-04-27</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="例子"><a href="#例子" class="headerlink" title="例子"></a>例子</h2><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">modprobe rbd</span><br><span class="line">echo &quot;192.168.1.234 name=admin,secret=AQAHzRBX77ORERAAqfW0YAqq8+ETXMqWtPKwkQ== rbd testrbd&quot; &gt; /sys/bus/rbd/add</span><br><span class="line">echo 1 &gt; /sys/bus/rbd/remove</span><br></pre></td></tr></table></figure>
+
+<p>如果你在执行<code>echo</code>时候提示参数错误，请现查看<code>modinfo rbd</code>看看里面的<code>single_major</code>默认值是否为<code>false</code><br>eg:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">modinfo rbd</span></span><br><span class="line">filename:       /lib/modules/3.10.0-693.el7.x86_64/kernel/drivers/block/rbd.ko.xz</span><br><span class="line">license:        GPL</span><br><span class="line">description:    RADOS Block Device (RBD) driver</span><br><span class="line">author:         Jeff Garzik &lt;jeff@garzik.org&gt;</span><br><span class="line">author:         Yehuda Sadeh &lt;yehuda@hq.newdream.net&gt;</span><br><span class="line">author:         Sage Weil &lt;sage@newdream.net&gt;</span><br><span class="line">author:         Alex Elder &lt;elder@inktank.com&gt;</span><br><span class="line">rhelversion:    7.4</span><br><span class="line">srcversion:     B41E51769EC95E3DBDB16AB</span><br><span class="line">depends:        libceph</span><br><span class="line">intree:         Y</span><br><span class="line">vermagic:       3.10.0-693.el7.x86_64 SMP mod_unload modversions</span><br><span class="line">signer:         CentOS Linux kernel signing key</span><br><span class="line">sig_key:        DA:18:7D:CA:7D:BE:53:AB:05:BD:13:BD:0C:4E:21:F4:22:B6:A4:9C</span><br><span class="line">sig_hashalgo:   sha256</span><br><span class="line">parm:           single_major:Use a single major number for all rbd devices (default: false) (bool)</span><br></pre></td></tr></table></figure>
+<p>如果<code>single_major</code>默认值为<code>ture</code>，那么在加载rbd模块时，需要将<code>single_major</code>设置成false<br>eg:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">modprobe rbd single_major=0</span><br></pre></td></tr></table></figure>
+<p>然后在重新执行<code>echo</code>。</p>
+<h2 id="解释"><a href="#解释" class="headerlink" title="解释"></a>解释</h2><ul>
+<li>192.168.1.234 为 Monitor 地址</li>
+<li>name，制定使用的用户，可通过“ceph auth list” 查看</li>
+<li>secret，name制定用户所对应的 key 值</li>
+<li>rbd，制定需要映射的块设备（该快设备必须是已经创建好的）</li>
+<li>使用客户端内核必须支持rbd.ko这个内核模块</li>
+<li>1, 设备ID，用于去映射</li>
+</ul>
+<h2 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h2><ul>
+<li><a target="_blank" rel="noopener" href="http://cephnotes.ksperis.com/blog/2014/01/09/map-rbd-kernel-without-install-ceph-common">Map Rbd Kernel Without Install Ceph-common</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/coreos/bugs/issues/2544">RBD failed to mount using rbd kernel module: tee: &#x2F;sys&#x2F;bus&#x2F;rbd&#x2F;add: Invalid argument #2544</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2016/04/15/storage/ceph/20160415_ceph-install-deploy-config-on-rhel7-md/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1133,82 +1225,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2015/12/16/vim/vim_config/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2015/12/16/vim/vim_config/" class="post-title-link" itemprop="url">vim 配置</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2015-12-16 21:15:00" itemprop="dateCreated datePublished" datetime="2015-12-16T21:15:00+08:00">2015-12-16</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/vim/" itemprop="url" rel="index"><span itemprop="name">vim</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="vim-配置"><a href="#vim-配置" class="headerlink" title="vim 配置"></a>vim 配置</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git <span class="built_in">clone</span> https://github.com/gmarik/vundle.vim.git ~/.vim/bundle/vundle</span><br></pre></td></tr></table></figure>
-
-<p><a target="_blank" rel="noopener" href="https://github.com/zhoubofsy/vim_env/blob/master/vimrc">vimrc 配置文件</a></p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1278,7 +1294,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">145</span>
+          <span class="site-state-item-count">146</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

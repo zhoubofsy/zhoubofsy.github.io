@@ -188,6 +188,167 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2019/09/28/storage/ceph/ceph-ansible-usage/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2019/09/28/storage/ceph/ceph-ansible-usage/" class="post-title-link" itemprop="url">ceph-ansible 使用</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2019-09-28 08:52:30" itemprop="dateCreated datePublished" datetime="2019-09-28T08:52:30+08:00">2019-09-28</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>Ceph的部署有很多种，从最早的手动部署，到后来的Ceph-deploy，再到目前比较火的容器部署等等。但能作为生产环境部署的却不多，其中Ceph-ansible算是生产环境部署的方法之一。Ceph-ansible是基于ansible工具完成Ceph部署的。对于生产环境中动则几十、成百上千的节点数量如果一台一台安装配置效率太低。引入ansible工具可以快速完成Ceph集群的安装配置，大大提高效率。让运维人员从机械重复的工作中解脱出来。</p>
+<h1 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h1><h2 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h2><p>三个节点，其中一个节点用作ansible和Ceph节点的复用节点。</p>
+<table>
+<thead>
+<tr>
+<th align="center">节点IP</th>
+<th align="center">节点角色</th>
+<th align="center">OS</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">172.30.12.137</td>
+<td align="center">ansible节点、ceph节点</td>
+<td align="center">CentOS Linux release 7.7.1908</td>
+</tr>
+<tr>
+<td align="center">172.30.12.197</td>
+<td align="center">ceph节点</td>
+<td align="center">CentOS Linux release 7.7.1908</td>
+</tr>
+<tr>
+<td align="center">172.30.12.227</td>
+<td align="center">ceph节点</td>
+<td align="center">CentOS Linux release 7.7.1908</td>
+</tr>
+</tbody></table>
+<p>本文中使用的ansible工具运行在一个 CentOS7.6.1810 的容器内。</p>
+<h2 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h2><p>ceph-ansible是基于ansible工作的，所以要先安装ansible。既然要安装ansible，首先要先搞清楚安装哪个版本？</p>
+<p>本文部署的Ceph版本为<code>mimic</code>，官方推荐可以使用<code>stable-3.1</code>和<code>stable-3.2</code>，我选择了较新的<code>stable-3.2</code>，<code>stable-3.2</code>对应的ansible版本为2.6。（更多关于版本对应关系请见<a target="_blank" rel="noopener" href="https://docs.ceph.com/ceph-ansible/master/#releases">官网</a>）</p>
+<p>选择完了ansible版本接下来就可以安装了，安装分为两种方式</p>
+<ul>
+<li>pip 安装</li>
+<li>yum&#x2F;apt 安装</li>
+</ul>
+<p>由于 yum&#x2F;apt 安装版本选择范围比较狭窄，所以本人推荐使用 pip 安装。(关于pip安装请见<a target="_blank" rel="noopener" href="https://pip.pypa.io/en/stable/installing/">pypa官网</a>)</p>
+<p>首先clone ceph-ansible project</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">git <span class="built_in">clone</span> git@github.com:ceph/ceph-ansible.git</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">git checkout -b 3.2.0 v3.2.0</span></span><br></pre></td></tr></table></figure>
+<p>然后使用ceph-ansible中推荐的<code>requirements.txt</code>安装对应版本的ansible</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pip install -r ./ceph-ansible/requirements.txt</span><br></pre></td></tr></table></figure>
+<p>待安装完成后，查看确认ansible版本</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">ansible --version</span></span><br><span class="line">ansible 2.6.19</span><br><span class="line">  config file = /root/ceph-ansible/ansible.cfg</span><br><span class="line">  configured module search path = [u&#x27;/root/.ansible/plugins/modules&#x27;, u&#x27;/usr/share/ansible/plugins/modules&#x27;]</span><br><span class="line">  ansible python module location = /usr/lib/python2.7/site-packages/ansible</span><br><span class="line">  executable location = /usr/bin/ansible</span><br><span class="line">  python version = 2.7.5 (default, Oct 30 2018, 23:45:53) [GCC 4.8.5 20150623 (Red Hat 4.8.5-36)]</span><br></pre></td></tr></table></figure>
+
+<h2 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h2><h3 id="ansible-配置"><a href="#ansible-配置" class="headerlink" title="ansible 配置"></a>ansible 配置</h3><p>ansible inventory 自定义的配置可以放置在任何位置，只是在运行ansible时增加<code>-i &#123;inventory host path&#125;</code>指定其路径即可。若不指定inventory文件，ansible将去<code>/etc/ansible/hosts</code>这个路径去找。</p>
+<p>inventory配置：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">[mons]</span><br><span class="line">172.30.12.197 ansible_ssh_user=root ansible_ssh_pass=1234\$\#</span><br><span class="line"></span><br><span class="line">[osds]</span><br><span class="line">172.30.12.137 ansible_ssh_user=root ansible_ssh_pass=1234\$\#</span><br><span class="line">172.30.12.197 ansible_ssh_user=root ansible_ssh_pass=1234\$\#</span><br><span class="line"></span><br><span class="line">[mgrs]</span><br><span class="line">172.30.12.137 ansible_ssh_user=root ansible_ssh_pass=1234\$\#</span><br></pre></td></tr></table></figure>
+<p>密码中若存在特殊字符<code>$</code>,<code>#</code>等，需要使用<code>\\</code>进行转义。<br>配置完成后，可使用<code>ansible all -i &#123;inventory host&#125; -m ping</code>测试节点连通情况</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">ansible all -i dummy-ansible-hosts -m ping</span></span><br><span class="line">172.30.12.197 | SUCCESS =&gt; &#123;</span><br><span class="line">    &quot;changed&quot;: false,</span><br><span class="line">    &quot;ping&quot;: &quot;pong&quot;</span><br><span class="line">&#125;</span><br><span class="line">172.30.12.227 | SUCCESS =&gt; &#123;</span><br><span class="line">    &quot;changed&quot;: false,</span><br><span class="line">    &quot;ping&quot;: &quot;pong&quot;</span><br><span class="line">&#125;</span><br><span class="line">172.30.12.137 | SUCCESS =&gt; &#123;</span><br><span class="line">    &quot;changed&quot;: false,</span><br><span class="line">    &quot;ping&quot;: &quot;pong&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="ceph-ansible-配置"><a href="#ceph-ansible-配置" class="headerlink" title="ceph-ansible 配置"></a>ceph-ansible 配置</h3><p>ceph-ansible的配置，主要是对group变量的配置，一般场景中我们不需要修改role。</p>
+<h4 id="配置-all-yml"><a href="#配置-all-yml" class="headerlink" title="配置 all.yml"></a>配置 all.yml</h4><p>首先：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cp ./gourp_vars/all.yml.sample ./gourp_vars/all.yml</span><br></pre></td></tr></table></figure>
+
+<p>然后，修改<code>all.yml</code>中的配置，如下：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Inventory host group variables</span></span><br><span class="line"><span class="attr">mon_group_name:</span> <span class="string">mons</span></span><br><span class="line"><span class="attr">osd_group_name:</span> <span class="string">osds</span></span><br><span class="line"><span class="comment">#rgw_group_name: rgws</span></span><br><span class="line"><span class="comment">#mds_group_name: mdss</span></span><br><span class="line"><span class="comment">#nfs_group_name: nfss</span></span><br><span class="line"><span class="comment">#restapi_group_name: restapis</span></span><br><span class="line"><span class="comment">#rbdmirror_group_name: rbdmirrors</span></span><br><span class="line"><span class="comment">#client_group_name: clients</span></span><br><span class="line"><span class="comment">#iscsi_gw_group_name: iscsigws</span></span><br><span class="line"><span class="comment">#mgr_group_name: mgrs</span></span><br><span class="line"><span class="comment"># 上述 Inventory host 相关变量的默认值与 Inventory配置中的标签名一致，也就是说这里注释打开与否没有影响</span></span><br><span class="line"><span class="string">...</span></span><br><span class="line"><span class="comment"># If configure_firewall is true, then ansible will try to configure the</span></span><br><span class="line"><span class="comment"># appropriate firewalling rules so that Ceph daemons can communicate</span></span><br><span class="line"><span class="comment"># with each others.</span></span><br><span class="line"><span class="comment">#configure_firewall: True</span></span><br><span class="line"><span class="attr">configure_firewall:</span> <span class="literal">False</span></span><br><span class="line"><span class="comment"># 建议Firewall配不明白的同学将Firewall关闭，免得找麻烦。</span></span><br><span class="line"><span class="string">...</span></span><br><span class="line"><span class="comment"># Set type of NTP client daemon to use, valid entries are chronyd, ntpd or timesyncd</span></span><br><span class="line"><span class="comment"># Note that this selection is currently ignored on containerized deployments</span></span><br><span class="line"><span class="comment">#ntp_daemon_type: timesyncd</span></span><br><span class="line"><span class="attr">ntp_daemon_type:</span> <span class="string">chronyd</span></span><br><span class="line"><span class="comment"># Ceph需要做时间同步，具体用什么做可根据自己环境来选择。目前提供支持的有三种 chronyd, ntpd, timesyncd</span></span><br><span class="line"><span class="string">...</span></span><br><span class="line"><span class="comment"># ORIGIN SOURCE</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># Choose between:</span></span><br><span class="line"><span class="comment"># - &#x27;repository&#x27; means that you will get ceph installed through a new repository. Later below choose between &#x27;community&#x27;, &#x27;rhcs&#x27;, &#x27;dev&#x27; or &#x27;obs&#x27;</span></span><br><span class="line"><span class="comment"># - &#x27;distro&#x27; means that no separate repo file will be added</span></span><br><span class="line"><span class="comment">#  you will get whatever version of Ceph is included in your Linux distro.</span></span><br><span class="line"><span class="comment"># &#x27;local&#x27; means that the ceph binaries will be copied over from the local machine</span></span><br><span class="line"><span class="comment">#ceph_origin: dummy</span></span><br><span class="line"><span class="attr">ceph_origin:</span> <span class="string">repository</span></span><br><span class="line"><span class="comment">#valid_ceph_origins:</span></span><br><span class="line"><span class="comment">#  - repository</span></span><br><span class="line"><span class="comment">#  - distro</span></span><br><span class="line"><span class="comment">#  - local</span></span><br><span class="line"></span><br><span class="line"><span class="attr">ceph_repository:</span> <span class="string">community</span></span><br><span class="line"><span class="comment">#valid_ceph_repository:</span></span><br><span class="line"><span class="comment">#  - community</span></span><br><span class="line"><span class="comment">#  - rhcs</span></span><br><span class="line"><span class="comment">#  - dev</span></span><br><span class="line"><span class="comment">#  - uca</span></span><br><span class="line"><span class="comment">#  - custom</span></span><br><span class="line"><span class="comment">#  - obs</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># REPOSITORY: COMMUNITY VERSION</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># Enabled when ceph_repository == &#x27;community&#x27;</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment">#ceph_mirror: http://download.ceph.com</span></span><br><span class="line"><span class="comment">#ceph_stable_key: https://download.ceph.com/keys/release.asc</span></span><br><span class="line"><span class="comment">#ceph_stable_release: dummy</span></span><br><span class="line"><span class="comment">#ceph_stable_repo: &quot;&#123;&#123; ceph_mirror &#125;&#125;/debian-&#123;&#123; ceph_stable_release &#125;&#125;&quot;</span></span><br><span class="line"><span class="attr">ceph_mirror:</span> <span class="string">http://mirrors.163.com/ceph</span></span><br><span class="line"><span class="attr">ceph_stable_key:</span> <span class="string">https://mirrors.163.com/ceph/keys/release.asc</span></span><br><span class="line"><span class="attr">ceph_stable_release:</span> <span class="string">mimic</span></span><br><span class="line"><span class="attr">ceph_stable_repo:</span> <span class="string">&quot;<span class="template-variable">&#123;&#123; ceph_mirror &#125;&#125;</span>/rpm-<span class="template-variable">&#123;&#123; ceph_stable_release &#125;&#125;</span>&quot;</span></span><br><span class="line"><span class="comment"># Ceph 软件包的安装方式，有三种，repository使用一个新的源进行安装；distro使用linux发行版自带的源进行安装；local使用本地安装包的形式进行安装。</span></span><br><span class="line"><span class="comment"># 具体情况根据自身要求而定吧。</span></span><br><span class="line"><span class="string">...</span></span><br><span class="line"><span class="comment">## Monitor options</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># You must define either monitor_interface, monitor_address or monitor_address_block.</span></span><br><span class="line"><span class="comment"># These variables must be defined at least in all.yml and overrided if needed (inventory host file or group_vars/*.yml).</span></span><br><span class="line"><span class="comment"># Eg. If you want to specify for each monitor which address the monitor will bind to you can set it in your **inventory host file** by using &#x27;monitor_address&#x27; variable.</span></span><br><span class="line"><span class="comment"># Preference will go to monitor_address if both monitor_address and monitor_interface are defined.</span></span><br><span class="line"><span class="comment">#monitor_interface: interface</span></span><br><span class="line"><span class="attr">monitor_interface:</span> <span class="string">ens33</span></span><br><span class="line"><span class="comment">#monitor_address: 0.0.0.0</span></span><br><span class="line"><span class="comment">#monitor_address_block: subnet</span></span><br><span class="line"><span class="comment"># set to either ipv4 or ipv6, whichever your network is using</span></span><br><span class="line"><span class="comment">#ip_version: ipv4</span></span><br><span class="line"><span class="comment">#mon_use_fqdn: false # if set to true, the MON name used will be the fqdn in the ceph.conf</span></span><br><span class="line"><span class="comment"># Monitor的配置，必须要在 interface, address, address_block 中选择一个定义。（更多使用方法，请仔细阅读上面的英文吧。）</span></span><br><span class="line"><span class="string">...</span></span><br><span class="line"><span class="comment">## OSD options</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment">#is_hci: false</span></span><br><span class="line"><span class="comment">#hci_safety_factor: 0.2</span></span><br><span class="line"><span class="comment">#non_hci_safety_factor: 0.7</span></span><br><span class="line"><span class="comment">#osd_memory_target: 4294967296</span></span><br><span class="line"><span class="comment">#journal_size: 5120 # OSD journal size in MB</span></span><br><span class="line"><span class="attr">journal_size:</span> <span class="number">1024</span> <span class="comment"># OSD journal size in MB</span></span><br><span class="line"><span class="comment">#block_db_size: -1 # block db size in bytes for the ceph-volume lvm batch. -1 means use the default of &#x27;as big as possible&#x27;.</span></span><br><span class="line"><span class="comment">#public_network: 0.0.0.0/0</span></span><br><span class="line"><span class="attr">public_network:</span> <span class="number">172.30</span><span class="number">.12</span><span class="number">.0</span><span class="string">/24</span></span><br><span class="line"><span class="attr">cluster_network:</span> <span class="number">172.30</span><span class="number">.12</span><span class="number">.0</span><span class="string">/24</span></span><br><span class="line"><span class="comment">#cluster_network: &quot;&#123;&#123; public_network | regex_replace(&#x27; &#x27;, &#x27;&#x27;) &#125;&#125;&quot;</span></span><br><span class="line"><span class="comment">#osd_mkfs_type: xfs</span></span><br><span class="line"><span class="comment">#osd_mkfs_options_xfs: -f -i size=2048</span></span><br><span class="line"><span class="comment">#osd_mount_options_xfs: noatime,largeio,inode64,swalloc</span></span><br><span class="line"><span class="comment">#osd_objectstore: bluestore</span></span><br><span class="line"><span class="attr">osd_objectstore:</span> <span class="string">filestore</span></span><br><span class="line"><span class="comment"># 根据硬盘的存储介质与速度决定Journal size的大小；配置public,cluster newtwork；选择objectstore filestore or bluestore</span></span><br><span class="line"><span class="string">...</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="配置-osds-yml"><a href="#配置-osds-yml" class="headerlink" title="配置 osds.yml"></a>配置 osds.yml</h4><p>首先</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cp ./gourp_vars/osds.yml.sample ./gourp_vars/osds.yml</span><br></pre></td></tr></table></figure>
+<p>然后，修改<code>osds.yml</code>配置，如下：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">...</span></span><br><span class="line"><span class="comment"># Even though OSD nodes should not have the admin key</span></span><br><span class="line"><span class="comment"># at their disposal, some people might want to have it</span></span><br><span class="line"><span class="comment"># distributed on OSD nodes. Setting &#x27;copy_admin_key&#x27; to &#x27;true&#x27;</span></span><br><span class="line"><span class="comment"># will copy the admin key to the /etc/ceph/ directory</span></span><br><span class="line"><span class="comment">#copy_admin_key: false</span></span><br><span class="line"><span class="attr">copy_admin_key:</span> <span class="literal">true</span></span><br><span class="line"><span class="comment"># 根据个人喜好来吧，我喜欢各个OSD节点都有admin key</span></span><br><span class="line"><span class="string">...</span></span><br><span class="line"><span class="comment"># Declare devices to be used as OSDs</span></span><br><span class="line"><span class="comment"># All scenario(except 3rd) inherit from the following device declaration</span></span><br><span class="line"><span class="comment"># <span class="doctag">Note:</span> This scenario uses the ceph-disk tool to provision OSDs</span></span><br><span class="line"></span><br><span class="line"><span class="attr">devices:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="string">/dev/sdb</span></span><br><span class="line">  <span class="bullet">-</span> <span class="string">/dev/sdc</span></span><br><span class="line">  <span class="comment">#  - /dev/sdd</span></span><br><span class="line">  <span class="comment">#  - /dev/sde</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#devices: []</span></span><br><span class="line"><span class="comment"># 根据主机情况配置硬盘路径相关信息</span></span><br><span class="line"><span class="string">...</span></span><br><span class="line"><span class="attr">osd_scenario:</span> <span class="string">collocated</span></span><br><span class="line"><span class="comment">#valid_osd_scenarios:</span></span><br><span class="line"><span class="comment">#  - collocated</span></span><br><span class="line"><span class="comment">#  - non-collocated</span></span><br><span class="line"><span class="comment">#  - lvm</span></span><br><span class="line"><span class="comment"># collocated是将日志和数据部署到同一个硬盘上；non-collocated是分硬盘部署日志和数据；这两个选项都是使用ceph-disk创建的。</span></span><br><span class="line"><span class="comment"># lvm使用ceph-volume创建osd，需要指定vg、lvm等信息。</span></span><br><span class="line"><span class="comment"># 此处具体信息，请见`osds.yml.sample`里面有很详细的注解。</span></span><br><span class="line"><span class="string">...</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="配置-mgrs-yml"><a href="#配置-mgrs-yml" class="headerlink" title="配置 mgrs.yml"></a>配置 mgrs.yml</h4><p>首先</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cp ./gourp_vars/mgrs.yml.sample ./gourp_vars/mgrs.yml</span><br></pre></td></tr></table></figure>
+<p>然后，修改<code>mgrs.yml</code>配置，如下：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">...</span></span><br><span class="line"><span class="comment">###########</span></span><br><span class="line"><span class="comment"># MODULES #</span></span><br><span class="line"><span class="comment">###########</span></span><br><span class="line"><span class="comment"># Ceph mgr modules to enable, current modules available are: status,dashboard,localpool,restful,zabbix,prometheus,influx</span></span><br><span class="line"><span class="attr">ceph_mgr_modules:</span> [<span class="string">status</span>]</span><br><span class="line"><span class="string">...</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="部署"><a href="#部署" class="headerlink" title="部署"></a>部署</h2><h3 id="集群初始化部署"><a href="#集群初始化部署" class="headerlink" title="集群初始化部署"></a>集群初始化部署</h3><p>首先</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cp ./site.yml.sample ./site.yml</span><br></pre></td></tr></table></figure>
+<p>然后</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ansible-playbook -i &#123;inventory host&#125; site.yml</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<p>部署过程需要下载RPM包安装，所以网速对部署速度的影响很大。请耐心等待。</p>
+<h3 id="增加OSD节点部署"><a href="#增加OSD节点部署" class="headerlink" title="增加OSD节点部署"></a>增加OSD节点部署</h3><p>首先</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cp ./infrastructure-playbooks/add-osd.yml ./add-osd.yml</span><br></pre></td></tr></table></figure>
+<p>然后，修改inventory host文件，在<code>[osds]</code>中增加<code>172.30.12.227</code>这条记录，相当于增加一个osd节点。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">[mons]</span><br><span class="line">172.30.12.197 ansible_ssh_user=root ansible_ssh_pass=1234\$\#</span><br><span class="line"></span><br><span class="line">[osds]</span><br><span class="line">172.30.12.137 ansible_ssh_user=root ansible_ssh_pass=1234\$\#</span><br><span class="line">172.30.12.197 ansible_ssh_user=root ansible_ssh_pass=1234\$\#</span><br><span class="line">172.30.12.227 ansible_ssh_user=root ansible_ssh_pass=1234\$\#</span><br><span class="line"></span><br><span class="line">[mgrs]</span><br><span class="line">172.30.12.137 ansible_ssh_user=root ansible_ssh_pass=1234\$\#</span><br></pre></td></tr></table></figure>
+<p>最后</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ansible-playbook -i &#123;inventory host&#125; add-osd.yml</span><br></pre></td></tr></table></figure>
+
+<h3 id="清除集群部署"><a href="#清除集群部署" class="headerlink" title="清除集群部署"></a>清除集群部署</h3><p>首先</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cp ./infrastructure-playbooks/purge-cluster.yml ./purge-cluster.yml</span><br></pre></td></tr></table></figure>
+<p>然后</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ansible-playbook -i &#123;inventory host&#125; purge-cluster.yml</span><br></pre></td></tr></table></figure>
+
+<h3 id="Ceph配置文件分发"><a href="#Ceph配置文件分发" class="headerlink" title="Ceph配置文件分发"></a>Ceph配置文件分发</h3><p>配置文件分发各个节点</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ansible all -i dummy-ansible-hosts -m copy -a &quot;src=/root/ceph.conf dest=/etc/ceph/&quot;</span><br></pre></td></tr></table></figure>
+
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="https://lnsyyj.github.io/2018/08/29/ceph-ansible-project/">ceph-ansible project</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2019/09/24/storage/ceph/rgw-auth-ldap/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1260,131 +1421,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2019/08/04/storage/ceph/s3-authorization-v4/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2019/08/04/storage/ceph/s3-authorization-v4/" class="post-title-link" itemprop="url">s3 authorization v4</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2019-08-04 14:20:20" itemprop="dateCreated datePublished" datetime="2019-08-04T14:20:20+08:00">2019-08-04</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>s3 authorization v4</p>
-<h2 id="参数传递"><a href="#参数传递" class="headerlink" title="参数传递"></a>参数传递</h2><h3 id="通过Authorization请求头"><a href="#通过Authorization请求头" class="headerlink" title="通过Authorization请求头"></a>通过<code>Authorization</code>请求头</h3><p>eg:</p>
-<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">Authorization</span><span class="punctuation">: </span>AWS4-HMAC-SHA256 Credential=ziw5dp1alvty9n47qksu/20160830/us-east-1/s3/aws4_request, SignedHeaders=content-type;host;x-amz-date, Signature=5d672d79c15b13162d9279b0855cfba6789a8edb4c82c400e06b5924a6f2b5d7</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li><code>Credential</code> 由AccessKey，请求的日期，region，服务名，aws4_request五部分组成，各部分之间用斜线分隔</li>
-<li><code>SignedHeaders</code> 表示那些头参与了签名的计算，未包含在这里的头不会影响到签名的生成</li>
-<li><code>Signature</code> 计算得到的签名</li>
-</ul>
-<h3 id="通过请求参数"><a href="#通过请求参数" class="headerlink" title="通过请求参数"></a>通过请求参数</h3><p>eg:</p>
-<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">GET /yourbucket/test.mp4??X-Amz-Algorithm=AWS4-HMAC-SHA256&amp;&amp;X-Amz-Credential=ziw5dp1alvty9n47qksu/20160830/us-east-1/s3/aws4_request&amp;X-Amz-Date=20160830T201207Z&amp;X-Amz-Expires=86400&amp;X-Amz-SignedHeaders=host&amp;X-Amz-Signature=5d672d79c15b13162d9279b0855cfba6789a8edb4c82c400e06b5924a6f2b5d7</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li><code>X-Amz-Algorithm</code> 计算签名时使用的Hash算法，指定为<code>AWS4-HMAC-SHA256</code></li>
-<li><code>X-Amz-Credential</code> 包含了AccessKey，日期，region，服务名的信息</li>
-<li><code>X-Amz-Date</code> 请求的时间</li>
-<li><code>X-Amz-Expires</code> 指定签名在多长时间内有效</li>
-<li><code>X-Amz-SignedHeaders</code> 计算签名时用到的头</li>
-<li><code>X-Amz-Signature</code> 计算得的到签名</li>
-</ul>
-<h2 id="签名计算"><a href="#签名计算" class="headerlink" title="签名计算"></a>签名计算</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">signature = HexEncode(HMAC-SHA256(kSigning, StringToSign))</span><br></pre></td></tr></table></figure>
-
-<h3 id="kSigning"><a href="#kSigning" class="headerlink" title="kSigning"></a>kSigning</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">kSecret = <span class="type">YourSecretKey</span></span><br><span class="line"><span class="variable">kDate</span> <span class="operator">=</span> HMAC(<span class="string">&quot;AWS4&quot;</span> + kSecret, Date)</span><br><span class="line">kRegion = HMAC(kDate, Region)</span><br><span class="line">kService = HMAC(kRegion, Service)</span><br><span class="line">kSigning = HMAC(kService, <span class="string">&quot;aws4_request&quot;</span>)</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>YourSecretKey 你的<code>SecretKey</code></li>
-<li>Date 8位数的日期，应与Credentail中的Date部分一样</li>
-<li>Region 应与Credential中的region部分一样</li>
-<li>Service 应与Credential中的服务名部分一样</li>
-<li>kSigning 为用于计算签名的signing key</li>
-</ul>
-<h3 id="StringToSign"><a href="#StringToSign" class="headerlink" title="StringToSign"></a>StringToSign</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">StringToSign  =</span><br><span class="line">    Algorithm + <span class="string">&#x27;\n&#x27;</span> +</span><br><span class="line">    RequestDate + <span class="string">&#x27;\n&#x27;</span> +</span><br><span class="line">    CredentialScope + <span class="string">&#x27;\n&#x27;</span> +</span><br><span class="line">    HashedCanonicalRequest</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>Algorithm 指定为<code>AWS4-HMAC-SHA256</code></li>
-<li>RequestDate ISO8601 basic 格式的请求时间，如：<code>20160830T123600Z</code></li>
-<li>CredentialScope 日期，region，服务名等组成的字符串， 如：<code>20160830/us-east-1/s3/aws4_request</code></li>
-<li>HashedCanonicalRequest Hex(SHA256Hash(CanonicalRequest)),即CanonicalRequest的hash的16进制编码</li>
-</ul>
-<h3 id="CanonicalRequest"><a href="#CanonicalRequest" class="headerlink" title="CanonicalRequest"></a>CanonicalRequest</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">CanonicalRequest =</span><br><span class="line">    HTTPRequestMethod + <span class="string">&#x27;\n&#x27;</span> +</span><br><span class="line">    CanonicalURI + <span class="string">&#x27;\n&#x27;</span> +</span><br><span class="line">    CanonicalQueryString + <span class="string">&#x27;\n&#x27;</span> +</span><br><span class="line">    CanonicalHeaders + <span class="string">&#x27;\n&#x27;</span> +</span><br><span class="line">    SignedHeaders + <span class="string">&#x27;\n&#x27;</span> +</span><br><span class="line">    HexEncode(Hash(RequestPayload))</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>HTTPRequestMethod 如: <code>PUT</code>, <code>GET</code>, <code>DELETE</code>, <code>POST</code></li>
-<li>CanonicalURI 请求的uri</li>
-<li>CanonicalQueryString 请求参数排序后组成的字符串</li>
-<li>CanonicalHeaders 需要加入签名计算的头排序后组成的字符串</li>
-<li>SignedHeaders 加入到签名计算的头的名字的列表，各个名字之间用逗号分隔</li>
-<li>HexEncode(Hash(RequestPayload)) 请求body的hash的16进制编码,如果通过请求参数携带签名，此处应由字符串<code>UNSIGNED-PAYLOAD</code>代替</li>
-</ul>
-<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a target="_blank" rel="noopener" href="https://doc.bscstorage.com/doc/s2/signature/signature.html">签名算法</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1454,7 +1490,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">145</span>
+          <span class="site-state-item-count">146</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

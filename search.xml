@@ -10767,4 +10767,231 @@
         <tag>solidity</tag>
       </tags>
   </entry>
+  <entry>
+    <title>Solidity中的存储布局和内存布局</title>
+    <url>/2024/12/09/blockchain/ethereum/solidity-state-layout/</url>
+    <content><![CDATA[<p>EVM 的整个空间被逻辑上划分为不同的区域，分别为栈（Stack）、内存（Memory）、存储（Storage）、代码（Code）和常量区域。</p>
+<p><strong>栈区域（Stack）区域</strong></p>
+<ul>
+<li>特点:<ul>
+<li>栈是一个 固定大小 的数据区域，最大为 1024 个字（每个字 32 字节）。</li>
+<li>用于存储操作数、临时值，以及函数调用的返回地址。</li>
+<li>数据只能通过 push 和 pop 操作访问。</li>
+</ul>
+</li>
+<li>作用: 函数内部的临时变量和操作数首先存储在栈中。</li>
+</ul>
+<p><strong>内存 (Memory)区域</strong></p>
+<ul>
+<li>功能: 用于临时存储数据，生命周期仅在交易或调用期间有效。</li>
+<li>地址范围: 逻辑地址从<code>0</code>开始，可以按需扩展，理论上可以扩展到 <code>2^256 - 1</code>。</li>
+<li>特点:<ul>
+<li>按 32 字节（256 位）对齐。</li>
+<li>初始化时为空（零值）。</li>
+<li>按需分配时会增加 gas 消耗。</li>
+</ul>
+</li>
+<li>作用: 用于存储函数的局部变量、动态数组、字符串、函数参数等。</li>
+</ul>
+<p><strong>数据调用区域（Calldata）</strong></p>
+<ul>
+<li>特点:<ul>
+<li>是不可修改的只读区域，用于传递外部函数调用的输入数据。</li>
+<li>效率高，Gas 消耗低。</li>
+</ul>
+</li>
+<li>作用：效率高，Gas 消耗低。</li>
+</ul>
+<p><strong>存储 (Storage)区域</strong></p>
+<ul>
+<li>地址范围：存储区域的地址范围是从 0 到 2^256 - 1。</li>
+<li>存储单元：每个存储槽（storage slot）大小为 32 字节（256 位）。</li>
+<li>访问方式：存储按照 键值对的形式 存储，每个键为 256 位的存储槽地址，每个值为 256 位的存储内容。</li>
+<li>作用：存储合约的全局状态。</li>
+</ul>
+<h1 id="Storage-Layout-存储布局"><a href="#Storage-Layout-存储布局" class="headerlink" title="Storage Layout (存储布局)"></a>Storage Layout (存储布局)</h1><p>存储状态布局涉及 合约的存储变量如何映射到 EVM 的存储空间。EVM 的存储空间是一个巨大的 256 位地址空间，采用键值对形式。每个存储槽（slot）存储 32 字节数据。</p>
+<p>EVM 的存储区域采用 哈希映射结构 存储数据：</p>
+<ul>
+<li>简单变量：直接按照顺序存储，每个变量占用一个或部分存储槽。</li>
+<li>复杂数据结构：<ul>
+<li>数组：第一个槽存储长度，数据存储在 <code>keccak256(slot)</code> 地址开始的连续存储槽中。</li>
+<li>映射：数据存储在 <code>keccak256(key, slot)</code> 地址处，key 是映射键，slot 是映射变量在合约中的存储槽编号。</li>
+<li>结构体：将结构体的成员顺序存储，每个成员分配单独的存储槽。</li>
+</ul>
+</li>
+</ul>
+<h2 id="存储分配规则"><a href="#存储分配规则" class="headerlink" title="存储分配规则"></a>存储分配规则</h2><ol>
+<li><p>基础规则</p>
+<ul>
+<li>变量顺序存储: 每个状态变量按声明顺序分配存储槽，优先填充当前槽剩余空间。</li>
+<li>一个槽的大小为 32 字节。</li>
+<li>如果变量类型大小超过槽大小（如 uint256），则占据一个完整槽。</li>
+<li>较小变量（如 uint8、bool）在同一槽中紧密打包，但不能跨槽。</li>
+</ul>
+</li>
+<li><p>映射（Mapping）</p>
+<ul>
+<li>映射的键值对（key-value）不会紧密打包在槽中。</li>
+<li>每个键（key）对应的值（value）存储在一个唯一的槽中，其地址由<code>keccak256(key, slot)</code> 计算</li>
+<li>键（key）不会存储在存储区域中，键值（key-value）对中的“键（key）”并没有单独存储的槽。所以无法直接遍历Mapping</li>
+</ul>
+</li>
+<li><p>动态数组与字符串</p>
+<ul>
+<li>元数据存储：动态数组的主槽（主存储槽）中存储的是数组的长度。</li>
+<li>数据存储：数组的实际数据存储在与主槽分开的连续存储槽中。<ul>
+<li>数据槽的起始地址由 keccak256(slot) 计算得出，slot 是动态数组的主槽编号。</li>
+<li>数组中的每个元素按照顺序依次存储在数据槽中。</li>
+</ul>
+</li>
+<li>字符串与动态数组处理相似。</li>
+</ul>
+</li>
+<li><p>结构体（Struct）</p>
+<ul>
+<li>结构体的变量按顺序存储。</li>
+<li>结构体变量紧密打包（类似单个槽中存储的变量）。</li>
+</ul>
+</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">pragma solidity ^0.8.0;</span><br><span class="line"></span><br><span class="line">contract StateLayoutExample &#123;</span><br><span class="line">    uint256 public number;         // Slot 0</span><br><span class="line">    bool public flag;              // Slot 1 (packed with `smallValue` if space allows)</span><br><span class="line">    uint16 public smallValue;      // Slot 1</span><br><span class="line">    mapping(uint256 =&gt; uint256) public map; // Data stored at keccak256(key, 2)</span><br><span class="line">    uint256[] public dynamicArray; // Slot 3: array length; data starts at keccak256(3)</span><br><span class="line">    struct MyStruct &#123;</span><br><span class="line">        uint256 largeValue;        // Slot 4</span><br><span class="line">        uint8 smallPart;           // Slot 4 (packed with other struct fields)</span><br><span class="line">    &#125;</span><br><span class="line">    MyStruct public myStruct;      // Struct occupies its own slots</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>执行命令 <code>solc --storage-layout --transient-storage-layout StateLayoutExample.sol</code> 查看合约存储布局 </p>
+<figure class="highlight json"><table><tr><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;storage&quot;</span><span class="punctuation">:</span><span class="punctuation">[</span></span><br><span class="line">        <span class="punctuation">&#123;</span><span class="attr">&quot;astId&quot;</span><span class="punctuation">:</span><span class="number">3</span><span class="punctuation">,</span><span class="attr">&quot;contract&quot;</span><span class="punctuation">:</span><span class="string">&quot;StateLayoutExample.sol:StateLayoutExample&quot;</span><span class="punctuation">,</span><span class="attr">&quot;label&quot;</span><span class="punctuation">:</span><span class="string">&quot;number&quot;</span><span class="punctuation">,</span><span class="attr">&quot;offset&quot;</span><span class="punctuation">:</span><span class="number">0</span><span class="punctuation">,</span><span class="attr">&quot;slot&quot;</span><span class="punctuation">:</span><span class="string">&quot;0&quot;</span><span class="punctuation">,</span><span class="attr">&quot;type&quot;</span><span class="punctuation">:</span><span class="string">&quot;t_uint256&quot;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="punctuation">&#123;</span><span class="attr">&quot;astId&quot;</span><span class="punctuation">:</span><span class="number">5</span><span class="punctuation">,</span><span class="attr">&quot;contract&quot;</span><span class="punctuation">:</span><span class="string">&quot;StateLayoutExample.sol:StateLayoutExample&quot;</span><span class="punctuation">,</span><span class="attr">&quot;label&quot;</span><span class="punctuation">:</span><span class="string">&quot;flag&quot;</span><span class="punctuation">,</span><span class="attr">&quot;offset&quot;</span><span class="punctuation">:</span><span class="number">0</span><span class="punctuation">,</span><span class="attr">&quot;slot&quot;</span><span class="punctuation">:</span><span class="string">&quot;1&quot;</span><span class="punctuation">,</span><span class="attr">&quot;type&quot;</span><span class="punctuation">:</span><span class="string">&quot;t_bool&quot;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="punctuation">&#123;</span><span class="attr">&quot;astId&quot;</span><span class="punctuation">:</span><span class="number">7</span><span class="punctuation">,</span><span class="attr">&quot;contract&quot;</span><span class="punctuation">:</span><span class="string">&quot;StateLayoutExample.sol:StateLayoutExample&quot;</span><span class="punctuation">,</span><span class="attr">&quot;label&quot;</span><span class="punctuation">:</span><span class="string">&quot;smallValue&quot;</span><span class="punctuation">,</span><span class="attr">&quot;offset&quot;</span><span class="punctuation">:</span><span class="number">1</span><span class="punctuation">,</span><span class="attr">&quot;slot&quot;</span><span class="punctuation">:</span><span class="string">&quot;1&quot;</span><span class="punctuation">,</span><span class="attr">&quot;type&quot;</span><span class="punctuation">:</span><span class="string">&quot;t_uint16&quot;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="punctuation">&#123;</span><span class="attr">&quot;astId&quot;</span><span class="punctuation">:</span><span class="number">11</span><span class="punctuation">,</span><span class="attr">&quot;contract&quot;</span><span class="punctuation">:</span><span class="string">&quot;StateLayoutExample.sol:StateLayoutExample&quot;</span><span class="punctuation">,</span><span class="attr">&quot;label&quot;</span><span class="punctuation">:</span><span class="string">&quot;map&quot;</span><span class="punctuation">,</span><span class="attr">&quot;offset&quot;</span><span class="punctuation">:</span><span class="number">0</span><span class="punctuation">,</span><span class="attr">&quot;slot&quot;</span><span class="punctuation">:</span><span class="string">&quot;2&quot;</span><span class="punctuation">,</span><span class="attr">&quot;type&quot;</span><span class="punctuation">:</span><span class="string">&quot;t_mapping(t_uint256,t_uint256)&quot;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="punctuation">&#123;</span><span class="attr">&quot;astId&quot;</span><span class="punctuation">:</span><span class="number">14</span><span class="punctuation">,</span><span class="attr">&quot;contract&quot;</span><span class="punctuation">:</span><span class="string">&quot;StateLayoutExample.sol:StateLayoutExample&quot;</span><span class="punctuation">,</span><span class="attr">&quot;label&quot;</span><span class="punctuation">:</span><span class="string">&quot;dynamicArray&quot;</span><span class="punctuation">,</span><span class="attr">&quot;offset&quot;</span><span class="punctuation">:</span><span class="number">0</span><span class="punctuation">,</span><span class="attr">&quot;slot&quot;</span><span class="punctuation">:</span><span class="string">&quot;3&quot;</span><span class="punctuation">,</span><span class="attr">&quot;type&quot;</span><span class="punctuation">:</span><span class="string">&quot;t_array(t_uint256)dyn_storage&quot;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="punctuation">&#123;</span><span class="attr">&quot;astId&quot;</span><span class="punctuation">:</span><span class="number">22</span><span class="punctuation">,</span><span class="attr">&quot;contract&quot;</span><span class="punctuation">:</span><span class="string">&quot;StateLayoutExample.sol:StateLayoutExample&quot;</span><span class="punctuation">,</span><span class="attr">&quot;label&quot;</span><span class="punctuation">:</span><span class="string">&quot;myStruct&quot;</span><span class="punctuation">,</span><span class="attr">&quot;offset&quot;</span><span class="punctuation">:</span><span class="number">0</span><span class="punctuation">,</span><span class="attr">&quot;slot&quot;</span><span class="punctuation">:</span><span class="string">&quot;4&quot;</span><span class="punctuation">,</span><span class="attr">&quot;type&quot;</span><span class="punctuation">:</span><span class="string">&quot;t_struct(MyStruct)19_storage&quot;</span><span class="punctuation">&#125;</span></span><br><span class="line">    <span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;types&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;t_array(t_uint256)dyn_storage&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span><span class="attr">&quot;base&quot;</span><span class="punctuation">:</span><span class="string">&quot;t_uint256&quot;</span><span class="punctuation">,</span><span class="attr">&quot;encoding&quot;</span><span class="punctuation">:</span><span class="string">&quot;dynamic_array&quot;</span><span class="punctuation">,</span><span class="attr">&quot;label&quot;</span><span class="punctuation">:</span><span class="string">&quot;uint256[]&quot;</span><span class="punctuation">,</span><span class="attr">&quot;numberOfBytes&quot;</span><span class="punctuation">:</span><span class="string">&quot;32&quot;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;t_bool&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span><span class="attr">&quot;encoding&quot;</span><span class="punctuation">:</span><span class="string">&quot;inplace&quot;</span><span class="punctuation">,</span><span class="attr">&quot;label&quot;</span><span class="punctuation">:</span><span class="string">&quot;bool&quot;</span><span class="punctuation">,</span><span class="attr">&quot;numberOfBytes&quot;</span><span class="punctuation">:</span><span class="string">&quot;1&quot;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;t_mapping(t_uint256,t_uint256)&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span><span class="attr">&quot;encoding&quot;</span><span class="punctuation">:</span><span class="string">&quot;mapping&quot;</span><span class="punctuation">,</span><span class="attr">&quot;key&quot;</span><span class="punctuation">:</span><span class="string">&quot;t_uint256&quot;</span><span class="punctuation">,</span><span class="attr">&quot;label&quot;</span><span class="punctuation">:</span><span class="string">&quot;mapping(uint256 =&gt; uint256)&quot;</span><span class="punctuation">,</span><span class="attr">&quot;numberOfBytes&quot;</span><span class="punctuation">:</span><span class="string">&quot;32&quot;</span><span class="punctuation">,</span><span class="attr">&quot;value&quot;</span><span class="punctuation">:</span><span class="string">&quot;t_uint256&quot;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;t_struct(MyStruct)19_storage&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span></span><br><span class="line">                <span class="attr">&quot;encoding&quot;</span><span class="punctuation">:</span><span class="string">&quot;inplace&quot;</span><span class="punctuation">,</span></span><br><span class="line">                <span class="attr">&quot;label&quot;</span><span class="punctuation">:</span><span class="string">&quot;struct StateLayoutExample.MyStruct&quot;</span><span class="punctuation">,</span></span><br><span class="line">                <span class="attr">&quot;members&quot;</span><span class="punctuation">:</span><span class="punctuation">[</span></span><br><span class="line">                    <span class="punctuation">&#123;</span><span class="attr">&quot;astId&quot;</span><span class="punctuation">:</span><span class="number">16</span><span class="punctuation">,</span><span class="attr">&quot;contract&quot;</span><span class="punctuation">:</span><span class="string">&quot;StateLayoutExample.sol:StateLayoutExample&quot;</span><span class="punctuation">,</span><span class="attr">&quot;label&quot;</span><span class="punctuation">:</span><span class="string">&quot;largeValue&quot;</span><span class="punctuation">,</span><span class="attr">&quot;offset&quot;</span><span class="punctuation">:</span><span class="number">0</span><span class="punctuation">,</span><span class="attr">&quot;slot&quot;</span><span class="punctuation">:</span><span class="string">&quot;0&quot;</span><span class="punctuation">,</span><span class="attr">&quot;type&quot;</span><span class="punctuation">:</span><span class="string">&quot;t_uint256&quot;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">                    <span class="punctuation">&#123;</span><span class="attr">&quot;astId&quot;</span><span class="punctuation">:</span><span class="number">18</span><span class="punctuation">,</span><span class="attr">&quot;contract&quot;</span><span class="punctuation">:</span><span class="string">&quot;StateLayoutExample.sol:StateLayoutExample&quot;</span><span class="punctuation">,</span><span class="attr">&quot;label&quot;</span><span class="punctuation">:</span><span class="string">&quot;smallPart&quot;</span><span class="punctuation">,</span><span class="attr">&quot;offset&quot;</span><span class="punctuation">:</span><span class="number">0</span><span class="punctuation">,</span><span class="attr">&quot;slot&quot;</span><span class="punctuation">:</span><span class="string">&quot;1&quot;</span><span class="punctuation">,</span><span class="attr">&quot;type&quot;</span><span class="punctuation">:</span><span class="string">&quot;t_uint8&quot;</span><span class="punctuation">&#125;</span></span><br><span class="line">                <span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">                <span class="attr">&quot;numberOfBytes&quot;</span><span class="punctuation">:</span><span class="string">&quot;64&quot;</span></span><br><span class="line">        <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;t_uint16&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span><span class="attr">&quot;encoding&quot;</span><span class="punctuation">:</span><span class="string">&quot;inplace&quot;</span><span class="punctuation">,</span><span class="attr">&quot;label&quot;</span><span class="punctuation">:</span><span class="string">&quot;uint16&quot;</span><span class="punctuation">,</span><span class="attr">&quot;numberOfBytes&quot;</span><span class="punctuation">:</span><span class="string">&quot;2&quot;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;t_uint256&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span><span class="attr">&quot;encoding&quot;</span><span class="punctuation">:</span><span class="string">&quot;inplace&quot;</span><span class="punctuation">,</span><span class="attr">&quot;label&quot;</span><span class="punctuation">:</span><span class="string">&quot;uint256&quot;</span><span class="punctuation">,</span><span class="attr">&quot;numberOfBytes&quot;</span><span class="punctuation">:</span><span class="string">&quot;32&quot;</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;t_uint8&quot;</span><span class="punctuation">:</span><span class="punctuation">&#123;</span><span class="attr">&quot;encoding&quot;</span><span class="punctuation">:</span><span class="string">&quot;inplace&quot;</span><span class="punctuation">,</span><span class="attr">&quot;label&quot;</span><span class="punctuation">:</span><span class="string">&quot;uint8&quot;</span><span class="punctuation">,</span><span class="attr">&quot;numberOfBytes&quot;</span><span class="punctuation">:</span><span class="string">&quot;1&quot;</span><span class="punctuation">&#125;</span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>storage</strong></p>
+<p>描述每个状态变量的存储位置：<br>    - <code>slot</code>: 存储槽号。<br>    - <code>offset</code>: 偏移量，表示变量在槽内的起始位置。<br>    - <code>type</code>: 变量的类型标识，与 types 部分中的描述对应。</p>
+<p><strong>types</strong></p>
+<p>定义每种数据类型的详细信息：<br>    - <code>encoding</code>: 数据的存储方式（如 inplace 或 dynamic_array）。<br>    - <code>numberOfBytes</code>: 占用的字节数。<br>    - <code>members</code>: 如果是结构体，列出所有成员及其存储位置。<br>    - <code>base</code>: 如果是数组，表示基础类型。</p>
+<h1 id="Memory-Layout-内存布局"><a href="#Memory-Layout-内存布局" class="headerlink" title="Memory Layout (内存布局)"></a>Memory Layout (内存布局)</h1><p>在 Solidity 中，内存（Memory） 是 EVM 提供的一种线性存储结构，主要用于在函数调用过程中存储临时变量、局部变量和中间计算结果。内存是按需分配的，不同于存储（Storage），内存是 瞬时的，在调用结束后会被释放，且读写成本较低。</p>
+<p>内存是一个 按字节寻址的线性空间，地址范围从 0x00 到无限大（理论上为 2^256 - 1）。但在实际操作中，内存的分配是动态增长的，EVM 会根据需要分配内存，并且以 32 字节（一个字）为单位扩展。</p>
+<pre><code>- 每个内存地址存储一个字节。
+- 每 32 个字节组成一个字（word），这是 EVM 操作的基本单位。
+</code></pre>
+<p>内存布局的设计遵循以下原则：</p>
+<ol>
+<li>按需动态分配:<ul>
+<li>Solidity 会在需要时从内存中分配新的空间。</li>
+<li>起始空闲内存地址存储在 0x40，可通过 mload(0x40) 获取。</li>
+</ul>
+</li>
+<li>按 32 字节对齐:<ul>
+<li>内存分配是以 32 字节为单位对齐的，即使是 bool 等小数据类型也会占用 32 字节。</li>
+</ul>
+</li>
+<li>变量存储位置:<ul>
+<li>固定大小类型直接存储其值。</li>
+<li>动态类型存储一个指针，指向实际数据的内存地址。</li>
+</ul>
+</li>
+</ol>
+<h2 id="固定分配区域"><a href="#固定分配区域" class="headerlink" title="固定分配区域"></a>固定分配区域</h2><p>Solidity保留了四个32字节的插槽，具体的字节范围（包括端点）使用如下：</p>
+<ul>
+<li>0x00 ~ 0x3f（64Byte）<ul>
+<li>用于哈希方法的临时空间</li>
+<li>临时空间可以在语句之间使用（即在内联汇编之中）。</li>
+</ul>
+</li>
+<li>0x40 ~ 0x5f (Free memory pointer 32Byte):<ul>
+<li>mstore(0x40, …) 用于指向当前空闲内存的起始地址。</li>
+<li>Solidity 使用内存时，会从该地址开始分配。</li>
+<li>开发者不需要手动管理，但在使用汇编时，需要注意维护 0x40 的正确值。</li>
+</ul>
+</li>
+<li>0x60 ~ 0x7f（Zero pointer 32Byte):<ul>
+<li>保留一块全零的内存区域，通常用于返回零值。</li>
+<li>0值插槽则用来对动态内存数组进行初始化，且永远不会写入数据 （因而可用的初始内存指针为 0x80）。</li>
+</ul>
+</li>
+</ul>
+<p>Solidity 总会把新对象保存在空闲内存指针的位置， 所以这段内存实际上从来不会空闲（在未来可能会修改这个机制）。</p>
+<h2 id="动态分配区域"><a href="#动态分配区域" class="headerlink" title="动态分配区域"></a>动态分配区域</h2><p>Solidity 的局部变量、动态数组和字符串都从 0x80 开始动态分配，并按照实际需要扩展。</p>
+<p>分配规则：<br>    - 内存分配以 32 字节为单位对齐。<br>    - 临时变量直接写入内存对应的位置。<br>    - 动态类型需要额外存储元数据（如长度和起始地址）。</p>
+<h2 id="内存中的数据类型布局"><a href="#内存中的数据类型布局" class="headerlink" title="内存中的数据类型布局"></a>内存中的数据类型布局</h2><h3 id="固定大小的类型"><a href="#固定大小的类型" class="headerlink" title="固定大小的类型"></a>固定大小的类型</h3><ul>
+<li>包括 uint256、address、bool 等。</li>
+<li>直接按 32 字节对齐存储，例如：<ul>
+<li>uint256 占用 32 字节。</li>
+<li>bool 也占用 32 字节（尽管实际值只需 1 字节）。</li>
+</ul>
+</li>
+</ul>
+<h3 id="动态类型"><a href="#动态类型" class="headerlink" title="动态类型"></a>动态类型</h3><p>动态类型（如 string、bytes 和动态数组）会分为两个部分：</p>
+<ol>
+<li>指针部分：主变量存储的是指向实际数据的偏移量（相对于起始地址 0x80 的偏移量）。</li>
+<li>数据部分：存储动态类型的元数据（如长度）和实际数据。</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">pragma solidity ^0.8.0;</span><br><span class="line"></span><br><span class="line">contract MemoryExample &#123;</span><br><span class="line">    function demo() public pure returns (bytes memory, string memory) &#123;</span><br><span class="line">        bytes memory byteArray = new bytes(10); // 动态字节数组</span><br><span class="line">        string memory str = &quot;Hello, Memory!&quot;;</span><br><span class="line">        return (byteArray, str);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ol>
+<li><code>byteArray</code>:<ul>
+<li>主变量存储数据偏移量，例如 0x80。</li>
+<li>数据存储从 0x80 开始：<ul>
+<li>长度（10 字节）：存储在 0x80。</li>
+<li>实际内容（10 字节）：从 0xA0 开始。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><code>str</code>:<ul>
+<li>主变量存储数据偏移量，例如 0xE0。</li>
+<li>数据存储从 0xE0 开始：<ul>
+<li>长度（14 字节）：存储在 0xE0。</li>
+<li>实际内容（”Hello, Memory!”）：从 0x100 开始。</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<h1 id="State-Layout-和-Memory-Layout-的区别"><a href="#State-Layout-和-Memory-Layout-的区别" class="headerlink" title="State Layout 和 Memory Layout 的区别"></a>State Layout 和 Memory Layout 的区别</h1><table>
+<thead>
+<tr>
+<th align="center">特性</th>
+<th align="left">状态布局 (State Layout)</th>
+<th align="left">内存布局 (Memory Layout)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">存储位置</td>
+<td align="left">持久化存储在 EVM 存储 (Storage) 中</td>
+<td align="left">函数调用时临时存储在 EVM 内存 (Memory) 中</td>
+</tr>
+<tr>
+<td align="center">生命周期</td>
+<td align="left">持久化，合约销毁之前一直存在</td>
+<td align="left">临时，函数执行结束即释放</td>
+</tr>
+<tr>
+<td align="center">成本</td>
+<td align="left">写入存储需要高 Gas 成本</td>
+<td align="left">使用内存成本较低</td>
+</tr>
+<tr>
+<td align="center">用途</td>
+<td align="left">存储合约的持久化数据</td>
+<td align="left">处理临时计算或函数的中间结果</td>
+</tr>
+</tbody></table>
+<p><strong>Gas 优化建议</strong></p>
+<ul>
+<li>状态变量优化<ul>
+<li>紧密打包变量，减少存储槽的使用。</li>
+<li>避免在循环中频繁读写存储。</li>
+</ul>
+</li>
+<li>内存优化<ul>
+<li>使用临时变量代替状态变量进行中间计算。</li>
+<li>适时释放不再使用的内存。</li>
+</ul>
+</li>
+</ul>
+<p> 了解 Solidity 的状态与内存布局，能帮助开发者高效设计合约，同时优化 Gas 成本。</p>
+]]></content>
+      <categories>
+        <category>blockchain</category>
+      </categories>
+      <tags>
+        <tag>ethereum</tag>
+        <tag>solidity</tag>
+      </tags>
+  </entry>
 </search>

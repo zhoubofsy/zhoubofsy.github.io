@@ -188,6 +188,113 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2016/06/23/storage/ceph/persistence-calculation/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2016/06/23/storage/ceph/persistence-calculation/" class="post-title-link" itemprop="url">Ceph 持久性计算</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2016-06-23 14:23:33" itemprop="dateCreated datePublished" datetime="2016-06-23T14:23:33+08:00">2016-06-23</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="持久性"><a href="#持久性" class="headerlink" title="持久性"></a>持久性</h1><p>持久性是数据丢失的概率，可以用于度量一个存储系统的可靠性，俗称 “多少个9”。数据的放置(DataPlacement)决定了数据持久性，而Ceph的CRUSH MAP又决定了数据的放置，因此CRUSH MAP的设置决定了数据持久性。</p>
+<h1 id="数学模型"><a href="#数学模型" class="headerlink" title="数学模型"></a>数学模型</h1><h2 id="公式"><a href="#公式" class="headerlink" title="公式"></a>公式</h2><p><code>P = Pr x M / C（R，N）</code></p>
+<h2 id="解释"><a href="#解释" class="headerlink" title="解释"></a>解释</h2><h3 id="P"><a href="#P" class="headerlink" title="P"></a>P</h3><p>P为丢失数据的概率，持久性，可用1-P来计算。</p>
+<h3 id="Pr"><a href="#Pr" class="headerlink" title="Pr"></a>Pr</h3><p><code>Pr = P1（any） x P2（any） x P3（any）</code></p>
+<p>Pr为一年内R（ceph副本数）个OSD发生故障的概率。</p>
+<ul>
+<li><p>P1（any）为一年内第一个OSD发生故障的概率<br>硬盘在一定时间内的失败概率符合Possion（伯松）分布 <code>Pn（入,t）</code>(<code>入</code>为lamda)，由于我们不太容易直接计算任意一个OSD顺坏的概率，但可以计算出没有OSD出现故障的概率，再用1减去无OSD节点故障的概率，就得到了<code>P1（any）</code><br><code>入=FIT x N</code> ，<code>FIT=AFR/（24×365）</code>，AFR为硬盘年故障概率;<br><code>t</code>为一年的小时数，24x365</p>
+</li>
+<li><p>P2（any）为一个OSD恢复周期内第二个OSD发生故障的概率<br><code>入</code>中的N为N-1<br><code>t</code> 为一个OSD恢复周期，<code>OSD恢复周期 = 恢复数据量 / 恢复速度</code>；<code>恢复数据量 = 硬盘容量 x 使用率</code>；<code>恢复速度 = 每个OSD写速度 x 参与恢复的OSD数量</code></p>
+</li>
+<li><p>P3（any）为一个OSD恢复周期内第三个OSD发生故障的概率<br><code>入</code>中的N为N-2<br><code>t</code> 为一个OSD恢复周期，算法同上</p>
+</li>
+</ul>
+<h3 id="M"><a href="#M" class="headerlink" title="M"></a>M</h3><p>Copy Set个数，copy set上至少有一个PG的所有副本。<br>丢失数据必须是主副本数据同时丢失，数据不可恢复才算。而一个copy set，包含一个PG的所有主副本数据，所以一个copy set损坏（或丢失）导致至少一个PG的主副本数据丢失，数据不可恢复。</p>
+<h3 id="C（R，N）"><a href="#C（R，N）" class="headerlink" title="C（R，N）"></a>C（R，N）</h3><p>N为OSD数量（一个OSD对应一个硬盘），R为副本数，C（R，N）为N个OSD中任意挑选R个OSD的组合数。</p>
+<h2 id="优化"><a href="#优化" class="headerlink" title="优化"></a>优化</h2><p>综上所述，我们能调节的参数包括：</p>
+<ul>
+<li>OSD恢复周期（recovery time）<br>  增加<code>参与恢复的OSD数量</code>可以缩短<code>OSD恢复周期</code>，从而降低丢失数据的概率</li>
+<li>copy set个数<br>  减少copy set个数，可以降低丢失数据的概率</li>
+</ul>
+<p>以上优化需要修改Crush map</p>
+<h1 id="使用prmc计算持久性"><a href="#使用prmc计算持久性" class="headerlink" title="使用prmc计算持久性"></a>使用prmc计算持久性</h1><h2 id="获取prmc"><a href="#获取prmc" class="headerlink" title="获取prmc"></a>获取prmc</h2><p>从github上下载prmc代码</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git clone https://github.com/zhoubofsy/persistence_calculation.git</span><br></pre></td></tr></table></figure>
+
+<h2 id="配置输入参数"><a href="#配置输入参数" class="headerlink" title="配置输入参数"></a>配置输入参数</h2><p>修改<code>config.py</code>文件中的<code>prmc</code>字典</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">算法名称</span></span><br><span class="line">name = &#x27;prmc&#x27;</span><br><span class="line"></span><br><span class="line">prmc = &#123;</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">副本数</span></span><br><span class="line">&#x27;replica_num&#x27; : 3, </span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">集群OSD总数数量</span></span><br><span class="line">&#x27;osd_num&#x27; : 14,</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">AFR(硬盘年故障率)</span></span><br><span class="line">&#x27;disk_afr&#x27; : 0.017,</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">磁盘平均容量（MB）</span></span><br><span class="line">&#x27;disk_capacity&#x27; : 1000.0,</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">磁盘平均写速度（MB/s）</span></span><br><span class="line">&#x27;disk_writerate&#x27; : 50.0,</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">磁盘使用率</span></span><br><span class="line">&#x27;disk_usage&#x27; : 0.75,</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">一个Host中OSD的数量</span></span><br><span class="line">&#x27;num_osd_in_host&#x27; : 4, </span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">一个副本域的host数量</span></span><br><span class="line">&#x27;num_host_in_replic_domain&#x27; : 1,</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">rack数量</span></span><br><span class="line">&#x27;num_rack_in_root&#x27; : 4, </span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">副本域数量</span></span><br><span class="line">&#x27;num_replic_domain_in_root&#x27; : 1</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>程序会根据<code>name</code>的设置，选择相关的算法，不同的算法会采用不同的配置参数，目前只支持<code>prmc</code>算法</p>
+<h2 id="执行计算"><a href="#执行计算" class="headerlink" title="执行计算"></a>执行计算</h2><p>执行<code>main.py</code>进行计算持久性</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./main.py</span><br></pre></td></tr></table></figure>
+
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="https://www.ustack.com/blog/build-block-storage-service/">打造高性能高可靠块存储系统</a></li>
+<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/xiaoquqi/article/details/43055031#0-tsina-1-70142-397232819ff9a47a7b7e80a40613cfe1">CEPH可靠性的计算方法分析</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2016/06/07/power/20160607-control-usb-power/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1196,98 +1303,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2016/04/27/storage/ceph/20160427-map-rbd-kernel-without-ceph-common-md/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2016/04/27/storage/ceph/20160427-map-rbd-kernel-without-ceph-common-md/" class="post-title-link" itemprop="url">不使用ceph-common 进行内核映射 rbd 块设备</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2016-04-27 16:04:57" itemprop="dateCreated datePublished" datetime="2016-04-27T16:04:57+08:00">2016-04-27</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="例子"><a href="#例子" class="headerlink" title="例子"></a>例子</h2><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">modprobe rbd</span><br><span class="line">echo &quot;192.168.1.234 name=admin,secret=AQAHzRBX77ORERAAqfW0YAqq8+ETXMqWtPKwkQ== rbd testrbd&quot; &gt; /sys/bus/rbd/add</span><br><span class="line">echo 1 &gt; /sys/bus/rbd/remove</span><br></pre></td></tr></table></figure>
-
-<p>如果你在执行<code>echo</code>时候提示参数错误，请现查看<code>modinfo rbd</code>看看里面的<code>single_major</code>默认值是否为<code>false</code><br>eg:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">modinfo rbd</span></span><br><span class="line">filename:       /lib/modules/3.10.0-693.el7.x86_64/kernel/drivers/block/rbd.ko.xz</span><br><span class="line">license:        GPL</span><br><span class="line">description:    RADOS Block Device (RBD) driver</span><br><span class="line">author:         Jeff Garzik &lt;jeff@garzik.org&gt;</span><br><span class="line">author:         Yehuda Sadeh &lt;yehuda@hq.newdream.net&gt;</span><br><span class="line">author:         Sage Weil &lt;sage@newdream.net&gt;</span><br><span class="line">author:         Alex Elder &lt;elder@inktank.com&gt;</span><br><span class="line">rhelversion:    7.4</span><br><span class="line">srcversion:     B41E51769EC95E3DBDB16AB</span><br><span class="line">depends:        libceph</span><br><span class="line">intree:         Y</span><br><span class="line">vermagic:       3.10.0-693.el7.x86_64 SMP mod_unload modversions</span><br><span class="line">signer:         CentOS Linux kernel signing key</span><br><span class="line">sig_key:        DA:18:7D:CA:7D:BE:53:AB:05:BD:13:BD:0C:4E:21:F4:22:B6:A4:9C</span><br><span class="line">sig_hashalgo:   sha256</span><br><span class="line">parm:           single_major:Use a single major number for all rbd devices (default: false) (bool)</span><br></pre></td></tr></table></figure>
-<p>如果<code>single_major</code>默认值为<code>ture</code>，那么在加载rbd模块时，需要将<code>single_major</code>设置成false<br>eg:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">modprobe rbd single_major=0</span><br></pre></td></tr></table></figure>
-<p>然后在重新执行<code>echo</code>。</p>
-<h2 id="解释"><a href="#解释" class="headerlink" title="解释"></a>解释</h2><ul>
-<li>192.168.1.234 为 Monitor 地址</li>
-<li>name，制定使用的用户，可通过“ceph auth list” 查看</li>
-<li>secret，name制定用户所对应的 key 值</li>
-<li>rbd，制定需要映射的块设备（该快设备必须是已经创建好的）</li>
-<li>使用客户端内核必须支持rbd.ko这个内核模块</li>
-<li>1, 设备ID，用于去映射</li>
-</ul>
-<h2 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h2><ul>
-<li><a target="_blank" rel="noopener" href="http://cephnotes.ksperis.com/blog/2014/01/09/map-rbd-kernel-without-install-ceph-common">Map Rbd Kernel Without Install Ceph-common</a></li>
-<li><a target="_blank" rel="noopener" href="https://github.com/coreos/bugs/issues/2544">RBD failed to mount using rbd kernel module: tee: &#x2F;sys&#x2F;bus&#x2F;rbd&#x2F;add: Invalid argument #2544</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1357,7 +1372,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">145</span>
+          <span class="site-state-item-count">146</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

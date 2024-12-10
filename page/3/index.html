@@ -188,6 +188,232 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2020/11/07/network/rdma/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/11/07/network/rdma/" class="post-title-link" itemprop="url">RDMA</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-11-07 10:27:04" itemprop="dateCreated datePublished" datetime="2020-11-07T10:27:04+08:00">2020-11-07</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/network/" itemprop="url" rel="index"><span itemprop="name">network</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>在数据中心领域，远程直接内存访问（英语：remote direct memory access，RDMA）是一种绕过远程主机操作系统内核访问其内存中数据的技术，由于不经过操作系统，不仅节省了大量CPU资源，同样也提高了系统吞吐量、降低了系统的网络通信延迟，尤其适合在大规模并行计算机集群中有广泛应用。在基于NVMe over Fabric的数据中心中，RDMA可以配合高性能的NVMe SSD构建高性能、低延迟的存储网络。</p>
+<p>Red Hat和甲骨文公司等软件供应商已经在其最新产品中支持这些API，截至2013年，工程师也已开始开发基于以太网的RDMA网络适配器。Red Hat Enterprise Linux和Red Hat Enterprise MRG已支持RDMA。微软已在Windows Server 2012中通过SMB Direct支持RDMA。</p>
+<h1 id="RDMA-原理"><a href="#RDMA-原理" class="headerlink" title="RDMA 原理"></a>RDMA 原理</h1><p>传统的基于Socket套接字（TCP&#x2F;IP协议栈）的网络通信需要经过操作系统协议栈。数据在系统中搬来搬去，因此占用了大量的CPU和内存资源，也加大了网络延时。RDMA解决了传统Socket通信的痛点，采用了Kernel Bypass的工作方式，减少了CPU和内存的占用，也降低了网络延时。</p>
+<p><img src="/images/rdma/rdma_theory.jpg" alt="rdma_theory"></p>
+<p>目前RDMA有三种不同的硬件实现，分别是InfiniBand、iWARP（internet wide area RDMA Protocol）、RoCE（RDMA over Coverged Ethernet）。</p>
+<p><img src="/images/rdma/rdma_theory_2.jpg" alt="rdma_theory_2"></p>
+<ul>
+<li>Infiniband<br>  支持RDMA的新一代网络协议。 由于这是一种新的网络技术，因此需要支持该技术的NIC和交换机。</li>
+<li>RoCE<br>  一个允许在以太网上执行RDMA的网络协议。 其较低的网络标头是以太网标头，其较高的网络标头（包括数据）是InfiniBand标头。 这支持在标准以太网基础设施(交换机)上使用RDMA。 只有网卡应该是特殊的，支持RoCE。<br>  RoCE v1是一种链路层协议，允许在同一个广播域下的任意两台主机直接访问。<br>  RoCE v2是一种Internet层协议，即可以实现路由功能。</li>
+<li>iWARP<br>  一个允许在TCP上执行RDMA的网络协议。 IB和RoCE中存在的功能在iWARP中不受支持。 这支持在标准以太网基础设施(交换机)上使用RDMA。</li>
+</ul>
+<h2 id="关键概念"><a href="#关键概念" class="headerlink" title="关键概念"></a>关键概念</h2><p>** QP(Queue Pair) **</p>
+<p>每对QP由Send Queue(SQ)和Receive Queue(RQ)构成，这些队列中管理着各种类型的消息。QP会被映射到应用的虚拟地址空间，使得应用直接通过它访问RNIC网卡。</p>
+<p>** CQ(Complete Queue) **</p>
+<ol>
+<li>完成队列包含了发送到工作队列（WQ）中已完成的工作请求（WR）。每次完成表示一个特定的 WR执行完毕（包括成功完成的WR和不成功完成的WR）。完成队列是一个用来告知应用程序已结束的工作请求的信息（状态、操作码、大小、来源）的机制。</li>
+<li>CQ有n个完成队列实体（CQE）。CQE的数量在CQ创建的时候被指定。</li>
+<li>当一个CQP被轮询到，它就从CQ中被删除。</li>
+<li>CQ是一个CQE的先进选出（FIFO）队列。</li>
+<li>CQ能服务于发送队列、接收队列或者同时服务于这两种队列。多个不同QP中的工作请求（WQ）可联系到同一个CQ上。</li>
+</ol>
+<p>** MR(Memory Region) **</p>
+<ol>
+<li>内存注册机制允许应用程序申请一些连续的虚拟内存空间或者连续的物理内存空间，将这些内存空间提供给网络适配器作为虚拟的连续缓冲区，缓冲区使用虚拟地址。</li>
+<li>内存注册进程锁定了内存页。（为了防止页被替换出去，同时保持物理和虚拟内存的映射）在注册期间，操作系统检查被注册块的许可。注册进程将虚拟地址与物理地址的映射表写入网络适配器。在注册内存时，对应内存区域的权限会被设定。权限包括本地写、远程读、远程写、原子操作、绑定。</li>
+<li>每个内存注册（MR）有一个远程的和一个本地的key（r_key，l_key）。本地key被本地的HCA 用来访问本地内存，例如在接收数据操作的期间。远程key提供给远程HCA用来在RDMA操作期间允许远程进程访问本地的系统内存。同一内存缓冲区可以被多次注册（甚至设置不同的操作权限），并且每次注册都会生成不同的key。</li>
+</ol>
+<p>** HCA **</p>
+<ol>
+<li>Opening an HCA 打开HCA，准备好HCA供消费者使用。一旦打开了一个HCA设备，只有关闭它以后，才能再次打开。</li>
+<li>HCA属性 HCA属性是设备特征，这些属性必须可以被消费者获取。</li>
+<li>修改HCA属性 HCA允许修改一组&#x3D;&#x3D;受限制的&#x3D;&#x3D;HCA属性。这些可以修改的属性主要是性能信息和错误计数器管理性息。其他大部分属性或是不可修改的，或是通过General Services Interface &#x2F; Fabric Management Interface进行操作。</li>
+<li>关闭HCA 将HCA恢复到初始条件下，同时注销打开HCA时分配的资源。</li>
+</ol>
+<p>** 寻址 **</p>
+<ol>
+<li>源端地址 CI(Channel Interface)需要存储每个HCA有效的LID和GID。</li>
+<li>目的地址 对于RC服务类型来说，目的地址被保存在本地QP的属性中。</li>
+<li>Loopback 由于自寻址的需要，HCA需要支持Loopback。Loopback仅支持于一个HCA中，同一个端口下的QP之间进行。</li>
+</ol>
+<p>** Protection Domain **</p>
+<ol>
+<li>PD通过在QP&#x2F;SRQ与MR之间建立联系，获得HCA访问主存的权限。此外，PD还可以用来关联QP和未绑定的内存窗口，用来控制HCA访问主系统内存。</li>
+<li>分配保护域 当创建QP，注册MR，分配MW,创建Address Handle时需要分配PD。</li>
+<li>释放保护域 如果PD仍然与任何队列对、内存区域、内存窗口、SRQ或地址句柄相关联，则不应释放它。如果尝试这样做，则谓词将立即返回一个错误。</li>
+</ol>
+<h2 id="RDMA-工作流程"><a href="#RDMA-工作流程" class="headerlink" title="RDMA 工作流程"></a>RDMA 工作流程</h2><ol>
+<li>当一个应用执行RDMA读或写请求时，不执行任何数据复制。在不需要任何内核内存参与的条件下，RDMA请求从运行在用户空间中的应用中发送到本地NIC(网卡)。</li>
+<li>NIC读取缓冲的内容，并通过网络传送到远程NIC。</li>
+<li>在网络上传输的RDMA信息包含目标虚拟地址、内存钥匙和数据本身。请求既可以完全在用户空间中处理(通过轮询用户级完成排列) ，又或者在应用一直睡眠到请求完成时的情况下通过系统中断处理。RDMA操作使应用可以从一个远程应用的内存中读数据或向这个内存写数据。</li>
+<li>目标NIC确认内存钥匙，直接将数据写人应用缓存中。用于操作的远程虚拟内存地址包含在RDMA信息中。</li>
+</ol>
+<h1 id="RDMA-API"><a href="#RDMA-API" class="headerlink" title="RDMA API"></a>RDMA API</h1><p>RDMA API (Verbs)主要有两种操作方式，One-Sided RDMA。包括RDMA Reads, RDMA Writes, RDMA Atomic。这种模式下的RDMA访问完全不需要远端机的任何确认；Two-Sided RDMA。包括RDMA Send, RDMA Receive。这种模式下的RDMA访问需要远端机CPU的参与。</p>
+<h2 id="Two-Side-RDMA"><a href="#Two-Side-RDMA" class="headerlink" title="Two-Side RDMA"></a>Two-Side RDMA</h2><ol>
+<li>首先，A和B都要创建并初始化好各自的QP，CQ</li>
+<li>A和B分别向自己的WQ中注册WQE，对于A，WQ&#x3D;SQ，WQE描述指向一个等到被发送的数据；对于B，WQ&#x3D;RQ，WQE描述指向一块用于存储数据的Buffer。</li>
+<li>A的RNIC异步调度轮到A的WQE，解析到这是一个SEND消息，从Buffer中直接向B发出数据。数据流到达B的RNIC后，B的WQE被消耗，并把数据直接存储到WQE指向的存储位置。</li>
+<li>AB通信完成后，A的CQ中会产生一个完成消息CQE表示发送完成。与此同时，B的CQ中也会产生一个完成消息表示接收完成。每个WQ中WQE的处理完成都会产生一个CQE。</li>
+</ol>
+<p>** 双边操作与传统网络的底层Buffer Pool类似，收发双方的参与过程并无差别，区别在零拷贝、Kernel Bypass，实际上对于RDMA，这是一种复杂的消息传输模式，多用于传输短的控制消息。 **</p>
+<h3 id="RDMA通信流程"><a href="#RDMA通信流程" class="headerlink" title="RDMA通信流程"></a>RDMA通信流程</h3><ol>
+<li>获取RDMA设备列表(ibv_get_device_list)<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* 1 获取设备列表 */</span></span><br><span class="line"><span class="type">int</span> num_devices;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ibv_device</span> **<span class="title">dev_list</span> =</span> ibv_get_device_list(&amp;num_devices);</span><br><span class="line"><span class="keyword">if</span> (!dev_list || !num_devices)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;failed to get IB devices\n&quot;</span>);</span><br><span class="line">    rc = <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">goto</span> main_exit;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li>打开一个RDMA设备，获取一个上下文(ibv_open_device ibv_context)<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* 2 打开设备，获取设备上下文 */</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ibv_device</span> *<span class="title">ib_dev</span> =</span> dev_list[<span class="number">0</span>];</span><br><span class="line">res.ib_ctx = ibv_open_device(ib_dev);</span><br><span class="line"><span class="keyword">if</span> (!res.ib_ctx)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;failed to open device \n&quot;</span>);</span><br><span class="line">    rc = <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">goto</span> main_exit;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li>释放RDMA设备列表占用的资源(ibv_free_device_list)<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* 3 释放设备列表占用的资源 */</span></span><br><span class="line">ibv_free_device_list(dev_list);</span><br><span class="line">dev_list = <span class="literal">NULL</span>;</span><br><span class="line">ib_dev = <span class="literal">NULL</span>;</span><br></pre></td></tr></table></figure></li>
+<li>查询RDMA设备端口信息(ibv_query_port ibv_port_attr)<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* 4 查询设备端口状态 */</span></span><br><span class="line"><span class="keyword">if</span> (ibv_query_port(res.ib_ctx, <span class="number">1</span>, &amp;res.port_attr))</span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;ibv_query_port on port failed\n&quot;</span>);</span><br><span class="line">    rc = <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">goto</span> main_exit;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li>分配一个Protection Domain (ibv_alloc_pd ibv_pd)<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* 5 创建PD（Protection Domain） */</span></span><br><span class="line">res.pd = ibv_alloc_pd(res.ib_ctx);</span><br><span class="line"><span class="keyword">if</span> (!res.pd)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;ibv_alloc_pd failed\n&quot;</span>);</span><br><span class="line">    rc = <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">goto</span> main_exit;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li>创建一个Complete Queue (ibv_create_cq ibv_cq)<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* 6 创建CQ（Complete Queue） */</span></span><br><span class="line"><span class="type">int</span> cq_size = <span class="number">10</span>;</span><br><span class="line">res.cq = ibv_create_cq(res.ib_ctx, cq_size, <span class="literal">NULL</span>, <span class="literal">NULL</span>, <span class="number">0</span>);</span><br><span class="line"><span class="keyword">if</span> (!res.cq)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;failed to create CQ with %u entries\n&quot;</span>, cq_size);</span><br><span class="line">    rc = <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">goto</span> main_exit;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li>注册一块Memory Region (ibv_reg_mr ibv_mr)<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* 7 注册MR（Memory Region） */</span></span><br><span class="line"><span class="type">int</span> size = MSG_SIZE;</span><br><span class="line">res.buf = (<span class="type">char</span> *)<span class="built_in">malloc</span>(size);</span><br><span class="line"><span class="keyword">if</span> (!res.buf)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;failed to malloc %Zu bytes to memory buffer\n&quot;</span>, size);</span><br><span class="line">    rc = <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">goto</span> main_exit;</span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">memset</span>(res.buf, <span class="number">0</span>, size);</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> mr_flags = IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_READ | IBV_ACCESS_REMOTE_WRITE;</span><br><span class="line">res.mr = ibv_reg_mr(res.pd, res.buf, size, mr_flags);</span><br><span class="line"><span class="keyword">if</span> (!res.mr)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;ibv_reg_mr failed with mr_flags=0x%x\n&quot;</span>, mr_flags);</span><br><span class="line">    rc = <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">goto</span> main_exit;</span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">fprintf</span>(<span class="built_in">stdout</span>, <span class="string">&quot;MR was registered with addr=%p, lkey=0x%x, rkey=0x%x, flags=0x%x\n&quot;</span>,</span><br><span class="line">res.buf, res.mr-&gt;lkey, res.mr-&gt;rkey, mr_flags);</span><br></pre></td></tr></table></figure></li>
+<li>创建一个Queue Pair (ibv_create_qp ibv_qp)<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* 8 创建QP（Queue Pair） */</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ibv_qp_init_attr</span> <span class="title">qp_init_attr</span>;</span></span><br><span class="line"><span class="built_in">memset</span>(&amp;qp_init_attr, <span class="number">0</span>, <span class="keyword">sizeof</span>(qp_init_attr));</span><br><span class="line">qp_init_attr.qp_type = IBV_QPT_RC;</span><br><span class="line">qp_init_attr.sq_sig_all = <span class="number">1</span>;</span><br><span class="line">qp_init_attr.send_cq = res.cq;</span><br><span class="line">qp_init_attr.recv_cq = res.cq;</span><br><span class="line">qp_init_attr.cap.max_send_wr = <span class="number">1</span>;</span><br><span class="line">qp_init_attr.cap.max_recv_wr = <span class="number">1</span>;</span><br><span class="line">qp_init_attr.cap.max_send_sge = <span class="number">1</span>;</span><br><span class="line">qp_init_attr.cap.max_recv_sge = <span class="number">1</span>;</span><br><span class="line">res.qp = ibv_create_qp(res.pd, &amp;qp_init_attr);</span><br><span class="line"><span class="keyword">if</span> (!res.qp)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;failed to create QP\n&quot;</span>);</span><br><span class="line">    rc = <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">goto</span> main_exit;</span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">fprintf</span>(<span class="built_in">stdout</span>, <span class="string">&quot;QP was created, QP number=0x%x\n&quot;</span>, res.qp-&gt;qp_num);</span><br></pre></td></tr></table></figure></li>
+<li>交换控制信息 (使用Socket)<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* 9 交换控制信息 */</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">cm_con_data_t</span> <span class="title">local_con_data</span>;</span>  <span class="comment">// 发送给远程主机的信息</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">cm_con_data_t</span> <span class="title">remote_con_data</span>;</span> <span class="comment">// 接收远程主机发送过来的信息</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">cm_con_data_t</span> <span class="title">tmp_con_data</span>;</span></span><br><span class="line"></span><br><span class="line">local_con_data.addr = htonll((<span class="type">uintptr_t</span>)res.buf);</span><br><span class="line">local_con_data.rkey = htonl(res.mr-&gt;rkey);</span><br><span class="line">local_con_data.qp_num = htonl(res.qp-&gt;qp_num);</span><br><span class="line">local_con_data.lid = htons(res.port_attr.lid);</span><br><span class="line"><span class="keyword">if</span> (sock_sync_data(server_ip, <span class="keyword">sizeof</span>(<span class="keyword">struct</span> <span class="type">cm_con_data_t</span>), (<span class="type">char</span> *)&amp;local_con_data, (<span class="type">char</span> *)&amp;tmp_con_data) &lt; <span class="number">0</span>)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;failed to exchange connection data between sides\n&quot;</span>);</span><br><span class="line">    rc = <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">goto</span> main_exit;</span><br><span class="line">&#125;</span><br><span class="line">remote_con_data.addr = ntohll(tmp_con_data.addr);</span><br><span class="line">remote_con_data.rkey = ntohl(tmp_con_data.rkey);</span><br><span class="line">remote_con_data.qp_num = ntohl(tmp_con_data.qp_num);</span><br><span class="line">remote_con_data.lid = ntohs(tmp_con_data.lid);</span><br><span class="line"><span class="comment">/* save the remote side attributes, we will need it for the post SR */</span></span><br><span class="line">res.remote_props = remote_con_data;</span><br><span class="line"><span class="built_in">fprintf</span>(<span class="built_in">stdout</span>, <span class="string">&quot;Remote address = 0x%&quot;</span> PRIx64 <span class="string">&quot;\n&quot;</span>, remote_con_data.addr);</span><br><span class="line"><span class="built_in">fprintf</span>(<span class="built_in">stdout</span>, <span class="string">&quot;Remote rkey = 0x%x\n&quot;</span>, remote_con_data.rkey);</span><br><span class="line"><span class="built_in">fprintf</span>(<span class="built_in">stdout</span>, <span class="string">&quot;Remote QP number = 0x%x\n&quot;</span>, remote_con_data.qp_num);</span><br><span class="line"><span class="built_in">fprintf</span>(<span class="built_in">stdout</span>, <span class="string">&quot;Remote LID = 0x%x\n&quot;</span>, remote_con_data.lid);</span><br></pre></td></tr></table></figure></li>
+<li>转换QP状态(ibv_modify_qp)<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* 10 转换QP状态 */</span></span><br><span class="line"><span class="comment">// RESET -&gt; INIT</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ibv_qp_attr</span> <span class="title">attr</span>;</span></span><br><span class="line"><span class="type">int</span> flags;</span><br><span class="line"><span class="built_in">memset</span>(&amp;attr, <span class="number">0</span>, <span class="keyword">sizeof</span>(attr));</span><br><span class="line">attr.qp_state = IBV_QPS_INIT;</span><br><span class="line">attr.port_num = <span class="number">1</span>; <span class="comment">// IB 端口号</span></span><br><span class="line">attr.pkey_index = <span class="number">0</span>;</span><br><span class="line">attr.qp_access_flags = IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_READ | IBV_ACCESS_REMOTE_WRITE;</span><br><span class="line">flags = IBV_QP_STATE | IBV_QP_PKEY_INDEX | IBV_QP_PORT | IBV_QP_ACCESS_FLAGS;</span><br><span class="line">rc = ibv_modify_qp(res.qp, &amp;attr, flags);</span><br><span class="line"><span class="keyword">if</span> (rc)</span><br><span class="line">    <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;failed to modify QP state to INIT\n&quot;</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">//INIT -&gt; RTR(Ready To Receive)</span></span><br><span class="line"><span class="built_in">memset</span>(&amp;attr, <span class="number">0</span>, <span class="keyword">sizeof</span>(attr));</span><br><span class="line">attr.qp_state = IBV_QPS_RTR;</span><br><span class="line">attr.path_mtu = IBV_MTU_256;</span><br><span class="line">attr.dest_qp_num = res.remote_props.qp_num;</span><br><span class="line">attr.rq_psn = <span class="number">0</span>;</span><br><span class="line">attr.max_dest_rd_atomic = <span class="number">1</span>;</span><br><span class="line">attr.min_rnr_timer = <span class="number">0x12</span>;</span><br><span class="line">attr.ah_attr.is_global = <span class="number">0</span>;</span><br><span class="line">attr.ah_attr.dlid = res.remote_props.lid;</span><br><span class="line">attr.ah_attr.sl = <span class="number">0</span>;</span><br><span class="line">attr.ah_attr.src_path_bits = <span class="number">0</span>;</span><br><span class="line">attr.ah_attr.port_num = <span class="number">1</span>;</span><br><span class="line">flags = IBV_QP_STATE | IBV_QP_AV | IBV_QP_PATH_MTU | IBV_QP_DEST_QPN | IBV_QP_RQ_PSN | IBV_QP_MAX_DEST_RD_ATOMIC | IBV_QP_MIN_RNR_TIMER;</span><br><span class="line">rc = ibv_modify_qp(res.qp, &amp;attr, flags);</span><br><span class="line"><span class="keyword">if</span> (rc)</span><br><span class="line">    <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;failed to modify QP state to RTR\n&quot;</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">//RTR -&gt; RTS(Ready To Send)</span></span><br><span class="line"><span class="built_in">memset</span>(&amp;attr, <span class="number">0</span>, <span class="keyword">sizeof</span>(attr));</span><br><span class="line">attr.qp_state = IBV_QPS_RTS;</span><br><span class="line">attr.timeout = <span class="number">0x12</span>;</span><br><span class="line">attr.retry_cnt = <span class="number">6</span>;</span><br><span class="line">attr.rnr_retry = <span class="number">0</span>;</span><br><span class="line">attr.sq_psn = <span class="number">0</span>;</span><br><span class="line">attr.max_rd_atomic = <span class="number">1</span>;</span><br><span class="line">flags = IBV_QP_STATE | IBV_QP_TIMEOUT | IBV_QP_RETRY_CNT | IBV_QP_RNR_RETRY | IBV_QP_SQ_PSN | IBV_QP_MAX_QP_RD_ATOMIC;</span><br><span class="line">rc = ibv_modify_qp(res.qp, &amp;attr, flags);</span><br><span class="line"><span class="keyword">if</span> (rc)</span><br><span class="line">    <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;failed to modify QP state to RTS\n&quot;</span>);</span><br></pre></td></tr></table></figure>
+<ul>
+<li>状态：RESET -&gt; INIT -&gt; RTR -&gt; RTS</li>
+<li>要严格按照顺序进行转换</li>
+<li>QP刚创建时状态为RESET</li>
+<li>INIT之后就可以调用ibv_post_recv提交一个receive buffer了</li>
+<li>当QP进入RTR(ready to receive)状态以后，便开始进行接收处理</li>
+<li>RTR之后便可以转为RTS(ready to send)，RTS状态下可以调用ibv_post_send</li>
+</ul>
+</li>
+<li>创建发送任务&#x2F;接收任务(ibv_send_wr&#x2F;ibv_recv_wr)<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* 11 创建发送任务ibv_send_wr */</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ibv_send_wr</span> <span class="title">sr</span>;</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ibv_sge</span> <span class="title">sge</span>;</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ibv_send_wr</span> *<span class="title">bad_wr</span> =</span> <span class="literal">NULL</span>;</span><br><span class="line"><span class="type">int</span> rc;</span><br><span class="line"><span class="comment">/* prepare the scatter/gather entry */</span></span><br><span class="line"><span class="built_in">memset</span>(&amp;sge, <span class="number">0</span>, <span class="keyword">sizeof</span>(sge));</span><br><span class="line">sge.addr = (<span class="type">uintptr_t</span>)res-&gt;buf;</span><br><span class="line">sge.length = MSG_SIZE;</span><br><span class="line">sge.lkey = res-&gt;mr-&gt;lkey;</span><br><span class="line"><span class="comment">/* prepare the send work request */</span></span><br><span class="line"><span class="built_in">memset</span>(&amp;sr, <span class="number">0</span>, <span class="keyword">sizeof</span>(sr));</span><br><span class="line">sr.next = <span class="literal">NULL</span>;</span><br><span class="line">sr.wr_id = <span class="number">0</span>;</span><br><span class="line">sr.sg_list = &amp;sge;</span><br><span class="line">sr.num_sge = <span class="number">1</span>;</span><br><span class="line">sr.opcode = opcode;</span><br><span class="line">sr.send_flags = IBV_SEND_SIGNALED;</span><br><span class="line"><span class="keyword">if</span> (opcode != IBV_WR_SEND)</span><br><span class="line">&#123;</span><br><span class="line">    sr.wr.rdma.remote_addr = res-&gt;remote_props.addr;</span><br><span class="line">    sr.wr.rdma.rkey = res-&gt;remote_props.rkey;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>该任务会被提交到QP中的SQ（Send Queue）中</li>
+<li>发送任务有三种操作：Send,Read,Write。Send操作需要对方执行相应的Receive操作；Read&#x2F;Write直接操作对方内存，对方无感知。</li>
+<li>把要发送的数据的内存地址，大小，密钥告诉HCA</li>
+<li>Read&#x2F;Write还需要告诉HCA远程的内存地址和密钥</li>
+</ul>
+</li>
+<li>提交发送任务&#x2F;接收任务(ibv_post_send&#x2F;ibv_post_recv)<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">rc = ibv_post_send(res-&gt;qp, &amp;sr, &amp;bad_wr);</span><br><span class="line"><span class="keyword">if</span> (rc)</span><br><span class="line">    <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;failed to post SR\n&quot;</span>);</span><br><span class="line"><span class="keyword">return</span> rc;</span><br></pre></td></tr></table></figure></li>
+<li>轮询任务完成信息(ibv_poll_cq)<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* 13 轮询任务结果 */</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ibv_wc</span> <span class="title">wc</span>;</span></span><br><span class="line"><span class="type">int</span> poll_result;</span><br><span class="line"><span class="type">int</span> rc = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">do</span></span><br><span class="line">&#123;</span><br><span class="line">    poll_result = ibv_poll_cq(res-&gt;cq, <span class="number">1</span>, &amp;wc);</span><br><span class="line">&#125; <span class="keyword">while</span> (poll_result == <span class="number">0</span>);</span><br></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="QP状态转换"><a href="#QP状态转换" class="headerlink" title="QP状态转换"></a>QP状态转换</h3><p><img src="/images/rdma/rdma_qp_status.jpg" alt="rdma_qp_status"></p>
+<h4 id="Reset-State"><a href="#Reset-State" class="headerlink" title="Reset State"></a>Reset State</h4><ol>
+<li>该状态为QP新创建时的初始状态</li>
+<li>在不删除QP的情况下，仅能通过Modify Queue Pair Attributes verb跳出该状态</li>
+<li>该状态下向QP提交WR，将会返回错误，远端到来的消息也会直接被忽略</li>
+<li>通过利用verbs修改QP属性，可以将任何状态的QP转换为Reset状态。</li>
+</ol>
+<h4 id="Initialized-State"><a href="#Initialized-State" class="headerlink" title="Initialized State"></a>Initialized State</h4><ol>
+<li>仅能从Reset状态进入该状态</li>
+<li>在不删除QP的情况下，仅能通过Modify Queue Pair Attributes verb跳出该状态</li>
+<li>该状态下，RQ可以接受WR，但不会处理远端到来的消息，并将到来的消息丢弃</li>
+<li>该状态下，向SQ发送WR会返回错误。</li>
+</ol>
+<h4 id="Ready-To-Receive-RTR-State"><a href="#Ready-To-Receive-RTR-State" class="headerlink" title="Ready To Receive(RTR) State"></a>Ready To Receive(RTR) State</h4><ol>
+<li>在RTR状态下，RQ可以接受WR，从远端到来的消息也会正常处理</li>
+<li>该状态下，向SQ发送WR会返回错误。</li>
+</ol>
+<h4 id="Ready-To-Send-RTS-State"><a href="#Ready-To-Send-RTS-State" class="headerlink" title="Ready To Send(RTS) State"></a>Ready To Send(RTS) State</h4><ol>
+<li>在RTS状态下，请求端和应答端面向连接的服务类型的通道已经建立</li>
+<li>仅能由RTR和SQD状态进入该状态</li>
+<li>在不删除QP的情况下，仅能通过Modify Queue Pair Attributes verb跳出该状态</li>
+<li>该状态下，向QP发送的WR会被正常处理，发送WR的verb也不会返回错误</li>
+<li>该状态下，从远端到来的消息也正常处理。</li>
+</ol>
+<h4 id="Send-Queue-Drain-SQD-State"><a href="#Send-Queue-Drain-SQD-State" class="headerlink" title="Send Queue Drain(SQD) State"></a>Send Queue Drain(SQD) State</h4><ol>
+<li>该状态下，向QP发送的WR会被正常处理，发送WR的verb也不会返回错误</li>
+<li>该状态下，从远端到来的消息也正常处理</li>
+<li>仅能由RTS进入该状态</li>
+<li>当转移到该状态时，未处理的消息不能再处理，未处理完的消息必须处理完</li>
+<li>当所有应答都已收到时，如果有事件提醒的请求，则会生成一个附加的异步事件<br> a. 消费者可以利用异步事件来确定状态转移的完成<br> b. 为确保安全的修改QP的属性，必须在接收到异步事件后在进行属性的更改。 </li>
+<li>该状态下，提交到QP的WR会入队，但不会被处理</li>
+<li>在SQ还没有Drained之前，SQD到RTS的状态转换不被允许，在该状况下转移，CI会报告一个立即的错误。</li>
+</ol>
+<h4 id="Send-Queue-Error-SQE-State"><a href="#Send-Queue-Error-SQE-State" class="headerlink" title="Send Queue Error(SQE) State"></a>Send Queue Error(SQE) State</h4><ol>
+<li>该状态适用于除RC QP之外的所有QP</li>
+<li>该状态仅会由RTS跳入，当处理SQ的WR时，发生完成错误(Completion Error)，会造成该转移</li>
+<li>在该状态下，RQ可以接受WR，从远端到来的消息也会正常处理</li>
+<li>发生了完成错误的WR必须通过CQ返回正确的完成错误码</li>
+<li>由于SQ中的WR可能部份或全部执行，因此，接收端的状态是未知的</li>
+<li>在SQ中导致完成错误的WR的下一条WR，必须通过CQ返回刷新错误(Flush Error)的完成状态</li>
+<li>该状态下，可以通过Modify Queue Pair Attributes verb跳到RTS状态、Reset状态、Error状态。</li>
+</ol>
+<h4 id="Error-State"><a href="#Error-State" class="headerlink" title="Error State"></a>Error State</h4><ol>
+<li>QP上的所有正常处理全部停止</li>
+<li>由于WR发生完成错误，导致跳入该状态时，必须通过CQ返回完成错误码</li>
+<li>该状态下，从远端收到的数据会被丢弃</li>
+<li>在QP中导致完成错误的WR的下一条WR，必须通过CQ返回刷新错误(Flush Error)的完成状态。</li>
+</ol>
+<h2 id="One-Side-RDMA"><a href="#One-Side-RDMA" class="headerlink" title="One-Side RDMA"></a>One-Side RDMA</h2><ol>
+<li>首先A、B建立连接，QP已经创建并且初始化。</li>
+<li>数据被存档在A的buffer地址VA，注意VA应该提前注册到A的RNIC，并拿到返回的r_key，相当于RDMA操作这块buffer的权限。</li>
+<li>A把数据地址VA，key封装到专用的报文传送到B，这相当于A把数据buffer的操作权交给了B。同时A在它的WQ中注册进一个WR，以用于接收数据传输的B返回的状态。</li>
+<li>B在收到A的送过来的数据VA和r_key后，RNIC会把它们连同存储地址VB到封装RDMA READ，这个过程A、B两端不需要任何软件参与，就可以将A的数据存储到B的VB虚拟地址。</li>
+<li>B在存储完成后，会向A返回整个数据传输的状态信息。</li>
+</ol>
+<p>** 单边操作传输方式是RDMA与传统网络传输的最大不同，只需提供直接访问远程的虚拟地址，无须远程应用的参与其中，这种方式适用于批量数据传输。 **</p>
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/BtB5e6Nsu1g511Eg5XEg/article/details/80045487">RDMA技术原理分析、主流实现对比和解析</a></li>
+<li><a target="_blank" rel="noopener" href="http://rinjilee.com/post_wukan/2019-09-28-RDMA%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">RDMA学习笔记</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.360doc.com/content/19/0126/13/99071_811392560.shtml">详解RDMA架构和技术原理</a></li>
+<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/110898225">InfiniBand协议学习</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2019/12/17/storage/ceph/rgw-authorization/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1093,167 +1319,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2019/09/28/storage/ceph/ceph-ansible-usage/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2019/09/28/storage/ceph/ceph-ansible-usage/" class="post-title-link" itemprop="url">ceph-ansible 使用</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2019-09-28 08:52:30" itemprop="dateCreated datePublished" datetime="2019-09-28T08:52:30+08:00">2019-09-28</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>Ceph的部署有很多种，从最早的手动部署，到后来的Ceph-deploy，再到目前比较火的容器部署等等。但能作为生产环境部署的却不多，其中Ceph-ansible算是生产环境部署的方法之一。Ceph-ansible是基于ansible工具完成Ceph部署的。对于生产环境中动则几十、成百上千的节点数量如果一台一台安装配置效率太低。引入ansible工具可以快速完成Ceph集群的安装配置，大大提高效率。让运维人员从机械重复的工作中解脱出来。</p>
-<h1 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h1><h2 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h2><p>三个节点，其中一个节点用作ansible和Ceph节点的复用节点。</p>
-<table>
-<thead>
-<tr>
-<th align="center">节点IP</th>
-<th align="center">节点角色</th>
-<th align="center">OS</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">172.30.12.137</td>
-<td align="center">ansible节点、ceph节点</td>
-<td align="center">CentOS Linux release 7.7.1908</td>
-</tr>
-<tr>
-<td align="center">172.30.12.197</td>
-<td align="center">ceph节点</td>
-<td align="center">CentOS Linux release 7.7.1908</td>
-</tr>
-<tr>
-<td align="center">172.30.12.227</td>
-<td align="center">ceph节点</td>
-<td align="center">CentOS Linux release 7.7.1908</td>
-</tr>
-</tbody></table>
-<p>本文中使用的ansible工具运行在一个 CentOS7.6.1810 的容器内。</p>
-<h2 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h2><p>ceph-ansible是基于ansible工作的，所以要先安装ansible。既然要安装ansible，首先要先搞清楚安装哪个版本？</p>
-<p>本文部署的Ceph版本为<code>mimic</code>，官方推荐可以使用<code>stable-3.1</code>和<code>stable-3.2</code>，我选择了较新的<code>stable-3.2</code>，<code>stable-3.2</code>对应的ansible版本为2.6。（更多关于版本对应关系请见<a target="_blank" rel="noopener" href="https://docs.ceph.com/ceph-ansible/master/#releases">官网</a>）</p>
-<p>选择完了ansible版本接下来就可以安装了，安装分为两种方式</p>
-<ul>
-<li>pip 安装</li>
-<li>yum&#x2F;apt 安装</li>
-</ul>
-<p>由于 yum&#x2F;apt 安装版本选择范围比较狭窄，所以本人推荐使用 pip 安装。(关于pip安装请见<a target="_blank" rel="noopener" href="https://pip.pypa.io/en/stable/installing/">pypa官网</a>)</p>
-<p>首先clone ceph-ansible project</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">git <span class="built_in">clone</span> git@github.com:ceph/ceph-ansible.git</span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">git checkout -b 3.2.0 v3.2.0</span></span><br></pre></td></tr></table></figure>
-<p>然后使用ceph-ansible中推荐的<code>requirements.txt</code>安装对应版本的ansible</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pip install -r ./ceph-ansible/requirements.txt</span><br></pre></td></tr></table></figure>
-<p>待安装完成后，查看确认ansible版本</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">ansible --version</span></span><br><span class="line">ansible 2.6.19</span><br><span class="line">  config file = /root/ceph-ansible/ansible.cfg</span><br><span class="line">  configured module search path = [u&#x27;/root/.ansible/plugins/modules&#x27;, u&#x27;/usr/share/ansible/plugins/modules&#x27;]</span><br><span class="line">  ansible python module location = /usr/lib/python2.7/site-packages/ansible</span><br><span class="line">  executable location = /usr/bin/ansible</span><br><span class="line">  python version = 2.7.5 (default, Oct 30 2018, 23:45:53) [GCC 4.8.5 20150623 (Red Hat 4.8.5-36)]</span><br></pre></td></tr></table></figure>
-
-<h2 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h2><h3 id="ansible-配置"><a href="#ansible-配置" class="headerlink" title="ansible 配置"></a>ansible 配置</h3><p>ansible inventory 自定义的配置可以放置在任何位置，只是在运行ansible时增加<code>-i &#123;inventory host path&#125;</code>指定其路径即可。若不指定inventory文件，ansible将去<code>/etc/ansible/hosts</code>这个路径去找。</p>
-<p>inventory配置：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">[mons]</span><br><span class="line">172.30.12.197 ansible_ssh_user=root ansible_ssh_pass=1234\$\#</span><br><span class="line"></span><br><span class="line">[osds]</span><br><span class="line">172.30.12.137 ansible_ssh_user=root ansible_ssh_pass=1234\$\#</span><br><span class="line">172.30.12.197 ansible_ssh_user=root ansible_ssh_pass=1234\$\#</span><br><span class="line"></span><br><span class="line">[mgrs]</span><br><span class="line">172.30.12.137 ansible_ssh_user=root ansible_ssh_pass=1234\$\#</span><br></pre></td></tr></table></figure>
-<p>密码中若存在特殊字符<code>$</code>,<code>#</code>等，需要使用<code>\\</code>进行转义。<br>配置完成后，可使用<code>ansible all -i &#123;inventory host&#125; -m ping</code>测试节点连通情况</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">ansible all -i dummy-ansible-hosts -m ping</span></span><br><span class="line">172.30.12.197 | SUCCESS =&gt; &#123;</span><br><span class="line">    &quot;changed&quot;: false,</span><br><span class="line">    &quot;ping&quot;: &quot;pong&quot;</span><br><span class="line">&#125;</span><br><span class="line">172.30.12.227 | SUCCESS =&gt; &#123;</span><br><span class="line">    &quot;changed&quot;: false,</span><br><span class="line">    &quot;ping&quot;: &quot;pong&quot;</span><br><span class="line">&#125;</span><br><span class="line">172.30.12.137 | SUCCESS =&gt; &#123;</span><br><span class="line">    &quot;changed&quot;: false,</span><br><span class="line">    &quot;ping&quot;: &quot;pong&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h3 id="ceph-ansible-配置"><a href="#ceph-ansible-配置" class="headerlink" title="ceph-ansible 配置"></a>ceph-ansible 配置</h3><p>ceph-ansible的配置，主要是对group变量的配置，一般场景中我们不需要修改role。</p>
-<h4 id="配置-all-yml"><a href="#配置-all-yml" class="headerlink" title="配置 all.yml"></a>配置 all.yml</h4><p>首先：</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cp ./gourp_vars/all.yml.sample ./gourp_vars/all.yml</span><br></pre></td></tr></table></figure>
-
-<p>然后，修改<code>all.yml</code>中的配置，如下：</p>
-<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Inventory host group variables</span></span><br><span class="line"><span class="attr">mon_group_name:</span> <span class="string">mons</span></span><br><span class="line"><span class="attr">osd_group_name:</span> <span class="string">osds</span></span><br><span class="line"><span class="comment">#rgw_group_name: rgws</span></span><br><span class="line"><span class="comment">#mds_group_name: mdss</span></span><br><span class="line"><span class="comment">#nfs_group_name: nfss</span></span><br><span class="line"><span class="comment">#restapi_group_name: restapis</span></span><br><span class="line"><span class="comment">#rbdmirror_group_name: rbdmirrors</span></span><br><span class="line"><span class="comment">#client_group_name: clients</span></span><br><span class="line"><span class="comment">#iscsi_gw_group_name: iscsigws</span></span><br><span class="line"><span class="comment">#mgr_group_name: mgrs</span></span><br><span class="line"><span class="comment"># 上述 Inventory host 相关变量的默认值与 Inventory配置中的标签名一致，也就是说这里注释打开与否没有影响</span></span><br><span class="line"><span class="string">...</span></span><br><span class="line"><span class="comment"># If configure_firewall is true, then ansible will try to configure the</span></span><br><span class="line"><span class="comment"># appropriate firewalling rules so that Ceph daemons can communicate</span></span><br><span class="line"><span class="comment"># with each others.</span></span><br><span class="line"><span class="comment">#configure_firewall: True</span></span><br><span class="line"><span class="attr">configure_firewall:</span> <span class="literal">False</span></span><br><span class="line"><span class="comment"># 建议Firewall配不明白的同学将Firewall关闭，免得找麻烦。</span></span><br><span class="line"><span class="string">...</span></span><br><span class="line"><span class="comment"># Set type of NTP client daemon to use, valid entries are chronyd, ntpd or timesyncd</span></span><br><span class="line"><span class="comment"># Note that this selection is currently ignored on containerized deployments</span></span><br><span class="line"><span class="comment">#ntp_daemon_type: timesyncd</span></span><br><span class="line"><span class="attr">ntp_daemon_type:</span> <span class="string">chronyd</span></span><br><span class="line"><span class="comment"># Ceph需要做时间同步，具体用什么做可根据自己环境来选择。目前提供支持的有三种 chronyd, ntpd, timesyncd</span></span><br><span class="line"><span class="string">...</span></span><br><span class="line"><span class="comment"># ORIGIN SOURCE</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># Choose between:</span></span><br><span class="line"><span class="comment"># - &#x27;repository&#x27; means that you will get ceph installed through a new repository. Later below choose between &#x27;community&#x27;, &#x27;rhcs&#x27;, &#x27;dev&#x27; or &#x27;obs&#x27;</span></span><br><span class="line"><span class="comment"># - &#x27;distro&#x27; means that no separate repo file will be added</span></span><br><span class="line"><span class="comment">#  you will get whatever version of Ceph is included in your Linux distro.</span></span><br><span class="line"><span class="comment"># &#x27;local&#x27; means that the ceph binaries will be copied over from the local machine</span></span><br><span class="line"><span class="comment">#ceph_origin: dummy</span></span><br><span class="line"><span class="attr">ceph_origin:</span> <span class="string">repository</span></span><br><span class="line"><span class="comment">#valid_ceph_origins:</span></span><br><span class="line"><span class="comment">#  - repository</span></span><br><span class="line"><span class="comment">#  - distro</span></span><br><span class="line"><span class="comment">#  - local</span></span><br><span class="line"></span><br><span class="line"><span class="attr">ceph_repository:</span> <span class="string">community</span></span><br><span class="line"><span class="comment">#valid_ceph_repository:</span></span><br><span class="line"><span class="comment">#  - community</span></span><br><span class="line"><span class="comment">#  - rhcs</span></span><br><span class="line"><span class="comment">#  - dev</span></span><br><span class="line"><span class="comment">#  - uca</span></span><br><span class="line"><span class="comment">#  - custom</span></span><br><span class="line"><span class="comment">#  - obs</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># REPOSITORY: COMMUNITY VERSION</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># Enabled when ceph_repository == &#x27;community&#x27;</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment">#ceph_mirror: http://download.ceph.com</span></span><br><span class="line"><span class="comment">#ceph_stable_key: https://download.ceph.com/keys/release.asc</span></span><br><span class="line"><span class="comment">#ceph_stable_release: dummy</span></span><br><span class="line"><span class="comment">#ceph_stable_repo: &quot;&#123;&#123; ceph_mirror &#125;&#125;/debian-&#123;&#123; ceph_stable_release &#125;&#125;&quot;</span></span><br><span class="line"><span class="attr">ceph_mirror:</span> <span class="string">http://mirrors.163.com/ceph</span></span><br><span class="line"><span class="attr">ceph_stable_key:</span> <span class="string">https://mirrors.163.com/ceph/keys/release.asc</span></span><br><span class="line"><span class="attr">ceph_stable_release:</span> <span class="string">mimic</span></span><br><span class="line"><span class="attr">ceph_stable_repo:</span> <span class="string">&quot;<span class="template-variable">&#123;&#123; ceph_mirror &#125;&#125;</span>/rpm-<span class="template-variable">&#123;&#123; ceph_stable_release &#125;&#125;</span>&quot;</span></span><br><span class="line"><span class="comment"># Ceph 软件包的安装方式，有三种，repository使用一个新的源进行安装；distro使用linux发行版自带的源进行安装；local使用本地安装包的形式进行安装。</span></span><br><span class="line"><span class="comment"># 具体情况根据自身要求而定吧。</span></span><br><span class="line"><span class="string">...</span></span><br><span class="line"><span class="comment">## Monitor options</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># You must define either monitor_interface, monitor_address or monitor_address_block.</span></span><br><span class="line"><span class="comment"># These variables must be defined at least in all.yml and overrided if needed (inventory host file or group_vars/*.yml).</span></span><br><span class="line"><span class="comment"># Eg. If you want to specify for each monitor which address the monitor will bind to you can set it in your **inventory host file** by using &#x27;monitor_address&#x27; variable.</span></span><br><span class="line"><span class="comment"># Preference will go to monitor_address if both monitor_address and monitor_interface are defined.</span></span><br><span class="line"><span class="comment">#monitor_interface: interface</span></span><br><span class="line"><span class="attr">monitor_interface:</span> <span class="string">ens33</span></span><br><span class="line"><span class="comment">#monitor_address: 0.0.0.0</span></span><br><span class="line"><span class="comment">#monitor_address_block: subnet</span></span><br><span class="line"><span class="comment"># set to either ipv4 or ipv6, whichever your network is using</span></span><br><span class="line"><span class="comment">#ip_version: ipv4</span></span><br><span class="line"><span class="comment">#mon_use_fqdn: false # if set to true, the MON name used will be the fqdn in the ceph.conf</span></span><br><span class="line"><span class="comment"># Monitor的配置，必须要在 interface, address, address_block 中选择一个定义。（更多使用方法，请仔细阅读上面的英文吧。）</span></span><br><span class="line"><span class="string">...</span></span><br><span class="line"><span class="comment">## OSD options</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment">#is_hci: false</span></span><br><span class="line"><span class="comment">#hci_safety_factor: 0.2</span></span><br><span class="line"><span class="comment">#non_hci_safety_factor: 0.7</span></span><br><span class="line"><span class="comment">#osd_memory_target: 4294967296</span></span><br><span class="line"><span class="comment">#journal_size: 5120 # OSD journal size in MB</span></span><br><span class="line"><span class="attr">journal_size:</span> <span class="number">1024</span> <span class="comment"># OSD journal size in MB</span></span><br><span class="line"><span class="comment">#block_db_size: -1 # block db size in bytes for the ceph-volume lvm batch. -1 means use the default of &#x27;as big as possible&#x27;.</span></span><br><span class="line"><span class="comment">#public_network: 0.0.0.0/0</span></span><br><span class="line"><span class="attr">public_network:</span> <span class="number">172.30</span><span class="number">.12</span><span class="number">.0</span><span class="string">/24</span></span><br><span class="line"><span class="attr">cluster_network:</span> <span class="number">172.30</span><span class="number">.12</span><span class="number">.0</span><span class="string">/24</span></span><br><span class="line"><span class="comment">#cluster_network: &quot;&#123;&#123; public_network | regex_replace(&#x27; &#x27;, &#x27;&#x27;) &#125;&#125;&quot;</span></span><br><span class="line"><span class="comment">#osd_mkfs_type: xfs</span></span><br><span class="line"><span class="comment">#osd_mkfs_options_xfs: -f -i size=2048</span></span><br><span class="line"><span class="comment">#osd_mount_options_xfs: noatime,largeio,inode64,swalloc</span></span><br><span class="line"><span class="comment">#osd_objectstore: bluestore</span></span><br><span class="line"><span class="attr">osd_objectstore:</span> <span class="string">filestore</span></span><br><span class="line"><span class="comment"># 根据硬盘的存储介质与速度决定Journal size的大小；配置public,cluster newtwork；选择objectstore filestore or bluestore</span></span><br><span class="line"><span class="string">...</span></span><br></pre></td></tr></table></figure>
-
-<h4 id="配置-osds-yml"><a href="#配置-osds-yml" class="headerlink" title="配置 osds.yml"></a>配置 osds.yml</h4><p>首先</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cp ./gourp_vars/osds.yml.sample ./gourp_vars/osds.yml</span><br></pre></td></tr></table></figure>
-<p>然后，修改<code>osds.yml</code>配置，如下：</p>
-<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">...</span></span><br><span class="line"><span class="comment"># Even though OSD nodes should not have the admin key</span></span><br><span class="line"><span class="comment"># at their disposal, some people might want to have it</span></span><br><span class="line"><span class="comment"># distributed on OSD nodes. Setting &#x27;copy_admin_key&#x27; to &#x27;true&#x27;</span></span><br><span class="line"><span class="comment"># will copy the admin key to the /etc/ceph/ directory</span></span><br><span class="line"><span class="comment">#copy_admin_key: false</span></span><br><span class="line"><span class="attr">copy_admin_key:</span> <span class="literal">true</span></span><br><span class="line"><span class="comment"># 根据个人喜好来吧，我喜欢各个OSD节点都有admin key</span></span><br><span class="line"><span class="string">...</span></span><br><span class="line"><span class="comment"># Declare devices to be used as OSDs</span></span><br><span class="line"><span class="comment"># All scenario(except 3rd) inherit from the following device declaration</span></span><br><span class="line"><span class="comment"># <span class="doctag">Note:</span> This scenario uses the ceph-disk tool to provision OSDs</span></span><br><span class="line"></span><br><span class="line"><span class="attr">devices:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="string">/dev/sdb</span></span><br><span class="line">  <span class="bullet">-</span> <span class="string">/dev/sdc</span></span><br><span class="line">  <span class="comment">#  - /dev/sdd</span></span><br><span class="line">  <span class="comment">#  - /dev/sde</span></span><br><span class="line"></span><br><span class="line"><span class="comment">#devices: []</span></span><br><span class="line"><span class="comment"># 根据主机情况配置硬盘路径相关信息</span></span><br><span class="line"><span class="string">...</span></span><br><span class="line"><span class="attr">osd_scenario:</span> <span class="string">collocated</span></span><br><span class="line"><span class="comment">#valid_osd_scenarios:</span></span><br><span class="line"><span class="comment">#  - collocated</span></span><br><span class="line"><span class="comment">#  - non-collocated</span></span><br><span class="line"><span class="comment">#  - lvm</span></span><br><span class="line"><span class="comment"># collocated是将日志和数据部署到同一个硬盘上；non-collocated是分硬盘部署日志和数据；这两个选项都是使用ceph-disk创建的。</span></span><br><span class="line"><span class="comment"># lvm使用ceph-volume创建osd，需要指定vg、lvm等信息。</span></span><br><span class="line"><span class="comment"># 此处具体信息，请见`osds.yml.sample`里面有很详细的注解。</span></span><br><span class="line"><span class="string">...</span></span><br></pre></td></tr></table></figure>
-
-<h4 id="配置-mgrs-yml"><a href="#配置-mgrs-yml" class="headerlink" title="配置 mgrs.yml"></a>配置 mgrs.yml</h4><p>首先</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cp ./gourp_vars/mgrs.yml.sample ./gourp_vars/mgrs.yml</span><br></pre></td></tr></table></figure>
-<p>然后，修改<code>mgrs.yml</code>配置，如下：</p>
-<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">...</span></span><br><span class="line"><span class="comment">###########</span></span><br><span class="line"><span class="comment"># MODULES #</span></span><br><span class="line"><span class="comment">###########</span></span><br><span class="line"><span class="comment"># Ceph mgr modules to enable, current modules available are: status,dashboard,localpool,restful,zabbix,prometheus,influx</span></span><br><span class="line"><span class="attr">ceph_mgr_modules:</span> [<span class="string">status</span>]</span><br><span class="line"><span class="string">...</span></span><br></pre></td></tr></table></figure>
-
-<h2 id="部署"><a href="#部署" class="headerlink" title="部署"></a>部署</h2><h3 id="集群初始化部署"><a href="#集群初始化部署" class="headerlink" title="集群初始化部署"></a>集群初始化部署</h3><p>首先</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cp ./site.yml.sample ./site.yml</span><br></pre></td></tr></table></figure>
-<p>然后</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ansible-playbook -i &#123;inventory host&#125; site.yml</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
-<p>部署过程需要下载RPM包安装，所以网速对部署速度的影响很大。请耐心等待。</p>
-<h3 id="增加OSD节点部署"><a href="#增加OSD节点部署" class="headerlink" title="增加OSD节点部署"></a>增加OSD节点部署</h3><p>首先</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cp ./infrastructure-playbooks/add-osd.yml ./add-osd.yml</span><br></pre></td></tr></table></figure>
-<p>然后，修改inventory host文件，在<code>[osds]</code>中增加<code>172.30.12.227</code>这条记录，相当于增加一个osd节点。</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">[mons]</span><br><span class="line">172.30.12.197 ansible_ssh_user=root ansible_ssh_pass=1234\$\#</span><br><span class="line"></span><br><span class="line">[osds]</span><br><span class="line">172.30.12.137 ansible_ssh_user=root ansible_ssh_pass=1234\$\#</span><br><span class="line">172.30.12.197 ansible_ssh_user=root ansible_ssh_pass=1234\$\#</span><br><span class="line">172.30.12.227 ansible_ssh_user=root ansible_ssh_pass=1234\$\#</span><br><span class="line"></span><br><span class="line">[mgrs]</span><br><span class="line">172.30.12.137 ansible_ssh_user=root ansible_ssh_pass=1234\$\#</span><br></pre></td></tr></table></figure>
-<p>最后</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ansible-playbook -i &#123;inventory host&#125; add-osd.yml</span><br></pre></td></tr></table></figure>
-
-<h3 id="清除集群部署"><a href="#清除集群部署" class="headerlink" title="清除集群部署"></a>清除集群部署</h3><p>首先</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cp ./infrastructure-playbooks/purge-cluster.yml ./purge-cluster.yml</span><br></pre></td></tr></table></figure>
-<p>然后</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ansible-playbook -i &#123;inventory host&#125; purge-cluster.yml</span><br></pre></td></tr></table></figure>
-
-<h3 id="Ceph配置文件分发"><a href="#Ceph配置文件分发" class="headerlink" title="Ceph配置文件分发"></a>Ceph配置文件分发</h3><p>配置文件分发各个节点</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ansible all -i dummy-ansible-hosts -m copy -a &quot;src=/root/ceph.conf dest=/etc/ceph/&quot;</span><br></pre></td></tr></table></figure>
-
-<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a target="_blank" rel="noopener" href="https://lnsyyj.github.io/2018/08/29/ceph-ansible-project/">ceph-ansible project</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1323,7 +1388,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">145</span>
+          <span class="site-state-item-count">146</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
