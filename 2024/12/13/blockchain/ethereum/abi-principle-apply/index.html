@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zhoubofsy.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="什么是 ABI (Application Binary Interface)?在 Solidity 中，ABI（应用二进制接口）是智能合约与外界（包括其他合约和用户界面）交互的桥梁。它定义了智能合约中函数的编码方式、输入参数和返回值的格式，以便在区块链中进行数据的传输和解析。 ABI 的作用 数据编码与解码：在区块链中，所有的数据都以二进制形式存储和传输。ABI 提供了标准化的编码规则，使得智能合">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ABI格式和使用">
+<meta property="og:url" content="http://zhoubofsy.github.io/2024/12/13/blockchain/ethereum/abi-principle-apply/index.html">
+<meta property="og:site_name" content="Bolog">
+<meta property="og:description" content="什么是 ABI (Application Binary Interface)?在 Solidity 中，ABI（应用二进制接口）是智能合约与外界（包括其他合约和用户界面）交互的桥梁。它定义了智能合约中函数的编码方式、输入参数和返回值的格式，以便在区块链中进行数据的传输和解析。 ABI 的作用 数据编码与解码：在区块链中，所有的数据都以二进制形式存储和传输。ABI 提供了标准化的编码规则，使得智能合">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2024-12-13T09:55:44.000Z">
+<meta property="article:modified_time" content="2024-12-13T09:58:29.542Z">
+<meta property="article:author" content="博">
+<meta property="article:tag" content="ethereum">
+<meta property="article:tag" content="solidity">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://zhoubofsy.github.io/2024/12/13/blockchain/ethereum/abi-principle-apply/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>ABI格式和使用 | Bolog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Bolog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2024/12/13/blockchain/ethereum/abi-principle-apply/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          ABI格式和使用
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2024-12-13 17:55:44 / Modified: 17:58:29" itemprop="dateCreated datePublished" datetime="2024-12-13T17:55:44+08:00">2024-12-13</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/blockchain/" itemprop="url" rel="index"><span itemprop="name">blockchain</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="什么是-ABI-Application-Binary-Interface"><a href="#什么是-ABI-Application-Binary-Interface" class="headerlink" title="什么是 ABI (Application Binary Interface)?"></a>什么是 ABI (Application Binary Interface)?</h2><p>在 Solidity 中，ABI（应用二进制接口）是智能合约与外界（包括其他合约和用户界面）交互的桥梁。它定义了智能合约中函数的编码方式、输入参数和返回值的格式，以便在区块链中进行数据的传输和解析。</p>
+<h3 id="ABI-的作用"><a href="#ABI-的作用" class="headerlink" title="ABI 的作用"></a>ABI 的作用</h3><ol>
+<li><strong>数据编码与解码</strong>：在区块链中，所有的数据都以二进制形式存储和传输。ABI 提供了标准化的编码规则，使得智能合约的函数调用可以正确地解释输入和输出数据。</li>
+<li><strong>合约交互</strong>：外部程序（如 DApp）需要 ABI 文件来与合约交互，了解合约的函数和参数。</li>
+<li><strong>兼容性</strong>：通过 ABI，智能合约之间可以互操作，即使它们是由不同的开发人员编写的。</li>
+</ol>
+<h3 id="ABI-的重要性"><a href="#ABI-的重要性" class="headerlink" title="ABI 的重要性"></a>ABI 的重要性</h3><ul>
+<li><strong>统一性</strong>：ABI 使得智能合约与外部交互的过程标准化，避免了自定义协议带来的复杂性。</li>
+<li><strong>跨语言支持</strong>：无论是前端、后端，还是区块链中的其他合约，都可以基于 ABI 与合约进行交互。</li>
+</ul>
+<h2 id="ABI的原理"><a href="#ABI的原理" class="headerlink" title="ABI的原理"></a>ABI的原理</h2><h3 id="ABI-的结构"><a href="#ABI-的结构" class="headerlink" title="ABI 的结构"></a>ABI 的结构</h3><p>ABI 通常是以 JSON 格式生成的文件，描述了智能合约的函数、事件及其参数。</p>
+<p><strong>示例合约</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">pragma solidity ^0.8.0;</span><br><span class="line"></span><br><span class="line">contract Example &#123;</span><br><span class="line">    uint256 public value;</span><br><span class="line"></span><br><span class="line">    event ValueChanged(uint256 newValue);</span><br><span class="line"></span><br><span class="line">    function setValue(uint256 _value) public &#123;</span><br><span class="line">        value = _value;</span><br><span class="line">        emit ValueChanged(_value);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function getValue() public view returns (uint256) &#123;</span><br><span class="line">        return value;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>ABI 的 JSON 表示</strong></p>
+<p>运行 <code>solc --abi Example.sol</code> 会生成以下 ABI 文件：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">[</span></span><br><span class="line">    <span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;anonymous&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;inputs&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">            <span class="punctuation">&#123;</span></span><br><span class="line">                <span class="attr">&quot;indexed&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">                <span class="attr">&quot;internalType&quot;</span><span class="punctuation">:</span> <span class="string">&quot;uint256&quot;</span><span class="punctuation">,</span></span><br><span class="line">                <span class="attr">&quot;name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;newValue&quot;</span><span class="punctuation">,</span></span><br><span class="line">                <span class="attr">&quot;type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;uint256&quot;</span></span><br><span class="line">            <span class="punctuation">&#125;</span></span><br><span class="line">        <span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;ValueChanged&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;event&quot;</span></span><br><span class="line">    <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;inputs&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;getValue&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;outputs&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">            <span class="punctuation">&#123;</span></span><br><span class="line">                <span class="attr">&quot;internalType&quot;</span><span class="punctuation">:</span> <span class="string">&quot;uint256&quot;</span><span class="punctuation">,</span></span><br><span class="line">                <span class="attr">&quot;name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">                <span class="attr">&quot;type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;uint256&quot;</span></span><br><span class="line">            <span class="punctuation">&#125;</span></span><br><span class="line">        <span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;stateMutability&quot;</span><span class="punctuation">:</span> <span class="string">&quot;view&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;function&quot;</span></span><br><span class="line">    <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;inputs&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">            <span class="punctuation">&#123;</span></span><br><span class="line">                <span class="attr">&quot;internalType&quot;</span><span class="punctuation">:</span> <span class="string">&quot;uint256&quot;</span><span class="punctuation">,</span></span><br><span class="line">                <span class="attr">&quot;name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;_value&quot;</span><span class="punctuation">,</span></span><br><span class="line">                <span class="attr">&quot;type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;uint256&quot;</span></span><br><span class="line">            <span class="punctuation">&#125;</span></span><br><span class="line">        <span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;setValue&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;outputs&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;stateMutability&quot;</span><span class="punctuation">:</span> <span class="string">&quot;nonpayable&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;function&quot;</span></span><br><span class="line">    <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;inputs&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;value&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;outputs&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">            <span class="punctuation">&#123;</span></span><br><span class="line">                <span class="attr">&quot;internalType&quot;</span><span class="punctuation">:</span> <span class="string">&quot;uint256&quot;</span><span class="punctuation">,</span></span><br><span class="line">                <span class="attr">&quot;name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">                <span class="attr">&quot;type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;uint256&quot;</span></span><br><span class="line">            <span class="punctuation">&#125;</span></span><br><span class="line">        <span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;stateMutability&quot;</span><span class="punctuation">:</span> <span class="string">&quot;view&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;function&quot;</span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">]</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="ABI-的关键字段"><a href="#ABI-的关键字段" class="headerlink" title="ABI 的关键字段"></a>ABI 的关键字段</h3><ol>
+<li><strong><code>type</code></strong><br> 定义元素的类型：<ul>
+<li><code>function</code>：表示合约函数。</li>
+<li><code>event</code>：表示事件。</li>
+<li><code>constructor</code>：表示构造函数。</li>
+<li><code>fallback</code>：表示回退函数。</li>
+<li><code>receive</code>：表示接收以太币的特殊函数。</li>
+</ul>
+</li>
+<li><strong><code>name</code></strong><br> 函数或事件的名称（不适用于匿名函数）。</li>
+<li><strong><code>inputs</code></strong><br> 表示函数或事件的输入参数列表。每个参数包含：<ul>
+<li><code>internalType</code>：Solidity 内部类型。</li>
+<li><code>name</code>：参数名称。</li>
+<li><code>type</code>：外部使用的类型（如 <code>uint256</code>）。</li>
+</ul>
+</li>
+<li><strong><code>outputs</code></strong><br> 表示函数的返回值列表，格式与 <code>inputs</code> 相同。</li>
+<li><strong><code>stateMutability</code></strong><br> 表示函数的状态：<ul>
+<li><code>view</code>：只读，不修改状态。</li>
+<li><code>pure</code>：不读写状态。</li>
+<li><code>nonpayable</code>：不允许发送以太币。</li>
+<li><code>payable</code>：允许发送以太币。</li>
+</ul>
+</li>
+<li><strong><code>anonymous</code></strong><br> 仅适用于事件，表示事件是否匿名。</li>
+</ol>
+<h3 id="ABI-编码规则"><a href="#ABI-编码规则" class="headerlink" title="ABI 编码规则"></a>ABI 编码规则</h3><p>ABI 定义了调用合约函数时参数的编码方式。以下是编码的关键点：</p>
+<h4 id="编码示例"><a href="#编码示例" class="headerlink" title="编码示例"></a>编码示例</h4><p>调用 <code>setValue(42)</code> 的编码过程如下：</p>
+<ol>
+<li>函数签名的 Keccak 哈希： <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">setValue(uint256) -&gt; 0x55241077</span><br></pre></td></tr></table></figure></li>
+<li>参数的编码： <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">42 -&gt; 000000000000000000000000000000000000000000000000000000000000002a</span><br></pre></td></tr></table></figure></li>
+<li>完整的编码： <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">0x55241077000000000000000000000000000000000000000000000000000000000000002a</span><br></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="ABI-解码规则"><a href="#ABI-解码规则" class="headerlink" title="ABI 解码规则"></a><strong>ABI 解码规则</strong></h3><p>返回值的解码也遵循 ABI 的规则。<br>例如，<code>getValue()</code> 返回 <code>42</code> 时：</p>
+<ol>
+<li>返回数据： <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">0x000000000000000000000000000000000000000000000000000000000000002a</span><br></pre></td></tr></table></figure></li>
+<li>解码为 <code>42</code></li>
+</ol>
+<h2 id="ABI-的使用"><a href="#ABI-的使用" class="headerlink" title="ABI 的使用"></a>ABI 的使用</h2><h3 id="使用场景-1-智能合约调用"><a href="#使用场景-1-智能合约调用" class="headerlink" title="使用场景 1: 智能合约调用"></a>使用场景 1: 智能合约调用</h3><p><strong>场景描述：</strong></p>
+<p>通过 Golang 使用 ABI 文件调用智能合约上的函数，例如调用只读函数或发送交易调用状态变更函数。</p>
+<p><strong>代码示例：</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><span class="line">package main</span><br><span class="line"></span><br><span class="line">import (</span><br><span class="line">	&quot;context&quot;</span><br><span class="line">	&quot;fmt&quot;</span><br><span class="line">	&quot;log&quot;</span><br><span class="line">	&quot;math/big&quot;</span><br><span class="line"></span><br><span class="line">	&quot;github.com/ethereum/go-ethereum/accounts/abi&quot;</span><br><span class="line">	&quot;github.com/ethereum/go-ethereum/accounts/abi/bind&quot;</span><br><span class="line">	&quot;github.com/ethereum/go-ethereum/ethclient&quot;</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">func main() &#123;</span><br><span class="line">	// 1. 连接到 Ethereum 节点</span><br><span class="line">	client, err := ethclient.Dial(&quot;https://mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID&quot;)</span><br><span class="line">	if err != nil &#123;</span><br><span class="line">		log.Fatalf(&quot;Failed to connect to Ethereum node: %v&quot;, err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	// 2. 合约地址和 ABI 定义</span><br><span class="line">	contractAddress := &quot;0xYourContractAddress&quot;</span><br><span class="line">	contractABI := `[&#123;&quot;constant&quot;:true,&quot;inputs&quot;:[],&quot;name&quot;:&quot;getValue&quot;,&quot;outputs&quot;:[&#123;&quot;name&quot;:&quot;&quot;,&quot;type&quot;:&quot;uint256&quot;&#125;],&quot;payable&quot;:false,&quot;stateMutability&quot;:&quot;view&quot;,&quot;type&quot;:&quot;function&quot;&#125;]`</span><br><span class="line"></span><br><span class="line">	// 3. 解析 ABI</span><br><span class="line">	parsedABI, err := abi.JSON(strings.NewReader(contractABI))</span><br><span class="line">	if err != nil &#123;</span><br><span class="line">		log.Fatalf(&quot;Failed to parse ABI: %v&quot;, err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	// 4. 构造合约调用</span><br><span class="line">	callOpts := &amp;bind.CallOpts&#123;Context: context.Background()&#125;</span><br><span class="line">	data, err := parsedABI.Pack(&quot;getValue&quot;)</span><br><span class="line">	if err != nil &#123;</span><br><span class="line">		log.Fatalf(&quot;Failed to pack data: %v&quot;, err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	// 5. 调用合约</span><br><span class="line">	msg := ethereum.CallMsg&#123;</span><br><span class="line">		To:   &amp;contractAddress,</span><br><span class="line">		Data: data,</span><br><span class="line">	&#125;</span><br><span class="line">	result, err := client.CallContract(context.Background(), msg, nil)</span><br><span class="line">	if err != nil &#123;</span><br><span class="line">		log.Fatalf(&quot;Failed to call contract: %v&quot;, err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	// 6. 解析返回值</span><br><span class="line">	var value *big.Int</span><br><span class="line">	err = parsedABI.UnpackIntoInterface(&amp;value, &quot;getValue&quot;, result)</span><br><span class="line">	if err != nil &#123;</span><br><span class="line">		log.Fatalf(&quot;Failed to unpack result: %v&quot;, err)</span><br><span class="line">	&#125;</span><br><span class="line">	fmt.Printf(&quot;Value: %s\n&quot;, value.String())</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="关键点："><a href="#关键点：" class="headerlink" title="关键点："></a>关键点：</h4><ol>
+<li>使用 <code>abi.JSON</code> 解析 ABI。</li>
+<li>使用 <code>Pack</code> 将函数调用和参数编码。</li>
+<li>通过 <code>CallContract</code> 调用合约。</li>
+<li>使用 <code>UnpackIntoInterface</code> 解码返回值。</li>
+</ol>
+<h3 id="使用场景-2-监听合约事件"><a href="#使用场景-2-监听合约事件" class="headerlink" title="使用场景 2: 监听合约事件"></a>使用场景 2: 监听合约事件</h3><p><strong>场景描述：</strong></p>
+<p>通过 Golang 和 ABI 监听合约事件的发生。</p>
+<p><strong>代码示例：</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line">package main</span><br><span class="line"></span><br><span class="line">import (</span><br><span class="line">	&quot;context&quot;</span><br><span class="line">	&quot;log&quot;</span><br><span class="line"></span><br><span class="line">	&quot;github.com/ethereum/go-ethereum&quot;</span><br><span class="line">	&quot;github.com/ethereum/go-ethereum/accounts/abi&quot;</span><br><span class="line">	&quot;github.com/ethereum/go-ethereum/ethclient&quot;</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">func main() &#123;</span><br><span class="line">	// 1. 连接到 Ethereum 节点</span><br><span class="line">	client, err := ethclient.Dial(&quot;wss://mainnet.infura.io/ws/v3/YOUR_INFURA_PROJECT_ID&quot;)</span><br><span class="line">	if err != nil &#123;</span><br><span class="line">		log.Fatalf(&quot;Failed to connect to Ethereum node: %v&quot;, err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	// 2. 合约地址和事件的 ABI 定义</span><br><span class="line">	contractAddress := &quot;0xYourContractAddress&quot;</span><br><span class="line">	eventABI := `[&#123;&quot;anonymous&quot;:false,&quot;inputs&quot;:[&#123;&quot;indexed&quot;:false,&quot;name&quot;:&quot;newValue&quot;,&quot;type&quot;:&quot;uint256&quot;&#125;],&quot;name&quot;:&quot;ValueChanged&quot;,&quot;type&quot;:&quot;event&quot;&#125;]`</span><br><span class="line"></span><br><span class="line">	// 3. 解析事件 ABI</span><br><span class="line">	parsedABI, err := abi.JSON(strings.NewReader(eventABI))</span><br><span class="line">	if err != nil &#123;</span><br><span class="line">		log.Fatalf(&quot;Failed to parse ABI: %v&quot;, err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	// 4. 设置日志查询过滤器</span><br><span class="line">	query := ethereum.FilterQuery&#123;</span><br><span class="line">		Addresses: []common.Address&#123;common.HexToAddress(contractAddress)&#125;,</span><br><span class="line">	&#125;</span><br><span class="line">	logs := make(chan types.Log)</span><br><span class="line">	sub, err := client.SubscribeFilterLogs(context.Background(), query, logs)</span><br><span class="line">	if err != nil &#123;</span><br><span class="line">		log.Fatalf(&quot;Failed to subscribe to logs: %v&quot;, err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	// 5. 监听事件</span><br><span class="line">	for logEvent := range logs &#123;</span><br><span class="line">		var event struct &#123;</span><br><span class="line">			NewValue *big.Int</span><br><span class="line">		&#125;</span><br><span class="line">		err := parsedABI.UnpackIntoInterface(&amp;event, &quot;ValueChanged&quot;, logEvent.Data)</span><br><span class="line">		if err != nil &#123;</span><br><span class="line">			log.Printf(&quot;Failed to unpack event: %v&quot;, err)</span><br><span class="line">		&#125; else &#123;</span><br><span class="line">			log.Printf(&quot;New Value: %s&quot;, event.NewValue.String())</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	_ = sub // Handle subscription lifecycle as needed</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="关键点：-1"><a href="#关键点：-1" class="headerlink" title="关键点："></a>关键点：</h4><ol>
+<li>使用 <code>FilterQuery</code> 设置日志过滤器。</li>
+<li>通过 <code>SubscribeFilterLogs</code> 监听事件。</li>
+<li>使用 ABI 的 <code>UnpackIntoInterface</code> 解码事件数据。</li>
+</ol>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/ethereum/" rel="tag"># ethereum</a>
+              <a href="/tags/solidity/" rel="tag"># solidity</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2024/12/11/blockchain/ethereum/kurtosis-deploy-ethereum/" rel="prev" title="Kurtosis 部署 Ethereum 测试网">
+      <i class="fa fa-chevron-left"></i> Kurtosis 部署 Ethereum 测试网
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF-ABI-Application-Binary-Interface"><span class="nav-number">1.</span> <span class="nav-text">什么是 ABI (Application Binary Interface)?</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#ABI-%E7%9A%84%E4%BD%9C%E7%94%A8"><span class="nav-number">1.1.</span> <span class="nav-text">ABI 的作用</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ABI-%E7%9A%84%E9%87%8D%E8%A6%81%E6%80%A7"><span class="nav-number">1.2.</span> <span class="nav-text">ABI 的重要性</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ABI%E7%9A%84%E5%8E%9F%E7%90%86"><span class="nav-number">2.</span> <span class="nav-text">ABI的原理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#ABI-%E7%9A%84%E7%BB%93%E6%9E%84"><span class="nav-number">2.1.</span> <span class="nav-text">ABI 的结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ABI-%E7%9A%84%E5%85%B3%E9%94%AE%E5%AD%97%E6%AE%B5"><span class="nav-number">2.2.</span> <span class="nav-text">ABI 的关键字段</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ABI-%E7%BC%96%E7%A0%81%E8%A7%84%E5%88%99"><span class="nav-number">2.3.</span> <span class="nav-text">ABI 编码规则</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%BC%96%E7%A0%81%E7%A4%BA%E4%BE%8B"><span class="nav-number">2.3.1.</span> <span class="nav-text">编码示例</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ABI-%E8%A7%A3%E7%A0%81%E8%A7%84%E5%88%99"><span class="nav-number">2.4.</span> <span class="nav-text">ABI 解码规则</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ABI-%E7%9A%84%E4%BD%BF%E7%94%A8"><span class="nav-number">3.</span> <span class="nav-text">ABI 的使用</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8%E5%9C%BA%E6%99%AF-1-%E6%99%BA%E8%83%BD%E5%90%88%E7%BA%A6%E8%B0%83%E7%94%A8"><span class="nav-number">3.1.</span> <span class="nav-text">使用场景 1: 智能合约调用</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%85%B3%E9%94%AE%E7%82%B9%EF%BC%9A"><span class="nav-number">3.1.1.</span> <span class="nav-text">关键点：</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8%E5%9C%BA%E6%99%AF-2-%E7%9B%91%E5%90%AC%E5%90%88%E7%BA%A6%E4%BA%8B%E4%BB%B6"><span class="nav-number">3.2.</span> <span class="nav-text">使用场景 2: 监听合约事件</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%85%B3%E9%94%AE%E7%82%B9%EF%BC%9A-1"><span class="nav-number">3.2.1.</span> <span class="nav-text">关键点：</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">博</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">148</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">123</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">博</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : 'Iv1.9c9e3f90ac2cc9f9',
+      clientSecret: '478f8511687999ac85664313c08c94a1420e13f6',
+      repo        : 'zhoubofsy.github.io',
+      owner       : 'zhoubofsy',
+      admin       : ['zhoubofsy'],
+      id          : '1d22811ee000a647dd096349195866c0',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

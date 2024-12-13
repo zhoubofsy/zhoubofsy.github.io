@@ -188,6 +188,151 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2024/05/24/linux/ebpf-deploy-sample/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2024/05/24/linux/ebpf-deploy-sample/" class="post-title-link" itemprop="url">eBPF开发环境搭建及示例</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-05-24 14:10:59" itemprop="dateCreated datePublished" datetime="2024-05-24T14:10:59+08:00">2024-05-24</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/linux/" itemprop="url" rel="index"><span itemprop="name">linux</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h1><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># lsb_release -a</span></span><br><span class="line">No LSB modules are available.</span><br><span class="line">Distributor ID:	Ubuntu</span><br><span class="line">Description:	Ubuntu 22.04.4 LTS</span><br><span class="line">Release:	22.04</span><br><span class="line">Codename:	jammy</span><br><span class="line"><span class="comment"># uname -a</span></span><br><span class="line">Linux ubu22 5.15.0-100-generic <span class="comment">#110-Ubuntu SMP Wed Feb 7 13:28:04 UTC 2024 aarch64 aarch64 aarch64 GNU/Linux</span></span><br></pre></td></tr></table></figure>
+
+<h1 id="包安装"><a href="#包安装" class="headerlink" title="包安装"></a>包安装</h1><p><em>安装软件包</em></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">apt install -y bison flex build-essential git cmake make libelf-dev strace tar libfl-dev libssl-dev libedit-dev zlib1g-dev  python  python3-distutils libcap-dev llvm clang</span><br></pre></td></tr></table></figure>
+
+<h2 id="安装-bcc"><a href="#安装-bcc" class="headerlink" title="安装 bcc"></a>安装 bcc</h2><p><code>bcc</code> 是一组用于 <code>eBPF</code> 开发的工具，它包括了一组用于编写和调试 <code>eBPF</code> 程序的库和命令行工具。使用 <code>bcc</code>，可以更加方便地开发和调试 <code>eBPF</code> 程序，提高开发效率和代码质量。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">apt install bpfcc-tools</span><br></pre></td></tr></table></figure>
+
+<h2 id="安装-bpftool"><a href="#安装-bpftool" class="headerlink" title="安装 bpftool"></a>安装 bpftool</h2><p><code>bpftool</code> 是一个用于管理和调试 <code>eBPF</code> 代码的命令行工具。它允许你查看和分析系统中运行的 <code>eBPF</code> 程序和映射，以及与内核中的 <code>eBPF</code> 子系统进行交互。更多内容可以查看 <a target="_blank" rel="noopener" href="https://github.com/libbpf/bpftool">bpftool Github</a></p>
+<p>使用 <code>bpftool</code>，你可以执行以下操作：</p>
+<ul>
+<li>列出当前系统中所有加载的 <code>eBPF</code> 程序和映射</li>
+<li>查看指定 <code>eBPF</code> 程序或映射的详细信息，例如指令集、内存布局等</li>
+<li>修改 <code>eBPF</code> 程序或映射的属性，例如禁用一个程序或清空一个映射</li>
+<li>将一个 <code>eBPF</code> 程序或映射导出到文件中，以便在其他系统上重新导入</li>
+<li>调试 <code>eBPF</code> 程序，例如跟踪程序的控制流、访问内存等</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">apt install -y linux-tools-$(<span class="built_in">uname</span> -r)</span><br></pre></td></tr></table></figure>
+
+<p>默认情况下 <code>bpftool</code> 命令会安装到&#x2F;<code>usr/local/sbin/</code> 下</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># bpftool version -p</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="string">&quot;version&quot;</span>: <span class="string">&quot;5.15.143&quot;</span>,</span><br><span class="line">    <span class="string">&quot;features&quot;</span>: &#123;</span><br><span class="line">        <span class="string">&quot;libbfd&quot;</span>: <span class="literal">false</span>,</span><br><span class="line">        <span class="string">&quot;skeletons&quot;</span>: <span class="literal">false</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="安装linux源码"><a href="#安装linux源码" class="headerlink" title="安装linux源码"></a>安装linux源码</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">apt install linux-source-5.15.0</span><br></pre></td></tr></table></figure>
+
+<h1 id="编译bpf-sample"><a href="#编译bpf-sample" class="headerlink" title="编译bpf sample"></a>编译bpf sample</h1><p><em>解压缩</em></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> /usr/src/linux-source-5.15.0/debian</span><br><span class="line">tar -jxvf linux-source-5.15.0.tar.bz2</span><br></pre></td></tr></table></figure>
+
+<p><em>Copy config文件</em></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> linux-source-5.15.0</span><br><span class="line"><span class="built_in">cp</span> -v /boot/config-$(<span class="built_in">uname</span> -r) .config</span><br><span class="line">make oldconfig &amp;&amp; make prepare</span><br></pre></td></tr></table></figure>
+
+
+<p><em>编译Samples</em></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">make -C samples/bpf</span><br></pre></td></tr></table></figure>
+
+<p>若遇到如下错误</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">......</span><br><span class="line">  CC      /usr/src/linux-source-5.15.0/samples/bpf/bpftool/prog.o</span><br><span class="line">  LINK    /usr/src/linux-source-5.15.0/samples/bpf/bpftool/bpftool</span><br><span class="line">/usr/src/linux-source-5.15.0/samples/bpf/Makefile:369: *** Cannot find a vmlinux <span class="keyword">for</span> VMLINUX_BTF at any of <span class="string">&quot;  /usr/src/linux-source-5.15.0/vmlinux&quot;</span>, build the kernel or <span class="built_in">set</span> VMLINUX_BTF or VMLINUX_H variable.  Stop.</span><br><span class="line">make[1]: *** [Makefile:1911: /usr/src/linux-source-5.15.0/samples/bpf] Error 2</span><br><span class="line">make[1]: Leaving directory <span class="string">&#x27;/usr/src/linux-source-5.15.0&#x27;</span></span><br><span class="line">make: *** [Makefile:275: all] Error 2</span><br><span class="line">make: Leaving directory <span class="string">&#x27;/usr/src/linux-source-5.15.0/samples/bpf&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p>说明需要 vmlinux，可以指定vmlinux再进行编译</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">make VMLINUX_BTF=/sys/kernel/btf/vmlinux -C samples/bpf</span><br></pre></td></tr></table></figure>
+
+<p>or</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">make VMLINUX_BTF=/sys/kernel/btf/vmlinux M=samples/bpf</span><br></pre></td></tr></table></figure>
+
+<h1 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h1><p>示例需要在 <code>usr/src/linux-source-5.15.0/samples/bpf</code>目录下进行编译。<code>samples/bpf</code> 下的程序一般组成方式是 xxx_user.c 和 xxx_kern.c</p>
+<ul>
+<li>xxx_user.c：为用户空间的程序用于设置 BPF 程序的相关配置、加载 BPF 程序至内核、设置 BPF 程序中的 map 值和读取 BPF 程序运行过程中发送至用户空间的消息等。</li>
+<li>xxx_kern.c：为 BPF 程序代码，通过 clang 编译成字节码加载至内核中，在对应事件触发的时候运行，可以接受用户空间程序发送的各种数据，并将运行时产生的数据发送至用户空间程序。</li>
+</ul>
+<p>新建两个文件：<code>bob_user.c</code>和<code>bob_kern.c</code></p>
+<p><em>bob_kern.c</em></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;uapi/linux/bpf.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;linux/version.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;bpf/bpf_helpers.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;bpf/bpf_tracing.h&gt;</span></span></span><br><span class="line"></span><br><span class="line">SEC(<span class="string">&quot;tracepoint/syscalls/sys_enter_execve&quot;</span>)</span><br><span class="line"><span class="type">int</span> <span class="title function_">bpf_prog</span><span class="params">(<span class="keyword">struct</span> pt_regs *ctx)</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="type">char</span> fmt[] = <span class="string">&quot;bob %s !\n&quot;</span>;</span><br><span class="line">	<span class="type">char</span> comm[<span class="number">16</span>];</span><br><span class="line">	bpf_get_current_comm(&amp;comm, <span class="keyword">sizeof</span>(comm));</span><br><span class="line">	bpf_trace_printk(fmt, <span class="keyword">sizeof</span>(fmt), comm);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">char</span> _license[] SEC(<span class="string">&quot;license&quot;</span>) = <span class="string">&quot;GPL&quot;</span>;</span><br><span class="line">u32 _version <span class="title function_">SEC</span><span class="params">(<span class="string">&quot;version&quot;</span>)</span> = LINUX_VERSION_CODE;</span><br></pre></td></tr></table></figure>
+
+<p><em>bob_user.c</em></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;bpf/libbpf.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;trace_helpers.h&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">(<span class="type">int</span> ac, <span class="type">char</span> **argv)</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">bpf_link</span> *<span class="title">link</span> =</span> <span class="literal">NULL</span>;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">bpf_program</span> *<span class="title">prog</span>;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">bpf_object</span> *<span class="title">obj</span>;</span></span><br><span class="line">	<span class="type">char</span> filename[<span class="number">256</span>];</span><br><span class="line"></span><br><span class="line">	<span class="built_in">snprintf</span>(filename, <span class="keyword">sizeof</span>(filename), <span class="string">&quot;%s_kern.o&quot;</span>, argv[<span class="number">0</span>]);</span><br><span class="line">	obj = bpf_object__open_file(filename, <span class="literal">NULL</span>);</span><br><span class="line">	<span class="keyword">if</span> (libbpf_get_error(obj)) &#123;</span><br><span class="line">		<span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;ERROR: opening BPF object file failed\n&quot;</span>);</span><br><span class="line">		<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	prog = bpf_object__find_program_by_name(obj, <span class="string">&quot;bpf_prog&quot;</span>);</span><br><span class="line">	<span class="keyword">if</span> (!prog) &#123;</span><br><span class="line">		<span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;ERROR: finding a prog in obj file failed\n&quot;</span>);</span><br><span class="line">		<span class="keyword">goto</span> cleanup;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/* load BPF program */</span></span><br><span class="line">	<span class="keyword">if</span> (bpf_object__load(obj)) &#123;</span><br><span class="line">		<span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;ERROR: loading BPF object file failed\n&quot;</span>);</span><br><span class="line">		<span class="keyword">goto</span> cleanup;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	link = bpf_program__attach(prog);</span><br><span class="line">	<span class="keyword">if</span> (libbpf_get_error(link)) &#123;</span><br><span class="line">		<span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;ERROR: bpf_program__attach failed\n&quot;</span>);</span><br><span class="line">		link = <span class="literal">NULL</span>;</span><br><span class="line">		<span class="keyword">goto</span> cleanup;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	read_trace_pipe();</span><br><span class="line"></span><br><span class="line">cleanup:</span><br><span class="line">	bpf_link__destroy(link);</span><br><span class="line">	bpf_object__close(obj);</span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>修改 <code>samples/bpf/Makefile</code></p>
+<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">...</span><br><span class="line">tprogs-y += xdp_sample_pkts</span><br><span class="line">tprogs-y += ibumad</span><br><span class="line">tprogs-y += hbm</span><br><span class="line"><span class="comment"># 增加 user programs</span></span><br><span class="line">tprogs-y += bob</span><br><span class="line">...</span><br><span class="line">ibumad-objs := ibumad_user.o</span><br><span class="line">hbm-objs := hbm.o <span class="variable">$(CGROUP_HELPERS)</span></span><br><span class="line"><span class="comment"># 增加 objs</span></span><br><span class="line">bob-objs := bob_user.o <span class="variable">$(TRACE_HELPERS)</span></span><br><span class="line">...</span><br><span class="line">always-y += hbm_edt_kern.o</span><br><span class="line">always-y += xdpsock_kern.o</span><br><span class="line"><span class="comment"># 增加 kernel programs</span></span><br><span class="line">always-y += bob_kern.o</span><br></pre></td></tr></table></figure>
+
+<p>编译</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">make VMLINUX_BTF=/sys/kernel/btf/vmlinux M=samples/bpf</span><br></pre></td></tr></table></figure>
+
+
+<p>运行</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># cd samples/bpf</span></span><br><span class="line"><span class="comment"># ./bob</span></span><br><span class="line">libbpf: elf: skipping unrecognized data section(4) .rodata.str1.1</span><br><span class="line">           &lt;...&gt;-3622529 [001] d...1 1751426.283602: bpf_trace_printk: bob sshd !</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">            sshd-3622530 [001] d...1 1751426.288591: bpf_trace_printk: bob sshd !</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">            sshd-3622531 [001] d...1 1751430.924951: bpf_trace_printk: bob sshd !</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">           &lt;...&gt;-3622532 [000] d...1 1751430.929273: bpf_trace_printk: bob sshd !</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">            bash-3622532 [000] d...1 1751430.930114: bpf_trace_printk: bob bash !</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">           &lt;...&gt;-3622533 [001] d...1 1751430.934470: bpf_trace_printk: bob sshd !</span><br></pre></td></tr></table></figure>
+
+
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/lizhijun_buaa/article/details/131644323">eBPF开发环境搭建</a></li>
+<li><a target="_blank" rel="noopener" href="https://yaoyao.io/posts/how-to-setup-ebpf-env-on-ubuntu#linux-tools">如何在 Ubuntu 上配置 eBPF 开发环境</a></li>
+<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/baidu_29900103/article/details/131188347">基于ubuntu22.04-深入浅出 eBPF</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2023/02/16/storage/linux-drbd-usage/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1420,99 +1565,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2020/11/11/storage/ceph/async-messenger-introduce/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/11/11/storage/ceph/async-messenger-introduce/" class="post-title-link" itemprop="url">AsyncMessenger介绍</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2020-11-11 15:05:40" itemprop="dateCreated datePublished" datetime="2020-11-11T15:05:40+08:00">2020-11-11</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>说到Ceph的通讯一定绕不开Messenger，无论是客户端到OSD，还是OSD到MON，或者OSD到OSD，都需要Messenger来协助完成各个模块间消息的发送、接收。Messenger有三种实现，分别是SimpleMessenger、AsyncMessenger、XioMessenger，本文以AsyncMessenger为例简单介绍一下其工作原理。</p>
-<h1 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h1><p><img src="/images/asyncmessenger/ceph-AsyncMessenger.png" alt="asyncmessenger"></p>
-<ul>
-<li><code>processors</code>线程数量由<code>cct-&gt;_conf-&gt;ms_async_op_threads</code>决定</li>
-<li><code>NetworkStack</code>中<code>workers</code>与<code>processors</code>一一对应。</li>
-<li><code>processors</code>收到请求会调创建<code>AsyncConnection</code>，并存入调用<code>AsyncConnection</code>实例的<code>accept</code>方法，<code>accept</code>通过<code>EventCenter</code>将由<code>NetworkStack</code>的<code>workers</code>调用<code>AsyncConnection</code>实例的<code>process</code>方法。(哈哈哈，绕吧，有点儿晕了吧～～～)</li>
-<li><code>processors</code>处理完accept请求后，将<code>AsyncConnection</code>实例存入<code>accepting_conns</code>，等待<code>NetworkStack</code>处理完成。</li>
-<li><code>AsyncConnection</code>的<code>process</code>被<code>NetworkStack</code>的<code>workers</code>线程调用，并构建<code>Message</code>消息通过<code>dispatch_queue</code>或<code>ms_fast_dispatch</code>发送到<code>fast_dispatchers</code>。</li>
-</ul>
-<h1 id="Message-格式"><a href="#Message-格式" class="headerlink" title="Message 格式"></a>Message 格式</h1><h2 id="CEPH-MSGR-TAG-MSG"><a href="#CEPH-MSGR-TAG-MSG" class="headerlink" title="CEPH_MSGR_TAG_MSG"></a>CEPH_MSGR_TAG_MSG</h2><p><img src="/images/asyncmessenger/ceph-message_format.png" alt="message_format"></p>
-<ul>
-<li>tag  <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> CEPH_MSGR_TAG_READY         1  <span class="comment">/* server-&gt;client: ready for messages */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CEPH_MSGR_TAG_RESETSESSION  2  <span class="comment">/* server-&gt;client: reset, try again */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CEPH_MSGR_TAG_WAIT          3  <span class="comment">/* server-&gt;client: wait for racing incoming connection */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CEPH_MSGR_TAG_RETRY_SESSION 4  <span class="comment">/* server-&gt;client + cseq: try again with higher cseq */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CEPH_MSGR_TAG_RETRY_GLOBAL  5  <span class="comment">/* server-&gt;client + gseq: try again with higher gseq */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CEPH_MSGR_TAG_CLOSE         6  <span class="comment">/* closing pipe */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CEPH_MSGR_TAG_MSG           7  <span class="comment">/* message */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CEPH_MSGR_TAG_ACK           8  <span class="comment">/* message ack */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CEPH_MSGR_TAG_KEEPALIVE     9  <span class="comment">/* just a keepalive byte! */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CEPH_MSGR_TAG_BADPROTOVER  10  <span class="comment">/* bad protocol version */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CEPH_MSGR_TAG_BADAUTHORIZER 11 <span class="comment">/* bad authorizer */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CEPH_MSGR_TAG_FEATURES      12 <span class="comment">/* insufficient features */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CEPH_MSGR_TAG_SEQ           13 <span class="comment">/* 64-bit int follows with seen seq number */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CEPH_MSGR_TAG_KEEPALIVE2     14</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CEPH_MSGR_TAG_KEEPALIVE2_ACK 15  <span class="comment">/* keepalive reply */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CEPH_MSGR_TAG_CHALLENGE_AUTHORIZER 16  <span class="comment">/* ceph v2 doing server challenge */</span></span></span><br></pre></td></tr></table></figure>
-  ** 我觉得注释处的说明写的很清楚了，此处不做过多说明了。 **</li>
-<li>header  <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">ceph_msg_header</span> &#123;</span><br><span class="line">    __le64 seq;       <span class="comment">/* message seq# for this session */</span></span><br><span class="line">    __le64 tid;       <span class="comment">/* transaction id */</span></span><br><span class="line">    __le16 type;      <span class="comment">/* message type */</span></span><br><span class="line">    __le16 priority;  <span class="comment">/* priority.  higher value == higher priority */</span></span><br><span class="line">    __le16 version;   <span class="comment">/* version of message encoding */</span></span><br><span class="line"></span><br><span class="line">    __le32 front_len; <span class="comment">/* bytes in main payload */</span></span><br><span class="line">    __le32 middle_len;<span class="comment">/* bytes in middle payload */</span></span><br><span class="line">    __le32 data_len;  <span class="comment">/* bytes of data payload */</span></span><br><span class="line">    __le16 data_off;  <span class="comment">/* sender: include full offset;</span></span><br><span class="line"><span class="comment">                 receiver: mask against ~PAGE_MASK */</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">ceph_entity_name</span> src;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* oldest code we think can decode this.  unknown if zero. */</span></span><br><span class="line">    __le16 compat_version;</span><br><span class="line">    __le16 reserved;</span><br><span class="line">    __le32 crc;       <span class="comment">/* header crc32c */</span></span><br><span class="line">&#125; __attribute__ ((packed));</span><br></pre></td></tr></table></figure></li>
-<li>payload<br>  *** 未知 ***</li>
-<li>middle<br>  *** 未知 ***</li>
-<li>data<br>  具体传递的数据内容，数据大小由<code>header</code>中的<code>data_len</code>决定。</li>
-<li>footer&#x2F;old_footer  <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> * follows data payload</span></span><br><span class="line"><span class="comment"> * ceph_msg_footer_old does not support digital signatures on messages PLR</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">ceph_msg_footer_old</span> &#123;</span><br><span class="line">    __le32 front_crc, middle_crc, data_crc;</span><br><span class="line">    __u8 flags;</span><br><span class="line">&#125; __attribute__ ((packed));</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">ceph_msg_footer</span> &#123;</span><br><span class="line">    __le32 front_crc, middle_crc, data_crc;</span><br><span class="line">    <span class="comment">// sig holds the 64 bits of the digital signature for the message PLR</span></span><br><span class="line">    __le64  sig;</span><br><span class="line">    __u8 flags;</span><br><span class="line">&#125; __attribute__ ((packed));</span><br></pre></td></tr></table></figure>
-  <code>footer</code>与<code>old_footer</code>之差一个签名<code>sig</code></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1582,7 +1634,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">147</span>
+          <span class="site-state-item-count">148</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

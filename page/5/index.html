@@ -188,6 +188,88 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2019/08/04/storage/ceph/s3-authorization/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2019/08/04/storage/ceph/s3-authorization/" class="post-title-link" itemprop="url">s3 authorization</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2019-08-04 15:41:23" itemprop="dateCreated datePublished" datetime="2019-08-04T15:41:23+08:00">2019-08-04</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <ol>
+<li>如果http请求中没有携带身份信息（AccessKey），则改该请求为匿名请求，会被认为是来自匿名用户的访问。</li>
+<li>如果http请求中携带了身份信息（AccessKey），则认为访问来自该AccessKey所对应的用户。由于AccessKey是可以被他人获取到的， 为了防止其他人冒用您的AccessKey来访问服务，请求中还必须携带您的签名。在申请帐号以后，您将得到AccessKey和SecretKey， SecretKey是需要保密的。签名是由此次http请求的相关信息和您的SecretKey计算得到的，其他人因为不知道您的SecretKey，将不能 计算出正确的签名。</li>
+<li>身份信息与签名可以放到请求头（Authorization）中，也可以放到请求参数中。</li>
+<li>签名的方式与Amazon S3的签名方式兼容，支持<a href="https://zhoubofsy.github.io/2019/08/04/storage/ceph/s3-authorization-v2/">signature version 2</a> 和 <a href="https://zhoubofsy.github.io/2019/08/04/storage/ceph/s3-authorization-v4/">signature version 4</a>。</li>
+</ol>
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="https://doc.bscstorage.com/doc/s2/signature/signature.html">签名算法</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2019/08/04/storage/ceph/s3-authorization-v2/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1368,207 +1450,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2018/11/21/storage/ceph/radosgw-frame/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2018/11/21/storage/ceph/radosgw-frame/" class="post-title-link" itemprop="url">Radosgw 架构</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2018-11-21 17:25:46" itemprop="dateCreated datePublished" datetime="2018-11-21T17:25:46+08:00">2018-11-21</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>** 概述 **</p>
-<p>Ceph对象网关是一个构建在<code>librados</code>之上的对象存储接口，它为应用程序访问Ceph 存储集群提供了一个<code>RESTful</code>风格的网关。</p>
-<p>Ceph 对象存储支持 2 种接口：</p>
-<ol>
-<li>兼容S3: 提供了对象存储接口，兼容<code>Amazon S3 RESTful</code>接口的一个大子集。</li>
-<li>兼容Swift: 提供了对象存储接口，兼容<code>Openstack Swift</code>接口的一个大子集。</li>
-</ol>
-<p>Ceph对象存储使用Ceph对象网关守护进程（radosgw 以下简称RGW），它是个与Ceph存储集群交互的FastCGI模块。因为它提供了与<code>OpenStack Swift</code>和<code>Amazon S3</code>兼容的接口，<code>RADOS</code>要有它自己的用户管理。Ceph对象网关可与CephFS客户端或Ceph 块设备客户端共用一个存储集群。S3和Swift接口共用一个通用命名空间，所以你可以用一个接口写如数据、然后用另一个接口取出数据。</p>
-<p>** 版本: Mimic **</p>
-<p><img src="/images/ceph/radosgw-Frame.png" alt="radosgw-Frame.png"></p>
-<h1 id="架构"><a href="#架构" class="headerlink" title="架构"></a>架构</h1><p>RGW 主要由3部分组成。Frontend，用于接收回复外部客户端的http请求；REST，根据外部请求的http信息选择相应的REST、Handler、Op对请求进行分解处理；RGWRados，完成了对数据读写业务的封装。</p>
-<h2 id="Frontend"><a href="#Frontend" class="headerlink" title="Frontend"></a>Frontend</h2><p>Frontend包括Frontend Config(<code>RGWFrontendConfig</code>)、Civetweb(<code>RGWCivetWebFrontend</code>)、beast(<code>RGWAsioFrontend</code>)、loadgen(<code>RGWLoadGenFrontend</code>)、fastcgi&#x2F;fcgi(<code>RGWFCGXFrontend</code>)。用一个map管理所有<code>RGWFrontendConfig</code>配置信息对象；用一个list管理所有<code>RGWFrontend</code>对象。每个<code>RGWFrontend</code>实例使用与之对应的<code>RGWFrontendConfig</code>实例进行配置。</p>
-<p>Frontend负责接收客户端的请求，然后回调<code>process_request</code>方法处理该请求，并将响应信息返回客户端。</p>
-<ul>
-<li>Frontend Config</li>
-<li>Civetweb</li>
-<li>Beast</li>
-<li>Loadgen</li>
-<li>FastCGI&#x2F;FCGI</li>
-</ul>
-<h2 id="REST"><a href="#REST" class="headerlink" title="REST"></a>REST</h2><p>REST包括request process、S3 resource、Swift resource、Swift auth resource、Admin Usage resource、Admin User resource、Admin Metadata resource、Admin Realm resource、Admin Config resource、Admin Bucket resource、Admin OpState resource、Admin Log resource、 Admin Replica-log resource。每个resource包含一个RESTMgr、多个Handler、多个Op。</p>
-<p>就在刚刚Frontend回调了<code>process_request</code>，<code>process_request</code>通过RESTMgr取得handler，handler再根据Http Method取得Op，Op再对数据进行读写操作。</p>
-<h3 id="REST-Resource"><a href="#REST-Resource" class="headerlink" title="REST Resource"></a>REST Resource</h3><h4 id="S3"><a href="#S3" class="headerlink" title="S3"></a>S3</h4><p>** 组成 **</p>
-<ul>
-<li>RESTMgr<br>  有1个<code>RGWRESTMgr_S3</code>组成。</li>
-<li>Handler<br>  有6个Handler组成，分别是：<code>RGWHandler_REST_Service_S3</code>、<code>RGWHandler_REST_Bucket_S3</code>、<code>RGWHandler_REST_Obj_S3</code>、<code>RGWHandler_REST_Service_S3Website</code>、<code>RGWHandler_REST_Bucket_S3Website</code>、<code>RGWHandler_REST_Obj_S3Website</code>。</li>
-</ul>
-<p>** 功能 **</p>
-<ul>
-<li><code>RGWHandler_REST_Service_S3</code>, 完成如下功能：<ol>
-<li>获取Usage信息</li>
-<li>List Buckets </li>
-<li>Role信息操作</li>
-</ol>
-</li>
-<li><code>RGWHandler_REST_Bucket_S3</code>，完成如下功能：<ol>
-<li>Bucket ACL信息操作</li>
-<li>Bucket Core信息操作</li>
-<li>Bucket Payment信息操作</li>
-<li>Bucket LC信息操作</li>
-<li>Bucket Policy信息操作</li>
-<li>Bucket操作</li>
-</ol>
-</li>
-<li><code>RGWHandler_REST_Obj_S3</code>，完成如下功能：<ol>
-<li>Object ACL操作</li>
-<li>Object tagging操作</li>
-<li>Object Multipart上传操作</li>
-<li>Object 操作</li>
-<li>Object Copy操作</li>
-</ol>
-</li>
-</ul>
-<h4 id="Swift"><a href="#Swift" class="headerlink" title="Swift"></a>Swift</h4><p>** 组成 **</p>
-<ul>
-<li>RESTMgr<br>  由<code>RGWRESTMgr_SWIFT</code>、<code>RGWRESTMgr_SWIFT_CrossDomain</code>、<code>RGWRESTMgr_SWIFT_HealthCheck</code>、<code>RGWRESTMgr_SWIFT_Info</code>组成。</li>
-<li>Handler<br>  由<code>RGWHandler_REST_Service_SWIFT</code>、<code>RGWHandler_REST_Bucket_SWIFT</code>、<code>RGWHandler_REST_Obj_SWIFT</code>、<code>RGWHandler_REST_SWIFT_Info</code>、<code>RGWHandler_SWIFT_HealthCheck</code>、<code>RGWHandler_SWIFT_CrossDomain</code>组成。</li>
-</ul>
-<h4 id="Swift-auth"><a href="#Swift-auth" class="headerlink" title="Swift auth"></a>Swift auth</h4><p>** 组成 **</p>
-<ul>
-<li>RESTMgr<br>  由1个<code>RGWRESTMgr_SWIFT_Auth</code>组成。</li>
-<li>Handler<br>  由1个<code>RGWHandler_SWIFT_Auth</code>组成。</li>
-</ul>
-<h4 id="Admin"><a href="#Admin" class="headerlink" title="Admin"></a>Admin</h4><p>** 组成 **</p>
-<ul>
-<li>RESTMgr<br>  由<code>RGWRESTMgr_Usage</code>、<code>RGWRESTMgr_User</code>、<code>RGWRESTMgr_Bucket</code>、<code>RGWRESTMgr_Metadata</code>、<code>RGWRESTMgr_Log</code>、<code>RGWRESTMgr_Opstate</code>、<code>RGWRESTMgr_ReplicaLog</code>、<code>RGWRESTMgr_Config</code>、<code>RGWRESTMgr_Realm</code>、<code>RGWRESTMgr_Period</code>组成。</li>
-<li>Handler<br>  由<code>RGWHandler_Usage</code>、<code>RGWHandler_User</code>、<code>RGWHandler_Bucket</code>、<code>RGWHandler_Metadata</code>、<code>RGWHandler_Log</code>、<code>RGWHandler_Opstate</code>、<code>RGWHandler_ReplicaLog</code>、<code>RGWHandler_Config</code>、<code>RGWHandler_Realm</code>、<code>RGWHandler_Period</code>组成。</li>
-</ul>
-<h3 id="Op"><a href="#Op" class="headerlink" title="Op"></a>Op</h3><h4 id="RGWOp"><a href="#RGWOp" class="headerlink" title="RGWOp"></a>RGWOp</h4><ul>
-<li>Object Tags<br>  <code>RGWGetObjTags</code> <code>RGWPutObjTags</code> <code>RGWDeleteObjTags</code>实现对象属性<code>user.rgw.x-amz-tagging</code>的查询、设置、删除操作 </li>
-<li>Bulk<br>  <code>RGWBulkDelete</code> <code>RGWBulkUploadOp</code> Swift专享批量上传、删除操作</li>
-<li>Usage<br>  <code>RGWGetUsage</code> 获取usage信息操作</li>
-<li>Stat<br>  <code>RGWStatAccount</code>统计buckets的使用情况 </li>
-<li>Bucket<br>  <code>RGWListBuckets</code>列出所有buckets<br>  <code>RGWGetBucketLocation</code>获取bucket location<br>  <code>RGWGetBucketVersioning</code>获取bucket versioning、mfa-delete状态<br>  <code>RGWSetBucketVersioning</code> 设置bucket versioning<br>  <code>RGWGetBucketWebsite</code>获取bucket website信息<br>  <code>RGWSetBucketWebsite</code>设置bucket website<br>  <code>RGWDeleteBucketWebsite</code>删除bucket website<br>  <code>RGWStatBucket</code>获取bucket信息<br>  <code>RGWCreateBucket</code>创建bucket操作<br>  <code>RGWDeleteBucket</code>删除bucket操作<br>  <code>RGWPutBucketPolicy</code>设置bucket policy<br>  <code>RGWGetBucketPolicy</code>获取bucket policy<br>  <code>RGWDeleteBucketPolicy</code>删除bucket policy </li>
-<li>Object<br>  <code>RGWPutObj</code> <code>RGWPostObj</code> <code>RGWGetObj</code> <code>RGWDeleteObj</code> <code>RGWCopyObj</code>实现对象的创建、修改、下载、删除、拷贝操作<br>  <code>RGWListBucket</code>列出bucket中的对象 </li>
-<li>Metadata<br>  <code>RGWPutMetadataAccount</code>Swift专享保存user所有属性信息(<code>RGWUserInfo</code>)<br>  <code>RGWPutMetadataBucket</code>Swift专享保存bucket所有属性信息<br>  <code>RGWPutMetadataObject</code>Swift专享保存object所有属性信息</li>
-<li>ACL<br>  <code>RGWGetACLs</code> <code>RGWPutACLs</code> 实现对bucket或object的访问控制策略属性(<code>user.rgw.acl</code>)的获取、设置操作</li>
-<li>LC<br>  <code>RGWGetLC</code> <code>RGWPutLC</code> <code>RGWDeleteLC</code>实现对bucket的生命周期属性(<code>user.rgw.lc</code>)的获取、设置、删除操作</li>
-<li>CORS<br>  <code>RGWGetCORS</code> <code>RGWPutCORS</code> <code>RGWDeleteCORS</code> <code>RGWOptionsCORS</code>实现对bucket的CORS属性(<code>user.rgw.cors</code>)的获取、设置、删除、Options操作<br>  <code>RGWGetCrossDomainPolicy</code>Swift专享获取CrossDomain策略信息操作</li>
-<li>Payment<br>  <code>RGWGetRequestPayment</code> <code>RGWSetRequestPayment</code>实现对bucket的payment属性的获取、设置操作</li>
-<li>Multipart<br>  <code>RGWInitMultipart</code> <code>RGWCompleteMultipart</code> <code>RGWAbortMultipart</code> <code>RGWListMultipart</code> <code>RGWListBucketMultiparts</code> <code>RGWDeleteMultiObj</code>实现对Object的分片上传的操作</li>
-<li>HealthCheck<br>  <code>RGWGetHealthCheck</code>Swift专享访问判断配置文件中的<code>rgw_healthcheck_disabling_path</code>是否可以被访问操作</li>
-<li>Swift Info<br>  <code>RGWInfo</code>Swift专享获取Swift信息</li>
-<li>Layout<br>  <code>RGWGetObjLayout</code>获取Object的layout信息</li>
-<li>Bucket MateSearch Config<br>  <code>RGWConfigBucketMetaSearch</code> <code>RGWGetBucketMetaSearch</code> <code>RGWDelBucketMetaSearch</code>实现对Bucket的MetaSearch Config属性的配置、查询、删除操作</li>
-<li>Cluster<br>  <code>RGWGetClusterStat</code>获取Cluster状态</li>
-</ul>
-<h4 id="AdminOp"><a href="#AdminOp" class="headerlink" title="AdminOp"></a>AdminOp</h4><ul>
-<li>Usage<br>  <code>RGWOp_Usage_Get</code> <code>RGWOp_Usage_Delete</code>获取usage信息操作</li>
-<li>User<br>  <code>RGWOp_User_Info</code> <code>RGWOp_User_Create</code> <code>RGWOp_User_Modify</code> <code>RGWOp_User_Remove</code>user信息的获取、创建、修改、删除操作<br>  <code>RGWOp_Subuser_Create</code> <code>RGWOp_Subuser_Modify</code> <code>RGWOp_Subuser_Remove</code>swift user的创建、修改、删除操作<br>  <code>RGWOp_Key_Create</code> <code>RGWOp_Key_Remove</code>AccessKey、SecretKey的创建、删除操作<br>  <code>RGWOp_Caps_Add</code> <code>RGWOp_Caps_Remove</code>Caps属性的增加、删除操作<br>  <code>RGWOp_Quota_Info</code> <code>RGWOp_Quota_Set</code>Quota的信息的获取、设置操作</li>
-<li>Bucket<br>  <code>RGWOp_Bucket_Info</code>获取bucket信息操作<br>  <code>RGWOp_Get_Policy</code>获取bucket的policy信息操作<br>  <code>RGWOp_Check_Bucket_Index</code>检查bucket index操作<br>  <code>RGWOp_Bucket_Link</code> <code>RGWOp_Bucket_Unlink</code>关联、去关联bucket与user操作<br>  <code>RGWOp_Bucket_Remove</code>删除bucket操作<br>  <code>RGWOp_Set_Bucket_Quota</code>设置bucket quota属性操作<br>  <code>RGWOp_Object_Remove</code>删除bucket内的object操作</li>
-<li>Metadata<br>  <code>RGWOp_Metadata_List</code> <code>RGWOp_Metadata_Get</code> <code>RGWOp_Metadata_Put</code> <code>RGWOp_Metadata_Delete</code> <code>RGWOp_Metadata_Lock</code> <code>RGWOp_Metadata_Unlock</code>实现对Metadata数据的管理操作</li>
-<li>Log<br>  <code>RGWOp_BILog_List</code> <code>RGWOp_BILog_Info</code> <code>RGWOp_BILog_Delete</code> <code>RGWOp_BILog_Status</code>实现对bucket index log的管理<br>  <code>RGWOp_MDLog_List</code> <code>RGWOp_MDLog_Info</code> <code>RGWOp_MDLog_ShardInfo</code> <code>RGWOp_MDLog_Lock</code> <code>RGWOp_MDLog_Unlock</code> <code>RGWOp_MDLog_Notify</code> <code>RGWOp_MDLog_Delete</code> <code>RGWOp_MDLog_Status</code>实现对Metadata log的管理<br>  <code>RGWOp_DATALog_List</code> <code>RGWOp_DATALog_Info</code> <code>RGWOp_DATALog_ShardInfo</code> <code>RGWOp_DATALog_Lock</code> <code>RGWOp_DATALog_Unlock</code> <code>RGWOp_DATALog_Notify</code> <code>RGWOp_DATALog_Delete</code> <code>RGWOp_DATALog_Status</code>实现对Data log的管理</li>
-<li>Opstate<br>  <code>RGWOp_Opstate_List</code> <code>RGWOp_Opstate_Set</code> <code>RGWOp_Opstate_Renew</code> <code>RGWOp_Opstate_Delete</code>获取远端object的操作日志管理</li>
-<li>ReplicaLog<br>  <code>RGWOp_OBJLog_GetBounds</code> <code>RGWOp_OBJLog_SetBounds</code> <code>RGWOp_OBJLog_DeleteBounds</code>Object同步日志管理<br>  <code>RGWOp_BILog_GetBounds</code> <code>RGWOp_BILog_SetBounds</code> <code>RGWOp_BILog_DeleteBounds</code>Bucket同步日志管理</li>
-<li>Zone<br>  <code>RGWOp_ZoneGroupMap_Get</code> <code>RGWOp_ZoneConfig_Get</code>获取zonegroup map 和 zone config操作</li>
-<li>Realm<br>  <code>RGWOp_Realm_Get</code>获取realm信息操作<br>  <code>RGWOp_Period_Get</code> <code>RGWOp_Period_Post</code>获取、设置Period信息操作</li>
-</ul>
-<h3 id="request-process"><a href="#request-process" class="headerlink" title="request process"></a>request process</h3><p>RGW的所有请求都需要回调<code>process_request</code>这个函数来处理，所以<code>process_request</code>处理过程十分重要。</p>
-<h4 id="处理流程"><a href="#处理流程" class="headerlink" title="处理流程"></a>处理流程</h4><ol>
-<li>获取<code>RGWHandler_REST</code><br> 1.1. 获取<code>RGWRESTMgr</code>对象<br> 各种REST resource 都保存在一个map中，当请求到来时根据传入的<code>frontend_prefix</code>和uri信息在map中查找对应的<code>RGWRESTMgr</code><br> 1.2. 通过<code>RGWRESTMgr</code>的<code>get_handler</code>获取<code>RGWHandler_REST</code>对象<br> 1.3. 调用<code>RGWHandler_REST</code>对象的<code>init</code>方法进行初始化</li>
-<li>调用<code>RGWHandler_REST</code>对象的<code>get_op</code>方法获取<code>RGWOp</code>对象</li>
-<li>调用<code>RGWOp</code>对象的<code>verify_request</code>的方法，根据不同的操作进行不同的请求授权检查</li>
-<li>调用<code>RGWHandler_REST</code>对象的<code>postauth_init</code>方法，进行bucket和tenant解析及验证等操作</li>
-<li>调用<code>RGWHandler_REST</code>对象的<code>init_permissions</code>方法，进行初始化权限<br> 5.1. 如果是创建Bucket操作(RGW_OP_CREATE_BUCKET)直接忽略此操作<br> 5.2. 非创建Bucket操作，通过调用<code>RGWHandler_REST</code>对象的<code>do_init_permissions</code>方法进行初始化权限</li>
-<li>调用<code>RGWHandler_REST</code>对象的<code>read_permissions</code>方法，获取Object的AccessControlPolicy，若处理的是Bucket直接忽略</li>
-<li>调用<code>RGWOp</code>对象的<code>init_processing</code>方法，获取bucket和user的quota信息</li>
-<li>调用<code>RGWOp</code>对象的<code>verify_op_mask</code>验证操作的种类是否为<code>RGW_OP_TYPE_READ</code>、<code>RGW_OP_TYPE_WRITE</code>、<code>RGW_OP_TYPE_DELETE</code>中的一个或多个</li>
-<li>调用<code>RGWOp</code>对象的<code>verify_permission</code>检查当前的操作在之前的<code>init_permissions</code>获取的策略之下是否有权限</li>
-<li>调用<code>RGWOp</code>对象的<code>verify_params</code>检查当前操作的参数</li>
-<li>调用<code>RGWOp</code>对象的<code>pre_exec</code>执行预执行操作</li>
-<li>调用<code>RGWOp</code>对象的<code>execute</code>执行操作</li>
-<li>调用<code>RGWOp</code>对象的<code>complete</code>完成操作，并整理响应结果</li>
-</ol>
-<h2 id="RGWRados"><a href="#RGWRados" class="headerlink" title="RGWRados"></a>RGWRados</h2><ul>
-<li>Bucket Op<br>  使用librados完成Bucket创建、删除、设置、获取等相关操作</li>
-<li>Object Op<br>  对Object的读写、属性获取设置等操作，所有操作都分为两类，一类是System Obj，包括metadata信息、realm信息、role信息、bucket信息等rgw内一些配置信息；另一类是Normal Obj，一般为用户上传的object</li>
-<li>Cache<br>  对Bucket info信息和User info信息及所有Object的缓存。缓存失效采用LRU算法，采用超时失效＋有效窗口方式判断缓存数据是否失效。</li>
-<li>Watcher<br>  监听<code>.rgw.control</code>pool中<code>nodify</code>的对象，当发生对Object（包括System Obj 和 Normal Obj）的增删改操作时，都会触发<code>nodify</code>的更新。Watcher再调用<code>watch_cb</code>去更新Object的缓存信息</li>
-<li>Pools<br>  对root pool(<code>.rgw</code>)、control pool(<code>.rgw.control</code>)、gc pool(<code>.rgw.gc</code>)、lc pool(<code>.rgw.lc</code>)、objexp pool、reshard pool的IoCtx管理及操作</li>
-<li>GC<br>  对象的删除操作不会真的将对象删除，而是在对象的属性中增加<code>olh.</code>，然后将对象存入<code>.rgw.gc</code>中。GC中的回收线程会每隔1小时处理一次，每次处理从<code>.rgw.gc</code>中获取对象并删除，每次处理的超时时间为1小时。</li>
-<li>Obj Expirer(OE)<br>  对象的Version删除功能，通过设置对象的<code>delete_at</code>属性来等待OE清扫线程进行删除，OE清扫线程每隔10分钟处理一次。</li>
-<li>LC<br>  bucket通过<code>user.rgw.lc</code>属性配置LC，开启了LC的bucket会被随机分配到<code>.rgw.lc</code>pool的<code>lc.&#123;index&#125;</code>对象上。LC处理线程会随机获取<code>lc.&#123;index&#125;</code>对象，对其上记录的bucket中的object进行处理，判断其是否过期失效，若失效则删除。</li>
-<li>Quota<br>  <code>bucket_stats_cache</code>和<code>user_stats_cache</code>分别缓存bucket和user的quota信息，并提供<code>check_quota</code>操作检查是否超出quota的限制。</li>
-<li>Reshard<br>  bucket index用于索引bucket内的Object，这些index存在shard文件上。随着bucket内object的数量增加，整个shard文件也在不断增长，当object数量超过“<code>bucket shard数</code>*<code>每个shard最大容纳object数量(默认值：100000)</code>”时，触发reshard操作分配更多的shard文件用于存储index。</li>
-<li>Sync<br>  根据metadata log 和 data log 同步 metadata 和 data 数据。当用户对metadata或data写入操作时，保存对应log信息，然后通过notifier模块唤醒SyncProcessor模块来同步log信息并处理。</li>
-<li>Realm<br>  包括Realm、zonggroup、zone、period四部分；period用于管理realm配置信息，一个realm包括多个zonegroup，每个zonegroup包括多个zone；一个realm中只能有一个master zonegroup，这个zonegroup中只能有一个master zone。用户修改period时，通过<code>.rgw.root</code>pool中的<code>periods.&#123;realm id&#125;.control</code>对象将通知<code>Realm Watcher</code>进行更改realm配置。</li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1638,7 +1519,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">147</span>
+          <span class="site-state-item-count">148</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

@@ -188,6 +188,150 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2024/12/13/blockchain/ethereum/abi-principle-apply/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2024/12/13/blockchain/ethereum/abi-principle-apply/" class="post-title-link" itemprop="url">ABI格式和使用</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2024-12-13 17:55:44 / Modified: 17:58:29" itemprop="dateCreated datePublished" datetime="2024-12-13T17:55:44+08:00">2024-12-13</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/blockchain/" itemprop="url" rel="index"><span itemprop="name">blockchain</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="什么是-ABI-Application-Binary-Interface"><a href="#什么是-ABI-Application-Binary-Interface" class="headerlink" title="什么是 ABI (Application Binary Interface)?"></a>什么是 ABI (Application Binary Interface)?</h2><p>在 Solidity 中，ABI（应用二进制接口）是智能合约与外界（包括其他合约和用户界面）交互的桥梁。它定义了智能合约中函数的编码方式、输入参数和返回值的格式，以便在区块链中进行数据的传输和解析。</p>
+<h3 id="ABI-的作用"><a href="#ABI-的作用" class="headerlink" title="ABI 的作用"></a>ABI 的作用</h3><ol>
+<li><strong>数据编码与解码</strong>：在区块链中，所有的数据都以二进制形式存储和传输。ABI 提供了标准化的编码规则，使得智能合约的函数调用可以正确地解释输入和输出数据。</li>
+<li><strong>合约交互</strong>：外部程序（如 DApp）需要 ABI 文件来与合约交互，了解合约的函数和参数。</li>
+<li><strong>兼容性</strong>：通过 ABI，智能合约之间可以互操作，即使它们是由不同的开发人员编写的。</li>
+</ol>
+<h3 id="ABI-的重要性"><a href="#ABI-的重要性" class="headerlink" title="ABI 的重要性"></a>ABI 的重要性</h3><ul>
+<li><strong>统一性</strong>：ABI 使得智能合约与外部交互的过程标准化，避免了自定义协议带来的复杂性。</li>
+<li><strong>跨语言支持</strong>：无论是前端、后端，还是区块链中的其他合约，都可以基于 ABI 与合约进行交互。</li>
+</ul>
+<h2 id="ABI的原理"><a href="#ABI的原理" class="headerlink" title="ABI的原理"></a>ABI的原理</h2><h3 id="ABI-的结构"><a href="#ABI-的结构" class="headerlink" title="ABI 的结构"></a>ABI 的结构</h3><p>ABI 通常是以 JSON 格式生成的文件，描述了智能合约的函数、事件及其参数。</p>
+<p><strong>示例合约</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">pragma solidity ^0.8.0;</span><br><span class="line"></span><br><span class="line">contract Example &#123;</span><br><span class="line">    uint256 public value;</span><br><span class="line"></span><br><span class="line">    event ValueChanged(uint256 newValue);</span><br><span class="line"></span><br><span class="line">    function setValue(uint256 _value) public &#123;</span><br><span class="line">        value = _value;</span><br><span class="line">        emit ValueChanged(_value);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function getValue() public view returns (uint256) &#123;</span><br><span class="line">        return value;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>ABI 的 JSON 表示</strong></p>
+<p>运行 <code>solc --abi Example.sol</code> 会生成以下 ABI 文件：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">[</span></span><br><span class="line">    <span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;anonymous&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;inputs&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">            <span class="punctuation">&#123;</span></span><br><span class="line">                <span class="attr">&quot;indexed&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">false</span></span><span class="punctuation">,</span></span><br><span class="line">                <span class="attr">&quot;internalType&quot;</span><span class="punctuation">:</span> <span class="string">&quot;uint256&quot;</span><span class="punctuation">,</span></span><br><span class="line">                <span class="attr">&quot;name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;newValue&quot;</span><span class="punctuation">,</span></span><br><span class="line">                <span class="attr">&quot;type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;uint256&quot;</span></span><br><span class="line">            <span class="punctuation">&#125;</span></span><br><span class="line">        <span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;ValueChanged&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;event&quot;</span></span><br><span class="line">    <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;inputs&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;getValue&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;outputs&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">            <span class="punctuation">&#123;</span></span><br><span class="line">                <span class="attr">&quot;internalType&quot;</span><span class="punctuation">:</span> <span class="string">&quot;uint256&quot;</span><span class="punctuation">,</span></span><br><span class="line">                <span class="attr">&quot;name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">                <span class="attr">&quot;type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;uint256&quot;</span></span><br><span class="line">            <span class="punctuation">&#125;</span></span><br><span class="line">        <span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;stateMutability&quot;</span><span class="punctuation">:</span> <span class="string">&quot;view&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;function&quot;</span></span><br><span class="line">    <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;inputs&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">            <span class="punctuation">&#123;</span></span><br><span class="line">                <span class="attr">&quot;internalType&quot;</span><span class="punctuation">:</span> <span class="string">&quot;uint256&quot;</span><span class="punctuation">,</span></span><br><span class="line">                <span class="attr">&quot;name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;_value&quot;</span><span class="punctuation">,</span></span><br><span class="line">                <span class="attr">&quot;type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;uint256&quot;</span></span><br><span class="line">            <span class="punctuation">&#125;</span></span><br><span class="line">        <span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;setValue&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;outputs&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;stateMutability&quot;</span><span class="punctuation">:</span> <span class="string">&quot;nonpayable&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;function&quot;</span></span><br><span class="line">    <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;inputs&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;value&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;outputs&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">            <span class="punctuation">&#123;</span></span><br><span class="line">                <span class="attr">&quot;internalType&quot;</span><span class="punctuation">:</span> <span class="string">&quot;uint256&quot;</span><span class="punctuation">,</span></span><br><span class="line">                <span class="attr">&quot;name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;&quot;</span><span class="punctuation">,</span></span><br><span class="line">                <span class="attr">&quot;type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;uint256&quot;</span></span><br><span class="line">            <span class="punctuation">&#125;</span></span><br><span class="line">        <span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;stateMutability&quot;</span><span class="punctuation">:</span> <span class="string">&quot;view&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;function&quot;</span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">]</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="ABI-的关键字段"><a href="#ABI-的关键字段" class="headerlink" title="ABI 的关键字段"></a>ABI 的关键字段</h3><ol>
+<li><strong><code>type</code></strong><br> 定义元素的类型：<ul>
+<li><code>function</code>：表示合约函数。</li>
+<li><code>event</code>：表示事件。</li>
+<li><code>constructor</code>：表示构造函数。</li>
+<li><code>fallback</code>：表示回退函数。</li>
+<li><code>receive</code>：表示接收以太币的特殊函数。</li>
+</ul>
+</li>
+<li><strong><code>name</code></strong><br> 函数或事件的名称（不适用于匿名函数）。</li>
+<li><strong><code>inputs</code></strong><br> 表示函数或事件的输入参数列表。每个参数包含：<ul>
+<li><code>internalType</code>：Solidity 内部类型。</li>
+<li><code>name</code>：参数名称。</li>
+<li><code>type</code>：外部使用的类型（如 <code>uint256</code>）。</li>
+</ul>
+</li>
+<li><strong><code>outputs</code></strong><br> 表示函数的返回值列表，格式与 <code>inputs</code> 相同。</li>
+<li><strong><code>stateMutability</code></strong><br> 表示函数的状态：<ul>
+<li><code>view</code>：只读，不修改状态。</li>
+<li><code>pure</code>：不读写状态。</li>
+<li><code>nonpayable</code>：不允许发送以太币。</li>
+<li><code>payable</code>：允许发送以太币。</li>
+</ul>
+</li>
+<li><strong><code>anonymous</code></strong><br> 仅适用于事件，表示事件是否匿名。</li>
+</ol>
+<h3 id="ABI-编码规则"><a href="#ABI-编码规则" class="headerlink" title="ABI 编码规则"></a>ABI 编码规则</h3><p>ABI 定义了调用合约函数时参数的编码方式。以下是编码的关键点：</p>
+<h4 id="编码示例"><a href="#编码示例" class="headerlink" title="编码示例"></a>编码示例</h4><p>调用 <code>setValue(42)</code> 的编码过程如下：</p>
+<ol>
+<li>函数签名的 Keccak 哈希： <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">setValue(uint256) -&gt; 0x55241077</span><br></pre></td></tr></table></figure></li>
+<li>参数的编码： <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">42 -&gt; 000000000000000000000000000000000000000000000000000000000000002a</span><br></pre></td></tr></table></figure></li>
+<li>完整的编码： <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">0x55241077000000000000000000000000000000000000000000000000000000000000002a</span><br></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="ABI-解码规则"><a href="#ABI-解码规则" class="headerlink" title="ABI 解码规则"></a><strong>ABI 解码规则</strong></h3><p>返回值的解码也遵循 ABI 的规则。<br>例如，<code>getValue()</code> 返回 <code>42</code> 时：</p>
+<ol>
+<li>返回数据： <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">0x000000000000000000000000000000000000000000000000000000000000002a</span><br></pre></td></tr></table></figure></li>
+<li>解码为 <code>42</code></li>
+</ol>
+<h2 id="ABI-的使用"><a href="#ABI-的使用" class="headerlink" title="ABI 的使用"></a>ABI 的使用</h2><h3 id="使用场景-1-智能合约调用"><a href="#使用场景-1-智能合约调用" class="headerlink" title="使用场景 1: 智能合约调用"></a>使用场景 1: 智能合约调用</h3><p><strong>场景描述：</strong></p>
+<p>通过 Golang 使用 ABI 文件调用智能合约上的函数，例如调用只读函数或发送交易调用状态变更函数。</p>
+<p><strong>代码示例：</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><span class="line">package main</span><br><span class="line"></span><br><span class="line">import (</span><br><span class="line">	&quot;context&quot;</span><br><span class="line">	&quot;fmt&quot;</span><br><span class="line">	&quot;log&quot;</span><br><span class="line">	&quot;math/big&quot;</span><br><span class="line"></span><br><span class="line">	&quot;github.com/ethereum/go-ethereum/accounts/abi&quot;</span><br><span class="line">	&quot;github.com/ethereum/go-ethereum/accounts/abi/bind&quot;</span><br><span class="line">	&quot;github.com/ethereum/go-ethereum/ethclient&quot;</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">func main() &#123;</span><br><span class="line">	// 1. 连接到 Ethereum 节点</span><br><span class="line">	client, err := ethclient.Dial(&quot;https://mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID&quot;)</span><br><span class="line">	if err != nil &#123;</span><br><span class="line">		log.Fatalf(&quot;Failed to connect to Ethereum node: %v&quot;, err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	// 2. 合约地址和 ABI 定义</span><br><span class="line">	contractAddress := &quot;0xYourContractAddress&quot;</span><br><span class="line">	contractABI := `[&#123;&quot;constant&quot;:true,&quot;inputs&quot;:[],&quot;name&quot;:&quot;getValue&quot;,&quot;outputs&quot;:[&#123;&quot;name&quot;:&quot;&quot;,&quot;type&quot;:&quot;uint256&quot;&#125;],&quot;payable&quot;:false,&quot;stateMutability&quot;:&quot;view&quot;,&quot;type&quot;:&quot;function&quot;&#125;]`</span><br><span class="line"></span><br><span class="line">	// 3. 解析 ABI</span><br><span class="line">	parsedABI, err := abi.JSON(strings.NewReader(contractABI))</span><br><span class="line">	if err != nil &#123;</span><br><span class="line">		log.Fatalf(&quot;Failed to parse ABI: %v&quot;, err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	// 4. 构造合约调用</span><br><span class="line">	callOpts := &amp;bind.CallOpts&#123;Context: context.Background()&#125;</span><br><span class="line">	data, err := parsedABI.Pack(&quot;getValue&quot;)</span><br><span class="line">	if err != nil &#123;</span><br><span class="line">		log.Fatalf(&quot;Failed to pack data: %v&quot;, err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	// 5. 调用合约</span><br><span class="line">	msg := ethereum.CallMsg&#123;</span><br><span class="line">		To:   &amp;contractAddress,</span><br><span class="line">		Data: data,</span><br><span class="line">	&#125;</span><br><span class="line">	result, err := client.CallContract(context.Background(), msg, nil)</span><br><span class="line">	if err != nil &#123;</span><br><span class="line">		log.Fatalf(&quot;Failed to call contract: %v&quot;, err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	// 6. 解析返回值</span><br><span class="line">	var value *big.Int</span><br><span class="line">	err = parsedABI.UnpackIntoInterface(&amp;value, &quot;getValue&quot;, result)</span><br><span class="line">	if err != nil &#123;</span><br><span class="line">		log.Fatalf(&quot;Failed to unpack result: %v&quot;, err)</span><br><span class="line">	&#125;</span><br><span class="line">	fmt.Printf(&quot;Value: %s\n&quot;, value.String())</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="关键点："><a href="#关键点：" class="headerlink" title="关键点："></a>关键点：</h4><ol>
+<li>使用 <code>abi.JSON</code> 解析 ABI。</li>
+<li>使用 <code>Pack</code> 将函数调用和参数编码。</li>
+<li>通过 <code>CallContract</code> 调用合约。</li>
+<li>使用 <code>UnpackIntoInterface</code> 解码返回值。</li>
+</ol>
+<h3 id="使用场景-2-监听合约事件"><a href="#使用场景-2-监听合约事件" class="headerlink" title="使用场景 2: 监听合约事件"></a>使用场景 2: 监听合约事件</h3><p><strong>场景描述：</strong></p>
+<p>通过 Golang 和 ABI 监听合约事件的发生。</p>
+<p><strong>代码示例：</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line">package main</span><br><span class="line"></span><br><span class="line">import (</span><br><span class="line">	&quot;context&quot;</span><br><span class="line">	&quot;log&quot;</span><br><span class="line"></span><br><span class="line">	&quot;github.com/ethereum/go-ethereum&quot;</span><br><span class="line">	&quot;github.com/ethereum/go-ethereum/accounts/abi&quot;</span><br><span class="line">	&quot;github.com/ethereum/go-ethereum/ethclient&quot;</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">func main() &#123;</span><br><span class="line">	// 1. 连接到 Ethereum 节点</span><br><span class="line">	client, err := ethclient.Dial(&quot;wss://mainnet.infura.io/ws/v3/YOUR_INFURA_PROJECT_ID&quot;)</span><br><span class="line">	if err != nil &#123;</span><br><span class="line">		log.Fatalf(&quot;Failed to connect to Ethereum node: %v&quot;, err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	// 2. 合约地址和事件的 ABI 定义</span><br><span class="line">	contractAddress := &quot;0xYourContractAddress&quot;</span><br><span class="line">	eventABI := `[&#123;&quot;anonymous&quot;:false,&quot;inputs&quot;:[&#123;&quot;indexed&quot;:false,&quot;name&quot;:&quot;newValue&quot;,&quot;type&quot;:&quot;uint256&quot;&#125;],&quot;name&quot;:&quot;ValueChanged&quot;,&quot;type&quot;:&quot;event&quot;&#125;]`</span><br><span class="line"></span><br><span class="line">	// 3. 解析事件 ABI</span><br><span class="line">	parsedABI, err := abi.JSON(strings.NewReader(eventABI))</span><br><span class="line">	if err != nil &#123;</span><br><span class="line">		log.Fatalf(&quot;Failed to parse ABI: %v&quot;, err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	// 4. 设置日志查询过滤器</span><br><span class="line">	query := ethereum.FilterQuery&#123;</span><br><span class="line">		Addresses: []common.Address&#123;common.HexToAddress(contractAddress)&#125;,</span><br><span class="line">	&#125;</span><br><span class="line">	logs := make(chan types.Log)</span><br><span class="line">	sub, err := client.SubscribeFilterLogs(context.Background(), query, logs)</span><br><span class="line">	if err != nil &#123;</span><br><span class="line">		log.Fatalf(&quot;Failed to subscribe to logs: %v&quot;, err)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	// 5. 监听事件</span><br><span class="line">	for logEvent := range logs &#123;</span><br><span class="line">		var event struct &#123;</span><br><span class="line">			NewValue *big.Int</span><br><span class="line">		&#125;</span><br><span class="line">		err := parsedABI.UnpackIntoInterface(&amp;event, &quot;ValueChanged&quot;, logEvent.Data)</span><br><span class="line">		if err != nil &#123;</span><br><span class="line">			log.Printf(&quot;Failed to unpack event: %v&quot;, err)</span><br><span class="line">		&#125; else &#123;</span><br><span class="line">			log.Printf(&quot;New Value: %s&quot;, event.NewValue.String())</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	_ = sub // Handle subscription lifecycle as needed</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="关键点：-1"><a href="#关键点：-1" class="headerlink" title="关键点："></a>关键点：</h4><ol>
+<li>使用 <code>FilterQuery</code> 设置日志过滤器。</li>
+<li>通过 <code>SubscribeFilterLogs</code> 监听事件。</li>
+<li>使用 ABI 的 <code>UnpackIntoInterface</code> 解码事件数据。</li>
+</ol>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2024/12/11/blockchain/ethereum/kurtosis-deploy-ethereum/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -2017,151 +2161,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2024/05/24/linux/ebpf-deploy-sample/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2024/05/24/linux/ebpf-deploy-sample/" class="post-title-link" itemprop="url">eBPF开发环境搭建及示例</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-05-24 14:10:59" itemprop="dateCreated datePublished" datetime="2024-05-24T14:10:59+08:00">2024-05-24</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/linux/" itemprop="url" rel="index"><span itemprop="name">linux</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h1><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># lsb_release -a</span></span><br><span class="line">No LSB modules are available.</span><br><span class="line">Distributor ID:	Ubuntu</span><br><span class="line">Description:	Ubuntu 22.04.4 LTS</span><br><span class="line">Release:	22.04</span><br><span class="line">Codename:	jammy</span><br><span class="line"><span class="comment"># uname -a</span></span><br><span class="line">Linux ubu22 5.15.0-100-generic <span class="comment">#110-Ubuntu SMP Wed Feb 7 13:28:04 UTC 2024 aarch64 aarch64 aarch64 GNU/Linux</span></span><br></pre></td></tr></table></figure>
-
-<h1 id="包安装"><a href="#包安装" class="headerlink" title="包安装"></a>包安装</h1><p><em>安装软件包</em></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">apt install -y bison flex build-essential git cmake make libelf-dev strace tar libfl-dev libssl-dev libedit-dev zlib1g-dev  python  python3-distutils libcap-dev llvm clang</span><br></pre></td></tr></table></figure>
-
-<h2 id="安装-bcc"><a href="#安装-bcc" class="headerlink" title="安装 bcc"></a>安装 bcc</h2><p><code>bcc</code> 是一组用于 <code>eBPF</code> 开发的工具，它包括了一组用于编写和调试 <code>eBPF</code> 程序的库和命令行工具。使用 <code>bcc</code>，可以更加方便地开发和调试 <code>eBPF</code> 程序，提高开发效率和代码质量。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">apt install bpfcc-tools</span><br></pre></td></tr></table></figure>
-
-<h2 id="安装-bpftool"><a href="#安装-bpftool" class="headerlink" title="安装 bpftool"></a>安装 bpftool</h2><p><code>bpftool</code> 是一个用于管理和调试 <code>eBPF</code> 代码的命令行工具。它允许你查看和分析系统中运行的 <code>eBPF</code> 程序和映射，以及与内核中的 <code>eBPF</code> 子系统进行交互。更多内容可以查看 <a target="_blank" rel="noopener" href="https://github.com/libbpf/bpftool">bpftool Github</a></p>
-<p>使用 <code>bpftool</code>，你可以执行以下操作：</p>
-<ul>
-<li>列出当前系统中所有加载的 <code>eBPF</code> 程序和映射</li>
-<li>查看指定 <code>eBPF</code> 程序或映射的详细信息，例如指令集、内存布局等</li>
-<li>修改 <code>eBPF</code> 程序或映射的属性，例如禁用一个程序或清空一个映射</li>
-<li>将一个 <code>eBPF</code> 程序或映射导出到文件中，以便在其他系统上重新导入</li>
-<li>调试 <code>eBPF</code> 程序，例如跟踪程序的控制流、访问内存等</li>
-</ul>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">apt install -y linux-tools-$(<span class="built_in">uname</span> -r)</span><br></pre></td></tr></table></figure>
-
-<p>默认情况下 <code>bpftool</code> 命令会安装到&#x2F;<code>usr/local/sbin/</code> 下</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># bpftool version -p</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="string">&quot;version&quot;</span>: <span class="string">&quot;5.15.143&quot;</span>,</span><br><span class="line">    <span class="string">&quot;features&quot;</span>: &#123;</span><br><span class="line">        <span class="string">&quot;libbfd&quot;</span>: <span class="literal">false</span>,</span><br><span class="line">        <span class="string">&quot;skeletons&quot;</span>: <span class="literal">false</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-<h2 id="安装linux源码"><a href="#安装linux源码" class="headerlink" title="安装linux源码"></a>安装linux源码</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">apt install linux-source-5.15.0</span><br></pre></td></tr></table></figure>
-
-<h1 id="编译bpf-sample"><a href="#编译bpf-sample" class="headerlink" title="编译bpf sample"></a>编译bpf sample</h1><p><em>解压缩</em></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> /usr/src/linux-source-5.15.0/debian</span><br><span class="line">tar -jxvf linux-source-5.15.0.tar.bz2</span><br></pre></td></tr></table></figure>
-
-<p><em>Copy config文件</em></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> linux-source-5.15.0</span><br><span class="line"><span class="built_in">cp</span> -v /boot/config-$(<span class="built_in">uname</span> -r) .config</span><br><span class="line">make oldconfig &amp;&amp; make prepare</span><br></pre></td></tr></table></figure>
-
-
-<p><em>编译Samples</em></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">make -C samples/bpf</span><br></pre></td></tr></table></figure>
-
-<p>若遇到如下错误</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">......</span><br><span class="line">  CC      /usr/src/linux-source-5.15.0/samples/bpf/bpftool/prog.o</span><br><span class="line">  LINK    /usr/src/linux-source-5.15.0/samples/bpf/bpftool/bpftool</span><br><span class="line">/usr/src/linux-source-5.15.0/samples/bpf/Makefile:369: *** Cannot find a vmlinux <span class="keyword">for</span> VMLINUX_BTF at any of <span class="string">&quot;  /usr/src/linux-source-5.15.0/vmlinux&quot;</span>, build the kernel or <span class="built_in">set</span> VMLINUX_BTF or VMLINUX_H variable.  Stop.</span><br><span class="line">make[1]: *** [Makefile:1911: /usr/src/linux-source-5.15.0/samples/bpf] Error 2</span><br><span class="line">make[1]: Leaving directory <span class="string">&#x27;/usr/src/linux-source-5.15.0&#x27;</span></span><br><span class="line">make: *** [Makefile:275: all] Error 2</span><br><span class="line">make: Leaving directory <span class="string">&#x27;/usr/src/linux-source-5.15.0/samples/bpf&#x27;</span></span><br></pre></td></tr></table></figure>
-
-<p>说明需要 vmlinux，可以指定vmlinux再进行编译</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">make VMLINUX_BTF=/sys/kernel/btf/vmlinux -C samples/bpf</span><br></pre></td></tr></table></figure>
-
-<p>or</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">make VMLINUX_BTF=/sys/kernel/btf/vmlinux M=samples/bpf</span><br></pre></td></tr></table></figure>
-
-<h1 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h1><p>示例需要在 <code>usr/src/linux-source-5.15.0/samples/bpf</code>目录下进行编译。<code>samples/bpf</code> 下的程序一般组成方式是 xxx_user.c 和 xxx_kern.c</p>
-<ul>
-<li>xxx_user.c：为用户空间的程序用于设置 BPF 程序的相关配置、加载 BPF 程序至内核、设置 BPF 程序中的 map 值和读取 BPF 程序运行过程中发送至用户空间的消息等。</li>
-<li>xxx_kern.c：为 BPF 程序代码，通过 clang 编译成字节码加载至内核中，在对应事件触发的时候运行，可以接受用户空间程序发送的各种数据，并将运行时产生的数据发送至用户空间程序。</li>
-</ul>
-<p>新建两个文件：<code>bob_user.c</code>和<code>bob_kern.c</code></p>
-<p><em>bob_kern.c</em></p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;uapi/linux/bpf.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;linux/version.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;bpf/bpf_helpers.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;bpf/bpf_tracing.h&gt;</span></span></span><br><span class="line"></span><br><span class="line">SEC(<span class="string">&quot;tracepoint/syscalls/sys_enter_execve&quot;</span>)</span><br><span class="line"><span class="type">int</span> <span class="title function_">bpf_prog</span><span class="params">(<span class="keyword">struct</span> pt_regs *ctx)</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="type">char</span> fmt[] = <span class="string">&quot;bob %s !\n&quot;</span>;</span><br><span class="line">	<span class="type">char</span> comm[<span class="number">16</span>];</span><br><span class="line">	bpf_get_current_comm(&amp;comm, <span class="keyword">sizeof</span>(comm));</span><br><span class="line">	bpf_trace_printk(fmt, <span class="keyword">sizeof</span>(fmt), comm);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">char</span> _license[] SEC(<span class="string">&quot;license&quot;</span>) = <span class="string">&quot;GPL&quot;</span>;</span><br><span class="line">u32 _version <span class="title function_">SEC</span><span class="params">(<span class="string">&quot;version&quot;</span>)</span> = LINUX_VERSION_CODE;</span><br></pre></td></tr></table></figure>
-
-<p><em>bob_user.c</em></p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;bpf/libbpf.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&quot;trace_helpers.h&quot;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">(<span class="type">int</span> ac, <span class="type">char</span> **argv)</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">bpf_link</span> *<span class="title">link</span> =</span> <span class="literal">NULL</span>;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">bpf_program</span> *<span class="title">prog</span>;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">bpf_object</span> *<span class="title">obj</span>;</span></span><br><span class="line">	<span class="type">char</span> filename[<span class="number">256</span>];</span><br><span class="line"></span><br><span class="line">	<span class="built_in">snprintf</span>(filename, <span class="keyword">sizeof</span>(filename), <span class="string">&quot;%s_kern.o&quot;</span>, argv[<span class="number">0</span>]);</span><br><span class="line">	obj = bpf_object__open_file(filename, <span class="literal">NULL</span>);</span><br><span class="line">	<span class="keyword">if</span> (libbpf_get_error(obj)) &#123;</span><br><span class="line">		<span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;ERROR: opening BPF object file failed\n&quot;</span>);</span><br><span class="line">		<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	prog = bpf_object__find_program_by_name(obj, <span class="string">&quot;bpf_prog&quot;</span>);</span><br><span class="line">	<span class="keyword">if</span> (!prog) &#123;</span><br><span class="line">		<span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;ERROR: finding a prog in obj file failed\n&quot;</span>);</span><br><span class="line">		<span class="keyword">goto</span> cleanup;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/* load BPF program */</span></span><br><span class="line">	<span class="keyword">if</span> (bpf_object__load(obj)) &#123;</span><br><span class="line">		<span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;ERROR: loading BPF object file failed\n&quot;</span>);</span><br><span class="line">		<span class="keyword">goto</span> cleanup;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	link = bpf_program__attach(prog);</span><br><span class="line">	<span class="keyword">if</span> (libbpf_get_error(link)) &#123;</span><br><span class="line">		<span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;ERROR: bpf_program__attach failed\n&quot;</span>);</span><br><span class="line">		link = <span class="literal">NULL</span>;</span><br><span class="line">		<span class="keyword">goto</span> cleanup;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	read_trace_pipe();</span><br><span class="line"></span><br><span class="line">cleanup:</span><br><span class="line">	bpf_link__destroy(link);</span><br><span class="line">	bpf_object__close(obj);</span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>修改 <code>samples/bpf/Makefile</code></p>
-<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">...</span><br><span class="line">tprogs-y += xdp_sample_pkts</span><br><span class="line">tprogs-y += ibumad</span><br><span class="line">tprogs-y += hbm</span><br><span class="line"><span class="comment"># 增加 user programs</span></span><br><span class="line">tprogs-y += bob</span><br><span class="line">...</span><br><span class="line">ibumad-objs := ibumad_user.o</span><br><span class="line">hbm-objs := hbm.o <span class="variable">$(CGROUP_HELPERS)</span></span><br><span class="line"><span class="comment"># 增加 objs</span></span><br><span class="line">bob-objs := bob_user.o <span class="variable">$(TRACE_HELPERS)</span></span><br><span class="line">...</span><br><span class="line">always-y += hbm_edt_kern.o</span><br><span class="line">always-y += xdpsock_kern.o</span><br><span class="line"><span class="comment"># 增加 kernel programs</span></span><br><span class="line">always-y += bob_kern.o</span><br></pre></td></tr></table></figure>
-
-<p>编译</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">make VMLINUX_BTF=/sys/kernel/btf/vmlinux M=samples/bpf</span><br></pre></td></tr></table></figure>
-
-
-<p>运行</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># cd samples/bpf</span></span><br><span class="line"><span class="comment"># ./bob</span></span><br><span class="line">libbpf: elf: skipping unrecognized data section(4) .rodata.str1.1</span><br><span class="line">           &lt;...&gt;-3622529 [001] d...1 1751426.283602: bpf_trace_printk: bob sshd !</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">            sshd-3622530 [001] d...1 1751426.288591: bpf_trace_printk: bob sshd !</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">            sshd-3622531 [001] d...1 1751430.924951: bpf_trace_printk: bob sshd !</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">           &lt;...&gt;-3622532 [000] d...1 1751430.929273: bpf_trace_printk: bob sshd !</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">            bash-3622532 [000] d...1 1751430.930114: bpf_trace_printk: bob bash !</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">           &lt;...&gt;-3622533 [001] d...1 1751430.934470: bpf_trace_printk: bob sshd !</span><br></pre></td></tr></table></figure>
-
-
-<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/lizhijun_buaa/article/details/131644323">eBPF开发环境搭建</a></li>
-<li><a target="_blank" rel="noopener" href="https://yaoyao.io/posts/how-to-setup-ebpf-env-on-ubuntu#linux-tools">如何在 Ubuntu 上配置 eBPF 开发环境</a></li>
-<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/baidu_29900103/article/details/131188347">基于ubuntu22.04-深入浅出 eBPF</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -2231,7 +2230,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">147</span>
+          <span class="site-state-item-count">148</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

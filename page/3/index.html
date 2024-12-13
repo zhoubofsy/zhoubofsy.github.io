@@ -188,6 +188,99 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2020/11/11/storage/ceph/async-messenger-introduce/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/11/11/storage/ceph/async-messenger-introduce/" class="post-title-link" itemprop="url">AsyncMessenger介绍</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-11-11 15:05:40" itemprop="dateCreated datePublished" datetime="2020-11-11T15:05:40+08:00">2020-11-11</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>说到Ceph的通讯一定绕不开Messenger，无论是客户端到OSD，还是OSD到MON，或者OSD到OSD，都需要Messenger来协助完成各个模块间消息的发送、接收。Messenger有三种实现，分别是SimpleMessenger、AsyncMessenger、XioMessenger，本文以AsyncMessenger为例简单介绍一下其工作原理。</p>
+<h1 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h1><p><img src="/images/asyncmessenger/ceph-AsyncMessenger.png" alt="asyncmessenger"></p>
+<ul>
+<li><code>processors</code>线程数量由<code>cct-&gt;_conf-&gt;ms_async_op_threads</code>决定</li>
+<li><code>NetworkStack</code>中<code>workers</code>与<code>processors</code>一一对应。</li>
+<li><code>processors</code>收到请求会调创建<code>AsyncConnection</code>，并存入调用<code>AsyncConnection</code>实例的<code>accept</code>方法，<code>accept</code>通过<code>EventCenter</code>将由<code>NetworkStack</code>的<code>workers</code>调用<code>AsyncConnection</code>实例的<code>process</code>方法。(哈哈哈，绕吧，有点儿晕了吧～～～)</li>
+<li><code>processors</code>处理完accept请求后，将<code>AsyncConnection</code>实例存入<code>accepting_conns</code>，等待<code>NetworkStack</code>处理完成。</li>
+<li><code>AsyncConnection</code>的<code>process</code>被<code>NetworkStack</code>的<code>workers</code>线程调用，并构建<code>Message</code>消息通过<code>dispatch_queue</code>或<code>ms_fast_dispatch</code>发送到<code>fast_dispatchers</code>。</li>
+</ul>
+<h1 id="Message-格式"><a href="#Message-格式" class="headerlink" title="Message 格式"></a>Message 格式</h1><h2 id="CEPH-MSGR-TAG-MSG"><a href="#CEPH-MSGR-TAG-MSG" class="headerlink" title="CEPH_MSGR_TAG_MSG"></a>CEPH_MSGR_TAG_MSG</h2><p><img src="/images/asyncmessenger/ceph-message_format.png" alt="message_format"></p>
+<ul>
+<li>tag  <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> CEPH_MSGR_TAG_READY         1  <span class="comment">/* server-&gt;client: ready for messages */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CEPH_MSGR_TAG_RESETSESSION  2  <span class="comment">/* server-&gt;client: reset, try again */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CEPH_MSGR_TAG_WAIT          3  <span class="comment">/* server-&gt;client: wait for racing incoming connection */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CEPH_MSGR_TAG_RETRY_SESSION 4  <span class="comment">/* server-&gt;client + cseq: try again with higher cseq */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CEPH_MSGR_TAG_RETRY_GLOBAL  5  <span class="comment">/* server-&gt;client + gseq: try again with higher gseq */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CEPH_MSGR_TAG_CLOSE         6  <span class="comment">/* closing pipe */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CEPH_MSGR_TAG_MSG           7  <span class="comment">/* message */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CEPH_MSGR_TAG_ACK           8  <span class="comment">/* message ack */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CEPH_MSGR_TAG_KEEPALIVE     9  <span class="comment">/* just a keepalive byte! */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CEPH_MSGR_TAG_BADPROTOVER  10  <span class="comment">/* bad protocol version */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CEPH_MSGR_TAG_BADAUTHORIZER 11 <span class="comment">/* bad authorizer */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CEPH_MSGR_TAG_FEATURES      12 <span class="comment">/* insufficient features */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CEPH_MSGR_TAG_SEQ           13 <span class="comment">/* 64-bit int follows with seen seq number */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CEPH_MSGR_TAG_KEEPALIVE2     14</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CEPH_MSGR_TAG_KEEPALIVE2_ACK 15  <span class="comment">/* keepalive reply */</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> CEPH_MSGR_TAG_CHALLENGE_AUTHORIZER 16  <span class="comment">/* ceph v2 doing server challenge */</span></span></span><br></pre></td></tr></table></figure>
+  ** 我觉得注释处的说明写的很清楚了，此处不做过多说明了。 **</li>
+<li>header  <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">ceph_msg_header</span> &#123;</span><br><span class="line">    __le64 seq;       <span class="comment">/* message seq# for this session */</span></span><br><span class="line">    __le64 tid;       <span class="comment">/* transaction id */</span></span><br><span class="line">    __le16 type;      <span class="comment">/* message type */</span></span><br><span class="line">    __le16 priority;  <span class="comment">/* priority.  higher value == higher priority */</span></span><br><span class="line">    __le16 version;   <span class="comment">/* version of message encoding */</span></span><br><span class="line"></span><br><span class="line">    __le32 front_len; <span class="comment">/* bytes in main payload */</span></span><br><span class="line">    __le32 middle_len;<span class="comment">/* bytes in middle payload */</span></span><br><span class="line">    __le32 data_len;  <span class="comment">/* bytes of data payload */</span></span><br><span class="line">    __le16 data_off;  <span class="comment">/* sender: include full offset;</span></span><br><span class="line"><span class="comment">                 receiver: mask against ~PAGE_MASK */</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">ceph_entity_name</span> src;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* oldest code we think can decode this.  unknown if zero. */</span></span><br><span class="line">    __le16 compat_version;</span><br><span class="line">    __le16 reserved;</span><br><span class="line">    __le32 crc;       <span class="comment">/* header crc32c */</span></span><br><span class="line">&#125; __attribute__ ((packed));</span><br></pre></td></tr></table></figure></li>
+<li>payload<br>  *** 未知 ***</li>
+<li>middle<br>  *** 未知 ***</li>
+<li>data<br>  具体传递的数据内容，数据大小由<code>header</code>中的<code>data_len</code>决定。</li>
+<li>footer&#x2F;old_footer  <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> * follows data payload</span></span><br><span class="line"><span class="comment"> * ceph_msg_footer_old does not support digital signatures on messages PLR</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">ceph_msg_footer_old</span> &#123;</span><br><span class="line">    __le32 front_crc, middle_crc, data_crc;</span><br><span class="line">    __u8 flags;</span><br><span class="line">&#125; __attribute__ ((packed));</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">ceph_msg_footer</span> &#123;</span><br><span class="line">    __le32 front_crc, middle_crc, data_crc;</span><br><span class="line">    <span class="comment">// sig holds the 64 bits of the digital signature for the message PLR</span></span><br><span class="line">    __le64  sig;</span><br><span class="line">    __u8 flags;</span><br><span class="line">&#125; __attribute__ ((packed));</span><br></pre></td></tr></table></figure>
+  <code>footer</code>与<code>old_footer</code>之差一个签名<code>sig</code></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2020/11/08/algorithm/raft/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1249,105 +1342,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2019/10/16/storage/ceph/rgw-placement-usage/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2019/10/16/storage/ceph/rgw-placement-usage/" class="post-title-link" itemprop="url">RGW zongroup/zone placement 和 compression 用法</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2019-10-16 18:17:58" itemprop="dateCreated datePublished" datetime="2019-10-16T18:17:58+08:00">2019-10-16</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>书接上文，上回书咱们了解了multisite的配置，最重要的是知道了zonegroup、zone是个什么东西，该怎么用。</p>
-<p>那么今天我们来看看zonegroup和zone中的placement，顾名思义，用于告诉zone使用这个placement会将bucket、object要放到哪个里。</p>
-<p>关于single rgw的模式，可以参考官网的<a target="_blank" rel="noopener" href="https://docs.ceph.com/docs/mimic/radosgw/placement/">使用配置</a>，这里不做赘述了。下面介绍一下Multisite上的配置方法。</p>
-<h2 id="Placement"><a href="#Placement" class="headerlink" title="Placement"></a>Placement</h2><ol>
-<li>在master zone和非master zone上分别创建同名placement</li>
-<li>使用的时候可以在用户信息中指定placement，也可以在创建bucket的s3请求中指定placement。</li>
-</ol>
-<h3 id="master-zone"><a href="#master-zone" class="headerlink" title="master zone"></a>master zone</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">radosgw-admin zonegroup placement add \</span></span><br><span class="line"><span class="language-bash">        --rgw-zonegroup default \</span></span><br><span class="line"><span class="language-bash">        --placement-id cold-placement</span></span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">radosgw-admin zone placement add \</span></span><br><span class="line"><span class="language-bash">        --rgw-zone exter \</span></span><br><span class="line"><span class="language-bash">        --placement-id cold-placement \</span></span><br><span class="line"><span class="language-bash">        --data-pool exter.rgw.cold.data \</span></span><br><span class="line"><span class="language-bash">        --index-pool exter.rgw.cold.index \</span></span><br><span class="line"><span class="language-bash">        --data-extra-pool exter.rgw.cold.non-ec \</span></span><br><span class="line"><span class="language-bash">        --compression zlib</span></span><br></pre></td></tr></table></figure>
-
-<p>看一下配置完的zone（此处忽略zonegroup配置完的接口）</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">radosgw-admin zone get</span></span><br><span class="line">&#123;</span><br><span class="line">    &quot;id&quot;: &quot;69234f1d-8f48-4431-b45f-912087431a47&quot;,</span><br><span class="line">    &quot;name&quot;: &quot;exter&quot;,</span><br><span class="line">    &quot;domain_root&quot;: &quot;exter.rgw.meta:root&quot;,</span><br><span class="line">    &quot;control_pool&quot;: &quot;exter.rgw.control&quot;,</span><br><span class="line">    &quot;gc_pool&quot;: &quot;exter.rgw.log:gc&quot;,</span><br><span class="line">    &quot;lc_pool&quot;: &quot;exter.rgw.log:lc&quot;,</span><br><span class="line">    &quot;log_pool&quot;: &quot;exter.rgw.log&quot;,</span><br><span class="line">    &quot;intent_log_pool&quot;: &quot;exter.rgw.log:intent&quot;,</span><br><span class="line">    &quot;usage_log_pool&quot;: &quot;exter.rgw.log:usage&quot;,</span><br><span class="line">    &quot;reshard_pool&quot;: &quot;exter.rgw.log:reshard&quot;,</span><br><span class="line">    &quot;user_keys_pool&quot;: &quot;exter.rgw.meta:users.keys&quot;,</span><br><span class="line">    &quot;user_email_pool&quot;: &quot;exter.rgw.meta:users.email&quot;,</span><br><span class="line">    &quot;user_swift_pool&quot;: &quot;exter.rgw.meta:users.swift&quot;,</span><br><span class="line">    &quot;user_uid_pool&quot;: &quot;exter.rgw.meta:users.uid&quot;,</span><br><span class="line">    &quot;otp_pool&quot;: &quot;exter.rgw.otp&quot;,</span><br><span class="line">    &quot;system_key&quot;: &#123;</span><br><span class="line">        &quot;access_key&quot;: &quot;85ZFW53VCKBZR7DQ7GS8&quot;,</span><br><span class="line">        &quot;secret_key&quot;: &quot;MfyuJECq3Et2kktmf3T077rYwXQMEiIGYRlwKBnq&quot;</span><br><span class="line">    &#125;,</span><br><span class="line">    &quot;placement_pools&quot;: [</span><br><span class="line">        &#123;</span><br><span class="line">            &quot;key&quot;: &quot;cold-placement&quot;,</span><br><span class="line">            &quot;val&quot;: &#123;</span><br><span class="line">                &quot;index_pool&quot;: &quot;exter.rgw.cold.index&quot;,</span><br><span class="line">                &quot;data_pool&quot;: &quot;exter.rgw.cold.data&quot;,</span><br><span class="line">                &quot;data_extra_pool&quot;: &quot;exter.rgw.cold.non-ec&quot;,</span><br><span class="line">                &quot;index_type&quot;: 0,</span><br><span class="line">                &quot;compression&quot;: &quot;zlib&quot;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            &quot;key&quot;: &quot;default-placement&quot;,</span><br><span class="line">            &quot;val&quot;: &#123;</span><br><span class="line">                &quot;index_pool&quot;: &quot;exter.rgw.buckets.index&quot;,</span><br><span class="line">                &quot;data_pool&quot;: &quot;exter.rgw.buckets.data&quot;,</span><br><span class="line">                &quot;data_extra_pool&quot;: &quot;exter.rgw.buckets.non-ec&quot;,</span><br><span class="line">                &quot;index_type&quot;: 0,</span><br><span class="line">                &quot;compression&quot;: &quot;&quot;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    ],</span><br><span class="line">    &quot;metadata_heap&quot;: &quot;&quot;,</span><br><span class="line">    &quot;realm_id&quot;: &quot;&quot;</span><br><span class="line">&#125; </span><br></pre></td></tr></table></figure>
-
-<p>让上述配置生效需要<code>radosgw-admin period update --commit</code>一下。</p>
-<h3 id="非master-zone"><a href="#非master-zone" class="headerlink" title="非master zone"></a>非master zone</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">radosgw-admin zonegroup placement add \</span></span><br><span class="line"><span class="language-bash">        --rgw-zonegroup default \</span></span><br><span class="line"><span class="language-bash">        --placement-id cold-placement</span></span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">radosgw-admin zone placement add \</span></span><br><span class="line"><span class="language-bash">        --rgw-zone backup \</span></span><br><span class="line"><span class="language-bash">        --placement-id cold-placement \</span></span><br><span class="line"><span class="language-bash">        --data-pool backup.rgw.cold.data \</span></span><br><span class="line"><span class="language-bash">        --index-pool backup.rgw.cold.index \</span></span><br><span class="line"><span class="language-bash">        --data-extra-pool backup.rgw.cold.non-ec \</span></span><br><span class="line"><span class="language-bash">        --compression lz4</span></span><br></pre></td></tr></table></figure>
-<p>*** 此处用的压缩算法与之前master zone使用的不一致，不影响使用。放心。***rgw会在每个对象上记录一个压缩类型，所以即使你这一刻使用的压缩算法和之前使用的不一致也不影响解压工作。</p>
-<p>看一下配置完的zone（此处忽略zonegroup配置完的接口）</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">radosgw-admin zone get</span></span><br><span class="line">&#123;</span><br><span class="line">    &quot;id&quot;: &quot;a6621518-6f80-41f5-a736-fb5d1814e036&quot;,</span><br><span class="line">    &quot;name&quot;: &quot;backup&quot;,</span><br><span class="line">    &quot;domain_root&quot;: &quot;backup.rgw.meta:root&quot;,</span><br><span class="line">    &quot;control_pool&quot;: &quot;backup.rgw.control&quot;,</span><br><span class="line">    &quot;gc_pool&quot;: &quot;backup.rgw.log:gc&quot;,</span><br><span class="line">    &quot;lc_pool&quot;: &quot;backup.rgw.log:lc&quot;,</span><br><span class="line">    &quot;log_pool&quot;: &quot;backup.rgw.log&quot;,</span><br><span class="line">    &quot;intent_log_pool&quot;: &quot;backup.rgw.log:intent&quot;,</span><br><span class="line">    &quot;usage_log_pool&quot;: &quot;backup.rgw.log:usage&quot;,</span><br><span class="line">    &quot;reshard_pool&quot;: &quot;backup.rgw.log:reshard&quot;,</span><br><span class="line">    &quot;user_keys_pool&quot;: &quot;backup.rgw.meta:users.keys&quot;,</span><br><span class="line">    &quot;user_email_pool&quot;: &quot;backup.rgw.meta:users.email&quot;,</span><br><span class="line">    &quot;user_swift_pool&quot;: &quot;backup.rgw.meta:users.swift&quot;,</span><br><span class="line">    &quot;user_uid_pool&quot;: &quot;backup.rgw.meta:users.uid&quot;,</span><br><span class="line">    &quot;otp_pool&quot;: &quot;backup.rgw.otp&quot;,</span><br><span class="line">    &quot;system_key&quot;: &#123;</span><br><span class="line">        &quot;access_key&quot;: &quot;85ZFW53VCKBZR7DQ7GS8&quot;,</span><br><span class="line">        &quot;secret_key&quot;: &quot;MfyuJECq3Et2kktmf3T077rYwXQMEiIGYRlwKBnq&quot;</span><br><span class="line">    &#125;,</span><br><span class="line">    &quot;placement_pools&quot;: [</span><br><span class="line">        &#123;</span><br><span class="line">            &quot;key&quot;: &quot;cold-placement&quot;,</span><br><span class="line">            &quot;val&quot;: &#123;</span><br><span class="line">                &quot;index_pool&quot;: &quot;backup.rgw.cold.index&quot;,</span><br><span class="line">                &quot;data_pool&quot;: &quot;backup.rgw.cold.data&quot;,</span><br><span class="line">                &quot;data_extra_pool&quot;: &quot;backkup.rgw.cold.non-ec&quot;,</span><br><span class="line">                &quot;index_type&quot;: 0,</span><br><span class="line">                &quot;compression&quot;: &quot;lz4&quot;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            &quot;key&quot;: &quot;default-placement&quot;,</span><br><span class="line">            &quot;val&quot;: &#123;</span><br><span class="line">                &quot;index_pool&quot;: &quot;backup.rgw.buckets.index&quot;,</span><br><span class="line">                &quot;data_pool&quot;: &quot;backup.rgw.buckets.data&quot;,</span><br><span class="line">                &quot;data_extra_pool&quot;: &quot;backup.rgw.buckets.non-ec&quot;,</span><br><span class="line">                &quot;index_type&quot;: 0,</span><br><span class="line">                &quot;compression&quot;: &quot;&quot;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    ],</span><br><span class="line">    &quot;metadata_heap&quot;: &quot;&quot;,</span><br><span class="line">    &quot;realm_id&quot;: &quot;f334e6c2-c2b4-4c04-b541-f64d96c10c07&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>同样为了上诉修改生效也需要执行一下<code>radosgw-admin period update --commit</code></p>
-<h2 id="User中使用Placement"><a href="#User中使用Placement" class="headerlink" title="User中使用Placement"></a>User中使用Placement</h2><p>要想在User中配置Placement，首先得创建一个User。由于我们是在Multisite模式中创建的User，所以创建的动作必须在master zone上操作，如果在非master zone上操作用户不能同步到master zone上。具体原因请见<a href="https://zhoubofsy.github.io/2019/10/14/storage/ceph/multi-site-in-a-cluster-md/">Deploy multisite in 同一个集群</a></p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">radosgw-admin user create --uid colder --display-name colder</span></span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">radosgw-admin user info --uid colder</span></span><br><span class="line">&#123;</span><br><span class="line">    &quot;user_id&quot;: &quot;colder&quot;,</span><br><span class="line">    &quot;display_name&quot;: &quot;colder&quot;,</span><br><span class="line">    &quot;email&quot;: &quot;&quot;,</span><br><span class="line">    &quot;suspended&quot;: 0,</span><br><span class="line">    &quot;max_buckets&quot;: 1000,</span><br><span class="line">    &quot;auid&quot;: 0,</span><br><span class="line">    &quot;subusers&quot;: [],</span><br><span class="line">    &quot;keys&quot;: [</span><br><span class="line">        &#123;</span><br><span class="line">            &quot;user&quot;: &quot;colder&quot;,</span><br><span class="line">            &quot;access_key&quot;: &quot;WGCQOD46GA92J7CIGXIY&quot;,</span><br><span class="line">            &quot;secret_key&quot;: &quot;8yZw0FkYojiLdebWEF61HHTGhUvBrCel6ZzvGQRu&quot;</span><br><span class="line">        &#125;</span><br><span class="line">    ],</span><br><span class="line">    &quot;swift_keys&quot;: [],</span><br><span class="line">    &quot;caps&quot;: [],</span><br><span class="line">    &quot;op_mask&quot;: &quot;read, write, delete&quot;,</span><br><span class="line">    &quot;default_placement&quot;: &quot;&quot;,</span><br><span class="line">    &quot;placement_tags&quot;: [],</span><br><span class="line">    &quot;bucket_quota&quot;: &#123;</span><br><span class="line">        &quot;enabled&quot;: false,</span><br><span class="line">        &quot;check_on_raw&quot;: false,</span><br><span class="line">        &quot;max_size&quot;: -1,</span><br><span class="line">        &quot;max_size_kb&quot;: 0,</span><br><span class="line">        &quot;max_objects&quot;: -1</span><br><span class="line">    &#125;,</span><br><span class="line">    &quot;user_quota&quot;: &#123;</span><br><span class="line">        &quot;enabled&quot;: false,</span><br><span class="line">        &quot;check_on_raw&quot;: false,</span><br><span class="line">        &quot;max_size&quot;: -1,</span><br><span class="line">        &quot;max_size_kb&quot;: 0,</span><br><span class="line">        &quot;max_objects&quot;: -1</span><br><span class="line">    &#125;,</span><br><span class="line">    &quot;temp_url_keys&quot;: [],</span><br><span class="line">    &quot;type&quot;: &quot;rgw&quot;,</span><br><span class="line">    &quot;mfa_ids&quot;: []</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>其中<code>default_placement</code>为空，此时会使用默认的placement也就是<code>default-placement</code>。所以需要配置这个选项。但是<code>radosgw-admin</code>中没有直接配置这个项目的参数，所以需要采用导出导入metadata的方式来修改该项目。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">radosgw-admin metadata get user:colder &gt; colder.json</span></span><br></pre></td></tr></table></figure>
-<p>将user <code>colder</code>的配置导出到<code>coder.json</code>中，然后编辑其中的<code>&quot;default_placement&quot;: &quot;cold-placement&quot;,</code>，然后再将<code>colder.json</code>导入回去。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">radosgw-admin metadata put user:colder &lt; colder.json</span></span><br></pre></td></tr></table></figure>
-<p>接下来可以使用该用户的access-key和secret-key去创建bucket并上传对象了。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1417,7 +1411,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">147</span>
+          <span class="site-state-item-count">148</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

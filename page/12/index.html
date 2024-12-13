@@ -188,6 +188,106 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2016/11/17/storage/ceph/rbd-nbd/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2016/11/17/storage/ceph/rbd-nbd/" class="post-title-link" itemprop="url">rbd-nbd分析</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2016-11-17 17:00:33" itemprop="dateCreated datePublished" datetime="2016-11-17T17:00:33+08:00">2016-11-17</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h1><p>rbd通过内核的NBD驱动映射成网络设备，用户可以通过读写nbd0…等网络设备，来实现对rbd设备的读写。</p>
+<p>优点：</p>
+<ul>
+<li>nbd设备成功将客户端和rbd隔离开，不再依赖以往的内核rbd驱动；</li>
+<li>nbd与librbd的读写在应用层完成，可使用rbd cache提高性能；</li>
+<li>rbd的数据保护，可通过ceph命令完成，不需要nbd支持。</li>
+</ul>
+<p>缺点：</p>
+<ul>
+<li>要求系统必须支持nbd驱动；</li>
+<li>内核nbd与librbd通信，需要通过文件socket通信，增加数据拷贝，会影响性能；</li>
+</ul>
+<h1 id="架构"><a href="#架构" class="headerlink" title="架构"></a>架构</h1><p><img src="/images/ceph/rbd-nbd.png" alt="rbd-nbd_frame"></p>
+<ul>
+<li>客户端直接读写nbd设备（同步）</li>
+<li>内核nbd驱动，将客户端的读写信息转化成nbd_request，并通过socket发送给NBDServer（rbd－nbd实现）</li>
+<li>NBDServer是守护进程，一个快设备对应一个nbd设备，对应一个守护进程</li>
+<li>NBDServer收到内核nbd驱动的nbd_reqeust后，向librbd发起同步读写请求</li>
+<li>librbd 向 Ceph集群读写数据</li>
+<li>NBDServer接收到librbd同步读写结果后，向内核nbd驱动发送reply</li>
+<li>内核nbd驱动收到reply，向客户端return</li>
+</ul>
+<h1 id="关键数据结构"><a href="#关键数据结构" class="headerlink" title="关键数据结构"></a>关键数据结构</h1><h2 id="Reqeust-Reply"><a href="#Reqeust-Reply" class="headerlink" title="Reqeust &amp; Reply"></a>Reqeust &amp; Reply</h2><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">nbd_request</span> &#123;</span><br><span class="line">    u32 magic;</span><br><span class="line">    u32 type;   <span class="comment">/* == READ || == WRITE */</span></span><br><span class="line">    <span class="type">char</span> handle[<span class="number">8</span>];</span><br><span class="line">    u64 from;</span><br><span class="line">    u32 len;</span><br><span class="line">&#125;</span><br><span class="line"><span class="meta">#<span class="keyword">ifdef</span> __GNUC__</span></span><br><span class="line">__attribute__ ((packed))</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line">;</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">nbd_reply</span> &#123;</span><br><span class="line">    u32 magic;</span><br><span class="line">    u32 error; <span class="comment">/* 0 = ok, else error */</span></span><br><span class="line">    <span class="type">char</span> handle[<span class="number">8</span>]; <span class="comment">/* handle you got from reqeust */</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="http://www.codeforge.com/read/47918/nbd.h__html">nbd.h</a></li>
+<li><a target="_blank" rel="noopener" href="http://lxr.free-electrons.com/source/drivers/block/nbd.c?v=3.6">nbd.c</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2016/11/17/search-engine-command/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1820,104 +1920,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2016/07/27/storage/ceph/20160727-ceph-deploy-parse/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2016/07/27/storage/ceph/20160727-ceph-deploy-parse/" class="post-title-link" itemprop="url">Ceph-deploy 解析</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2016-07-27 21:17:05" itemprop="dateCreated datePublished" datetime="2016-07-27T21:17:05+08:00">2016-07-27</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h1><p>ceph-deploy官方认可的ceph部署工具。它不同于ansible、puppet。</p>
-<h1 id="架构"><a href="#架构" class="headerlink" title="架构"></a>架构</h1><p><img src="/images/ceph/ceph-deploy-frame.png" alt="ceph-deploy-frame"></p>
-<h1 id="各个模块"><a href="#各个模块" class="headerlink" title="各个模块"></a>各个模块</h1><h2 id="parser"><a href="#parser" class="headerlink" title="parser"></a>parser</h2><p>主命令参数解析，子命令参数解析</p>
-<h2 id="cli"><a href="#cli" class="headerlink" title="cli"></a>cli</h2><p>加载子命令模块，选择调用哪个子命令执行操作</p>
-<h2 id="new-子命令"><a href="#new-子命令" class="headerlink" title="new 子命令"></a>new 子命令</h2><p>创建集群，及 ceph.conf 配置文件</p>
-<h2 id="install-子命令"><a href="#install-子命令" class="headerlink" title="install 子命令"></a>install 子命令</h2><p>跟据节点的不通角色（mon、mds、osd、rgw等），安装相关的软件包</p>
-<h2 id="uninstall-子命令"><a href="#uninstall-子命令" class="headerlink" title="uninstall 子命令"></a>uninstall 子命令</h2><p>卸载节点的ceph软件</p>
-<h2 id="purge-子命令"><a href="#purge-子命令" class="headerlink" title="purge 子命令"></a>purge 子命令</h2><p>清除ceph安装包</p>
-<h2 id="purgedata子命令"><a href="#purgedata子命令" class="headerlink" title="purgedata子命令"></a>purgedata子命令</h2><p>清除ceph在该节点上产生的数据</p>
-<h2 id="mon-子命令"><a href="#mon-子命令" class="headerlink" title="mon 子命令"></a>mon 子命令</h2><p>管理mon节点，添加、创建、删除等操作</p>
-<h2 id="gatherkeys子命令"><a href="#gatherkeys子命令" class="headerlink" title="gatherkeys子命令"></a>gatherkeys子命令</h2><p>收集ceph中的keyring</p>
-<h2 id="osd子命令"><a href="#osd子命令" class="headerlink" title="osd子命令"></a>osd子命令</h2><p>管理osd节点，准备、创建、激活等操作</p>
-<h2 id="disk子命令"><a href="#disk子命令" class="headerlink" title="disk子命令"></a>disk子命令</h2><p>管理硬盘，格式化硬盘分区等操作</p>
-<h2 id="mds子命令"><a href="#mds子命令" class="headerlink" title="mds子命令"></a>mds子命令</h2><p>管理mds节点，仅支持创建操作</p>
-<h2 id="forgetkeys子命令"><a href="#forgetkeys子命令" class="headerlink" title="forgetkeys子命令"></a>forgetkeys子命令</h2><p>删除“mon”、“client.admin”、“bootstrap-osd”、“bootstrap-mds”、“bootstrap-rgw”的keyring文件</p>
-<h2 id="config子命令"><a href="#config子命令" class="headerlink" title="config子命令"></a>config子命令</h2><p>从（往）指定的节点获取（输出）集群配置信息</p>
-<h2 id="admin子命令"><a href="#admin子命令" class="headerlink" title="admin子命令"></a>admin子命令</h2><p>为指定的节点赋予admin角色</p>
-<h2 id="pkg子命令"><a href="#pkg子命令" class="headerlink" title="pkg子命令"></a>pkg子命令</h2><p>包管理器，安装（卸载）指定的软件包</p>
-<h2 id="calamari子命令"><a href="#calamari子命令" class="headerlink" title="calamari子命令"></a>calamari子命令</h2><p><em>略</em></p>
-<h2 id="rgw子命令"><a href="#rgw子命令" class="headerlink" title="rgw子命令"></a>rgw子命令</h2><p>按配置文件中的配置启动rgw服务(建议使用CivetWeb)</p>
-<h2 id="repo子命令"><a href="#repo子命令" class="headerlink" title="repo子命令"></a>repo子命令</h2><p>管理节点repo信息，添加、删除repo操作</p>
-<h2 id="conf"><a href="#conf" class="headerlink" title="conf"></a>conf</h2><p>ceph.conf集群配置文件读写、解析等支持类操作</p>
-<h2 id="host"><a href="#host" class="headerlink" title="host"></a>host</h2><p>按不同操作系统进行区别操作</p>
-<h2 id="lib"><a href="#lib" class="headerlink" title="lib"></a>lib</h2><p>与系统相关的操作类库（如：连接管理、命令执行、文件操作等）</p>
-<h2 id="util"><a href="#util" class="headerlink" title="util"></a>util</h2><p>支持库（如：ssh连接管理、服务管理、RPM包管理、APT包管理、日志管理等）</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1987,7 +1989,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">147</span>
+          <span class="site-state-item-count">148</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
