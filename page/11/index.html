@@ -188,6 +188,159 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/01/04/linux/nettools-vs-iproute2/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2017/01/04/linux/nettools-vs-iproute2/" class="post-title-link" itemprop="url">net-tools <--> iproute2</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2017-01-04 12:53:44" itemprop="dateCreated datePublished" datetime="2017-01-04T12:53:44+08:00">2017-01-04</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/linux/" itemprop="url" rel="index"><span itemprop="name">linux</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>linux的ip命令和ifconfig类似，ifconfig属于net-tools套件中，ip命令属于iproute2套件中。由于net-tools中的部分命令已经长时间没有更新维护了，所以iproute2的套件大有取代net-tools套件的趋势。</p>
+<h1 id="NET-TOOLS-IPROUTE2对比"><a href="#NET-TOOLS-IPROUTE2对比" class="headerlink" title="NET-TOOLS IPROUTE2对比"></a>NET-TOOLS IPROUTE2对比</h1><table>
+<thead>
+<tr>
+<th align="center">net-tools</th>
+<th align="center">iproute2</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">arp -na</td>
+<td align="center">ip neigh</td>
+</tr>
+<tr>
+<td align="center">ifconfig</td>
+<td align="center">ip link</td>
+</tr>
+<tr>
+<td align="center">ifconfig -a</td>
+<td align="center">ip addr show</td>
+</tr>
+<tr>
+<td align="center">ifconfig –help</td>
+<td align="center">ip help</td>
+</tr>
+<tr>
+<td align="center">ifconfig -s</td>
+<td align="center">ip -s link</td>
+</tr>
+<tr>
+<td align="center">ifconfig eth0 up</td>
+<td align="center">ip link set eth0 up</td>
+</tr>
+<tr>
+<td align="center">ipmaddr</td>
+<td align="center">ip maddr</td>
+</tr>
+<tr>
+<td align="center">iptunnel</td>
+<td align="center">ip tunnel</td>
+</tr>
+<tr>
+<td align="center">netstat</td>
+<td align="center">ss</td>
+</tr>
+<tr>
+<td align="center">netstat -i</td>
+<td align="center">ip -s link</td>
+</tr>
+<tr>
+<td align="center">netstat -g</td>
+<td align="center">ip maddr</td>
+</tr>
+<tr>
+<td align="center">netstat -l</td>
+<td align="center">ss -l</td>
+</tr>
+<tr>
+<td align="center">netstat -r</td>
+<td align="center">ip route</td>
+</tr>
+<tr>
+<td align="center">route add</td>
+<td align="center">ip route add</td>
+</tr>
+<tr>
+<td align="center">route del</td>
+<td align="center">ip route del</td>
+</tr>
+<tr>
+<td align="center">route -n</td>
+<td align="center">ip route show</td>
+</tr>
+<tr>
+<td align="center">vconfig</td>
+<td align="center">ip link</td>
+</tr>
+</tbody></table>
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="http://os.51cto.com/art/201406/441461.htm">试试Linux下的ip命令，ifconfig已经过时了</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/01/04/container/docker/docker-mk-base-image/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1257,105 +1410,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2016/11/17/search-engine-command/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2016/11/17/search-engine-command/" class="post-title-link" itemprop="url">搜索引擎命令用法</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2016-11-17 09:57:58" itemprop="dateCreated datePublished" datetime="2016-11-17T09:57:58+08:00">2016-11-17</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/other/" itemprop="url" rel="index"><span itemprop="name">other</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="搜索引擎"><a href="#搜索引擎" class="headerlink" title="搜索引擎"></a>搜索引擎</h1><p>搜索引擎对于每一个码农来说都是一个互联网数据库，在这个数据库中有很多信息，我们在这个数据库中检索数据不需要指定数据库，也不需要数据表，只需要指定你需要检索的关键字即可。但这种搜索方式虽然搜索范围大，无漏网之鱼，可也搜到了很多于我们需要无关的内容。为了精确查找，筛选掉不需要的信息。搜索引擎还有如下用法，接下来，就让我们一探究竟吧。</p>
-<h1 id="特殊用法"><a href="#特殊用法" class="headerlink" title="特殊用法"></a>特殊用法</h1><p>由于天朝屏蔽Google，所以以下可在baidu搜索输入框中操作实现。</p>
-<h2 id="指定标题搜索"><a href="#指定标题搜索" class="headerlink" title="指定标题搜索"></a>指定标题搜索</h2><h3 id="语法"><a href="#语法" class="headerlink" title="语法"></a>语法</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">intitle:&quot;&lt;网页title内容(标签上显示的内容)&gt;&quot;</span><br></pre></td></tr></table></figure>
-<h3 id="举例"><a href="#举例" class="headerlink" title="举例"></a>举例</h3><p>搜索title中含有“Bolog”的网页</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">intitle:&quot;Bolog&quot;</span><br></pre></td></tr></table></figure>
-
-<h2 id="指定URL搜索"><a href="#指定URL搜索" class="headerlink" title="指定URL搜索"></a>指定URL搜索</h2><h3 id="语法-1"><a href="#语法-1" class="headerlink" title="语法"></a>语法</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">inurl:&lt;全部或部分URL信息&gt;</span><br></pre></td></tr></table></figure>
-<h3 id="举例-1"><a href="#举例-1" class="headerlink" title="举例"></a>举例</h3><p>搜索url中包含<code>nginx-1-11-6</code>的网页</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">inurl:nginx-1-11-6</span><br></pre></td></tr></table></figure>
-
-<h2 id="指定正文内容搜索"><a href="#指定正文内容搜索" class="headerlink" title="指定正文内容搜索"></a>指定正文内容搜索</h2><h3 id="语法-2"><a href="#语法-2" class="headerlink" title="语法"></a>语法</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">intext:&quot;&lt;搜索关键字&gt;&quot;</span><br></pre></td></tr></table></figure>
-<p>此方法也是搜索引擎默认使用方法（猜的）</p>
-<h3 id="举例-2"><a href="#举例-2" class="headerlink" title="举例"></a>举例</h3><p>搜索正文内容含有“python” 和“golang”关键字的网页</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">intext:&quot;&lt;python golang&gt;&quot;</span><br></pre></td></tr></table></figure>
-
-<h2 id="指定网站（站点）搜索"><a href="#指定网站（站点）搜索" class="headerlink" title="指定网站（站点）搜索"></a>指定网站（站点）搜索</h2><h3 id="语法-3"><a href="#语法-3" class="headerlink" title="语法"></a>语法</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">site:&lt;网站域名&gt; &lt;搜索关键字&gt;</span><br></pre></td></tr></table></figure>
-<h3 id="举例-3"><a href="#举例-3" class="headerlink" title="举例"></a>举例</h3><p>在oschina上搜索python关键字</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">site:oschina.net python</span><br></pre></td></tr></table></figure>
-
-<h2 id="指定文件类型搜索"><a href="#指定文件类型搜索" class="headerlink" title="指定文件类型搜索"></a>指定文件类型搜索</h2><h3 id="语法-4"><a href="#语法-4" class="headerlink" title="语法"></a>语法</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">filetype:&lt;文件类型&gt; &lt;搜索关键字&gt;</span><br></pre></td></tr></table></figure>
-<h3 id="举例-4"><a href="#举例-4" class="headerlink" title="举例"></a>举例</h3><p>搜索所有带有python关键字的PDF文档</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">filetype:pdf python</span><br></pre></td></tr></table></figure>
-
-<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a target="_blank" rel="noopener" href="http://www.360doc.com/content/13/1014/11/1956846_321333210.shtml">intile,inurl,filetype,site作用及在google中的用法</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1425,7 +1479,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">146</span>
+          <span class="site-state-item-count">147</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -1438,7 +1492,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">122</span>
+        <span class="site-state-item-count">123</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>

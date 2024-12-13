@@ -188,6 +188,137 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/05/18/container/coreos/coreos-build/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2017/05/18/container/coreos/coreos-build/" class="post-title-link" itemprop="url">CoreOS镜像制作</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2017-05-18 13:56:31" itemprop="dateCreated datePublished" datetime="2017-05-18T13:56:31+08:00">2017-05-18</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/container/" itemprop="url" rel="index"><span itemprop="name">container</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p><img src="/images/coreos/coreos_build.jpg" alt="coreos_build.jpg"></p>
+<h1 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h1><p>CoreOS，一个轻量的linux分布式操作系统。CoreOS中的应用都以容器形式在系统中运行。个人觉得CoreOS不能算是一个linux发行版，只能算是一种订制系统。(BTW，CoreOS的订制应该是源自Gentoo这个发行版)</p>
+<h1 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h1><ul>
+<li>CoreOS的编译与操作系统无关（此处使用的是RHEL7.2），硬件要求必须是X86-64系统。</li>
+<li>编译系统必须安装 curl、git、python2、bzip2</li>
+<li>CoreOS SDK编译有两种方法（<a target="_blank" rel="noopener" href="https://coreos.com/os/docs/latest/sdk-modifying-coreos.html">Option1 &amp; Option2</a>），Option1 需要选择和需要编译的CoreOS相匹配的golang版本。</li>
+<li>使用Option2 方法安装，需要设置<code>https_proxy</code>代理（否则，无法法访问GoogleSource）</li>
+</ul>
+<h1 id="制作-安装"><a href="#制作-安装" class="headerlink" title="制作&amp;安装"></a>制作&amp;安装</h1><p>本人使用Option2方法完成CoreOS编译，并使用coreos-install安装CoreOS到xen vm上。</p>
+<h2 id="制作"><a href="#制作" class="headerlink" title="制作"></a>制作</h2><h3 id="准备"><a href="#准备" class="headerlink" title="准备"></a>准备</h3><h4 id="安装Repo"><a href="#安装Repo" class="headerlink" title="安装Repo"></a>安装Repo</h4><p>下载repo，用于下载CoreOS SDK</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">curl http://storage.googleapis.com/git-repo-downloads/repo &gt; ./repo</span><br><span class="line">chmod a+x ./repo</span><br></pre></td></tr></table></figure>
+
+<h4 id="下载SDK"><a href="#下载SDK" class="headerlink" title="下载SDK"></a>下载SDK</h4><p>创建一个目录用于存放coreos sdk</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">mkdir coreos</span><br><span class="line">cd coreos</span><br></pre></td></tr></table></figure>
+<p>repo初始化目录，并同步git repos</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">repo init -u https://github.com/coreos/manifest.git</span><br><span class="line">repo sync</span><br></pre></td></tr></table></figure>
+
+<h4 id="Chroot到coreos-SDK"><a href="#Chroot到coreos-SDK" class="headerlink" title="Chroot到coreos SDK"></a>Chroot到coreos SDK</h4><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./chromite/bin/cros_sdk</span><br></pre></td></tr></table></figure>
+
+<h3 id="编译"><a href="#编译" class="headerlink" title="编译"></a>编译</h3><h4 id="设置core用户登陆密码"><a href="#设置core用户登陆密码" class="headerlink" title="设置core用户登陆密码"></a>设置core用户登陆密码</h4><p>设置core用户密码，已被系统安装完后登陆系统使用。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./set_shared_user_password.sh</span><br></pre></td></tr></table></figure>
+
+<h4 id="选择目标编译平台"><a href="#选择目标编译平台" class="headerlink" title="选择目标编译平台"></a>选择目标编译平台</h4><p>选择<code>amd64-usr</code>或<code>arm64-usr</code></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./setup_board --default --board=amd64-usr</span><br></pre></td></tr></table></figure>
+
+<h4 id="编译Packages"><a href="#编译Packages" class="headerlink" title="编译Packages"></a>编译Packages</h4><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./build_packages</span><br></pre></td></tr></table></figure>
+
+<h4 id="制作CoreOS镜像"><a href="#制作CoreOS镜像" class="headerlink" title="制作CoreOS镜像"></a>制作CoreOS镜像</h4><p>可以选择编译开发版(<code>dev</code>)还是生成版(<code>prod</code>)</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./build_image prod</span><br></pre></td></tr></table></figure>
+
+<h4 id="制作可以引导CoreOS镜像"><a href="#制作可以引导CoreOS镜像" class="headerlink" title="制作可以引导CoreOS镜像"></a>制作可以引导CoreOS镜像</h4><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./image_to_vm.sh --board=amd64-usr --format=xen --from=/mnt/host/source/src/build/images/amd64-usr/developer-1409.0.0+2017-05-15-1456-a1/coreos_production_image.bin --disk_layout=base</span><br></pre></td></tr></table></figure>
+<ul>
+<li><code>--format</code> 根据不同需要选择制作不同格式的可引导镜像</li>
+<li><code>--disk_layout</code> 默认是空，建议选择<code>base</code></li>
+</ul>
+<h2 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h2><p>*** 经过上述步骤的操作，已经将coreos镜像制作完成，并放置在”.&#x2F;src&#x2F;build&#x2F;images&#x2F;amd64-usr”目录下。 ***</p>
+<p>安装的过程需要使用liveCD启动，然后挂在需要安装的裸盘，使用<code>coreos-install</code>安装。镜像的传递是，先将镜像放置到一个webserver上，然后<code>coreos-install</code>再通过这个webserver下载、并安装。</p>
+<p>*** 在将镜像放置到webserver之前，需要先将镜像压缩成bz2文件，然后再将bz2进行签名 ***（签名无法使用官方的私钥，只能自己申请，<a href="https://zhoubofsy.github.io/2017/05/18/security/gpg-usage/">详细请见</a>）。</p>
+<h3 id="步骤"><a href="#步骤" class="headerlink" title="步骤"></a>步骤</h3><p>*** 本人的安装步骤，不是唯一的、方便、快捷的方法，更多安装方式建议阅者自行调研 ***</p>
+<h4 id="下载coreos-install安装脚本"><a href="#下载coreos-install安装脚本" class="headerlink" title="下载coreos-install安装脚本"></a>下载coreos-install安装脚本</h4><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">wget https://raw.githubusercontent.com/coreos/init/master/bin/coreos-install</span><br></pre></td></tr></table></figure>
+
+<h4 id="修改coreos-install中的公钥"><a href="#修改coreos-install中的公钥" class="headerlink" title="修改coreos-install中的公钥"></a>修改coreos-install中的公钥</h4><p>在coreos-install中有个变量<code>GPG_KEY</code>用于存储官方的公钥，需要将这个公钥换成你给镜像签名时对应的公钥。</p>
+<p>** 此处略去俺公钥内容 **</p>
+<p>镜像在下载到目标机后，coreos-install会对下载的镜像进行校验，这是不替换公钥，只能想办法让官方帮你签名</p>
+<h4 id="使用coreos-install安装CoreOS"><a href="#使用coreos-install安装CoreOS" class="headerlink" title="使用coreos-install安装CoreOS"></a>使用coreos-install安装CoreOS</h4><p>使用liveCD启动系统后，先确认需要安装CoreOS的硬盘，然后执行<code>coreos-install</code>进行安装</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo ./coreos-install -d /dev/xvda -V 1409.0.0 -o xen -v -b http://192.168.1.82:8000 -c /media/configdrive/openstack/latest/user_data</span><br></pre></td></tr></table></figure>
+<ul>
+<li><code>-d</code> 指定安装目标设备</li>
+<li><code>-V</code> 指定安装版本，一定要与URL中的路径能匹配上</li>
+<li><code>-o</code> 镜像名称中需要指出是<code>xen</code>or<code>kvm</code>or…</li>
+<li><code>-b</code> 镜像下载URL</li>
+</ul>
+<h1 id="问题-解决"><a href="#问题-解决" class="headerlink" title="问题&amp;解决"></a>问题&amp;解决</h1><h2 id="不能引导问题"><a href="#不能引导问题" class="headerlink" title="不能引导问题"></a>不能引导问题</h2><p>若成功编译安装，但不能正常引导，可以对比做bzip2之前镜像的前512字节和安装后xvda的前512字节是否一致。本人遇到不能引导问题，是因为本应使用<code>bzip2</code>压缩的镜像使用了<code>tar</code></p>
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li>感谢同事为我提供的VPN翻墙服务</li>
+<li>感谢同事为我提供的WebService服务，方便完成网络安装CoreOS</li>
+<li><a target="_blank" rel="noopener" href="https://coreos.com/os/docs/latest/sdk-modifying-coreos.html">container linux document</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/05/12/network/iptables-introduce/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1133,170 +1264,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/02/17/network/dns-protocol/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2017/02/17/network/dns-protocol/" class="post-title-link" itemprop="url">DNS协议</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2017-02-17 10:22:31" itemprop="dateCreated datePublished" datetime="2017-02-17T10:22:31+08:00">2017-02-17</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/network/" itemprop="url" rel="index"><span itemprop="name">network</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h1><p>IP地址对于人来说很难记忆区分，但域名却很方便记忆，所以要将域名与IP地址对应起来，就催生了DNS。DNS不仅提供域名到IP的映射服务，还能提供主机别名、邮件服务器识别、负载均衡服务。</p>
-<h1 id="协议"><a href="#协议" class="headerlink" title="协议"></a>协议</h1><p>DNS属于应用层协议，通常由HTTP、SMTP、FTP等协议使用，占用53端口。</p>
-<h2 id="交互流程"><a href="#交互流程" class="headerlink" title="交互流程"></a>交互流程</h2><p><img src="/images/dns/dns_protocol.png" alt="dns_protocol"></p>
-<ul>
-<li>客户端发送一个包含域名的请求给DNS服务器（DNS查询报文）</li>
-<li>DNS服务器查询到域名对应的IP地址后，给客户端一个应答回复（DNS应答报文），回复中包含客户端所请求域名对应的IP地址</li>
-<li>客户端收到回复后，取出IP地址，与该地址服务器建立链接</li>
-</ul>
-<h2 id="协议格式"><a href="#协议格式" class="headerlink" title="协议格式"></a>协议格式</h2><p>DNS协议分为查询协议和应答协议，这两种协议的格式是一样的。</p>
-<p><img src="/images/dns/dns-protocol-format.png" alt="dns-protocol-format"></p>
-<p>DNS协议包括两部分，协议头和协议体</p>
-<h3 id="协议头"><a href="#协议头" class="headerlink" title="协议头"></a>协议头</h3><p>DNS协议头由固定的12个字节组成</p>
-<ul>
-<li>ID<br>  由程序分配的16位标识符，该标识在查询时产生，应答报文中该ID与对应的查询请求ID相同。</li>
-<li>QR<br>  表示该报文类型，“0”表示查询，“1”表示应答</li>
-<li>OPcode<br>  表示查询种类，只在查询协议中作用。“0”为标准查询（QUERY），“1”为反相查询（IQUERY），“2”为服务器状态请求（STATUS），“3”～“15”为保留</li>
-<li>AA<br>  授权应答的标志位。该位在应答报文中有效，“1”表示名字服务器是权限服务器</li>
-<li>TC<br>  截断标志位。1表示响应已超过512字节并已被截断。(截断和UDP协议有关)</li>
-<li>RD<br>  期望递归标志，作用在查询报文中，该位为“1”表示客户端希望得到递归应答</li>
-<li>RA<br>  递归可用标志，作用在应答报文中，该位为“1”表示可以得到递归应答</li>
-<li>zero<br>  用“0”占位，保留字段</li>
-<li>Rcode<br>  返回码，在应答报文中出现，“0”表示无差错，“1”表示格式差错，“2”表示问题在域名服务器上，“3”表示域参照问题，“4”表示查询类型不支持，“5”表示在管理上被禁止，“6”～“15”预留</li>
-<li>QD Count<br>  查询信息的数量</li>
-<li>AN Count<br>  应答信息的数量</li>
-<li>NS Count<br>  授权信息的数量</li>
-<li>AR Count<br>  附加信息的数量</li>
-</ul>
-<h3 id="协议体"><a href="#协议体" class="headerlink" title="协议体"></a>协议体</h3><h4 id="查询段"><a href="#查询段" class="headerlink" title="查询段"></a>查询段</h4><p>描述查询信息</p>
-<ul>
-<li>QNAME<br>  表示需要查询的域名，该字段为变长字段，用标签序列表示域名（如：<a target="_blank" rel="noopener" href="http://www.baidu.com/">www.baidu.com</a> 显示为 03 77 77 77 05 62 61 69 64 75 03 63 6f 6d 00）</li>
-<li>QTYPE<br>  表示查询资源的类型，详细请见下文资源类型列表</li>
-<li>QCLASS<br>  表示查询网络类别，“1”表示Internet互联网系统(助记“IN”)，“CH”表示Chaos</li>
-</ul>
-<h4 id="应答段、授权段、附加段"><a href="#应答段、授权段、附加段" class="headerlink" title="应答段、授权段、附加段"></a>应答段、授权段、附加段</h4><p>对应答信息、授权信息、附加信息的描述</p>
-<ul>
-<li>NAME<br>  资源记录对应的域名，该字段为变长字段，格式同QNAME</li>
-<li>TYPE<br>  同QTYPE</li>
-<li>CLASS<br>  同QCLASS</li>
-<li>TTL<br>  表示资源记录的生命周期（以秒为单位），一般用于当地址杰西程序读取资源记录后决定保存及使用缓存数据的时间</li>
-<li>RDLENGTH<br>  表示资源数据的长度</li>
-<li>RDATA<br>  资源数据，按查询段要求返回的相关资源记录数据。<br>  若其TYPE为A，则返回4字节的IP地址；<br>  若其TYPE为NS，则返回授权域名服务器的域名；<br>  若其TYPE为CNAME，则返回规范名或与别名对应的真实名称。</li>
-</ul>
-<h4 id="资源类型列表"><a href="#资源类型列表" class="headerlink" title="资源类型列表"></a>资源类型列表</h4><table>
-<thead>
-<tr>
-<th align="center">助记符</th>
-<th align="left">说明</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">A</td>
-<td align="left">指定主机名（或域名）对应的IPv4地址记录</td>
-</tr>
-<tr>
-<td align="center">AAAA</td>
-<td align="left">指定主机名（或域名）对应的IPv6地址记录</td>
-</tr>
-<tr>
-<td align="center">CNAME</td>
-<td align="left">别名 如：dig <a target="_blank" rel="noopener" href="http://www.baidu.com/">www.baidu.com</a>, <a target="_blank" rel="noopener" href="http://www.baidu.com.的cname就是www.a.shifen.com/">www.baidu.com.的cname就是www.a.shifen.com</a>.</td>
-</tr>
-<tr>
-<td align="center">PTR</td>
-<td align="left">指针记录，用于将一个IP地址映射到对应的主机名,也可以看成是A记录的反向,通过IP访问域名</td>
-</tr>
-<tr>
-<td align="center">MX</td>
-<td align="left">邮件路由记录，用户可以将该域名下的邮件服务器指向到自己的mail server上，然后即可自行操控所有的邮箱设置</td>
-</tr>
-<tr>
-<td align="center">TXT</td>
-<td align="left">一般指为某个主机名或域名设置的说明，没啥用，可忽略</td>
-</tr>
-<tr>
-<td align="center">SRV</td>
-<td align="left">记录了哪台计算机提供了哪个服务</td>
-</tr>
-<tr>
-<td align="center">NS</td>
-<td align="left">域名解析服务器记录，如果要将子域名指定某个域名服务器来解析，需要设置NS记录</td>
-</tr>
-</tbody></table>
-<ul>
-<li>SRV<br>  格式：优先级 权重 端口 服务的名字.协议的类型.域名<br>  eg:  <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">_http._tcp.example.com. SRV 10 5 80. www.example.com</span><br><span class="line">_http - 服务名</span><br><span class="line">_tcp  - 协议</span><br><span class="line">10    - 优先级</span><br><span class="line">5     - 权重</span><br><span class="line">80    - 端口</span><br></pre></td></tr></table></figure></li>
-</ul>
-<h2 id="内部流程"><a href="#内部流程" class="headerlink" title="内部流程"></a>内部流程</h2><p><img src="/images/dns/dns-work-flow.gif" alt="dns-work-flow"></p>
-<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li>RFC1035</li>
-<li><a target="_blank" rel="noopener" href="http://www.360doc.com/content/11/0809/17/706976_139190573.shtml">DNS协议应用</a></li>
-<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/hunanchenxingyu/article/details/21488291">结合Wireshark分析DNS 协议</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1366,7 +1333,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">146</span>
+          <span class="site-state-item-count">147</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -1379,7 +1346,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">122</span>
+        <span class="site-state-item-count">123</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>

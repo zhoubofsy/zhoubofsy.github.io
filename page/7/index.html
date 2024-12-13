@@ -188,6 +188,105 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/10/19/bigdata/hadoop/Phoenix-index/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2017/10/19/bigdata/hadoop/Phoenix-index/" class="post-title-link" itemprop="url">Phoenix 二级索引</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2017-10-19 14:10:36" itemprop="dateCreated datePublished" datetime="2017-10-19T14:10:36+08:00">2017-10-19</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Big-Data/" itemprop="url" rel="index"><span itemprop="name">Big-Data</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>在Hbase中，只有一个单一的按照字典序排序的rowKey索引，当使用rowKey来进行数据查询的时候速度较快，但是如果不使用rowKey来查询的话就会使用filter来对全表进行扫描，很大程度上降低了检索性能。而Phoenix提供了二级索引技术来应对这种使用rowKey之外的条件进行检索的场景。</p>
+<h1 id="Global-Index"><a href="#Global-Index" class="headerlink" title="Global Index"></a>Global Index</h1><p>Global indexing适用于多读少写的业务场景。使用Global indexing的话在写数据的时候会消耗大量开销，因为所有对数据表的更新操作（DELETE, UPSERT VALUES and UPSERT SELECT）,会引起索引表的更新，而索引表是分布在不同的数据节点上的，跨节点的数据传输带来了较大的性能消耗。在读数据的时候Phoenix会选择索引表来降低查询消耗的时间。*** 在默认情况下如果想查询的字段不是索引字段的话索引表不会被使用，也就是说不会带来查询速度的提升。 ***</p>
+<h2 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h2><p>HBase集群的每个regionserver节点的hbase-site.xml中加入配置，并重启HBase集群</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">property</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">name</span>&gt;</span>hbase.regionserver.wal.codec<span class="tag">&lt;/<span class="name">name</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">value</span>&gt;</span>org.apache.hadoop.hbase.regionserver.wal.IndexedWALEditCodec<span class="tag">&lt;/<span class="name">value</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">property</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>注: phoenix有两种链接方式JDBC和phoenix-client，phoenix-client可以正常创建索引；zeppelin使用jdbc连接不能正常创建索引，提示如下错误。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">java.sql.SQLException: ERROR 1029 (42Y88): Mutable secondary indexes must have the hbase.regionserver.wal.codec property set to org.apache.hadoop.hbase.regionserver.wal.IndexedWALEditCodec in the hbase-sites.xml of every region server. tableName=CMP_IDX</span><br><span class="line">    at org.apache.phoenix.exception.SQLExceptionCode$Factory$1.newException(SQLExceptionCode.java:464)</span><br><span class="line">    at org.apache.phoenix.exception.SQLExceptionInfo.buildException(SQLExceptionInfo.java:150)</span><br><span class="line">    at org.apache.phoenix.schema.MetaDataClient.createIndex(MetaDataClient.java:1293)</span><br><span class="line">    at org.apache.phoenix.compile.CreateIndexCompiler$1.execute(CreateIndexCompiler.java:85)</span><br><span class="line">    at org.apache.phoenix.jdbc.PhoenixStatement$2.call(PhoenixStatement.java:358)</span><br><span class="line">    at org.apache.phoenix.jdbc.PhoenixStatement$2.call(PhoenixStatement.java:341)</span><br><span class="line">    at org.apache.phoenix.call.CallRunner.run(CallRunner.java:53)</span><br><span class="line">    at org.apache.phoenix.jdbc.PhoenixStatement.executeMutation(PhoenixStatement.java:340)</span><br><span class="line">    at org.apache.phoenix.jdbc.PhoenixStatement.execute(PhoenixStatement.java:1511)</span><br><span class="line">    at org.apache.commons.dbcp2.DelegatingStatement.execute(DelegatingStatement.java:291)</span><br><span class="line">    at org.apache.commons.dbcp2.DelegatingStatement.execute(DelegatingStatement.java:291)</span><br><span class="line">    at org.apache.zeppelin.jdbc.JDBCInterpreter.executeSql(JDBCInterpreter.java:581)</span><br><span class="line">    at org.apache.zeppelin.jdbc.JDBCInterpreter.interpret(JDBCInterpreter.java:692)</span><br><span class="line">    at org.apache.zeppelin.interpreter.LazyOpenInterpreter.interpret(LazyOpenInterpreter.java:97)</span><br><span class="line">    at org.apache.zeppelin.interpreter.remote.RemoteInterpreterServer$InterpretJob.jobRun(RemoteInterpreterServer.java:498)</span><br><span class="line">    at org.apache.zeppelin.scheduler.Job.run(Job.java:175)</span><br><span class="line">    at org.apache.zeppelin.scheduler.ParallelScheduler$JobRunner.run(ParallelScheduler.java:162)</span><br><span class="line">    at java.util.concurrent.Executors$RunnableAdapter.call(Unknown Source)</span><br><span class="line">    at java.util.concurrent.FutureTask.run(Unknown Source)</span><br><span class="line">    at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.access$201(Unknown Source)</span><br><span class="line">    at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(Unknown Source)</span><br><span class="line">    at java.util.concurrent.ThreadPoolExecutor.runWorker(Unknown Source)</span><br><span class="line">    at java.util.concurrent.ThreadPoolExecutor$Worker.run(Unknown Source)</span><br><span class="line">    at java.lang.Thread.run(Unknown Source)</span><br></pre></td></tr></table></figure>
+
+<h2 id="索引操作"><a href="#索引操作" class="headerlink" title="索引操作"></a>索引操作</h2><p>在开始创建索引以前先创建一个表，并向其中填充测试数据（此处填充的数据仅用于功能测试）</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">0</span>: jdbc:phoenix:<span class="operator">&gt;</span> <span class="keyword">create</span> <span class="keyword">table</span> usertable (id <span class="type">varchar</span> <span class="keyword">primary</span> key,firstname <span class="type">varchar</span>, lastname <span class="type">varchar</span>);</span><br><span class="line"><span class="number">0</span>: jdbc:phoenix:<span class="operator">&gt;</span> <span class="operator">!</span>tables</span><br><span class="line"><span class="operator">+</span><span class="comment">------------+--------------+-------------------------+---------------+----------+------------+----------------------------+-------------+</span></span><br><span class="line"><span class="operator">|</span> TABLE_CAT  <span class="operator">|</span> TABLE_SCHEM  <span class="operator">|</span>       TABLE_NAME        <span class="operator">|</span>  TABLE_TYPE   <span class="operator">|</span> REMARKS  <span class="operator">|</span> TYPE_NAME  <span class="operator">|</span> SELF_REFERENCING_COL_NAME  <span class="operator">|</span> REF_GENERAT <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">------------+--------------+-------------------------+---------------+----------+------------+----------------------------+-------------+</span></span><br><span class="line"><span class="operator">|</span>            <span class="operator">|</span> <span class="keyword">SYSTEM</span>       <span class="operator">|</span> CATALOG                 <span class="operator">|</span> <span class="keyword">SYSTEM</span> <span class="keyword">TABLE</span>  <span class="operator">|</span>          <span class="operator">|</span>            <span class="operator">|</span>                            <span class="operator">|</span>             <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span>            <span class="operator">|</span> <span class="keyword">SYSTEM</span>       <span class="operator">|</span> <span class="keyword">FUNCTION</span>                <span class="operator">|</span> <span class="keyword">SYSTEM</span> <span class="keyword">TABLE</span>  <span class="operator">|</span>          <span class="operator">|</span>            <span class="operator">|</span>                            <span class="operator">|</span>             <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span>            <span class="operator">|</span> <span class="keyword">SYSTEM</span>       <span class="operator">|</span> SEQUENCE                <span class="operator">|</span> <span class="keyword">SYSTEM</span> <span class="keyword">TABLE</span>  <span class="operator">|</span>          <span class="operator">|</span>            <span class="operator">|</span>                            <span class="operator">|</span>             <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span>            <span class="operator">|</span> <span class="keyword">SYSTEM</span>       <span class="operator">|</span> STATS                   <span class="operator">|</span> <span class="keyword">SYSTEM</span> <span class="keyword">TABLE</span>  <span class="operator">|</span>          <span class="operator">|</span>            <span class="operator">|</span>                            <span class="operator">|</span>             <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span>            <span class="operator">|</span>              <span class="operator">|</span> USERTABLE               <span class="operator">|</span> <span class="keyword">TABLE</span>         <span class="operator">|</span>          <span class="operator">|</span>            <span class="operator">|</span>                            <span class="operator">|</span>             <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">------------+--------------+-------------------------+---------------+----------+------------+----------------------------+-------------+</span></span><br><span class="line"></span><br><span class="line"><span class="number">0</span>: jdbc:phoenix:<span class="operator">&gt;</span> upsert <span class="keyword">into</span> usertable(id, firstname, lastname) <span class="keyword">values</span>(<span class="string">&#x27;1&#x27;</span>, <span class="string">&#x27;Hello&#x27;</span>, <span class="string">&#x27;world&#x27;</span>);</span><br><span class="line">...</span><br><span class="line"><span class="number">0</span>: jdbc:phoenix:<span class="operator">&gt;</span> upsert <span class="keyword">into</span> usertable(id, firstname, lastname) <span class="keyword">values</span>(<span class="string">&#x27;5&#x27;</span>, <span class="string">&#x27;Hello&#x27;</span>, <span class="string">&#x27;phoenix&#x27;</span>);</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">base(main):019:0&gt; scan &#x27;USERTABLE&#x27;</span><br><span class="line">ROW                                 COLUMN+CELL</span><br><span class="line"> 1                                  column=0:FIRSTNAME, timestamp=1508397473229, value=Hello</span><br><span class="line"> 1                                  column=0:LASTNAME, timestamp=1508397473229, value=world</span><br><span class="line"> 1                                  column=0:_0, timestamp=1508397473229, value=x</span><br><span class="line"> 2                                  column=0:FIRSTNAME, timestamp=1508397529852, value=Hello</span><br><span class="line"> 2                                  column=0:LASTNAME, timestamp=1508397529852, value=world</span><br><span class="line"> 2                                  column=0:_0, timestamp=1508397529852, value=x</span><br><span class="line"> 3                                  column=0:FIRSTNAME, timestamp=1508397535836, value=Hello</span><br><span class="line"> 3                                  column=0:LASTNAME, timestamp=1508397535836, value=world</span><br><span class="line"> 3                                  column=0:_0, timestamp=1508397535836, value=x</span><br><span class="line"> 4                                  column=0:FIRSTNAME, timestamp=1508397643594, value=Hello</span><br><span class="line"> 4                                  column=0:LASTNAME, timestamp=1508397643594, value=phoenix</span><br><span class="line"> 4                                  column=0:_0, timestamp=1508397643594, value=x</span><br><span class="line"> 5                                  column=0:FIRSTNAME, timestamp=1508397648938, value=Hello</span><br><span class="line"> 5                                  column=0:LASTNAME, timestamp=1508397648938, value=phoenix</span><br><span class="line"> 5                                  column=0:_0, timestamp=1508397648938, value=x</span><br><span class="line">5 row(s) in 0.3220 seconds</span><br></pre></td></tr></table></figure>
+
+<h3 id="创建索引"><a href="#创建索引" class="headerlink" title="创建索引"></a>创建索引</h3><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">0</span>: jdbc:phoenix:<span class="operator">&gt;</span> <span class="keyword">create</span> index idx_name <span class="keyword">on</span> usertable (lastname) include(firstname);</span><br><span class="line"><span class="number">0</span>: jdbc:phoenix:<span class="operator">&gt;</span> <span class="number">0</span>: jdbc:phoenix:<span class="operator">&gt;</span> <span class="operator">!</span>tables</span><br><span class="line"><span class="operator">+</span><span class="comment">------------+--------------+-------------------------+---------------+----------+------------+----------------------------+-------------+</span></span><br><span class="line"><span class="operator">|</span> TABLE_CAT  <span class="operator">|</span> TABLE_SCHEM  <span class="operator">|</span>       TABLE_NAME        <span class="operator">|</span>  TABLE_TYPE   <span class="operator">|</span> REMARKS  <span class="operator">|</span> TYPE_NAME  <span class="operator">|</span> SELF_REFERENCING_COL_NAME  <span class="operator">|</span> REF_GENERAT <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">------------+--------------+-------------------------+---------------+----------+------------+----------------------------+-------------+</span></span><br><span class="line"><span class="operator">|</span>            <span class="operator">|</span>              <span class="operator">|</span> IDX_NAME                <span class="operator">|</span> INDEX         <span class="operator">|</span>          <span class="operator">|</span>            <span class="operator">|</span>                            <span class="operator">|</span>             <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span>            <span class="operator">|</span> <span class="keyword">SYSTEM</span>       <span class="operator">|</span> CATALOG                 <span class="operator">|</span> <span class="keyword">SYSTEM</span> <span class="keyword">TABLE</span>  <span class="operator">|</span>          <span class="operator">|</span>            <span class="operator">|</span>                            <span class="operator">|</span>             <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span>            <span class="operator">|</span> <span class="keyword">SYSTEM</span>       <span class="operator">|</span> <span class="keyword">FUNCTION</span>                <span class="operator">|</span> <span class="keyword">SYSTEM</span> <span class="keyword">TABLE</span>  <span class="operator">|</span>          <span class="operator">|</span>            <span class="operator">|</span>                            <span class="operator">|</span>             <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span>            <span class="operator">|</span> <span class="keyword">SYSTEM</span>       <span class="operator">|</span> SEQUENCE                <span class="operator">|</span> <span class="keyword">SYSTEM</span> <span class="keyword">TABLE</span>  <span class="operator">|</span>          <span class="operator">|</span>            <span class="operator">|</span>                            <span class="operator">|</span>             <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span>            <span class="operator">|</span> <span class="keyword">SYSTEM</span>       <span class="operator">|</span> STATS                   <span class="operator">|</span> <span class="keyword">SYSTEM</span> <span class="keyword">TABLE</span>  <span class="operator">|</span>          <span class="operator">|</span>            <span class="operator">|</span>                            <span class="operator">|</span>             <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span>            <span class="operator">|</span>              <span class="operator">|</span> USERTABLE               <span class="operator">|</span> <span class="keyword">TABLE</span>         <span class="operator">|</span>          <span class="operator">|</span>            <span class="operator">|</span>                            <span class="operator">|</span>             <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">------------+--------------+-------------------------+---------------+----------+------------+----------------------------+-------------+</span></span><br><span class="line"><span class="number">0</span>: jdbc:phoenix:<span class="operator">&gt;</span> <span class="operator">!</span>index usertable</span><br><span class="line"><span class="operator">+</span><span class="comment">------------+--------------+-------------+-------------+------------------+-------------+-------+-------------------+--------------+----+</span></span><br><span class="line"><span class="operator">|</span> TABLE_CAT  <span class="operator">|</span> TABLE_SCHEM  <span class="operator">|</span> TABLE_NAME  <span class="operator">|</span> NON_UNIQUE  <span class="operator">|</span> INDEX_QUALIFIER  <span class="operator">|</span> INDEX_NAME  <span class="operator">|</span> TYPE  <span class="operator">|</span> ORDINAL_POSITION  <span class="operator">|</span> COLUMN_NAME  <span class="operator">|</span> <span class="keyword">AS</span> <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">------------+--------------+-------------+-------------+------------------+-------------+-------+-------------------+--------------+----+</span></span><br><span class="line"><span class="operator">|</span>            <span class="operator">|</span>              <span class="operator">|</span> USERTABLE   <span class="operator">|</span> <span class="literal">true</span>        <span class="operator">|</span>                  <span class="operator">|</span> IDX_NAME    <span class="operator">|</span> <span class="number">3</span>     <span class="operator">|</span> <span class="number">1</span>                 <span class="operator">|</span> <span class="number">0</span>:LASTNAME   <span class="operator">|</span> A  <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span>            <span class="operator">|</span>              <span class="operator">|</span> USERTABLE   <span class="operator">|</span> <span class="literal">true</span>        <span class="operator">|</span>                  <span class="operator">|</span> IDX_NAME    <span class="operator">|</span> <span class="number">3</span>     <span class="operator">|</span> <span class="number">2</span>                 <span class="operator">|</span> :ID          <span class="operator">|</span> A  <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span>            <span class="operator">|</span>              <span class="operator">|</span> USERTABLE   <span class="operator">|</span> <span class="literal">true</span>        <span class="operator">|</span>                  <span class="operator">|</span> IDX_NAME    <span class="operator">|</span> <span class="number">3</span>     <span class="operator">|</span> <span class="number">3</span>                 <span class="operator">|</span> <span class="number">0</span>:FIRSTNAME  <span class="operator">|</span>    <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">------------+--------------+-------------+-------------+------------------+-------------+-------+-------------------+--------------+----+</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">hbase(main):020:0&gt; scan &#x27;IDX_NAME&#x27;</span><br><span class="line">ROW                                 COLUMN+CELL</span><br><span class="line"> phoenix\x004                       column=0:0:FIRSTNAME, timestamp=1508397686228, value=Hello</span><br><span class="line"> phoenix\x004                       column=0:_0, timestamp=1508397686228, value=x</span><br><span class="line"> phoenix\x005                       column=0:0:FIRSTNAME, timestamp=1508397686228, value=Hello</span><br><span class="line"> phoenix\x005                       column=0:_0, timestamp=1508397686228, value=x</span><br><span class="line"> world\x001                         column=0:0:FIRSTNAME, timestamp=1508397686228, value=Hello</span><br><span class="line"> world\x001                         column=0:_0, timestamp=1508397686228, value=x</span><br><span class="line"> world\x002                         column=0:0:FIRSTNAME, timestamp=1508397686228, value=Hello</span><br><span class="line"> world\x002                         column=0:_0, timestamp=1508397686228, value=x</span><br><span class="line"> world\x003                         column=0:0:FIRSTNAME, timestamp=1508397686228, value=Hello</span><br><span class="line"> world\x003                         column=0:_0, timestamp=1508397686228, value=x</span><br><span class="line">5 row(s) in 0.3180 seconds</span><br></pre></td></tr></table></figure>
+
+<h3 id="使用索引"><a href="#使用索引" class="headerlink" title="使用索引"></a>使用索引</h3><p>正常的select … where … 是不会用到索引表的，要想用到索引表，必须查询出的字段也是索引字段。(此处的结论需要在后续的性能测试中进行验证)</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">0</span>: jdbc:phoenix:<span class="operator">&gt;</span> <span class="keyword">select</span> firstname <span class="keyword">from</span> usertable <span class="keyword">where</span> lastname <span class="operator">=</span> <span class="string">&#x27;phoenix&#x27;</span>;</span><br><span class="line"><span class="operator">+</span><span class="comment">------------+</span></span><br><span class="line"><span class="operator">|</span> FIRSTNAME  <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">------------+</span></span><br><span class="line"><span class="operator">|</span> Hello      <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span> Hello      <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">------------+</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="性能测试"><a href="#性能测试" class="headerlink" title="性能测试"></a>性能测试</h2><h3 id="读"><a href="#读" class="headerlink" title="读"></a>读</h3><p>Todo…</p>
+<h3 id="写"><a href="#写" class="headerlink" title="写"></a>写</h3><p>Todo…</p>
+<h1 id="Local-Index"><a href="#Local-Index" class="headerlink" title="Local Index"></a>Local Index</h1><p>Todo…</p>
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="http://www.cnblogs.com/mario-nb/p/6350266.html?utm_source=itdadao&utm_medium=referral">Phoenix的二级索引</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.cnblogs.com/MOBIN/p/5467284.html">Phoenix二级索引(Secondary Indexing)的使用</a></li>
+<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/lifuxiangcaohui/article/details/55518390">HBase phoenix二级索引</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/10/17/storage/fs-ext2/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1832,103 +1931,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/09/04/bigdata/hadoop/hive-load-from-hbase/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2017/09/04/bigdata/hadoop/hive-load-from-hbase/" class="post-title-link" itemprop="url">从hbase向hive导入数据</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2017-09-04 09:51:00" itemprop="dateCreated datePublished" datetime="2017-09-04T09:51:00+08:00">2017-09-04</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Big-Data/" itemprop="url" rel="index"><span itemprop="name">Big-Data</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>** 纯转载 **</p>
-<p>当我们用HBase 存储实时数据的时候， 如果要做一些数据分析方面的操作， 就比较困难了， 要写MapReduce Job。 Hive 主要是用来做数据分析的数据仓库，支持标准SQL 查询， 做数据分析很是方便，于是便很自然地想到用Hive来载入HBase的数据做分析， 但是很奇怪地是， 上网查了一下， 只看到以下两种情况：</p>
-<ol>
-<li>如何用Hive 往HBase里面插入大量的数据。</li>
-<li>Hive 与HBase集成， 直接从Hive里面连HBase的数据库进行查询。参考链接： <a target="_blank" rel="noopener" href="https://cwiki.apache.org/confluence/display/Hive/HBaseIntegration">https://cwiki.apache.org/confluence/display/Hive/HBaseIntegration</a></li>
-</ol>
-<p>选项1是我们需求的逆操作， 直接忽略， 选项2,  虽然没有做专门的Benchmark, 但总感觉直接对HBase进行查询操作不怎么靠谱， 如果我们要频繁做很多类型的数据分析， 那HBase的压力一定会倍增。<br>难道没有把HBase里面的数据直接导入到Hive当中的工具或者方法吗？<br>找了一会， 似乎没找到， 那么只好自己想一个解决方案了。</p>
-<p>思路：<br>利用选项2,  先打通Hive对HBase指定表的全表访问， 再建立一个新的空表， 把查询出来的数据全部导入到新表当中， 以后的所有数据分析操作在新表中完成。<br>说干就干， 让我们试一个简单的例子。</p>
-<ul>
-<li>首先在HBase里面建一个表， 名为 student， 包含 id 和 name 两个column  <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">hbase shell</span><br><span class="line">create &#x27;student&#x27;, &#x27;id&#x27;, &#x27;name&#x27;</span><br></pre></td></tr></table></figure></li>
-<li>向表中插入两行数据  <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">put &#x27;student&#x27;, &#x27;row1&#x27;, &#x27;id:val&#x27;, &#x27;1&#x27;</span><br><span class="line">put &#x27;student&#x27;, &#x27;row1&#x27;, &#x27;name:val&#x27;, &#x27;Tony&#x27;</span><br><span class="line">put &#x27;student&#x27;, &#x27;row2&#x27;, &#x27;id:val&#x27;, &#x27;2&#x27;</span><br><span class="line">put &#x27;student&#x27;, &#x27;row2&#x27;, &#x27;name:val&#x27;, &#x27;Mike&#x27;</span><br></pre></td></tr></table></figure>
-  注意：在插入数据的时候一定要指定column (如id:val, name:val) 直接使用column family (如 id, name) 去存数据会导致后面Hive 建表的时候有问题。</li>
-<li>扫描此表， 确定数据已经插入  <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">scan &#x27;student&#x27;</span><br><span class="line">ROW                               COLUMN+CELL                                                                                     </span><br><span class="line"> row1                             column=id:val, timestamp=1384939342989, value=1                                                 </span><br><span class="line"> row1                             column=name:val, timestamp=1384939365511, value=Tony                                            </span><br><span class="line"> row2                             column=id:val, timestamp=1384939351444, value=2                                                 </span><br><span class="line"> row2                             column=name:val, timestamp=1384939379245, value=Mike</span><br></pre></td></tr></table></figure></li>
-<li>从Hive建立可以访问HBase的外部表  <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">CREATE EXTERNAL TABLE student(key string, id int, name string) </span><br><span class="line">STORED BY &#x27;org.apache.hadoop.hive.hbase.HBaseStorageHandler&#x27;</span><br><span class="line">WITH SERDEPROPERTIES (&quot;hbase.columns.mapping&quot; = &quot;id:val,name:val&quot;)</span><br><span class="line">TBLPROPERTIES(&quot;hbase.table.name&quot; = &quot;student&quot;);</span><br></pre></td></tr></table></figure></li>
-<li>Hive中建立一个新的空表  <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">hive&gt; </span><span class="language-bash"><span class="keyword">select</span> * from student;</span></span><br><span class="line">OK</span><br><span class="line">row1    1    Tony</span><br><span class="line">row2    2    Mike</span><br></pre></td></tr></table></figure>
-  但是此时这个表实际上是一个虚拟表， 实际的数据还在HBase中。 下面需要在Hive中另建一个结构一样的空表， 再把数据导出来。</li>
-<li>Hive中建立一个新的空表  <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">CREATE TABLE new_student (</span><br><span class="line">  key string,</span><br><span class="line">  id INT,</span><br><span class="line">  name STRING)</span><br><span class="line">ROW FORMAT DELIMITED</span><br><span class="line">FIELDS TERMINATED BY &#x27;\t&#x27;</span><br><span class="line">STORED AS TEXTFILE;</span><br></pre></td></tr></table></figure></li>
-<li>将数据从HBase中导入到新的Hive表中  <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">hive&gt; </span><span class="language-bash">INSERT OVERWRITE TABLE new_student SELECT * FROM student;</span></span><br><span class="line"><span class="meta prompt_">hive&gt; </span><span class="language-bash"><span class="keyword">select</span> * from new_student;</span></span><br><span class="line">OK</span><br><span class="line">row1    1    Tony</span><br><span class="line">row2    2    Mike</span><br></pre></td></tr></table></figure>
-至此大功告成！<br>以后所有复杂的数据查询和数据分析都可以在new_student表中完成。</li>
-</ul>
-<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a target="_blank" rel="noopener" href="http://www.cnblogs.com/npumenglei/p/how_to_use_hive_load_data_from_hbase.html">Hive如何加载和导入HBase的数据</a></li>
-<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/lifuxiangcaohui/article/details/40588929">Hive总结（七）Hive四种数据导入方式</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1998,7 +2000,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">146</span>
+          <span class="site-state-item-count">147</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -2011,7 +2013,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">122</span>
+        <span class="site-state-item-count">123</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>

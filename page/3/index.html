@@ -188,6 +188,158 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2020/11/08/algorithm/raft/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/11/08/algorithm/raft/" class="post-title-link" itemprop="url">Raft</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-11-08 17:14:04" itemprop="dateCreated datePublished" datetime="2020-11-08T17:14:04+08:00">2020-11-08</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/algorithm/" itemprop="url" rel="index"><span itemprop="name">algorithm</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>分布式系统在极大提高可用性、容错性的同时，带来了一致性问题（CAP理论）。Raft算法能够解决分布式系统环境下的一致性问题。一致性是分布式系统容错的基本问题。一致性涉及多个服务器状态（Values）达成一致。 一旦他们就状态做出决定，该决定就是最终决定。 当大多数服务器可用时，典型的一致性算法会取得进展。</p>
+<p>raft是工程上使用较为广泛的强一致性、去中心化、高可用的分布式协议。在这里强调了是在工程上，因为在学术理论界，最耀眼的还是大名鼎鼎的Paxos。但Paxos是：少数真正理解的人觉得简单，尚未理解的人觉得很难，大多数人都是一知半解。本人也花了很多时间、看了很多材料也没有真正理解。直到看到raft的论文，两位研究者也提到，他们也花了很长的时间来理解Paxos，他们也觉得很难理解，于是研究出了raft算法。</p>
+<h1 id="Leader选举"><a href="#Leader选举" class="headerlink" title="Leader选举"></a>Leader选举</h1><p>raft协议中，一个节点任一时刻处于<code>leader</code>, <code>follower</code>, <code>candidate</code>三个角色之一。</p>
+<ul>
+<li>leader 接受客户端请求，并向Follower同步请求日志，当日志同步到大多数节点上后告诉Follower提交日志。</li>
+<li>follower 接受并持久化Leader同步的日志，在Leader告之日志可以提交之后，提交日志。</li>
+<li>candidate Leader选举过程中的临时角色。</li>
+</ul>
+<p><img src="/images/raft/election_state.jpg" alt="election_state"></p>
+<p>每个节点以<code>follower</code>角色开始，如果<code>follower</code>超时没有收到<code>leader</code>的消息，它会进入<code>candidate</code>角色，并发起选举投票。如果<code>candidate</code>收到的票数超过半数以上，则切换为<code>leader</code>角色。如果发现其他节点比自己更新，则主动切换到<code>follower</code>。总之，系统中最多只有一个<code>leader</code>，如果在一段时间里发现没有<code>leader</code>，则大家通过选举-投票选出<code>leader</code>。<code>leader</code>会不停的给<code>follower</code>发心跳消息，表明自己的存活状态。如果<code>leader</code>故障，那么<code>follower</code>会转换成<code>candidate</code>，重新选出<code>leader</code>。</p>
+<p><img src="/images/raft/election_term.png" alt="election_term"></p>
+<p>leader是大家投票选举出来的，每个leader工作一段时间，然后选出新的leader继续负责。这根民主社会的选举很像，每一届新的履职期称之为一届任期，在raft协议中，也是这样的，对应的术语叫term。term（任期）以选举（election）开始，然后就是一段或长或短的稳定工作期（normal Operation）。从上图可以看到，任期是递增的，这就充当了逻辑时钟的作用；另外，term 3展示了一种情况，就是说没有选举出leader就结束了，然后会发起新的选举。</p>
+<h2 id="选举过程"><a href="#选举过程" class="headerlink" title="选举过程"></a>选举过程</h2><h3 id="正常情况下选举"><a href="#正常情况下选举" class="headerlink" title="正常情况下选举"></a>正常情况下选举</h3><p>5个节点一开始的状态都是<code>Follower</code>。<br><img src="/images/raft/election_flow_normal_1.png" alt="election_flow_normal_1"></p>
+<p>在一个节点倒计时结束(Timeout) 后，这个节点的状态变成<code>Candidate</code>开始选举，它给其他几个节点发送选举请求(RequestVote)<br><img src="/images/raft/election_flow_normal_2.png" alt="election_flow_normal_2"></p>
+<p>其他四个节点都返回成功，这个节点的状态由<code>Candidate</code>变成了<code>Leader</code>，并在每个一小段时间后，就给所有的<code>Follower</code>发送一个 Heartbeat 以保持所有节点的状态，<code>Follower</code>收到<code>Leader</code>的Heartbeat后重设Timeout。<br><img src="/images/raft/election_flow_normal_3.png" alt="election_flow_normal_3"></p>
+<p>只要有超过一半的节点投支持票了，<code>Candidate</code>才会被选举为<code>Leader</code>，5个节点的情况下，3个节点 (包括<code>Candidate</code>本身) 投了支持就行。</p>
+<h3 id="Leader-出故障情况下的选举"><a href="#Leader-出故障情况下的选举" class="headerlink" title="Leader 出故障情况下的选举"></a>Leader 出故障情况下的选举</h3><p><img src="/images/raft/election_flow_error_leader_1.png" alt="election_flow_error_leader_1"></p>
+<p><code>leader</code>出故障挂掉了，其他四个<code>follower</code>将进行重新选主。<br><img src="/images/raft/election_flow_error_leader_2.png" alt="election_flow_error_leader_2"></p>
+<p>4个节点的选主过程和5个节点的类似，在选出一个新的<code>leader</code>后，原来的<code>Leader</code>恢复了又重新加入了，这个时候怎么处理？在Raft里，第几轮选举是有记录的，重新加入的<code>Leader</code>是第一轮选举(Term 1)选出来的，而现在的<code>Leader</code>则是Term 2，所有原来的<code>Leader</code>会自觉降级为<code>Follower</code><br><img src="/images/raft/election_flow_error_leader_3.png" alt="election_flow_error_leader_3"><br><img src="/images/raft/election_flow_error_leader_4.png" alt="election_flow_error_leader_4"><br><img src="/images/raft/election_flow_error_leader_5.png" alt="election_flow_error_leader_5"><br><img src="/images/raft/election_flow_error_leader_6.png" alt="election_flow_error_leader_6"></p>
+<h3 id="多个Candidate情况下的Leader选举"><a href="#多个Candidate情况下的Leader选举" class="headerlink" title="多个Candidate情况下的Leader选举"></a>多个Candidate情况下的Leader选举</h3><p><img src="/images/raft/election_flow_mult_cand_1.png" alt="election_flow_mult_cand_1"></p>
+<p>有两个<code>Follower</code>同时Timeout，都变成了<code>Candidate</code>开始选举，分别给一个<code>Follower</code>发送了投票请求。<br><img src="/images/raft/election_flow_mult_cand_3.png" alt="election_flow_mult_cand_2"></p>
+<p>两个<code>Follower</code>分别返回了ok，这时两个<code>Candidate</code>都只有2票，要3票才能被选成<code>Leader</code>。<br><img src="/images/raft/election_flow_mult_cand_3.png" alt="election_flow_mult_cand_3"></p>
+<p>两个<code>Candidate</code>会分别给另外一个还没有给自己投票的<code>Follower</code>发送投票请求。<br><img src="/images/raft/election_flow_mult_cand_4.png" alt="election_flow_mult_cand_4"></p>
+<p>但是因为<code>Follower</code>在这一轮选举中，都已经投完票了，所以都拒绝了他们的请求。所以在Term 2没有<code>Leader</code>被选出来。<br><img src="/images/raft/election_flow_mult_cand_5.png" alt="election_flow_mult_cand_5"></p>
+<p>这时，两个节点的状态是<code>Candidate</code>，两个是<code>Follower</code>，但是他们的倒计时器仍然在运行，最先Timeout的那个节点会进行发起新一轮Term 3的投票。<br><img src="/images/raft/election_flow_mult_cand_6.png" alt="election_flow_mult_cand_6"></p>
+<p>两个<code>Follower</code>在Term 3还没投过票，所以返回OK，这时<code>Candidate</code>一共有三票，被选为了<code>Leader</code>。<br><img src="/images/raft/election_flow_mult_cand_7.png" alt="election_flow_mult_cand_7"></p>
+<p>如果<code>Leader</code> Heartbeat的时间晚于另外一个<code>Candidate</code> timeout的时间，另外一个<code>Candidate</code>仍然会发送选举请求。<br><img src="/images/raft/election_flow_mult_cand_8.png" alt="election_flow_mult_cand_8"></p>
+<p>两个<code>Follower</code>已经投完票了，拒绝了这个<code>Candidate</code>的投票请求。<br><img src="/images/raft/election_flow_mult_cand_9.png" alt="election_flow_mult_cand_9"></p>
+<p><code>Leader</code>进行Heartbeat，<code>Candidate</code>收到后状态自动转为<code>Follower</code>，完成选举。<br><img src="/images/raft/election_flow_mult_cand_10.png" alt="election_flow_mult_cand_10"></p>
+<h1 id="日志复制"><a href="#日志复制" class="headerlink" title="日志复制"></a>日志复制</h1><p>Raft 在实际应用场景中的一致性更多的是体现在不同节点之间的数据一致性，客户端发送请求到任何一个节点都能收到一致的返回，当一个节点出故障后，其他节点仍然能以已有的数据正常进行。在选主之后的复制日志就是为了达到这个目的。</p>
+<p><img src="/images/raft/log_replication_normal.jpg" alt="log_replication_normal"></p>
+<h2 id="正常情况下日志复制过程"><a href="#正常情况下日志复制过程" class="headerlink" title="正常情况下日志复制过程"></a>正常情况下日志复制过程</h2><p><img src="/images/raft/log_replication_normal_step_1.png" alt="log_replication_normal_step_1"></p>
+<p>客户端发送请求给<code>Leader</code>，储存数据 “sally”，<code>Leader</code>先将数据写在本地日志，这时候数据还是Uncommitted (还没最终确认，红色表示)<br><img src="/images/raft/log_replication_normal_step_2.png" alt="log_replication_normal_step_2"></p>
+<p><code>Leader</code>给两个<code>Follower</code>发送AppendEntries请求，数据在<code>Follower</code>上没有冲突，则将数据暂时写在本地日志，<code>Follower</code>的数据也还是Uncommitted。<br><img src="/images/raft/log_replication_normal_step_3.png" alt="log_replication_normal_step_3"></p>
+<p><code>Follower</code>将数据写到本地后，返回OK。<code>Leader</code>收到后成功返回，只要收到的成功的返回数量超过半数(包含<code>Leader</code>)，<code>Leader</code>将数据 “sally” 的状态改成Committed。( 这个时候<code>Leader</code>就可以返回给客户端了)<br><img src="/images/raft/log_replication_normal_step_4.png" alt="log_replication_normal_step_4"></p>
+<p><code>Leader</code>再次给<code>Follower</code>发送AppendEntries请求，收到请求后，<code>Follower</code>将本地日志里Uncommitted数据改成Committed。这样就完成了一整个复制日志的过程，三个节点的数据是一致的<br><img src="/images/raft/log_replication_normal_step_5.png" alt="log_replication_normal_step_5"></p>
+<h2 id="Network-Partition情况下日志复制过程"><a href="#Network-Partition情况下日志复制过程" class="headerlink" title="Network Partition情况下日志复制过程"></a>Network Partition情况下日志复制过程</h2><p>在Network Partition的情况下，部分节点之间没办法互相通信，Raft 也能保证在这种情况下数据的一致性。</p>
+<p><img src="/images/raft/log_replication_np_1.png" alt="log_replication_np_1"></p>
+<p>Network Partition将节点分成两边，一边有两个节点，一边三个节点。<br><img src="/images/raft/log_replication_np_2.png" alt="log_replication_np_2"></p>
+<p>两个节点这边已经有<code>Leader</code>了，来自客户端的数据“bob”通过<code>Leader</code>同步到<code>Follower</code>。<br><img src="/images/raft/log_replication_np_3.png" alt="log_replication_np_3"></p>
+<p>因为只有两个节点，少于3个节点，所以“bob”的状态仍是Uncommitted。所以在这里，服务器会返回错误给客户端<br><img src="/images/raft/log_replication_np_4.png" alt="log_replication_np_4"></p>
+<p>另外一个Partition有三个节点，进行重新选主。客户端数据“tom”发到新的<code>Leader</code>，通过和上节网络状态下相似的过程，同步到另外两个<code>Follower</code>。<br><img src="/images/raft/log_replication_np_5.png" alt="log_replication_np_5"></p>
+<p>因为这个Partition有3个节点，超过半数，所以数据“tom”都Commit了。<br><img src="/images/raft/log_replication_np_6.png" alt="log_replication_np_6"><br><img src="/images/raft/log_replication_np_7.png" alt="log_replication_np_7"><br><img src="/images/raft/log_replication_np_8.png" alt="log_replication_np_8"></p>
+<p>网络状态恢复，5个节点再次处于同一个网络状态下。但是这里出现了数据冲突“bob”和“tom”<br><img src="/images/raft/log_replication_np_9.png" alt="log_replication_np_9"></p>
+<p>三个节点的<code>Leader</code>广播AppendEntries<br><img src="/images/raft/log_replication_np_10.png" alt="log_replication_np_10"></p>
+<p>两个节点Partition的<code>Leader</code>自动降级为<code>Follower</code>，因为这个Partition的数据 “bob” 没有Commit，返回给客户端的是错误，客户端知道请求没有成功，所以<code>Follower</code>在收到AppendEntries请求时，可以把“bob“删除，然后同步”tom”，通过这么一个过程，就完成了在Network Partition情况下的复制日志，保证了数据的一致性。<br><img src="/images/raft/log_replication_np_11.png" alt="log_replication_np_11"><br><img src="/images/raft/log_replication_np_12.png" alt="log_replication_np_12"></p>
+<h1 id="安全性"><a href="#安全性" class="headerlink" title="安全性"></a>安全性</h1><h2 id="Election-safety"><a href="#Election-safety" class="headerlink" title="Election safety"></a>Election safety</h2><p>选举安全性，即任一任期内最多一个<code>leader</code>被选出。这一点非常重要，在一个复制集中任何时刻只能有一个<code>leader</code>。系统中同时有多余一个<code>leader</code>，被称之为脑裂（brain split），这是非常严重的问题，会导致数据的覆盖丢失。</p>
+<ul>
+<li>一个节点某一任期内最多只能投一票</li>
+<li>只有获得多数票的节点才会成为<code>leader</code></li>
+</ul>
+<h2 id="log-matching"><a href="#log-matching" class="headerlink" title="log matching"></a>log matching</h2><p>如果两个节点上的某个log entry的log index相同且term相同，那么在该index之前的所有log entry应该都是相同的。在没有异常的情况下，log matching是很容易满足的，但如果出现了node crash，情况就会变得复杂了。</p>
+<p><img src="/images/raft/safety_log_matching.png" alt="safety_log_matching"><br>*** 上图的a-f不是6个follower，而是某个follower可能存在的六个状态 ***</p>
+<ul>
+<li>比<code>leader</code>日志少: a,b</li>
+<li>比<code>leader</code>日志多：c,d</li>
+<li>某些位置比<code>leader</code>多，某些日志比<code>leader</code>少：e,f</li>
+</ul>
+<p>当出现了<code>leader</code>与<code>follower</code>不一致的情况，<code>leader</code>强制<code>follower</code>复制自己的log。</p>
+<h2 id="leader-completeness"><a href="#leader-completeness" class="headerlink" title="leader completeness"></a>leader completeness</h2><ul>
+<li>一个日志被复制到多数节点才算committed</li>
+<li>一个节点得到多数的投票才能成为<code>leader</code>，而节点A给节点B投票的其中一个前提是，B的日志不能比A的日志旧</li>
+</ul>
+<h2 id="State-Machine-Safety"><a href="#State-Machine-Safety" class="headerlink" title="State Machine Safety"></a>State Machine Safety</h2><p>如果节点将某一位置的log entry应用到了状态机，那么其他节点在同一位置不能应用不同的日志。简单点来说，所有节点在同一位置（index in log entries）应该应用同样的日志。</p>
+<p><img src="/images/raft/safety_state_machine.png" alt="safety_state_machine"></p>
+<ul>
+<li>(a)时刻, s1是leader，在term2提交的日志只赋值到了s1 s2两个节点就crash了。</li>
+<li>(b)时刻, s5成为了term 3的<code>leader</code>，日志只赋值到了s5，然后crash。</li>
+<li>(c)时刻，s1又成为了term 4的<code>leader</code>，开始赋值日志，于是把term2的日志复制到了s3，此刻，可以看出term2对应的日志已经被复制到了多数节点上，因此是committed，可以被状态机应用。</li>
+<li>(d)时刻，s1又crash了，s5重新当选，然后将term3的日志复制到所有节点，这就出现了一种奇怪的现象：被复制到大多数节点（或者说可能已经应用）的日志被回滚。</li>
+</ul>
+<p>因为term4时的<code>leader</code> s1在(c)时刻提交了之前term2任期的日志。某个<code>leader</code>选举成功之后，不会直接提交前任<code>leader</code>时期的日志，而是通过提交当前任期的日志的时候“顺手”把之前的日志也提交了，具体怎么实现了，在log matching部分有详细介绍。那么问题来了，如果<code>leader</code>被选举后没有收到客户端的请求呢，论文中有提到，在任期开始的时候发立即尝试复制、提交一条空的log。</p>
+<p>因此，在上图中，不会出现（C）时刻的情况，即term4任期的<code>leader</code> s1不会复制term2的日志到s3。而是如同(e)描述的情况，通过复制-提交term4的日志顺便提交term2的日志。如果term4的日志提交成功，那么term2的日志也一定提交成功，此时即使s1 crash，s5也不会重新当选。</p>
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/8e4bbe7e276c">共识算法：Raft</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.cnblogs.com/xybaby/p/10124083.html">一文搞懂Raft算法</a></li>
+<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/32052223">Raft算法详解</a></li>
+<li><a target="_blank" rel="noopener" href="http://blog.itpub.net/31556438/viewspace-2637112/">10分钟弄懂Raft算法</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2020/11/07/network/rdma/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1196,129 +1348,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2019/10/14/storage/ceph/multi-site-in-a-cluster-md/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2019/10/14/storage/ceph/multi-site-in-a-cluster-md/" class="post-title-link" itemprop="url">Deploy multisite in 同一个集群</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2019-10-14 18:17:55" itemprop="dateCreated datePublished" datetime="2019-10-14T18:17:55+08:00">2019-10-14</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>在一个Ceph集群里部署一个multisite RGW环境。有什么意义吗？没有，存属个人折腾。由于资源有限，所以只能在一个集群里委屈了。</p>
-<p>限盐少许，直接开整。</p>
-<h1 id="版本"><a href="#版本" class="headerlink" title="版本"></a>版本</h1><p>14.2.3 (0f776cf838a1ae3130b2b73dc26be9c95c6ccc39) nautilus (stable)</p>
-<h1 id="RGW配置部署"><a href="#RGW配置部署" class="headerlink" title="RGW配置部署"></a>RGW配置部署</h1><h2 id="一个Site的部署"><a href="#一个Site的部署" class="headerlink" title="一个Site的部署"></a>一个Site的部署</h2><h3 id="修改-rgw-rootPool"><a href="#修改-rgw-rootPool" class="headerlink" title="修改.rgw.rootPool"></a>修改<code>.rgw.root</code>Pool</h3><p>修改<code>/etc/ceph/ceph.conf</code>中使用到<code>.rgw.root</code>pool的所有配置项，将其改为<code>exter.rgw.root</code>。<code>ceph.conf</code>中没有显示的配置，所以建议查找一下源代码中的配置<code>options.cc</code>。<br>之后再创建<code>realm</code>、<code>zonegroup</code>、<code>zone</code>等信息都会记录到<code>exter.rgw.root</code>中。</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">rgw_zone_root_pool = exter.rgw.root</span><br><span class="line">rgw_region_root_pool = exter.rgw.root</span><br><span class="line">rgw_zonegroup_root_pool = exter.rgw.root</span><br><span class="line">rgw_realm_root_pool = exter.rgw.root</span><br><span class="line">rgw_period_root_pool = exter.rgw.root</span><br></pre></td></tr></table></figure>
-
-<p>配置完成后，启动RGW。本人将RGW安装到了容器中，所以下面给出容器的启动命令</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run -d --net=host --name rgw -v /etc/ceph/:/etc/ceph/ -v /var/lib/ceph/:/var/lib/ceph/ ceph/daemon:latest-nautilus rgw</span><br></pre></td></tr></table></figure>
-<p>运行后记得用<code>docker logs -f rgw</code>看一下rgw日志，确保其正常运行。</p>
-<p>然后使用<code>ceph df</code>看一下，当前RGW创建了哪些Pools</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">ceph <span class="built_in">df</span></span></span><br><span class="line">GLOBAL:</span><br><span class="line">    SIZE       AVAIL      RAW USED     %RAW USED</span><br><span class="line">    57 GiB     56 GiB      654 MiB          1.12</span><br><span class="line">POOLS:</span><br><span class="line">    NAME                        ID     USED        %USED     MAX AVAIL     OBJECTS</span><br><span class="line">    exter.rgw.root              18     1.2 KiB         0        27 GiB           4</span><br><span class="line">    default.rgw.control         19         0 B         0        27 GiB           8</span><br><span class="line">    default.rgw.meta            20         0 B         0        27 GiB           0</span><br><span class="line">    default.rgw.log             21         0 B         0        27 GiB          33</span><br></pre></td></tr></table></figure>
-
-<h3 id="创建Realm"><a href="#创建Realm" class="headerlink" title="创建Realm"></a>创建Realm</h3><p>创建一个 realm ，若不创建，后续在设置自定义的zone为default时会报无效参数的错误。此问题，可以看<code>rgw_admin.cc</code>的源码。</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">4438</span>     <span class="keyword">case</span> OPT_ZONE_DEFAULT:</span><br><span class="line"><span class="number">4439</span>       &#123;</span><br><span class="line"><span class="number">4440</span>         RGWZoneGroup <span class="title function_">zonegroup</span><span class="params">(zonegroup_id,zonegroup_name)</span>;</span><br><span class="line"><span class="number">4441</span>         <span class="type">int</span> ret = zonegroup.init(g_ceph_context, store-&gt;svc()-&gt;sysobj);</span><br><span class="line"><span class="number">4442</span>         <span class="keyword">if</span> (ret &lt; <span class="number">0</span>) &#123;</span><br><span class="line"><span class="number">4443</span>           <span class="built_in">cerr</span> &lt;&lt; <span class="string">&quot;WARNING: failed to initialize zonegroup &quot;</span> &lt;&lt; zonegroup_name &lt;&lt; <span class="built_in">std</span>::<span class="built_in">endl</span>;</span><br><span class="line"><span class="number">4444</span>         &#125;</span><br><span class="line"><span class="number">4445</span>         <span class="keyword">if</span> (zone_id.empty() &amp;&amp; zone_name.empty()) &#123;</span><br><span class="line"><span class="number">4446</span>           <span class="built_in">cerr</span> &lt;&lt; <span class="string">&quot;no zone name or id provided&quot;</span> &lt;&lt; <span class="built_in">std</span>::<span class="built_in">endl</span>;</span><br><span class="line"><span class="number">4447</span>           <span class="keyword">return</span> EINVAL;</span><br><span class="line"><span class="number">4448</span>         &#125;</span><br><span class="line"><span class="number">4449</span>         RGWZoneParams <span class="title function_">zone</span><span class="params">(zone_id, zone_name)</span>;</span><br><span class="line"><span class="number">4450</span>         ret = zone.init(g_ceph_context, store-&gt;svc()-&gt;sysobj);</span><br><span class="line"><span class="number">4451</span>         <span class="keyword">if</span> (ret &lt; <span class="number">0</span>) &#123;</span><br><span class="line"><span class="number">4452</span>           <span class="built_in">cerr</span> &lt;&lt; <span class="string">&quot;unable to initialize zone: &quot;</span> &lt;&lt; cpp_strerror(-ret) &lt;&lt; <span class="built_in">std</span>::<span class="built_in">endl</span>;</span><br><span class="line"><span class="number">4453</span>           <span class="keyword">return</span> -ret;</span><br><span class="line"><span class="number">4454</span>         &#125;</span><br><span class="line"><span class="number">4455</span>         ret = zone.set_as_default();</span><br><span class="line"><span class="number">4456</span>         <span class="keyword">if</span> (ret &lt; <span class="number">0</span>) &#123;</span><br><span class="line"><span class="number">4457</span>           <span class="built_in">cerr</span> &lt;&lt; <span class="string">&quot;failed to set zone as default: &quot;</span> &lt;&lt; cpp_strerror(-ret) &lt;&lt; <span class="built_in">std</span>::<span class="built_in">endl</span>;</span><br><span class="line"><span class="number">4458</span>           <span class="keyword">return</span> -ret;</span><br><span class="line"><span class="number">4459</span>         &#125;</span><br><span class="line"><span class="number">4460</span>       &#125;</span><br><span class="line"><span class="number">4461</span>       <span class="keyword">break</span>;</span><br></pre></td></tr></table></figure>
-<p>在<code>failed to set zone as default</code>这个位置报错。</p>
-<p>所以先配置一个realm吧</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">[root@master ~]# radosgw-admin realm list</span><br><span class="line">&#123;</span><br><span class="line">    &quot;default_info&quot;: &quot;&quot;,</span><br><span class="line">    &quot;realms&quot;: []</span><br><span class="line">&#125;</span><br><span class="line">[root@master ~]# radosgw-admin realm create --rgw-realm=default --default</span><br><span class="line">&#123;</span><br><span class="line">    &quot;id&quot;: &quot;f334e6c2-c2b4-4c04-b541-f64d96c10c07&quot;,</span><br><span class="line">    &quot;name&quot;: &quot;default&quot;,</span><br><span class="line">    &quot;current_period&quot;: &quot;40775bd3-d592-46c0-98c7-33171915825b&quot;,</span><br><span class="line">    &quot;epoch&quot;: 1</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h3 id="设置zonegroup的default-info"><a href="#设置zonegroup的default-info" class="headerlink" title="设置zonegroup的default info"></a>设置zonegroup的default info</h3><p>此时zonegroup的default info缺失了</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">[root@master ~]# radosgw-admin zonegroup list</span><br><span class="line">&#123;</span><br><span class="line">    &quot;default_info&quot;: &quot;&quot;,</span><br><span class="line">    &quot;zonegroups&quot;: [</span><br><span class="line">        &quot;default&quot;</span><br><span class="line">    ]</span><br><span class="line">&#125;</span><br><span class="line">[root@master ~]# radosgw-admin zonegroup get</span><br><span class="line">failed to init zonegroup: (2) No such file or directory</span><br></pre></td></tr></table></figure>
-<p>使用 <code>zonegroup default</code>重新设置default info</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">[root@master ~]# radosgw-admin zonegroup default --rgw-zonegroup=default</span><br><span class="line">[root@master ~]# radosgw-admin zonegroup list</span><br><span class="line">&#123;</span><br><span class="line">    &quot;default_info&quot;: &quot;57b6eaac-63da-42dd-b69d-f7e871ce74c9&quot;,</span><br><span class="line">    &quot;zonegroups&quot;: [</span><br><span class="line">        &quot;default&quot;</span><br><span class="line">    ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h3 id="创建Zone"><a href="#创建Zone" class="headerlink" title="创建Zone"></a>创建Zone</h3><p>接下来，创建我们需要的zone, 并设置其为default</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line">[root@master ~]# radosgw-admin zone list</span><br><span class="line">&#123;</span><br><span class="line">    &quot;default_info&quot;: &quot;&quot;,</span><br><span class="line">    &quot;zones&quot;: [</span><br><span class="line">        &quot;default&quot;</span><br><span class="line">    ]</span><br><span class="line">&#125;</span><br><span class="line">[root@master ~]# radosgw-admin zone create --rgw-zonegroup=default --rgw-zone=exter --master --default</span><br><span class="line">2019-10-14 19:00:50.322 7f3698ef7240  0 NOTICE: overriding master zone: f2a55476-fb68-4ea7-af97-251b91e94747</span><br><span class="line">&#123;</span><br><span class="line">    &quot;id&quot;: &quot;69234f1d-8f48-4431-b45f-912087431a47&quot;,</span><br><span class="line">    &quot;name&quot;: &quot;exter&quot;,</span><br><span class="line">    &quot;domain_root&quot;: &quot;exter.rgw.meta:root&quot;,</span><br><span class="line">    &quot;control_pool&quot;: &quot;exter.rgw.control&quot;,</span><br><span class="line">    &quot;gc_pool&quot;: &quot;exter.rgw.log:gc&quot;,</span><br><span class="line">    &quot;lc_pool&quot;: &quot;exter.rgw.log:lc&quot;,</span><br><span class="line">    &quot;log_pool&quot;: &quot;exter.rgw.log&quot;,</span><br><span class="line">    &quot;intent_log_pool&quot;: &quot;exter.rgw.log:intent&quot;,</span><br><span class="line">    &quot;usage_log_pool&quot;: &quot;exter.rgw.log:usage&quot;,</span><br><span class="line">    &quot;reshard_pool&quot;: &quot;exter.rgw.log:reshard&quot;,</span><br><span class="line">    &quot;user_keys_pool&quot;: &quot;exter.rgw.meta:users.keys&quot;,</span><br><span class="line">    &quot;user_email_pool&quot;: &quot;exter.rgw.meta:users.email&quot;,</span><br><span class="line">    &quot;user_swift_pool&quot;: &quot;exter.rgw.meta:users.swift&quot;,</span><br><span class="line">    &quot;user_uid_pool&quot;: &quot;exter.rgw.meta:users.uid&quot;,</span><br><span class="line">    &quot;otp_pool&quot;: &quot;exter.rgw.otp&quot;,</span><br><span class="line">    &quot;system_key&quot;: &#123;</span><br><span class="line">        &quot;access_key&quot;: &quot;&quot;,</span><br><span class="line">        &quot;secret_key&quot;: &quot;&quot;</span><br><span class="line">    &#125;,</span><br><span class="line">    &quot;placement_pools&quot;: [</span><br><span class="line">        &#123;</span><br><span class="line">            &quot;key&quot;: &quot;default-placement&quot;,</span><br><span class="line">            &quot;val&quot;: &#123;</span><br><span class="line">                &quot;index_pool&quot;: &quot;exter.rgw.buckets.index&quot;,</span><br><span class="line">                &quot;data_pool&quot;: &quot;exter.rgw.buckets.data&quot;,</span><br><span class="line">                &quot;data_extra_pool&quot;: &quot;exter.rgw.buckets.non-ec&quot;,</span><br><span class="line">                &quot;index_type&quot;: 0,</span><br><span class="line">                &quot;compression&quot;: &quot;&quot;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    ],</span><br><span class="line">    &quot;metadata_heap&quot;: &quot;&quot;,</span><br><span class="line">    &quot;realm_id&quot;: &quot;f334e6c2-c2b4-4c04-b541-f64d96c10c07&quot;</span><br><span class="line">&#125;</span><br><span class="line">[root@master ~]# radosgw-admin zone list</span><br><span class="line">&#123;</span><br><span class="line">    &quot;default_info&quot;: &quot;69234f1d-8f48-4431-b45f-912087431a47&quot;,</span><br><span class="line">    &quot;zones&quot;: [</span><br><span class="line">        &quot;exter&quot;,</span><br><span class="line">        &quot;default&quot;</span><br><span class="line">    ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h3 id="删除default-zone"><a href="#删除default-zone" class="headerlink" title="删除default zone"></a>删除default zone</h3><p>现在你会发现有两个zone了，一个是我们新建的，另一个是default，这个default没用了，我们把它删掉。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">radosgw-admin zone delete --rgw-zone=default --default</span><br></pre></td></tr></table></figure>
-
-<p>细心的朋友可能会发现radosgw-admin命令中没有<code>zone delete</code>这个命令啊，<code>-h</code>中显示的是<code>zone rm</code>啊。这是Bug，嘿嘿嘿～～～</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">[root@master ~]# radosgw-admin -h | grep -i zone | grep -i rm</span><br><span class="line">  zonegroup rm               remove a zone group info</span><br><span class="line">  zonegroup rm               remove a zone from a zonegroup</span><br><span class="line">  zonegroup placement rm     remove a placement target from a zonegroup</span><br><span class="line">  zone rm                    remove a zone</span><br><span class="line">  zone placement rm          remove a zone placement target</span><br><span class="line">   --tags-rm=&lt;list&gt;          list of tags to remove for zonegroup placement modify command</span><br><span class="line">   --sync-from-rm=[zone-name][,...]</span><br><span class="line">[root@master ~]# radosgw-admin -h | grep -i delete</span><br><span class="line">                               replica mdlog get/delete</span><br><span class="line">                               replica datalog get/delete</span><br><span class="line">                             (NOTE: required to delete a non-empty bucket)</span><br></pre></td></tr></table></figure>
-
-<h3 id="重启RGW服务"><a href="#重启RGW服务" class="headerlink" title="重启RGW服务"></a>重启RGW服务</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[root@master ~]# docker stop rgw</span><br><span class="line">[root@master ~]# docker start rgw</span><br></pre></td></tr></table></figure>
-
-<h3 id="删除default相关的Pools"><a href="#删除default相关的Pools" class="headerlink" title="删除default相关的Pools"></a>删除default相关的Pools</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">[root@master ~]# ceph df</span><br><span class="line">GLOBAL:</span><br><span class="line">    SIZE       AVAIL      RAW USED     %RAW USED</span><br><span class="line">    57 GiB     56 GiB      657 MiB          1.13</span><br><span class="line">POOLS:</span><br><span class="line">    NAME                        ID     USED        %USED     MAX AVAIL     OBJECTS</span><br><span class="line">    exter.rgw.root              18     1.7 KiB         0        27 GiB          13</span><br><span class="line">    default.rgw.control         19         0 B         0        27 GiB           8</span><br><span class="line">    default.rgw.meta            20         0 B         0        27 GiB           0</span><br><span class="line">    default.rgw.log             21         0 B         0        27 GiB         175</span><br><span class="line">    exter.rgw.control           22         0 B         0        27 GiB           8</span><br><span class="line">    exter.rgw.meta              23         0 B         0        27 GiB           0</span><br><span class="line">    exter.rgw.log               24         0 B         0        27 GiB         159</span><br></pre></td></tr></table></figure>
-<p>重启RGW服务后，发现多了三个Pool <code>exter.rgw.control</code>、<code>exter.rgw.meta</code>、<code>exter.rgw.log</code>。而default开头的pool就没用了，可以删除了。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">[root@master ~]# ceph osd pool rm default.rgw.control default.rgw.control --yes-i-really-really-mean-it</span><br><span class="line">pool &#x27;default.rgw.control&#x27; removed</span><br><span class="line">[root@master ~]# ceph osd pool rm default.rgw.meta default.rgw.meta --yes-i-really-really-mean-it</span><br><span class="line">pool &#x27;default.rgw.meta&#x27; removed</span><br><span class="line">[root@master ~]# ceph osd pool rm default.rgw.log default.rgw.log --yes-i-really-really-mean-it</span><br><span class="line">pool &#x27;default.rgw.log&#x27; removed</span><br></pre></td></tr></table></figure>
-
-<h2 id="另一个Site的部署"><a href="#另一个Site的部署" class="headerlink" title="另一个Site的部署"></a>另一个Site的部署</h2><p>*** 参考<code>一个Site的部署方法</code>吧 ***</p>
-<h2 id="Zone之间的数据同步"><a href="#Zone之间的数据同步" class="headerlink" title="Zone之间的数据同步"></a>Zone之间的数据同步</h2><p>如果上述的部署方法你都清楚了，相信配置一个Zone之间同步数据的Multisite应该不在话下了。下面说说数据同步的几点注意事项吧。</p>
-<ol>
-<li>数据同步必须是在不同zone之间进行的，但zone必须在同一zonegroup之下。</li>
-<li>每一个zonegroup内都有一个master zone；一个realm中有多个zonegroup，但master zonegroup只有一个，realm命名空间全局唯一；</li>
-<li>数据分为 period 数据、user数据、bucket数据、object数据。<br> period数据需要用户手动配置，不能自动同步；<br> user数据只能从master zone写入，然后非master zone同步；<br> bucket数据可以从任意一个zone写入，但最后都会转发给master zone，待master 写入成功后，其它zone同步数据，若master失败，其它zone亦失败；<br> object数据可以从任意一个zone写入，若master zone写入失败，不影响其它zone写入情况。</li>
-<li>每个zone的<code>endpoints</code>需要配置，否则zone之间无法正常访问</li>
-<li>zone上配置的<code>access key</code>和<code>secret</code>要与master zone一致</li>
-</ol>
-<p>补个图吧：</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">                                          +--- master zone</span><br><span class="line">                                          |</span><br><span class="line">                                          +--- secondary zone 1</span><br><span class="line">                                          |</span><br><span class="line">         +---------- master zonegroup ----+--- ......</span><br><span class="line">         |                                |</span><br><span class="line">         |                                +--- secondary zone n</span><br><span class="line">         |</span><br><span class="line">realm ---+---------- secondary zonegroup 1 --+--- master zone</span><br><span class="line">         |                                   |</span><br><span class="line">         |                                   +--- secondary zone 1</span><br><span class="line">         +---------- ......                  |</span><br><span class="line">         |                                   +--- ......</span><br><span class="line">         |</span><br><span class="line">         +---------- secondary zonegropu n</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1388,7 +1417,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">146</span>
+          <span class="site-state-item-count">147</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -1401,7 +1430,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">122</span>
+        <span class="site-state-item-count">123</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>

@@ -188,6 +188,138 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2018/04/02/storage/ceph/ceph-compile/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2018/04/02/storage/ceph/ceph-compile/" class="post-title-link" itemprop="url">Ceph 编译</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2018-04-02 17:18:48" itemprop="dateCreated datePublished" datetime="2018-04-02T17:18:48+08:00">2018-04-02</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="Nautilus"><a href="#Nautilus" class="headerlink" title="Nautilus"></a>Nautilus</h1><h2 id="编译环境"><a href="#编译环境" class="headerlink" title="编译环境"></a>编译环境</h2><h3 id="硬件"><a href="#硬件" class="headerlink" title="硬件"></a>硬件</h3><p>采用KVM虚拟机编译Ceph源码，具体配置如下：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">lscpu</span></span><br><span class="line">Architecture:          x86_64</span><br><span class="line">CPU op-mode(s):        32-bit, 64-bit</span><br><span class="line">Byte Order:            Little Endian</span><br><span class="line">CPU(s):                8</span><br><span class="line">On-line CPU(s) list:   0-7</span><br><span class="line">Thread(s) per core:    1</span><br><span class="line">Core(s) per socket:    1</span><br><span class="line">Socket(s):             8</span><br><span class="line">NUMA node(s):          1</span><br><span class="line">Vendor ID:             GenuineIntel</span><br><span class="line">CPU family:            6</span><br><span class="line">Model:                 13</span><br><span class="line">Model name:            QEMU Virtual CPU version 2.5+</span><br><span class="line">Stepping:              3</span><br><span class="line">CPU MHz:               2394.454</span><br><span class="line">BogoMIPS:              4788.90</span><br><span class="line">Hypervisor vendor:     KVM</span><br><span class="line">Virtualization type:   full</span><br><span class="line">L1d cache:             32K</span><br><span class="line">L1i cache:             32K</span><br><span class="line">L2 cache:              4096K</span><br><span class="line">NUMA node0 CPU(s):     0-7</span><br><span class="line">Flags:                 fpu de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pse36 clflush mmx fxsr sse sse2 syscall nx lm rep_good nopl cpuid tsc_known_freq pni cx16 x2apic hypervisor lahf_lm pti</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">free -g</span></span><br><span class="line">              total        used        free      shared  buff/cache   available</span><br><span class="line">Mem:             15           7           5           0           2           7</span><br><span class="line">Swap:             0           0           0</span><br></pre></td></tr></table></figure>
+
+<h3 id="软件"><a href="#软件" class="headerlink" title="软件"></a>软件</h3><p>OS:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash"><span class="built_in">cat</span> /etc/redhat-release</span></span><br><span class="line">CentOS Linux release 7.6.1810 (Core)</span><br></pre></td></tr></table></figure>
+
+<p>kernel:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash"><span class="built_in">uname</span> -a</span></span><br><span class="line">Linux host-10-100-13-111 4.18.20 #1 SMP Tue Sep 17 11:21:39 CST 2019 x86_64 x86_64 x86_64 GNU/Linux</span><br></pre></td></tr></table></figure>
+
+<p>gcc:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">gcc -v</span></span><br><span class="line">Using built-in specs.</span><br><span class="line">COLLECT_GCC=gcc</span><br><span class="line">COLLECT_LTO_WRAPPER=/opt/rh/devtoolset-7/root/usr/libexec/gcc/x86_64-redhat-linux/7/lto-wrapper</span><br><span class="line">Target: x86_64-redhat-linux</span><br><span class="line">Configured with: ../configure --enable-bootstrap --enable-languages=c,c++,fortran,lto --prefix=/opt/rh/devtoolset-7/root/usr --mandir=/opt/rh/devtoolset-7/root/usr/share/man --infodir=/opt/rh/devtoolset-7/root/usr/share/info --with-bugurl=http://bugzilla.redhat.com/bugzilla --enable-shared --enable-threads=posix --enable-checking=release --enable-multilib --with-system-zlib --enable-__cxa_atexit --disable-libunwind-exceptions --enable-gnu-unique-object --enable-linker-build-id --with-gcc-major-version-only --enable-plugin --with-linker-hash-style=gnu --enable-initfini-array --with-default-libstdcxx-abi=gcc4-compatible --with-isl=/builddir/build/BUILD/gcc-7.3.1-20180303/obj-x86_64-redhat-linux/isl-install --enable-libmpx --enable-gnu-indirect-function --with-tune=generic --with-arch_32=i686 --build=x86_64-redhat-linux</span><br><span class="line">Thread model: posix</span><br><span class="line">gcc version 7.3.1 20180303 (Red Hat 7.3.1-5) (GCC)</span><br></pre></td></tr></table></figure>
+
+<h2 id="编译"><a href="#编译" class="headerlink" title="编译"></a>编译</h2><h3 id="pre-compile"><a href="#pre-compile" class="headerlink" title="pre-compile"></a>pre-compile</h3><p>执行<code>install-deps.sh</code>，安装编译ceph依赖的软件包。</p>
+<h3 id="cmake"><a href="#cmake" class="headerlink" title="cmake"></a>cmake</h3><p>安装官方文档的步骤可以正常编译，但默认的编译是含有调试信息的。所以编译后的bin文件比较大。</p>
+<ol>
+<li>生成makefile文件<br> 使用<code>do_cmake.sh</code>脚本在<code>build</code>目录下生成<code>Makefile</code>文件</li>
+<li>编译<br> 使用<code>make</code>命令编译，此过程时间较长。</li>
+<li>瘦身<br> 编译后的binary文件包含有debug信息，所以文件较大。需要使用strip对其debug信息进行裁剪。裁剪有两个工具可以用一个是<code>objcopy</code>；另一个是<code>strip</code><br> eg:<br> <code>objcopy --strip-debug ./radosgw</code><br> <code>strip --strip-debug --strip-unneeded ./radosgw</code></li>
+</ol>
+<h3 id="rpmbuild"><a href="#rpmbuild" class="headerlink" title="rpmbuild"></a>rpmbuild</h3><ol>
+<li>生成<code>rpmbuild</code>目录树<br> 使用<code>rpmdev-setuptree</code>命令创建<code>rpmbuild</code>目录树，该目录树会在<code>$home</code>目录下生成。可根据自己的需要将<code>rpmbuild</code>copy到指定的目录，但后续build过程需要指定这个目录。本人将<code>rpmbuild</code>目录移动到<code>/root/src</code>目录下。</li>
+<li>获取源码tar包到<code>rpmbuild/SOURCES</code>目录<br> 获取源码tar包可以到<code>https://download.ceph.com/tarballs/ceph-14.2.3.tar.gz</code>去下载。也可以将修改好的代码直接做成tar包。然后将tar包copy到<code>rpmbuild/SOURCES</code>目录下。</li>
+<li>提取tar包中的<code>ceph.spec</code><br> 从源码tar包中提取<code>ceph.spec</code>文件到<code>rpmbuild/SPECS</code>目录，用于后续rpmbuild使用。eg: <code>tar --strip-components=1 -C /root/src/rpmbuild/SPECS/ --no-anchored -xvzf /root/src/rpmbuild/SOURCES/ceph-14.2.3.tar.gz &quot;ceph.spec&quot;</code></li>
+<li>build rpms<br> rpmbuild具体使用<code>-bb</code>还是<code>-ba</code>根据个人需要而定吧。本人这里使用<code>-bb</code>只制作binary。eg: <code>rpmbuild -D &quot;_smp_mflags 4&quot; -D &quot;_topdir /root/src/rpmbuild&quot; -bb /root/src/rpmbuild/SPECS/ceph.spec</code>。<br> 由于本人将<code>rpmbuild</code>移动到了<code>/root/src</code>目录下，所以需要使用<code>-D &quot;_topdir /root/src/rpmbuild&quot;</code>去指定<code>rpmbuild</code>目录。<br> 本人不希望rpmbuild自动推算使用几个核心去编译，需要指定4个核心编译需要指定<code>-D &quot;_smp_mflags 4&quot;</code></li>
+</ol>
+<p>此时，可以静静等待编译完成。</p>
+<p>*** 编译的过程中可能会遇到<code>BuildArch:noarch</code>错误 ***</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">error: Arch dependent binaries in noarch package</span><br><span class="line"> </span><br><span class="line">  </span><br><span class="line">RPM build errors:</span><br><span class="line">    Arch dependent binaries in noarch package</span><br></pre></td></tr></table></figure>
+
+<p>可以通过在<code>spec</code>文件中增加<code>%define _binaries_in_noarch_packages_terminate_build 0</code>来解决此问题。</p>
+<h1 id="Luminous"><a href="#Luminous" class="headerlink" title="Luminous"></a>Luminous</h1><p>编译 Ceph luminous版本，luminous的改动还是蛮大的，而且改变了原有的configure为cmake。</p>
+<h2 id="编译环境-1"><a href="#编译环境-1" class="headerlink" title="编译环境"></a>编译环境</h2><h3 id="硬件-1"><a href="#硬件-1" class="headerlink" title="硬件"></a>硬件</h3><p>armv7l (Odroid XU4)</p>
+<h3 id="软件-1"><a href="#软件-1" class="headerlink" title="软件"></a>软件</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">lsb_release  -a</span></span><br><span class="line">LSB Version:    1.4</span><br><span class="line">Distributor ID: Arch</span><br><span class="line">Description:    Arch Linux</span><br><span class="line">Release:        rolling</span><br><span class="line">Codename:       n/a</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">uname</span> -a</span></span><br><span class="line">Linux HomeCenter 4.14.29-1-ARCH #1 SMP PREEMPT Fri Mar 23 02:57:06 UTC 2018 armv7l GNU/Linux</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">gcc -v</span></span><br><span class="line">Using built-in specs.</span><br><span class="line">COLLECT_GCC=gcc</span><br><span class="line">COLLECT_LTO_WRAPPER=/usr/lib/gcc/armv7l-unknown-linux-gnueabihf/7.2.1/lto-wrapper</span><br><span class="line">Target: armv7l-unknown-linux-gnueabihf</span><br><span class="line">Configured with: /build/gcc/src/gcc/configure --prefix=/usr --libdir=/usr/lib --libexecdir=/usr/lib --mandir=/usr/share/man --infodir=/usr/share/info --with-bugurl=https://github.com/archlinuxarm/PKGBUILDs/issues --enable-languages=c,c++,fortran,go,lto,objc,obj-c++ --enable-shared --enable-threads=posix --with-system-zlib --with-isl --enable-__cxa_atexit --disable-libunwind-exceptions --enable-clocale=gnu --disable-libstdcxx-pch --disable-libssp --enable-gnu-unique-object --enable-linker-build-id --enable-lto --enable-plugin --enable-install-libiberty --with-linker-hash-style=gnu --enable-gnu-indirect-function --disable-multilib --disable-werror --enable-checking=release --enable-default-pie --enable-default-ssp --host=armv7l-unknown-linux-gnueabihf --build=armv7l-unknown-linux-gnueabihf --with-arch=armv7-a --with-float=hard --with-fpu=vfpv3-d16</span><br><span class="line">Thread model: posix</span><br><span class="line">gcc version 7.2.1 20180116 (GCC)</span><br></pre></td></tr></table></figure>
+
+<h2 id="编译-1"><a href="#编译-1" class="headerlink" title="编译"></a>编译</h2><p>按照官方的文档，编译总共分为4步。</p>
+<ol>
+<li>安装编译需要的依赖包 <code>./install-deps.sh</code></li>
+<li>使用cmake生成Makefile <code>./do_cmake.sh</code></li>
+<li>使用Makefile编译源代码</li>
+<li>安装包制作</li>
+</ol>
+<p>由于本人使用的是archlinux，简单查看了一下<code>install-deps.sh</code>这个脚本，发现没有与我使用os相匹配的处理；所以本人决定跳过第一步，并且我也不打算制作安装包，所以第四部也省略了。</p>
+<p>接下来就只剩下第2、3步了，那么ceph编译依赖的其他软件包怎么解决，就只能放倒编译过程中出现报错再去究其原因了。闲言少叙，我们开始编译。</p>
+<h3 id="cmake过程"><a href="#cmake过程" class="headerlink" title="cmake过程"></a>cmake过程</h3><p>从github上clone下来ceph代码，不需要取得submodule的代码，因为在<code>do_cmake.sh</code>中首先会做。执行<code>do_cmake.sh</code>后，先取submodule代码，然后创建build目录，并在build目录中执行cmake，生成Makefile。</p>
+<p>在获取submodule这个过程由于网络问题会出现不只一次的中断，这个时候需要先删除<code>build</code>目录，然后在重新执行<code>do_cmake.sh</code>。</p>
+<h3 id="make过程"><a href="#make过程" class="headerlink" title="make过程"></a>make过程</h3><p>ceph编译需要用到boost包，之前的版本都是需要用户手动安装，L版改为取源码自行编译了。可以先执行<code>make Boost</code>或直接执行<code>make</code>操作，我在编译boost的时候遇到了找不到<code>pyconfig.h</code>的编译错误，此时需要根据错误提示的文件及行数，找到对应的<code>cxxflags</code>并增加<code>-I/usr/include/python2.7/</code>这样再次执行<code>make</code>操作boost就能正常编译了。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">Scanning dependencies of target ceph-dencoder</span><br><span class="line">[  0%] Building CXX object src/CMakeFiles/ceph-dencoder.dir/test/encoding/ceph_dencoder.cc.o</span><br><span class="line">c++: internal compiler error: Killed (program cc1plus)</span><br><span class="line">Please submit a full bug report,</span><br><span class="line">with preprocessed source if appropriate.</span><br><span class="line">See &lt;https://github.com/archlinuxarm/PKGBUILDs/issues&gt; for instructions.</span><br><span class="line">make[2]: *** [src/CMakeFiles/ceph-dencoder.dir/build.make:64: src/CMakeFiles/ceph-dencoder.dir/test/encoding/ceph_dencoder.cc.o] Error 4</span><br><span class="line">make[1]: *** [CMakeFiles/Makefile2:1609: src/CMakeFiles/ceph-dencoder.dir/all] Error 2</span><br><span class="line">make: *** [Makefile:141: all] Error 2</span><br></pre></td></tr></table></figure>
+<p>由于我使用的是嵌入式设备，内存只有2g大小，并且没有配置swap，在编译过程中会遇到<code>g++: internal compiler error: Killed (program cc1plus)</code>错误，这种错误都是由于内存不足导致的。对于我的环境而言，只能通过增加swap来解决（<a target="_blank" rel="noopener" href="https://wiki.archlinux.org/index.php/Swap">关于增加swap的方法</a>）。</p>
+<p>问题解决了，就一路make下去吧。</p>
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/BXD1314/article/details/47338391">解决: g++: internal compiler error: Killed (program cc1plus)</a></li>
+<li><a target="_blank" rel="noopener" href="https://superuser.com/questions/608410/building-boost-in-arch">Building Boost in Arch</a></li>
+<li><a target="_blank" rel="noopener" href="https://wiki.archlinux.org/index.php/Swap">Swap</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.cnblogs.com/zhang-wen/p/6070626.html">rpmbuild用法</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.cnblogs.com/schangech/p/5641108.html">RPM包rpmbuild SPEC文件深度说明 【装载】</a></li>
+<li><a target="_blank" rel="noopener" href="https://ceph.com/planet/%E7%BC%96%E8%AF%91%E7%9A%84ceph%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%96%87%E4%BB%B6%E8%BF%87%E5%A4%A7%E9%97%AE%E9%A2%98/">编译的Ceph二进制文件过大问题</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2018/01/31/works/create-xs-builder-env/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1647,105 +1779,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/10/19/bigdata/hadoop/Phoenix-index/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2017/10/19/bigdata/hadoop/Phoenix-index/" class="post-title-link" itemprop="url">Phoenix 二级索引</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2017-10-19 14:10:36" itemprop="dateCreated datePublished" datetime="2017-10-19T14:10:36+08:00">2017-10-19</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Big-Data/" itemprop="url" rel="index"><span itemprop="name">Big-Data</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>在Hbase中，只有一个单一的按照字典序排序的rowKey索引，当使用rowKey来进行数据查询的时候速度较快，但是如果不使用rowKey来查询的话就会使用filter来对全表进行扫描，很大程度上降低了检索性能。而Phoenix提供了二级索引技术来应对这种使用rowKey之外的条件进行检索的场景。</p>
-<h1 id="Global-Index"><a href="#Global-Index" class="headerlink" title="Global Index"></a>Global Index</h1><p>Global indexing适用于多读少写的业务场景。使用Global indexing的话在写数据的时候会消耗大量开销，因为所有对数据表的更新操作（DELETE, UPSERT VALUES and UPSERT SELECT）,会引起索引表的更新，而索引表是分布在不同的数据节点上的，跨节点的数据传输带来了较大的性能消耗。在读数据的时候Phoenix会选择索引表来降低查询消耗的时间。*** 在默认情况下如果想查询的字段不是索引字段的话索引表不会被使用，也就是说不会带来查询速度的提升。 ***</p>
-<h2 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h2><p>HBase集群的每个regionserver节点的hbase-site.xml中加入配置，并重启HBase集群</p>
-<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">property</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">name</span>&gt;</span>hbase.regionserver.wal.codec<span class="tag">&lt;/<span class="name">name</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">value</span>&gt;</span>org.apache.hadoop.hbase.regionserver.wal.IndexedWALEditCodec<span class="tag">&lt;/<span class="name">value</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">property</span>&gt;</span></span><br></pre></td></tr></table></figure>
-
-<p>注: phoenix有两种链接方式JDBC和phoenix-client，phoenix-client可以正常创建索引；zeppelin使用jdbc连接不能正常创建索引，提示如下错误。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">java.sql.SQLException: ERROR 1029 (42Y88): Mutable secondary indexes must have the hbase.regionserver.wal.codec property set to org.apache.hadoop.hbase.regionserver.wal.IndexedWALEditCodec in the hbase-sites.xml of every region server. tableName=CMP_IDX</span><br><span class="line">    at org.apache.phoenix.exception.SQLExceptionCode$Factory$1.newException(SQLExceptionCode.java:464)</span><br><span class="line">    at org.apache.phoenix.exception.SQLExceptionInfo.buildException(SQLExceptionInfo.java:150)</span><br><span class="line">    at org.apache.phoenix.schema.MetaDataClient.createIndex(MetaDataClient.java:1293)</span><br><span class="line">    at org.apache.phoenix.compile.CreateIndexCompiler$1.execute(CreateIndexCompiler.java:85)</span><br><span class="line">    at org.apache.phoenix.jdbc.PhoenixStatement$2.call(PhoenixStatement.java:358)</span><br><span class="line">    at org.apache.phoenix.jdbc.PhoenixStatement$2.call(PhoenixStatement.java:341)</span><br><span class="line">    at org.apache.phoenix.call.CallRunner.run(CallRunner.java:53)</span><br><span class="line">    at org.apache.phoenix.jdbc.PhoenixStatement.executeMutation(PhoenixStatement.java:340)</span><br><span class="line">    at org.apache.phoenix.jdbc.PhoenixStatement.execute(PhoenixStatement.java:1511)</span><br><span class="line">    at org.apache.commons.dbcp2.DelegatingStatement.execute(DelegatingStatement.java:291)</span><br><span class="line">    at org.apache.commons.dbcp2.DelegatingStatement.execute(DelegatingStatement.java:291)</span><br><span class="line">    at org.apache.zeppelin.jdbc.JDBCInterpreter.executeSql(JDBCInterpreter.java:581)</span><br><span class="line">    at org.apache.zeppelin.jdbc.JDBCInterpreter.interpret(JDBCInterpreter.java:692)</span><br><span class="line">    at org.apache.zeppelin.interpreter.LazyOpenInterpreter.interpret(LazyOpenInterpreter.java:97)</span><br><span class="line">    at org.apache.zeppelin.interpreter.remote.RemoteInterpreterServer$InterpretJob.jobRun(RemoteInterpreterServer.java:498)</span><br><span class="line">    at org.apache.zeppelin.scheduler.Job.run(Job.java:175)</span><br><span class="line">    at org.apache.zeppelin.scheduler.ParallelScheduler$JobRunner.run(ParallelScheduler.java:162)</span><br><span class="line">    at java.util.concurrent.Executors$RunnableAdapter.call(Unknown Source)</span><br><span class="line">    at java.util.concurrent.FutureTask.run(Unknown Source)</span><br><span class="line">    at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.access$201(Unknown Source)</span><br><span class="line">    at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(Unknown Source)</span><br><span class="line">    at java.util.concurrent.ThreadPoolExecutor.runWorker(Unknown Source)</span><br><span class="line">    at java.util.concurrent.ThreadPoolExecutor$Worker.run(Unknown Source)</span><br><span class="line">    at java.lang.Thread.run(Unknown Source)</span><br></pre></td></tr></table></figure>
-
-<h2 id="索引操作"><a href="#索引操作" class="headerlink" title="索引操作"></a>索引操作</h2><p>在开始创建索引以前先创建一个表，并向其中填充测试数据（此处填充的数据仅用于功能测试）</p>
-<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">0</span>: jdbc:phoenix:<span class="operator">&gt;</span> <span class="keyword">create</span> <span class="keyword">table</span> usertable (id <span class="type">varchar</span> <span class="keyword">primary</span> key,firstname <span class="type">varchar</span>, lastname <span class="type">varchar</span>);</span><br><span class="line"><span class="number">0</span>: jdbc:phoenix:<span class="operator">&gt;</span> <span class="operator">!</span>tables</span><br><span class="line"><span class="operator">+</span><span class="comment">------------+--------------+-------------------------+---------------+----------+------------+----------------------------+-------------+</span></span><br><span class="line"><span class="operator">|</span> TABLE_CAT  <span class="operator">|</span> TABLE_SCHEM  <span class="operator">|</span>       TABLE_NAME        <span class="operator">|</span>  TABLE_TYPE   <span class="operator">|</span> REMARKS  <span class="operator">|</span> TYPE_NAME  <span class="operator">|</span> SELF_REFERENCING_COL_NAME  <span class="operator">|</span> REF_GENERAT <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">------------+--------------+-------------------------+---------------+----------+------------+----------------------------+-------------+</span></span><br><span class="line"><span class="operator">|</span>            <span class="operator">|</span> <span class="keyword">SYSTEM</span>       <span class="operator">|</span> CATALOG                 <span class="operator">|</span> <span class="keyword">SYSTEM</span> <span class="keyword">TABLE</span>  <span class="operator">|</span>          <span class="operator">|</span>            <span class="operator">|</span>                            <span class="operator">|</span>             <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span>            <span class="operator">|</span> <span class="keyword">SYSTEM</span>       <span class="operator">|</span> <span class="keyword">FUNCTION</span>                <span class="operator">|</span> <span class="keyword">SYSTEM</span> <span class="keyword">TABLE</span>  <span class="operator">|</span>          <span class="operator">|</span>            <span class="operator">|</span>                            <span class="operator">|</span>             <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span>            <span class="operator">|</span> <span class="keyword">SYSTEM</span>       <span class="operator">|</span> SEQUENCE                <span class="operator">|</span> <span class="keyword">SYSTEM</span> <span class="keyword">TABLE</span>  <span class="operator">|</span>          <span class="operator">|</span>            <span class="operator">|</span>                            <span class="operator">|</span>             <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span>            <span class="operator">|</span> <span class="keyword">SYSTEM</span>       <span class="operator">|</span> STATS                   <span class="operator">|</span> <span class="keyword">SYSTEM</span> <span class="keyword">TABLE</span>  <span class="operator">|</span>          <span class="operator">|</span>            <span class="operator">|</span>                            <span class="operator">|</span>             <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span>            <span class="operator">|</span>              <span class="operator">|</span> USERTABLE               <span class="operator">|</span> <span class="keyword">TABLE</span>         <span class="operator">|</span>          <span class="operator">|</span>            <span class="operator">|</span>                            <span class="operator">|</span>             <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">------------+--------------+-------------------------+---------------+----------+------------+----------------------------+-------------+</span></span><br><span class="line"></span><br><span class="line"><span class="number">0</span>: jdbc:phoenix:<span class="operator">&gt;</span> upsert <span class="keyword">into</span> usertable(id, firstname, lastname) <span class="keyword">values</span>(<span class="string">&#x27;1&#x27;</span>, <span class="string">&#x27;Hello&#x27;</span>, <span class="string">&#x27;world&#x27;</span>);</span><br><span class="line">...</span><br><span class="line"><span class="number">0</span>: jdbc:phoenix:<span class="operator">&gt;</span> upsert <span class="keyword">into</span> usertable(id, firstname, lastname) <span class="keyword">values</span>(<span class="string">&#x27;5&#x27;</span>, <span class="string">&#x27;Hello&#x27;</span>, <span class="string">&#x27;phoenix&#x27;</span>);</span><br></pre></td></tr></table></figure>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">base(main):019:0&gt; scan &#x27;USERTABLE&#x27;</span><br><span class="line">ROW                                 COLUMN+CELL</span><br><span class="line"> 1                                  column=0:FIRSTNAME, timestamp=1508397473229, value=Hello</span><br><span class="line"> 1                                  column=0:LASTNAME, timestamp=1508397473229, value=world</span><br><span class="line"> 1                                  column=0:_0, timestamp=1508397473229, value=x</span><br><span class="line"> 2                                  column=0:FIRSTNAME, timestamp=1508397529852, value=Hello</span><br><span class="line"> 2                                  column=0:LASTNAME, timestamp=1508397529852, value=world</span><br><span class="line"> 2                                  column=0:_0, timestamp=1508397529852, value=x</span><br><span class="line"> 3                                  column=0:FIRSTNAME, timestamp=1508397535836, value=Hello</span><br><span class="line"> 3                                  column=0:LASTNAME, timestamp=1508397535836, value=world</span><br><span class="line"> 3                                  column=0:_0, timestamp=1508397535836, value=x</span><br><span class="line"> 4                                  column=0:FIRSTNAME, timestamp=1508397643594, value=Hello</span><br><span class="line"> 4                                  column=0:LASTNAME, timestamp=1508397643594, value=phoenix</span><br><span class="line"> 4                                  column=0:_0, timestamp=1508397643594, value=x</span><br><span class="line"> 5                                  column=0:FIRSTNAME, timestamp=1508397648938, value=Hello</span><br><span class="line"> 5                                  column=0:LASTNAME, timestamp=1508397648938, value=phoenix</span><br><span class="line"> 5                                  column=0:_0, timestamp=1508397648938, value=x</span><br><span class="line">5 row(s) in 0.3220 seconds</span><br></pre></td></tr></table></figure>
-
-<h3 id="创建索引"><a href="#创建索引" class="headerlink" title="创建索引"></a>创建索引</h3><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">0</span>: jdbc:phoenix:<span class="operator">&gt;</span> <span class="keyword">create</span> index idx_name <span class="keyword">on</span> usertable (lastname) include(firstname);</span><br><span class="line"><span class="number">0</span>: jdbc:phoenix:<span class="operator">&gt;</span> <span class="number">0</span>: jdbc:phoenix:<span class="operator">&gt;</span> <span class="operator">!</span>tables</span><br><span class="line"><span class="operator">+</span><span class="comment">------------+--------------+-------------------------+---------------+----------+------------+----------------------------+-------------+</span></span><br><span class="line"><span class="operator">|</span> TABLE_CAT  <span class="operator">|</span> TABLE_SCHEM  <span class="operator">|</span>       TABLE_NAME        <span class="operator">|</span>  TABLE_TYPE   <span class="operator">|</span> REMARKS  <span class="operator">|</span> TYPE_NAME  <span class="operator">|</span> SELF_REFERENCING_COL_NAME  <span class="operator">|</span> REF_GENERAT <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">------------+--------------+-------------------------+---------------+----------+------------+----------------------------+-------------+</span></span><br><span class="line"><span class="operator">|</span>            <span class="operator">|</span>              <span class="operator">|</span> IDX_NAME                <span class="operator">|</span> INDEX         <span class="operator">|</span>          <span class="operator">|</span>            <span class="operator">|</span>                            <span class="operator">|</span>             <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span>            <span class="operator">|</span> <span class="keyword">SYSTEM</span>       <span class="operator">|</span> CATALOG                 <span class="operator">|</span> <span class="keyword">SYSTEM</span> <span class="keyword">TABLE</span>  <span class="operator">|</span>          <span class="operator">|</span>            <span class="operator">|</span>                            <span class="operator">|</span>             <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span>            <span class="operator">|</span> <span class="keyword">SYSTEM</span>       <span class="operator">|</span> <span class="keyword">FUNCTION</span>                <span class="operator">|</span> <span class="keyword">SYSTEM</span> <span class="keyword">TABLE</span>  <span class="operator">|</span>          <span class="operator">|</span>            <span class="operator">|</span>                            <span class="operator">|</span>             <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span>            <span class="operator">|</span> <span class="keyword">SYSTEM</span>       <span class="operator">|</span> SEQUENCE                <span class="operator">|</span> <span class="keyword">SYSTEM</span> <span class="keyword">TABLE</span>  <span class="operator">|</span>          <span class="operator">|</span>            <span class="operator">|</span>                            <span class="operator">|</span>             <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span>            <span class="operator">|</span> <span class="keyword">SYSTEM</span>       <span class="operator">|</span> STATS                   <span class="operator">|</span> <span class="keyword">SYSTEM</span> <span class="keyword">TABLE</span>  <span class="operator">|</span>          <span class="operator">|</span>            <span class="operator">|</span>                            <span class="operator">|</span>             <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span>            <span class="operator">|</span>              <span class="operator">|</span> USERTABLE               <span class="operator">|</span> <span class="keyword">TABLE</span>         <span class="operator">|</span>          <span class="operator">|</span>            <span class="operator">|</span>                            <span class="operator">|</span>             <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">------------+--------------+-------------------------+---------------+----------+------------+----------------------------+-------------+</span></span><br><span class="line"><span class="number">0</span>: jdbc:phoenix:<span class="operator">&gt;</span> <span class="operator">!</span>index usertable</span><br><span class="line"><span class="operator">+</span><span class="comment">------------+--------------+-------------+-------------+------------------+-------------+-------+-------------------+--------------+----+</span></span><br><span class="line"><span class="operator">|</span> TABLE_CAT  <span class="operator">|</span> TABLE_SCHEM  <span class="operator">|</span> TABLE_NAME  <span class="operator">|</span> NON_UNIQUE  <span class="operator">|</span> INDEX_QUALIFIER  <span class="operator">|</span> INDEX_NAME  <span class="operator">|</span> TYPE  <span class="operator">|</span> ORDINAL_POSITION  <span class="operator">|</span> COLUMN_NAME  <span class="operator">|</span> <span class="keyword">AS</span> <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">------------+--------------+-------------+-------------+------------------+-------------+-------+-------------------+--------------+----+</span></span><br><span class="line"><span class="operator">|</span>            <span class="operator">|</span>              <span class="operator">|</span> USERTABLE   <span class="operator">|</span> <span class="literal">true</span>        <span class="operator">|</span>                  <span class="operator">|</span> IDX_NAME    <span class="operator">|</span> <span class="number">3</span>     <span class="operator">|</span> <span class="number">1</span>                 <span class="operator">|</span> <span class="number">0</span>:LASTNAME   <span class="operator">|</span> A  <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span>            <span class="operator">|</span>              <span class="operator">|</span> USERTABLE   <span class="operator">|</span> <span class="literal">true</span>        <span class="operator">|</span>                  <span class="operator">|</span> IDX_NAME    <span class="operator">|</span> <span class="number">3</span>     <span class="operator">|</span> <span class="number">2</span>                 <span class="operator">|</span> :ID          <span class="operator">|</span> A  <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span>            <span class="operator">|</span>              <span class="operator">|</span> USERTABLE   <span class="operator">|</span> <span class="literal">true</span>        <span class="operator">|</span>                  <span class="operator">|</span> IDX_NAME    <span class="operator">|</span> <span class="number">3</span>     <span class="operator">|</span> <span class="number">3</span>                 <span class="operator">|</span> <span class="number">0</span>:FIRSTNAME  <span class="operator">|</span>    <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">------------+--------------+-------------+-------------+------------------+-------------+-------+-------------------+--------------+----+</span></span><br></pre></td></tr></table></figure>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">hbase(main):020:0&gt; scan &#x27;IDX_NAME&#x27;</span><br><span class="line">ROW                                 COLUMN+CELL</span><br><span class="line"> phoenix\x004                       column=0:0:FIRSTNAME, timestamp=1508397686228, value=Hello</span><br><span class="line"> phoenix\x004                       column=0:_0, timestamp=1508397686228, value=x</span><br><span class="line"> phoenix\x005                       column=0:0:FIRSTNAME, timestamp=1508397686228, value=Hello</span><br><span class="line"> phoenix\x005                       column=0:_0, timestamp=1508397686228, value=x</span><br><span class="line"> world\x001                         column=0:0:FIRSTNAME, timestamp=1508397686228, value=Hello</span><br><span class="line"> world\x001                         column=0:_0, timestamp=1508397686228, value=x</span><br><span class="line"> world\x002                         column=0:0:FIRSTNAME, timestamp=1508397686228, value=Hello</span><br><span class="line"> world\x002                         column=0:_0, timestamp=1508397686228, value=x</span><br><span class="line"> world\x003                         column=0:0:FIRSTNAME, timestamp=1508397686228, value=Hello</span><br><span class="line"> world\x003                         column=0:_0, timestamp=1508397686228, value=x</span><br><span class="line">5 row(s) in 0.3180 seconds</span><br></pre></td></tr></table></figure>
-
-<h3 id="使用索引"><a href="#使用索引" class="headerlink" title="使用索引"></a>使用索引</h3><p>正常的select … where … 是不会用到索引表的，要想用到索引表，必须查询出的字段也是索引字段。(此处的结论需要在后续的性能测试中进行验证)</p>
-<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">0</span>: jdbc:phoenix:<span class="operator">&gt;</span> <span class="keyword">select</span> firstname <span class="keyword">from</span> usertable <span class="keyword">where</span> lastname <span class="operator">=</span> <span class="string">&#x27;phoenix&#x27;</span>;</span><br><span class="line"><span class="operator">+</span><span class="comment">------------+</span></span><br><span class="line"><span class="operator">|</span> FIRSTNAME  <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">------------+</span></span><br><span class="line"><span class="operator">|</span> Hello      <span class="operator">|</span></span><br><span class="line"><span class="operator">|</span> Hello      <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">------------+</span></span><br></pre></td></tr></table></figure>
-
-<h2 id="性能测试"><a href="#性能测试" class="headerlink" title="性能测试"></a>性能测试</h2><h3 id="读"><a href="#读" class="headerlink" title="读"></a>读</h3><p>Todo…</p>
-<h3 id="写"><a href="#写" class="headerlink" title="写"></a>写</h3><p>Todo…</p>
-<h1 id="Local-Index"><a href="#Local-Index" class="headerlink" title="Local Index"></a>Local Index</h1><p>Todo…</p>
-<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a target="_blank" rel="noopener" href="http://www.cnblogs.com/mario-nb/p/6350266.html?utm_source=itdadao&utm_medium=referral">Phoenix的二级索引</a></li>
-<li><a target="_blank" rel="noopener" href="http://www.cnblogs.com/MOBIN/p/5467284.html">Phoenix二级索引(Secondary Indexing)的使用</a></li>
-<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/lifuxiangcaohui/article/details/55518390">HBase phoenix二级索引</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1815,7 +1848,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">146</span>
+          <span class="site-state-item-count">147</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -1828,7 +1861,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">122</span>
+        <span class="site-state-item-count">123</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
