@@ -10997,7 +10997,8 @@
   <entry>
     <title>Kurtosis 部署 Ethereum 测试网</title>
     <url>/2024/12/11/blockchain/ethereum/kurtosis-deploy-ethereum/</url>
-    <content><![CDATA[<h2 id="安装Docker"><a href="#安装Docker" class="headerlink" title="安装Docker"></a>安装Docker</h2><h2 id="安装Kurtosis"><a href="#安装Kurtosis" class="headerlink" title="安装Kurtosis"></a>安装Kurtosis</h2><p>以macos为例，安装Kurtosis</p>
+    <content><![CDATA[<h2 id="安装Docker"><a href="#安装Docker" class="headerlink" title="安装Docker"></a>安装Docker</h2><p><a href="https://docs.docker.com/manuals/">https://docs.docker.com/manuals/</a></p>
+<h2 id="安装Kurtosis"><a href="#安装Kurtosis" class="headerlink" title="安装Kurtosis"></a>安装Kurtosis</h2><p>以macos为例，安装Kurtosis</p>
 <figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">brew install kurtosis-tech/tap/kurtosis-cli</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">kurtosis version</span></span><br><span class="line">CLI Version:   1.4.3</span><br><span class="line"></span><br><span class="line">To see the engine version (provided it is running): kurtosis engine status</span><br></pre></td></tr></table></figure>
 
 <h2 id="部署Ethereum测试网"><a href="#部署Ethereum测试网" class="headerlink" title="部署Ethereum测试网"></a>部署Ethereum测试网</h2><p>使用下面命令部署Ethereum测试网络</p>
