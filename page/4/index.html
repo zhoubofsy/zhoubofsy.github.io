@@ -188,6 +188,142 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2019/10/17/storage/ceph/rgw-bucket-policy/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2019/10/17/storage/ceph/rgw-bucket-policy/" class="post-title-link" itemprop="url">RGW Bucket Policy</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2019-10-17 18:28:02" itemprop="dateCreated datePublished" datetime="2019-10-17T18:28:02+08:00">2019-10-17</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>Bucket Policy 开启S3数据分享这扇大门。该配置通过S3接口设置到Bucket上，使bucket可对某些用户开放一些访问权限；或拒绝某些用户的一些访问权限。</p>
+<h1 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h1><ul>
+<li>Ceph集群版本mimic</li>
+<li>RGW版本nautilus</li>
+<li>一个Realm中一个master zonegroup</li>
+<li>master zonegroup中包含两个zone，exter(master zone)和backup</li>
+<li>master zongrroup中包含两个placement，default-placement 和 cold-placement<br>  default-placement 将数据存储于 exter.rgw.buckets.{data, index, non-ec}<br>  cold-placement 将数据存储于 exter.rgw.cold.{data, index, non-ec}</li>
+<li>zone exter中创建了4个用户分别属于ours tenant和 默认tenant<br>  默认tenant包括用户，colder 和 admin<br>  ours tenant包括用户，ourone 和 ourtwo</li>
+<li>colder 用户使用的 cold-placement，其它用户均使用default-placement</li>
+</ul>
+<h1 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h1><p>Policy 配置Json Example：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;Version&quot;</span><span class="punctuation">:</span> <span class="string">&quot;2012-10-17&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;Statement&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;Effect&quot;</span><span class="punctuation">:</span> <span class="string">&quot;Allow&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Principal&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span><span class="attr">&quot;AWS&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">&quot;*&quot;</span><span class="punctuation">]</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Action&quot;</span><span class="punctuation">:</span> <span class="string">&quot;s3:*&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Resource&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">            <span class="string">&quot;arn:aws:s3:::my-cold-bucket&quot;</span><span class="punctuation">,</span></span><br><span class="line">            <span class="string">&quot;arn:aws:s3:::my-cold-bucket/*&quot;</span></span><br><span class="line">        <span class="punctuation">]</span></span><br><span class="line">    <span class="punctuation">&#125;</span><span class="punctuation">]</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>** 配置说明：**</p>
+<ol>
+<li><code>Version</code>可以选择<code>2008-10-17</code>或者<code>2012-10-17</code> AWS就是这样的，没道理讲的。</li>
+<li><code>Effect</code>有<code>Allow</code>和<code>Deny</code>两个选项</li>
+<li><code>Principal</code>操作主体。eg: “arn:aws:iam::<tenant>:user&#x2F;<uid>“ 该示例有待验证。</li>
+<li><code>Action</code>是<code>Allow</code>或<code>Deny</code>得动作</li>
+<li><code>Resource</code>被操作得对象</li>
+<li><code>Condition</code>使用条件</li>
+</ol>
+<p>更多配置得内容参见ceph源码<code>src/rgw/rgw_iam_policy_keywords.gperf</code></p>
+<h2 id="测试"><a href="#测试" class="headerlink" title="测试"></a>测试</h2><h3 id="目的"><a href="#目的" class="headerlink" title="目的"></a>目的</h3><p>调研同tenant访问配置使用方法和跨tenant访问配置使用方法</p>
+<h3 id="测试方法"><a href="#测试方法" class="headerlink" title="测试方法"></a>测试方法</h3><p>用户<code>ours$ourone</code>创建一个叫<code>ouronebucket</code>的bucket，并配置其policy</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;Version&quot;</span><span class="punctuation">:</span> <span class="string">&quot;2012-10-17&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;Statement&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;Effect&quot;</span><span class="punctuation">:</span> <span class="string">&quot;Allow&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Principal&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span><span class="attr">&quot;AWS&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">&quot;arn:aws:iam::ours:user/ourtwo&quot;</span><span class="punctuation">,</span> <span class="string">&quot;arn:aws:iam:::user/admin&quot;</span><span class="punctuation">]</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Action&quot;</span><span class="punctuation">:</span> <span class="string">&quot;s3:*&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Resource&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">            <span class="string">&quot;arn:aws:s3:::ouronebucket&quot;</span><span class="punctuation">,</span></span><br><span class="line">            <span class="string">&quot;arn:aws:s3:::ouronebucket/*&quot;</span></span><br><span class="line">        <span class="punctuation">]</span></span><br><span class="line">    <span class="punctuation">&#125;</span><span class="punctuation">]</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+<p>使用s3cmd工具将policy写入bucket</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">s3cmd setpolicy policy.json s3://ouronebucket</span><br></pre></td></tr></table></figure>
+
+<p>用户<code>colder</code>创建一个叫<code>my-cold-bucket</code>的bucket，并配置其policy</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;Version&quot;</span><span class="punctuation">:</span> <span class="string">&quot;2012-10-17&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;Statement&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;Effect&quot;</span><span class="punctuation">:</span> <span class="string">&quot;Allow&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Principal&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span><span class="attr">&quot;AWS&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">&quot;*&quot;</span><span class="punctuation">]</span><span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Action&quot;</span><span class="punctuation">:</span> <span class="string">&quot;s3:*&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;Resource&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">            <span class="string">&quot;arn:aws:s3:::my-cold-bucket&quot;</span><span class="punctuation">,</span></span><br><span class="line">            <span class="string">&quot;arn:aws:s3:::my-cold-bucket/*&quot;</span></span><br><span class="line">        <span class="punctuation">]</span></span><br><span class="line">    <span class="punctuation">&#125;</span><span class="punctuation">]</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+<p>使用s3cmd工具将policy写入bucket</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">s3cmd setpolicy policy.json s3://my-cold-bucket</span><br></pre></td></tr></table></figure>
+
+<p>** 使用admin用户访问<code>my-cold-bucket</code> **</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">s3cmd -c ./admin.cfg <span class="built_in">ls</span> s3://my-cold-bucket</span></span><br><span class="line">2019-10-17 09:06       207   s3://my-cold-bucket/admin.cfg</span><br><span class="line">2019-10-16 08:40   8478720   s3://my-cold-bucket/tgt.tar</span><br></pre></td></tr></table></figure>
+<p>同tenant内正常访问</p>
+<p>** 使用admin用户访问<code>ouronebucket</code> **</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">s3cmd -c ./admin.cfg <span class="built_in">ls</span> s3://ouronebucket</span></span><br><span class="line">ERROR: Bucket &#x27;ouronebucket&#x27; does not exist</span><br><span class="line">ERROR: S3 error: 404 (NoSuchBucket)</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">s3cmd -c ./admin.cfg <span class="built_in">ls</span> s3://ours:ouronebucket                                                                                                     12 ↵</span></span><br><span class="line">ERROR: S3 error: 403 (SignatureDoesNotMatch)</span><br></pre></td></tr></table></figure>
+
+<p>** 使用ourtwo用户访问<code>my-cold-bucket</code> **</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">s3cmd -c ./ours_two.cfg <span class="built_in">ls</span> s3://my-cold-bucket                                                                                                     77 ↵</span></span><br><span class="line">ERROR: Bucket &#x27;my-cold-bucket&#x27; does not exist</span><br><span class="line">ERROR: S3 error: 404 (NoSuchBucket)</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">s3cmd -c ./ours_two.cfg <span class="built_in">ls</span> s3://:my-cold-bucket                                                                                                    12 ↵</span></span><br><span class="line">ERROR: S3 error: 403 (SignatureDoesNotMatch)</span><br></pre></td></tr></table></figure>
+
+<p>** 使用ourtwo用户访问<code>ouronebucket</code> **</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">s3cmd -c ./ours_two.cfg <span class="built_in">ls</span> s3://ouronebucket                                                                                                       77 ↵</span></span><br><span class="line">ERROR: Access to bucket &#x27;ouronebucket&#x27; was denied</span><br><span class="line">ERROR: S3 error: 403 (AccessDenied)</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">s3cmd -c ./ours_two.cfg <span class="built_in">ls</span> s3://ours:ouronebucket                                                                                                  77 ↵</span></span><br><span class="line">ERROR: S3 error: 403 (SignatureDoesNotMatch)</span><br></pre></td></tr></table></figure>
+
+<p>** 修改 **<br>将<code>ouronebucket</code>的policy中的<code>Principal</code>改为<code>&#123;&quot;AWS&quot;: [&quot;*&quot;]&#125;,</code>。再试一次</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">s3cmd -c ./ours_two.cfg put ./ours_two.cfg s3://ouronebucket</span></span><br><span class="line">WARNING: Module python-magic is not available. Guessing MIME types based on file extensions.</span><br><span class="line">upload: &#x27;./ours_two.cfg&#x27; -&gt; &#x27;s3://ouronebucket/ours_two.cfg&#x27;  [1 of 1]</span><br><span class="line"> 207 of 207   100% in    0s   356.83 B/s  done</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">s3cmd -c ./ours_two.cfg <span class="built_in">ls</span> s3://ouronebucket</span></span><br><span class="line">2019-10-17 12:01       207   s3://ouronebucket/ours_two.cfg</span><br></pre></td></tr></table></figure>
+
+<p>在网上看到“<a target="_blank" rel="noopener" href="https://www.dovefi.com/post/rgw-bucket-policy%E6%9D%83%E9%99%90%E8%AE%BE%E7%BD%AE/">Rgw bucket policy权限设置</a>”这篇文章，里面提到boto3对tenant不支持，于是猜想是不是s3cmd也不支持tenant，遂自己写一个python验证一下</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#!/usr/bin/env python</span></span><br><span class="line"><span class="comment"># encoding: utf-8</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> boto</span><br><span class="line"><span class="keyword">import</span> boto.s3.connection</span><br><span class="line"></span><br><span class="line">access_list = [<span class="string">&quot;1CXO01UCDSR1182IUYPL&quot;</span>,<span class="string">&quot;8I4K2USDV5SK3UFLQUB0&quot;</span>]</span><br><span class="line">secret_list = [<span class="string">&quot;Ww0Io3b6fF7dXHQiO9gLo99DZbZAKqfvNO2N7g48&quot;</span>,<span class="string">&quot;A4JuvB468tmnDpmkZMfwesb2zmGZeSiCJlzJMALc&quot;</span>]</span><br><span class="line">bucket_list = [<span class="string">&quot;:my-cold-bucket&quot;</span>,<span class="string">&quot;ours:ouronebucket&quot;</span>]</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">0</span>,<span class="built_in">len</span>(access_list)):</span><br><span class="line">    access = access_list[i]</span><br><span class="line">    secret = secret_list[i]</span><br><span class="line">    bucket = bucket_list[i]</span><br><span class="line">    conn = boto.connect_s3(aws_access_key_id=access,</span><br><span class="line">                           aws_secret_access_key = secret,</span><br><span class="line">                           host=<span class="string">&#x27;172.30.12.137&#x27;</span>,</span><br><span class="line">                           port=<span class="number">7480</span>,</span><br><span class="line">                           is_secure=<span class="literal">False</span>,</span><br><span class="line">                           calling_format = boto.s3.connection.OrdinaryCallingFormat())</span><br><span class="line">    bkt = conn.get_bucket(bucket)</span><br><span class="line">    <span class="built_in">print</span>(bkt.get_all_keys())</span><br></pre></td></tr></table></figure>
+<p>执行下</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">python bkt-policy.py</span></span><br><span class="line">[&lt;Key: :my-cold-bucket,admin.cfg&gt;, &lt;Key: :my-cold-bucket,tgt.tar&gt;]</span><br><span class="line">[&lt;Key: ours:ouronebucket,ours_two.cfg&gt;]</span><br></pre></td></tr></table></figure>
+<p>发现跨tenant可以正常访问。</p>
+<p>修改<code>ouronebucket</code> policy 中的<code>Principal</code>为<code>&#123;&quot;AWS&quot;: [&quot;arn:aws:iam::ours:user/two&quot;,&quot;arn:aws:iam:::user/admin&quot;]&#125;,</code>只允许<code>ours$two</code>和<code>admin</code>这两个用户访问。<br>再次执行上面的python脚本</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">python bkt-policy.py</span></span><br><span class="line">[&lt;Key: :my-cold-bucket,admin.cfg&gt;, &lt;Key: :my-cold-bucket,tgt.tar&gt;]</span><br><span class="line">[&lt;Key: ours:ouronebucket,ours_two.cfg&gt;]</span><br></pre></td></tr></table></figure>
+<p>再在上面的脚本中增加<code>colder</code>的access、secret key。并执行脚本</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">python bkt-policy.py</span></span><br><span class="line">[&lt;Key: :my-cold-bucket,admin.cfg&gt;, &lt;Key: :my-cold-bucket,tgt.tar&gt;]</span><br><span class="line">[&lt;Key: ours:ouronebucket,ours_two.cfg&gt;]</span><br><span class="line">Traceback (most recent call last):</span><br><span class="line">  File &quot;bkt-policy.py&quot;, line 22, in &lt;module&gt;</span><br><span class="line">    bkt = conn.get_bucket(bucket)</span><br><span class="line">  File &quot;/usr/local/lib/python2.7/site-packages/boto/s3/connection.py&quot;, line 509, in get_bucket</span><br><span class="line">    return self.head_bucket(bucket_name, headers=headers)</span><br><span class="line">  File &quot;/usr/local/lib/python2.7/site-packages/boto/s3/connection.py&quot;, line 542, in head_bucket</span><br><span class="line">    raise err</span><br><span class="line">boto.exception.S3ResponseError: S3ResponseError: 403 Forbidden</span><br></pre></td></tr></table></figure>
+<p>由于<code>Principal</code>中没有给<code>colder</code>用户授权，所以<code>colder</code>访问<code>ouronebucket</code>时报403错误。</p>
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/a1aab0d3eeef">ceph rgw：bucket policy实现</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.dovefi.com/post/rgw-bucket-policy%E6%9D%83%E9%99%90%E8%AE%BE%E7%BD%AE/">Rgw bucket policy权限设置</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2019/10/16/storage/ceph/rgw-placement-usage/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1357,99 +1493,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2019/08/13/storage/ceph/osd-journal-operation/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2019/08/13/storage/ceph/osd-journal-operation/" class="post-title-link" itemprop="url">OSD Journal 运维操作</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2019-08-13 16:55:35" itemprop="dateCreated datePublished" datetime="2019-08-13T16:55:35+08:00">2019-08-13</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="部署创建"><a href="#部署创建" class="headerlink" title="部署创建"></a>部署创建</h1><p>可以使用<code>ceph-osd</code>命令单独创建初始化OSD日志</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ceph-osd -i &#123;osd-id&#125; --mkjournal</span><br></pre></td></tr></table></figure>
-<p>默认在<code>/var/lib/ceph/osd/ceph-&#123;osd.id&#125;</code>目录下的<code>journal</code>文件中初始化日志数据；也可以通过<code>-c</code>制定配置文件<code>ceph.conf</code>，再在配置文件中制定OSD日志所在路径。</p>
-<h1 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h1><h3 id="osd-journal"><a href="#osd-journal" class="headerlink" title="osd journal"></a>osd journal</h3><p>journal所在的位置，默认为<code>/var/lib/ceph/osd/&#123;cluster&#125;-&#123;osd.id&#125;/jouranl</code>。可以是一个文件也可以是一个块设备。</p>
-<h3 id="osd-jouranl-size"><a href="#osd-jouranl-size" class="headerlink" title="osd jouranl size"></a>osd jouranl size</h3><p>日志的大小，不同版本其默认值也不一样。通常根据OSD盘的性能来设置其大小。<br><code>osd journal size = 2 * 写入带宽 * filestore max sync interval</code> 写入带宽一般是固定的，所以可以根据<code>filestore max sync interval</code>来计算journal的大小。或者根据journal大小来设置<code>filestore max sync interval</code>。</p>
-<h1 id="更换迁移"><a href="#更换迁移" class="headerlink" title="更换迁移"></a>更换迁移</h1><p>更换Journal盘有2种情况</p>
-<h3 id="Journal盘挂了"><a href="#Journal盘挂了" class="headerlink" title="Journal盘挂了"></a>Journal盘挂了</h3><p>只能删除对应的OSD重新创建</p>
-<h3 id="Journal还在运行"><a href="#Journal还在运行" class="headerlink" title="Journal还在运行"></a>Journal还在运行</h3><ol>
-<li>设置<code>noout</code>标记</li>
-<li>停止关联的OSD</li>
-<li>下刷 journal 到 osd <code>ceph-osd -i &#123;osd.io&#125; --flush-journal</code></li>
-<li>删除旧的 journal 链接</li>
-<li>重建journal 链接</li>
-<li>重建 journal <code>ceph-osd -i &#123;osd.id&#125; --mkjournal</code></li>
-<li>启动关联的OSD</li>
-<li>去除<code>noout</code>标记</li>
-</ol>
-<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a target="_blank" rel="noopener" href="https://www.bookstack.cn/read/ceph-handbook/Advance_usage-change_osd_journal.md">更换OSD Journal</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1519,7 +1562,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">148</span>
+          <span class="site-state-item-count">149</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

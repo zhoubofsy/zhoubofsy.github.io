@@ -188,6 +188,103 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/09/13/security/certificate-theory/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2017/09/13/security/certificate-theory/" class="post-title-link" itemprop="url">证书、签名、密钥那些事儿</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2017-09-13 14:59:55" itemprop="dateCreated datePublished" datetime="2017-09-13T14:59:55+08:00">2017-09-13</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/security/" itemprop="url" rel="index"><span itemprop="name">security</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>我对这些问题的理解，一直是模模糊糊的，很多细节搞不清楚。网上看到一篇文章<a target="_blank" rel="noopener" href="http://www.ruanyifeng.com/blog/2011/08/what_is_a_digital_signature.html">《数字签名是什么？》</a>，发现思路一下子就理清了。为了加深记忆，我把文字和图片都复制过来。</p>
+<p><img src="/images/certificate_theory/keys_1.png" alt="keys_1"></p>
+<p><img src="/images/certificate_theory/keys_2.png" alt="keys_2"></p>
+<p><img src="/images/certificate_theory/keys_3.png" alt="keys_3"></p>
+<p><img src="/images/certificate_theory/keys_4.png" alt="keys_4"></p>
+<p>鲍勃收信后，用私钥解密，就看到了信件内容。这里要强调的是，只要鲍勃的私钥不泄露，这封信就是安全的，即使落在别人手里，也无法解密。</p>
+<p><img src="/images/certificate_theory/sign_1.png" alt="sign_1"></p>
+<p>鲍勃给苏珊回信，决定采用”数字签名”。他写完后先用Hash函数，生成信件的摘要（digest）。</p>
+<p><img src="/images/certificate_theory/sign_2.png" alt="sign_2"></p>
+<p><img src="/images/certificate_theory/sign_3.png" alt="sign_3"></p>
+<p><img src="/images/certificate_theory/sign_4.png" alt="sign_4"></p>
+<p><img src="/images/certificate_theory/sign_5.png" alt="sign_5"></p>
+<p>苏珊再对信件本身使用Hash函数，将得到的结果，与上一步得到的摘要进行对比。如果两者一致，就证明这封信未被修改过。</p>
+<p><img src="/images/certificate_theory/cert_1.png" alt="cert_1"></p>
+<p>复杂的情况出现了。道格想欺骗苏珊，他偷偷使用了苏珊的电脑，用自己的公钥换走了鲍勃的公钥。此时，苏珊实际拥有的是道格的公钥，但是还以为这是鲍勃的公钥。因此，道格就可以冒充鲍勃，用自己的私钥做成”数字签名”，写信给苏珊，让苏珊用假的鲍勃公钥进行解密。</p>
+<p><img src="/images/certificate_theory/cert_2.png" alt="cert_2"></p>
+<p>后来，苏珊感觉不对劲，发现自己无法确定公钥是否真的属于鲍勃。她想到了一个办法，要求鲍勃去找”证书中心”（certificate authority，简称CA），为公钥做认证。证书中心用自己的私钥，对鲍勃的公钥和一些相关信息一起加密，生成”数字证书”（Digital Certificate）。</p>
+<p><img src="/images/certificate_theory/cert_3.png" alt="cert_3"></p>
+<p>鲍勃拿到数字证书以后，就可以放心了。以后再给苏珊写信，只要在签名的同时，再附上数字证书就行了。</p>
+<p><img src="/images/certificate_theory/cert_4.png" alt="cert_4"></p>
+<p>苏珊收信后，用CA的公钥解开数字证书，就可以拿到鲍勃真实的公钥了，然后就能证明”数字签名”是否真的是鲍勃签的。</p>
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="http://www.ruanyifeng.com/blog/2011/08/what_is_a_digital_signature.html">数字签名是什么？</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/09/08/network/tcpdump-usage/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1165,115 +1262,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/05/25/storage/ceph/ceph-nfs-service-by-rgw-with-nfs-ganesha/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2017/05/25/storage/ceph/ceph-nfs-service-by-rgw-with-nfs-ganesha/" class="post-title-link" itemprop="url">Ceph提供NFS服务 —— RGW＋nfs-ganesha</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2017-05-25 09:43:37" itemprop="dateCreated datePublished" datetime="2017-05-25T09:43:37+08:00">2017-05-25</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p><img src="/images/ceph/nfs-ganesha.jpg" alt="nfs-ganesha.jpg"></p>
-<p>Ceph是统一存储，包括块、文件、对象。其中块存储必须映射给linux内核，然后才能用，而内核客户端代码的更新收到了linus的限制，已经好久没更新了。librbd又不能直接用，不过道是可以用nbd映射一下使用。cephfs目前还不太适合生产环境。目前<code>*nix</code>对nfs的支持还是很全面的，而对librbd、cephfs的支持就是大不一样了。so，使ceph支持nfs协议很有意义了，but！ceph是分布式存储，被ganesha一搞，出现了单节点问题，所以只能想办法从HA角度解决了，这也是一种无奈，唉。。。</p>
-<p>（～～一丝光～～）从nfs v4.1开始支持并行存储，这或许是一缕新曙光。</p>
-<h1 id="NFS-Ganesha架构"><a href="#NFS-Ganesha架构" class="headerlink" title="NFS-Ganesha架构"></a>NFS-Ganesha架构</h1><p><img src="/images/ceph/ceph-nfs-service-by-rgw-with-nfs-ganesha.png" alt="ceph-nfs-service-by-rgw-with-nfs-ganesha.png"></p>
-<h1 id="实施"><a href="#实施" class="headerlink" title="实施"></a>实施</h1><h2 id="RGW搭建"><a href="#RGW搭建" class="headerlink" title="RGW搭建"></a>RGW搭建</h2><p>关于RGW的安装搭建请于<a target="_blank" rel="noopener" href="http://www.ceph.com/">Ceph官网</a>查看</p>
-<h4 id="用户创建"><a href="#用户创建" class="headerlink" title="用户创建"></a>用户创建</h4><p>创建一个S3用户专门服务于nfs-ganesha</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> radosgw-admin --uid=nfs_ganesha_user --display=<span class="string">&quot;User for NFS-Ganesha&quot;</span></span></span><br><span class="line">&#123;</span><br><span class="line">    &quot;user_id&quot;: &quot;nfs_ganesha_user&quot;,</span><br><span class="line">    &quot;display_name&quot;: &quot;User for NFS-Ganesha&quot;,</span><br><span class="line">    &quot;email&quot;: &quot;&quot;,</span><br><span class="line">    &quot;suspended&quot;: 0,</span><br><span class="line">    &quot;max_buckets&quot;: 1000,</span><br><span class="line">    &quot;auid&quot;: 0,</span><br><span class="line">    &quot;subusers&quot;: [],</span><br><span class="line">    &quot;keys&quot;: [</span><br><span class="line">        &#123;</span><br><span class="line">            &quot;user&quot;: &quot;nfs_ganesha_user&quot;,</span><br><span class="line">            &quot;access_key&quot;: &quot;xxxxxxxxxxxxxxxxxxxx&quot;,</span><br><span class="line">            &quot;secret_key&quot;: &quot;XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX&quot;</span><br><span class="line">        &#125;</span><br><span class="line">    ],</span><br><span class="line">    &quot;swift_keys&quot;: [],</span><br><span class="line">    &quot;caps&quot;: [],</span><br><span class="line">    &quot;op_mask&quot;: &quot;read, write, delete&quot;,</span><br><span class="line">    &quot;default_placement&quot;: &quot;&quot;,</span><br><span class="line">    &quot;placement_tags&quot;: [],</span><br><span class="line">    &quot;bucket_quota&quot;: &#123;</span><br><span class="line">        &quot;enabled&quot;: false,</span><br><span class="line">        &quot;max_size_kb&quot;: -1,</span><br><span class="line">        &quot;max_objects&quot;: -1</span><br><span class="line">    &#125;,</span><br><span class="line">    &quot;user_quota&quot;: &#123;</span><br><span class="line">        &quot;enabled&quot;: false,</span><br><span class="line">        &quot;max_size_kb&quot;: -1,</span><br><span class="line">        &quot;max_objects&quot;: -1</span><br><span class="line">    &#125;,</span><br><span class="line">    &quot;temp_url_keys&quot;: []</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p><code>user</code>、<code>access_key</code>、<code>secret_key</code>是后续nfs-ganesha配置是需要使用到的。</p>
-<h2 id="nfs-ganesha编译部署"><a href="#nfs-ganesha编译部署" class="headerlink" title="nfs-ganesha编译部署"></a>nfs-ganesha编译部署</h2><h4 id="获取Project"><a href="#获取Project" class="headerlink" title="获取Project"></a>获取Project</h4><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">// clone nfs-ganesha project</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">git <span class="built_in">clone</span> https://github.com/nfs-ganesha/nfs-ganesha.git</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cd</span> ./nfs-ganesha</span></span><br><span class="line"></span><br><span class="line">// 切换到v2.4 stable版本</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">git checkout V2.4-stable</span></span><br><span class="line"></span><br><span class="line">// 获取submodule libntirpc</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">git submodule update --init</span></span><br></pre></td></tr></table></figure>
-
-<p>在正式开始编译前，需要安装一些包，<code>libntirpc</code>强制使用了GSS，使用<code>-DUSE_GSS=OFF</code>是不能关闭GSS使用的。所以在编译nfs-ganesha时不需要关闭GSS。<br>本人编译使用的系统是rhel7.2，需要安装一些软件包<code>krb5-libs-1.14.1-27.el7_3.x86_64</code>、<code>krb5-devel-1.14.1-27.el7_3.x86_64</code>、<code>libgssglue-0.4-2.el7.nux.x86_64</code>、<code>libgssglue-devel-0.4-2.el7.nux.x86_64</code></p>
-<h4 id="编译安装"><a href="#编译安装" class="headerlink" title="编译安装"></a>编译安装</h4><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">// libntirpc 编译 </span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cd</span> ./nfs-ganesha/src/libntirpc</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">cmake ./</span></span><br><span class="line">...</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">make</span></span><br><span class="line">...</span><br><span class="line"></span><br><span class="line">// nfs-ganesha 编译</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cd</span> ./nfs-ganesha</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">mkdir</span> ./build</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">cd</span> ./build</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">cmake -DUSE_NLM=OFF -DRGW_PREFIX=/usr -DUSE_FSAL_RGW=ON -DUSE_FSAL_CEPH=OFF -DCMAKE_INSTALL_PREFIX=/home/xxxxx/.local -DUSE_GSS=ON -DUSE_FSAL_ZFS=OFF -DUSE_NFSIDMAP=OFF -DUSE_FSAL_GLUSTER=OFF ../src</span></span><br><span class="line">...</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">make</span></span><br><span class="line">...</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">make install</span></span><br><span class="line">...</span><br><span class="line"></span><br><span class="line">// 为了能让ganesha正常运行，需要更新一下ld.cache，保证动态库可以正常加载</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> <span class="built_in">echo</span> <span class="string">&quot;/home/xxxxx/.local/lib64/ganesha&quot;</span> &gt;&gt; /etc/ld.so.conf</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> ldconfig -v</span></span><br><span class="line"></span><br><span class="line">//生成RPM包</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">cpack -G RPM</span></span><br><span class="line">...</span><br></pre></td></tr></table></figure>
-
-<h3 id="配置启动"><a href="#配置启动" class="headerlink" title="配置启动"></a>配置启动</h3><h4 id="配置RGW的Keyring"><a href="#配置RGW的Keyring" class="headerlink" title="配置RGW的Keyring"></a>配置RGW的Keyring</h4><p>librgw 访问ceph时会用到keyring，它回去<code>/var/lib/ceph/radosgw/ceph-admin</code>这个目录下去找<code>keyring</code>，这个目录需要用户自己创建并，copy一个keyring进去，这个keyring可以是admin，也可以是rgw实用的keyring，从权限管理角度建议使用rgw的keyring</p>
-<h4 id="撰写ganesha-conf-rgw"><a href="#撰写ganesha-conf-rgw" class="headerlink" title="撰写ganesha.conf.rgw"></a>撰写<code>ganesha.conf.rgw</code></h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line">###################################################</span><br><span class="line">#</span><br><span class="line"># EXPORT</span><br><span class="line">#</span><br><span class="line"># To function, all that is required is an EXPORT</span><br><span class="line">#</span><br><span class="line"># Define the absolute minimal export</span><br><span class="line">#</span><br><span class="line">###################################################</span><br><span class="line"></span><br><span class="line">EXPORT</span><br><span class="line">&#123;</span><br><span class="line">        # Export Id (mandatory, each EXPORT must have a unique Export_Id)</span><br><span class="line">        Export_Id = 1;</span><br><span class="line"></span><br><span class="line">        # Exported path (mandatory)</span><br><span class="line">        Path = &quot;nfs_bucket&quot;;</span><br><span class="line"></span><br><span class="line">        # Pseudo Path (required for NFS v4)</span><br><span class="line">        Pseudo = &quot;/nfs_bucket&quot;;</span><br><span class="line"></span><br><span class="line">        # Required for access (default is None)</span><br><span class="line">        # Could use CLIENT blocks instead</span><br><span class="line">        Access_Type = RW;</span><br><span class="line">        Protocols = 4;</span><br><span class="line">        Transports = TCP;</span><br><span class="line"></span><br><span class="line">        # Exporting FSAL</span><br><span class="line">        FSAL &#123;</span><br><span class="line">             # Name = VFS;</span><br><span class="line">             Name = RGW;</span><br><span class="line">             User_Id = &quot;xxxxxxxxxxx&quot;;</span><br><span class="line">             Access_Key_Id = &quot;xxxxxxxxxxxxxxxxxxxx&quot;;</span><br><span class="line">             Secret_Access_Key = &quot;xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx&quot;;</span><br><span class="line">        &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">RGW &#123;</span><br><span class="line">        ceph_conf = &quot;/etc/ceph/ceph.conf&quot;;</span><br><span class="line">        name = &quot;client.admin&quot;;</span><br><span class="line">        cluster = &quot;ceph&quot;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h4 id="运行ganesha进程"><a href="#运行ganesha进程" class="headerlink" title="运行ganesha进程"></a>运行ganesha进程</h4><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo ganesha.nfsd -f /home/xxxxx/.local/etc/ganesha/ganesha.conf.rgw -F -L /var/log/ganesha.log</span><br></pre></td></tr></table></figure>
-
-<h4 id="客户端连接"><a href="#客户端连接" class="headerlink" title="客户端连接"></a>客户端连接</h4><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo mount -t nfs4 192.168.1.82:/nfs_bucket /mnt</span><br></pre></td></tr></table></figure>
-
-
-<h2 id="docker容器部署"><a href="#docker容器部署" class="headerlink" title="docker容器部署"></a>docker容器部署</h2><h3 id="镜像"><a href="#镜像" class="headerlink" title="镜像"></a>镜像</h3><p><a target="_blank" rel="noopener" href="https://hub.docker.com/r/ananace/nfs-ganesha-ceph">ananace&#x2F;nfs-ganesha-ceph</a></p>
-<h3 id="gannesha配置"><a href="#gannesha配置" class="headerlink" title="gannesha配置"></a>gannesha配置</h3><p>配置上来讲与编译部署没有太大差别</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"># NFS protocol options</span><br><span class="line">EXPORT</span><br><span class="line">&#123;</span><br><span class="line">  # Export Id (mandatory, each EXPORT must have a unique Export_Id)</span><br><span class="line">  Export_Id = 77;</span><br><span class="line"></span><br><span class="line">  # Exported path (mandatory)</span><br><span class="line">  Path = /;</span><br><span class="line"></span><br><span class="line">  # Pseudo Path (for NFS v4)</span><br><span class="line">  Pseudo = /;</span><br><span class="line"></span><br><span class="line">  # Access control options</span><br><span class="line">  Access_Type = RW;</span><br><span class="line">  Squash = No_Root_Squash;</span><br><span class="line"></span><br><span class="line">  # NFS protocol options</span><br><span class="line">  SecType = &quot;sys&quot;;</span><br><span class="line">  Transports = TCP;</span><br><span class="line">  Protocols = 4;</span><br><span class="line"></span><br><span class="line">  # Exporting FSAL</span><br><span class="line">  FSAL &#123;</span><br><span class="line">    Name = RGW;</span><br><span class="line">    User_Id = &quot;admin&quot;;</span><br><span class="line">    Access_Key_Id = &quot;8I4K2USDV5SK3UFLQUB0&quot;;</span><br><span class="line">    Secret_Access_Key = &quot;A4JuvB468tmnDpmkZMfwesb2zmGZeSiCJlzJMALc&quot;;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">RGW &#123;</span><br><span class="line">    cluster = &quot;ceph&quot;;</span><br><span class="line">    ceph_conf = &quot;/etc/ceph/ceph.conf&quot;;</span><br><span class="line">    name = &quot;client.rgw.host-10-100-13-111&quot;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h3 id="运行ganesha容器"><a href="#运行ganesha容器" class="headerlink" title="运行ganesha容器"></a>运行ganesha容器</h3><p>由于Ganesha 的 FSAL 使用到了librgw，所以在镜像中会装好<code>ceph-common</code>、<code>librgw2</code>等。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run -d --net=host  -v /home/xxx/ceph/etc_ceph/:/etc/ceph:ro -v /home/xxx/ceph/ganesha/:/etc/ganesha:ro -v /home/xxx/ceph/var_lib_ceph/:/var/lib/ceph --name nfs -e GANESHA_BOOTSTRAP_CONFIG=no ananace/nfs-ganesha-ceph</span><br></pre></td></tr></table></figure>
-<p>docker 启动是需要设置环境变量<code>GANESHA_BOOTSTRAP_CONFIG=no</code>，默认配置为<code>yes</code>；若为<code>yes</code>的化，nfs-ganesha在启动的时候会重置<code>/etc/ganesha/ganesha.conf</code>配置文件。</p>
-<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a target="_blank" rel="noopener" href="https://github.com/nfs-ganesha/nfs-ganesha/issues/152">Will not compile with USE_GSS&#x3D;”OFF”</a></li>
-<li><a target="_blank" rel="noopener" href="http://www.tuicool.com/articles/yAV7R3N">rgw实现nfs的首测</a></li>
-<li><a target="_blank" rel="noopener" href="http://www.tuicool.com/articles/JFRn2me">NFS + CephFS 构建基于 Ceph 的 NAS 服务</a></li>
-<li><a target="_blank" rel="noopener" href="http://www.php230.com/1492048922.html">通过ganesha-nfs将 Ceph 导出为 NFS</a></li>
-<li><a target="_blank" rel="noopener" href="http://www.cnblogs.com/alexyuyu/articles/3509255.html">LD_LIBRARY_PATH</a></li>
-<li><a target="_blank" rel="noopener" href="https://hub.docker.com/r/ananace/nfs-ganesha-ceph">ananace&#x2F;nfs-ganesha-ceph</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1343,7 +1331,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">148</span>
+          <span class="site-state-item-count">149</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

@@ -188,6 +188,153 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2024/12/14/blockchain/ethereum/solidity-call-deploy-principle/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2024/12/14/blockchain/ethereum/solidity-call-deploy-principle/" class="post-title-link" itemprop="url">Solidity部署和调用原理</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2024-12-14 10:44:55 / Modified: 10:59:38" itemprop="dateCreated datePublished" datetime="2024-12-14T10:44:55+08:00">2024-12-14</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/blockchain/" itemprop="url" rel="index"><span itemprop="name">blockchain</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><h3 id="Sample合约"><a href="#Sample合约" class="headerlink" title="Sample合约"></a>Sample合约</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">// SPDX-License-Identifier: MIT</span><br><span class="line"></span><br><span class="line">pragma solidity ^0.8.0;</span><br><span class="line"></span><br><span class="line">contract Sample &#123;</span><br><span class="line">    address public owner;</span><br><span class="line">    constructor() &#123;</span><br><span class="line">        owner = msg.sender;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function getOwner() external view returns (address) &#123;</span><br><span class="line">        return owner;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function setOwner(address _owner) public returns (bool) &#123;</span><br><span class="line">        owner = _owner;</span><br><span class="line">        return true;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>使用命令 <code>solc --ir -o ./ sample.sol</code> 将sol文件编译成 Sample.yul 文件，部分内容如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br></pre></td><td class="code"><pre><span class="line">/// @use-src 0:&quot;sample.sol&quot;</span><br><span class="line">object &quot;Sample_35&quot; &#123;</span><br><span class="line">    code &#123;</span><br><span class="line">        /// @src 0:58:358  &quot;contract Sample &#123;...&quot;</span><br><span class="line">        mstore(64, memoryguard(128))</span><br><span class="line">        if callvalue() &#123; revert_error_ca66f745a3ce8ff40e2ccaf1ad45db7774001b90d25810abd9040049be7bf4bb() &#125;</span><br><span class="line"></span><br><span class="line">        constructor_Sample_35()</span><br><span class="line"></span><br><span class="line">        let _1 := allocate_unbounded()</span><br><span class="line">        codecopy(_1, dataoffset(&quot;Sample_35_deployed&quot;), datasize(&quot;Sample_35_deployed&quot;))</span><br><span class="line"></span><br><span class="line">        return(_1, datasize(&quot;Sample_35_deployed&quot;))</span><br><span class="line"></span><br><span class="line">        function allocate_unbounded() -&gt; memPtr &#123;</span><br><span class="line">            memPtr := mload(64)</span><br><span class="line">        &#125;</span><br><span class="line">        function update_storage_value_offset_0_t_address_to_t_address(slot, value_0) &#123;</span><br><span class="line">            let convertedValue_0 := convert_t_address_to_t_address(value_0)</span><br><span class="line">            sstore(slot, update_byte_slice_20_shift_0(sload(slot), prepare_store_t_address(convertedValue_0)))</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        /// @ast-id 12</span><br><span class="line">        /// @src 0:106:155  &quot;constructor() &#123;...&quot;</span><br><span class="line">        function constructor_Sample_35() &#123;</span><br><span class="line"></span><br><span class="line">            /// @src 0:106:155  &quot;constructor() &#123;...&quot;</span><br><span class="line"></span><br><span class="line">            /// @src 0:138:148  &quot;msg.sender&quot;</span><br><span class="line">            let expr_8 := caller()</span><br><span class="line">            /// @src 0:130:148  &quot;owner = msg.sender&quot;</span><br><span class="line">            update_storage_value_offset_0_t_address_to_t_address(0x00, expr_8)</span><br><span class="line">            let expr_9 := expr_8</span><br><span class="line"></span><br><span class="line">        &#125;</span><br><span class="line">        /// @src 0:58:358  &quot;contract Sample &#123;...&quot;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">    /// @use-src 0:&quot;sample.sol&quot;</span><br><span class="line">    object &quot;Sample_35_deployed&quot; &#123;</span><br><span class="line">        code &#123;</span><br><span class="line">            /// @src 0:58:358  &quot;contract Sample &#123;...&quot;</span><br><span class="line">            mstore(64, memoryguard(128))</span><br><span class="line">            if iszero(lt(calldatasize(), 4))</span><br><span class="line">            &#123;</span><br><span class="line">                let selector := shift_right_224_unsigned(calldataload(0))</span><br><span class="line">                switch selector</span><br><span class="line">                case 0x13af4035</span><br><span class="line">                &#123;</span><br><span class="line">                    // setOwner(address)</span><br><span class="line">                    external_fun_setOwner_34()</span><br><span class="line">                &#125;</span><br><span class="line">                case 0x893d20e8</span><br><span class="line">                &#123;</span><br><span class="line">                    // getOwner()</span><br><span class="line">                    external_fun_getOwner_20()</span><br><span class="line">                &#125;</span><br><span class="line">                case 0x8da5cb5b</span><br><span class="line">                &#123;</span><br><span class="line">                    // owner()</span><br><span class="line">                    external_fun_owner_3()</span><br><span class="line">                &#125;</span><br><span class="line">                default &#123;&#125;</span><br><span class="line">            &#125;</span><br><span class="line">            revert_error_42b3090547df1d2001c96683413b8cf91c1b902ef5e3cb8d9f6f304cf7446f74()</span><br><span class="line"></span><br><span class="line">            function allocate_unbounded() -&gt; memPtr &#123;</span><br><span class="line">                memPtr := mload(64)</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            function external_fun_setOwner_34() &#123;</span><br><span class="line"></span><br><span class="line">                if callvalue() &#123; revert_error_ca66f745a3ce8ff40e2ccaf1ad45db7774001b90d25810abd9040049be7bf4bb() &#125;</span><br><span class="line">                let param_0 :=  abi_decode_tuple_t_address(4, calldatasize())</span><br><span class="line">                let ret_0 :=  fun_setOwner_34(param_0)</span><br><span class="line">                let memPos := allocate_unbounded()</span><br><span class="line">                let memEnd := abi_encode_tuple_t_bool__to_t_bool__fromStack(memPos , ret_0)</span><br><span class="line">                return(memPos, sub(memEnd, memPos))</span><br><span class="line"></span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            function abi_encode_t_address_to_t_address_fromStack(value, pos) &#123;</span><br><span class="line">                mstore(pos, cleanup_t_address(value))</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            function abi_encode_tuple_t_address__to_t_address__fromStack(headStart , value0) -&gt; tail &#123;</span><br><span class="line">                tail := add(headStart, 32)</span><br><span class="line"></span><br><span class="line">                abi_encode_t_address_to_t_address_fromStack(value0,  add(headStart, 0))</span><br><span class="line"></span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            function external_fun_getOwner_20() &#123;</span><br><span class="line">                if callvalue() &#123; revert_error_ca66f745a3ce8ff40e2ccaf1ad45db7774001b90d25810abd9040049be7bf4bb() &#125;</span><br><span class="line">                abi_decode_tuple_(4, calldatasize())</span><br><span class="line">                let ret_0 :=  fun_getOwner_20()</span><br><span class="line">                let memPos := allocate_unbounded()</span><br><span class="line">                let memEnd := abi_encode_tuple_t_address__to_t_address__fromStack(memPos , ret_0)</span><br><span class="line">                return(memPos, sub(memEnd, memPos))</span><br><span class="line"></span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            function read_from_storage_split_dynamic_t_address(slot, offset) -&gt; value &#123;</span><br><span class="line">                value := extract_from_storage_value_dynamict_address(sload(slot), offset)</span><br><span class="line"></span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            /// @ast-id 3</span><br><span class="line">            /// @src 0:80:100  &quot;address public owner&quot;</span><br><span class="line">            function getter_fun_owner_3() -&gt; ret &#123;</span><br><span class="line"></span><br><span class="line">                let slot := 0</span><br><span class="line">                let offset := 0</span><br><span class="line"></span><br><span class="line">                ret := read_from_storage_split_dynamic_t_address(slot, offset)</span><br><span class="line"></span><br><span class="line">            &#125;</span><br><span class="line">            /// @src 0:58:358  &quot;contract Sample &#123;...&quot;</span><br><span class="line"></span><br><span class="line">            function external_fun_owner_3() &#123;</span><br><span class="line"></span><br><span class="line">                if callvalue() &#123; revert_error_ca66f745a3ce8ff40e2ccaf1ad45db7774001b90d25810abd9040049be7bf4bb() &#125;</span><br><span class="line">                abi_decode_tuple_(4, calldatasize())</span><br><span class="line">                let ret_0 :=  getter_fun_owner_3()</span><br><span class="line">                let memPos := allocate_unbounded()</span><br><span class="line">                let memEnd := abi_encode_tuple_t_address__to_t_address__fromStack(memPos , ret_0)</span><br><span class="line">                return(memPos, sub(memEnd, memPos))</span><br><span class="line"></span><br><span class="line">            &#125;</span><br><span class="line">            </span><br><span class="line">            function update_byte_slice_20_shift_0(value, toInsert) -&gt; result &#123;</span><br><span class="line">                let mask := 0xffffffffffffffffffffffffffffffffffffffff</span><br><span class="line">                toInsert := shift_left_0(toInsert)</span><br><span class="line">                value := and(value, not(mask))</span><br><span class="line">                result := or(value, and(toInsert, mask))</span><br><span class="line">            &#125;</span><br><span class="line">            </span><br><span class="line">            function update_storage_value_offset_0_t_address_to_t_address(slot, value_0) &#123;</span><br><span class="line">                let convertedValue_0 := convert_t_address_to_t_address(value_0)</span><br><span class="line">                sstore(slot, update_byte_slice_20_shift_0(sload(slot), prepare_store_t_address(convertedValue_0)))</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            /// @ast-id 34</span><br><span class="line">            /// @src 0:248:356  &quot;function setOwner(address _owner) public returns (bool) &#123;...&quot;</span><br><span class="line">            function fun_setOwner_34(var__owner_22) -&gt; var__25 &#123;</span><br><span class="line">                /// @src 0:298:302  &quot;bool&quot;</span><br><span class="line">                let zero_t_bool_1 := zero_value_for_split_t_bool()</span><br><span class="line">                var__25 := zero_t_bool_1</span><br><span class="line"></span><br><span class="line">                /// @src 0:322:328  &quot;_owner&quot;</span><br><span class="line">                let _2 := var__owner_22</span><br><span class="line">                let expr_28 := _2</span><br><span class="line">                /// @src 0:314:328  &quot;owner = _owner&quot;</span><br><span class="line">                update_storage_value_offset_0_t_address_to_t_address(0x00, expr_28)</span><br><span class="line">                let expr_29 := expr_28</span><br><span class="line">                /// @src 0:345:349  &quot;true&quot;</span><br><span class="line">                let expr_31 := 0x01</span><br><span class="line">                /// @src 0:338:349  &quot;return true&quot;</span><br><span class="line">                var__25 := expr_31</span><br><span class="line">                leave</span><br><span class="line"></span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            /// @ast-id 20</span><br><span class="line">            /// @src 0:161:242  &quot;function getOwner() external view returns (address) &#123;...&quot;</span><br><span class="line">            function fun_getOwner_20() -&gt; var__15 &#123;</span><br><span class="line">                /// @src 0:204:211  &quot;address&quot;</span><br><span class="line">                let zero_t_address_3 := zero_value_for_split_t_address()</span><br><span class="line">                var__15 := zero_t_address_3</span><br><span class="line"></span><br><span class="line">                /// @src 0:230:235  &quot;owner&quot;</span><br><span class="line">                let _4 := read_from_storage_split_offset_0_t_address(0x00)</span><br><span class="line">                let expr_17 := _4</span><br><span class="line">                /// @src 0:223:235  &quot;return owner&quot;</span><br><span class="line">                var__15 := expr_17</span><br><span class="line">                leave</span><br><span class="line"></span><br><span class="line">            &#125;</span><br><span class="line">            /// @src 0:58:358  &quot;contract Sample &#123;...&quot;</span><br><span class="line"></span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        data &quot;.metadata&quot; hex&quot;a2646970667358221220c3c7bfea64093019fdb0e0aaf2f6130bb86c98f28ea301dcc40713fb9f64853964736f6c634300081c0033&quot;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h2><p>生成的 Yul 文件是基于以太坊中间表示（Intermediate Representation, IR）的代码，它介于 Solidity 源代码和 EVM 字节码之间。Yul 不是 JavaScript，而是一种低级、高效的语言，用于表示以太坊智能合约逻辑。Yul 的目标是更贴近 EVM 的执行逻辑，同时保留一定的可读性。</p>
+<h3 id="顶层结构"><a href="#顶层结构" class="headerlink" title="顶层结构"></a>顶层结构</h3><p>Yul 文件包含两个主要对象：</p>
+<ol>
+<li><strong><code>Sample_35</code></strong>: 表示主合约的部署代码。</li>
+<li><strong><code>Sample_35_deployed</code></strong>: 表示部署后的运行时代码。</li>
+</ol>
+<h4 id="1-Sample-35（合约部署阶段）"><a href="#1-Sample-35（合约部署阶段）" class="headerlink" title="1. Sample_35（合约部署阶段）"></a>1. <code>Sample_35</code>（合约部署阶段）</h4><ul>
+<li><strong><code>code</code></strong>:<ul>
+<li>执行合约的部署逻辑，将运行时代码加载到链上。</li>
+<li>包含一些辅助函数，如内存分配、错误处理等。</li>
+</ul>
+</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">object &quot;Sample_35&quot; &#123;</span><br><span class="line">code &#123;</span><br><span class="line">    mstore(64, memoryguard(128))</span><br></pre></td></tr></table></figure>
+<pre><code>`mstore(64, memoryguard(128))`: 初始化内存位置，指向位置 `0x40`，这是 Solidity 合约中默认的内存分配起点。
+</code></pre>
+<ul>
+<li><strong>检查调用值</strong>：</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">if callvalue() &#123; revert_error_ca66f745a3ce8ff40e2ccaf1ad45db7774001b90d25810abd9040049be7bf4bb() &#125;</span><br></pre></td></tr></table></figure>
+
+<pre><code>执行 `constructor_Sample_35()`，这是对应 Solidity 构造函数 `constructor` 的实现。
+</code></pre>
+<ul>
+<li><strong>加载运行时代码</strong>：</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">let _1 := allocate_unbounded()</span><br><span class="line">codecopy(_1, dataoffset(&quot;Sample_35_deployed&quot;), datasize(&quot;Sample_35_deployed&quot;))</span><br><span class="line">return(_1, datasize(&quot;Sample_35_deployed&quot;))</span><br></pre></td></tr></table></figure>
+
+<pre><code>将 `Sample_35_deployed` 对象的代码加载到内存中，并将其返回以存储在链上。
+</code></pre>
+<h4 id="2-Sample-35-deployed（运行时阶段）"><a href="#2-Sample-35-deployed（运行时阶段）" class="headerlink" title="2. Sample_35_deployed（运行时阶段）"></a>2. <code>Sample_35_deployed</code>（运行时阶段）</h4><ul>
+<li><strong>代码入口</strong>：</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">object &quot;Sample_35_deployed&quot; &#123;</span><br><span class="line">    code &#123;</span><br><span class="line">        /// @src 0:58:358  &quot;contract Sample &#123;...&quot;</span><br><span class="line">        mstore(64, memoryguard(128))</span><br><span class="line"></span><br><span class="line">        if iszero(lt(calldatasize(), 4))</span><br><span class="line">        &#123;</span><br></pre></td></tr></table></figure>
+
+<pre><code>- 如果传入的调用数据长度（`calldatasize()`）大于或等于 4，则认为是函数调用。
+- 读取调用数据的前 4 个字节（`calldataload(0)`），解析为函数选择器（`selector`）。
+</code></pre>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">let selector := shift_right_224_unsigned(calldataload(0))</span><br><span class="line">switch selector</span><br><span class="line"></span><br><span class="line">case 0x13af4035</span><br><span class="line">&#123;</span><br><span class="line">    // setOwner(address)</span><br><span class="line"></span><br><span class="line">    external_fun_setOwner_34()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">case 0x893d20e8</span><br><span class="line">&#123;</span><br><span class="line">    // getOwner()</span><br><span class="line"></span><br><span class="line">    external_fun_getOwner_20()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">case 0x8da5cb5b</span><br><span class="line">&#123;</span><br><span class="line">    // owner()</span><br><span class="line"></span><br><span class="line">    external_fun_owner_3()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">default &#123;&#125;</span><br></pre></td></tr></table></figure>
+
+<p>使用 <code>switch</code> 根据函数选择器跳转到对应的外部函数实现：</p>
+<pre><code>- `0x13af4035`: 对应 `setOwner(address)`。
+- `0x893d20e8`: 对应 `getOwner()`。
+- `0x8da5cb5b`: 对应 `owner()`。
+- 如果没有匹配的函数选择器，默认执行空操作。
+</code></pre>
+<h3 id="构造函数（constructor-Sample-35）"><a href="#构造函数（constructor-Sample-35）" class="headerlink" title="构造函数（constructor_Sample_35）"></a>构造函数（<code>constructor_Sample_35</code>）</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">let expr_8 := caller()</span><br><span class="line">/// @src 0:130:148  &quot;owner = msg.sender&quot;</span><br><span class="line">update_storage_value_offset_0_t_address_to_t_address(0x00, expr_8)</span><br><span class="line">let expr_9 := expr_8</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>获取合约部署者地址（<code>caller()</code>）并存储到 <code>owner</code> 槽位（存储槽位 0）。</li>
+<li><code>update_storage_value_offset_0_t_address_to_t_address</code> 是一个存储更新的通用函数。</li>
+</ul>
+<h3 id="外部函数实现"><a href="#外部函数实现" class="headerlink" title="外部函数实现"></a>外部函数实现</h3><h4 id="setOwner-address"><a href="#setOwner-address" class="headerlink" title="setOwner(address)"></a><code>setOwner(address)</code></h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">function external_fun_setOwner_34() &#123;</span><br><span class="line"></span><br><span class="line">    if callvalue() &#123; revert_error_ca66f745a3ce8ff40e2ccaf1ad45db7774001b90d25810abd9040049be7bf4bb() &#125;</span><br><span class="line">    </span><br><span class="line">    /// 将地址参数 `_owner` 从调用数据中解码。</span><br><span class="line">    let param_0 :=  abi_decode_tuple_t_address(4, calldatasize())</span><br><span class="line"> </span><br><span class="line"> /// 更新存储</span><br><span class="line">    let ret_0 :=  fun_setOwner_34(param_0)</span><br><span class="line">    let memPos := allocate_unbounded()</span><br><span class="line">    let memEnd := abi_encode_tuple_t_bool__to_t_bool__fromStack(memPos , ret_0)</span><br><span class="line">    return(memPos, sub(memEnd, memPos))</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>更新存储：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">function fun_setOwner_34(var__owner_22) -&gt; var__25 &#123;</span><br><span class="line">    /// @src 0:298:302  &quot;bool&quot;</span><br><span class="line">    let zero_t_bool_1 := zero_value_for_split_t_bool()</span><br><span class="line">    var__25 := zero_t_bool_1</span><br><span class="line"></span><br><span class="line">    /// @src 0:322:328  &quot;_owner&quot;</span><br><span class="line">    let _2 := var__owner_22</span><br><span class="line">    let expr_28 := _2</span><br><span class="line">    /// @src 0:314:328  &quot;owner = _owner&quot;</span><br><span class="line">    /// 将 `_owner` 更新到 `owner` 的存储槽位（0）。</span><br><span class="line">    update_storage_value_offset_0_t_address_to_t_address(0x00, expr_28)</span><br><span class="line">    let expr_29 := expr_28</span><br><span class="line">    /// @src 0:345:349  &quot;true&quot;</span><br><span class="line">    let expr_31 := 0x01</span><br><span class="line">    /// @src 0:338:349  &quot;return true&quot;</span><br><span class="line">    var__25 := expr_31</span><br><span class="line">    leave</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<pre><code>- 返回布尔值 `true`，表示操作成功。
+</code></pre>
+<h4 id="getOwner"><a href="#getOwner" class="headerlink" title="getOwner()"></a><code>getOwner()</code></h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">        function external_fun_getOwner_20() &#123;</span><br><span class="line"></span><br><span class="line">            if callvalue() &#123; revert_error_ca66f745a3ce8ff40e2ccaf1ad45db7774001b90d25810abd9040049be7bf4bb() &#125;</span><br><span class="line">            abi_decode_tuple_(4, calldatasize())</span><br><span class="line"></span><br><span class="line">/// 从存储槽位读取 `owner`</span><br><span class="line">            let ret_0 :=  fun_getOwner_20()</span><br><span class="line">            </span><br><span class="line">            let memPos := allocate_unbounded()</span><br><span class="line">            let memEnd := abi_encode_tuple_t_address__to_t_address__fromStack(memPos , ret_0)</span><br><span class="line">            /// 将结果编码为 ABI 格式并返回。</span><br><span class="line">            return(memPos, sub(memEnd, memPos))</span><br><span class="line"></span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure>
+
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">function fun_getOwner_20() -&gt; var__15 &#123;</span><br><span class="line">    /// @src 0:204:211  &quot;address&quot;</span><br><span class="line">    let zero_t_address_3 := zero_value_for_split_t_address()</span><br><span class="line">    var__15 := zero_t_address_3</span><br><span class="line"></span><br><span class="line">    /// @src 0:230:235  &quot;owner&quot;</span><br><span class="line">    /// 读取存储槽位 0 的值，即当前合约的 `owner` 地址。</span><br><span class="line">    let _4 := read_from_storage_split_offset_0_t_address(0x00)</span><br><span class="line">    let expr_17 := _4</span><br><span class="line">    /// @src 0:223:235  &quot;return owner&quot;</span><br><span class="line">    var__15 := expr_17</span><br><span class="line">    leave</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="辅助函数"><a href="#辅助函数" class="headerlink" title="辅助函数"></a>辅助函数</h3><ul>
+<li><strong><code>allocate_unbounded</code></strong>: 分配内存。</li>
+<li><strong><code>abi_decode</code> 和 <code>abi_encode</code></strong>: 解码和编码 ABI 数据。</li>
+<li><strong><code>cleanup</code></strong>: 用于数据清理，确保值符合地址或布尔格式。</li>
+<li><strong><code>shift</code></strong>: 位操作，用于提取或存储特定位数据。</li>
+</ul>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><ul>
+<li>该 Yul 文件表示了 <code>Sample</code> 合约的部署和运行时逻辑，分为部署代码和运行时代码。</li>
+<li>核心逻辑如存储更新、函数选择、参数解码&#x2F;编码都通过低级 Yul 操作实现。</li>
+<li>Yul 提供了更高效、更贴近 EVM 的执行语义，同时保留了逻辑清晰度。</li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2024/12/13/blockchain/ethereum/abi-principle-apply/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1955,213 +2102,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2024/11/21/blockchain/ethereum/usage-of-call-staticcall-delegatecall/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2024/11/21/blockchain/ethereum/usage-of-call-staticcall-delegatecall/" class="post-title-link" itemprop="url">call、staticcall、delegatecall使用</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2024-11-21 10:58:29" itemprop="dateCreated datePublished" datetime="2024-11-21T10:58:29+08:00">2024-11-21</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-11-25 12:05:10" itemprop="dateModified" datetime="2024-11-25T12:05:10+08:00">2024-11-25</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/blockchain/" itemprop="url" rel="index"><span itemprop="name">blockchain</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>在 Solidity 中，<code>call</code>、<code>staticcall</code>和<code>delegatecall</code>是强大的低级操作，用于与其他合约交互或在当前上下文中执行外部合约的逻辑。掌握它们的用法和区别对于智能合约开发非常重要。</p>
-<p>本文将详细介绍它们的功能、适用场景、代码示例，以及使用时需要注意的潜在问题。</p>
-<h1 id="call"><a href="#call" class="headerlink" title="call"></a>call</h1><p><strong>功能</strong></p>
-<p><code>call</code> 是一种通用方法，用于调用另一个合约的函数或发送 ETH。它可以调用目标合约的任意函数，包括不存在的函数（在这种情况下不会抛出错误）。</p>
-<p><strong>特点</strong></p>
-<ul>
-<li>可读写目标合约的状态。</li>
-<li>支持附带 ETH 发送。</li>
-<li>返回两个值：<ul>
-<li>调用是否成功 (bool)。</li>
-<li>调用返回的数据 (bytes memory)。</li>
-</ul>
-</li>
-</ul>
-<p><strong>使用场景</strong></p>
-<ul>
-<li>调用外部合约的任意函数。</li>
-<li>向合约或外部账户发送 ETH。</li>
-</ul>
-<p><strong>代码示例</strong></p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">pragma solidity ^0.8.0;</span><br><span class="line"></span><br><span class="line">contract CallExample &#123;</span><br><span class="line">    function callFunction(address target, uint256 value) external returns (bool, bytes memory) &#123;</span><br><span class="line">        // 通过 call 调用目标合约的 setValue(uint)</span><br><span class="line">        (bool success, bytes memory data) = target.call(</span><br><span class="line">            abi.encodeWithSignature(&quot;setValue(uint256)&quot;, value)</span><br><span class="line">        );</span><br><span class="line">        require(success, &quot;Call failed&quot;);</span><br><span class="line">        return (success, data);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function sendEth(address payable target) external payable &#123;</span><br><span class="line">        // 使用 call 发送 ETH</span><br><span class="line">        (bool success, ) = target.call&#123;value: msg.value&#125;(&quot;&quot;);</span><br><span class="line">        require(success, &quot;Send ETH failed&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h1 id="staticcall"><a href="#staticcall" class="headerlink" title="staticcall"></a>staticcall</h1><p><strong>功能</strong></p>
-<p><code>staticcall</code>是一种只读调用方法，用于调用目标合约的视图或纯函数。它不允许改变状态，因此更安全且节省 Gas</p>
-<p><strong>特点</strong></p>
-<ul>
-<li>只能调用 view 或 pure 修饰的函数。</li>
-<li>无法修改状态或发送 ETH。</li>
-<li>返回两个值：<ul>
-<li>调用是否成功 (bool)。</li>
-<li>调用返回的数据 (bytes memory)。</li>
-</ul>
-</li>
-</ul>
-<p><strong>使用场景</strong></p>
-<ul>
-<li>查询目标合约的状态。</li>
-<li>调用只读逻辑以避免状态改变。</li>
-</ul>
-<p><strong>代码示例</strong></p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">pragma solidity ^0.8.0;</span><br><span class="line"></span><br><span class="line">contract StaticCallExample &#123;</span><br><span class="line">    function staticCallFunction(address target) external view returns (uint256) &#123;</span><br><span class="line">        // 使用 staticcall 调用目标合约的 storedValue()</span><br><span class="line">        (bool success, bytes memory data) = target.staticcall(</span><br><span class="line">            abi.encodeWithSignature(&quot;storedValue()&quot;)</span><br><span class="line">        );</span><br><span class="line">        require(success, &quot;Staticcall failed&quot;);</span><br><span class="line">        return abi.decode(data, (uint256));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h1 id="delegatecall"><a href="#delegatecall" class="headerlink" title="delegatecall"></a>delegatecall</h1><p><strong>功能</strong></p>
-<p><code>delegatecall</code> 是一种在当前合约上下文中执行目标合约逻辑的方法。它会以调用合约的存储布局为准，执行目标合约中的代码。</p>
-<p><strong>特点</strong></p>
-<ul>
-<li>使用调用合约的存储。</li>
-<li>使用调用合约的 msg.sender 和 msg.value。</li>
-<li>返回两个值：<ul>
-<li>调用是否成功 (bool)。</li>
-<li>调用返回的数据 (bytes memory)。</li>
-</ul>
-</li>
-</ul>
-<p><strong>使用场景</strong></p>
-<ul>
-<li>实现合约代理（如升级逻辑）。</li>
-<li>在共享存储布局的上下文中执行外部逻辑。</li>
-</ul>
-<p><strong>代码示例</strong></p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">pragma solidity ^0.8.0;</span><br><span class="line"></span><br><span class="line">contract DelegateCallExample &#123;</span><br><span class="line">    uint256 public storedValue;</span><br><span class="line"></span><br><span class="line">    function delegateCallFunction(address target, uint256 value) external &#123;</span><br><span class="line">        // 使用 delegatecall 调用目标合约的 setValue(uint)</span><br><span class="line">        (bool success, ) = target.delegatecall(</span><br><span class="line">            abi.encodeWithSignature(&quot;setValue(uint256)&quot;, value)</span><br><span class="line">        );</span><br><span class="line">        require(success, &quot;Delegatecall failed&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// 被调用合约 (Library)</span><br><span class="line">contract Target &#123;</span><br><span class="line">    uint256 public storedValue;</span><br><span class="line"></span><br><span class="line">    function setValue(uint256 value) external &#123;</span><br><span class="line">        storedValue = value</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h1 id="call-VS-staticcall-VS-delegatecall"><a href="#call-VS-staticcall-VS-delegatecall" class="headerlink" title="call VS staticcall VS delegatecall"></a><code>call</code> VS <code>staticcall</code> VS <code>delegatecall</code></h1><table>
-<thead>
-<tr>
-<th align="center">特性</th>
-<th align="center">call</th>
-<th align="center">staticcall</th>
-<th align="center">delegatecall</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">可读写状态</td>
-<td align="center">✅</td>
-<td align="center">❌（只读）</td>
-<td align="center">✅</td>
-</tr>
-<tr>
-<td align="center">使用调用合约存储</td>
-<td align="center">❌</td>
-<td align="center">❌</td>
-<td align="center">✅</td>
-</tr>
-<tr>
-<td align="center">使用调用合约<code>msg.sender</code></td>
-<td align="center">❌</td>
-<td align="center">❌</td>
-<td align="center">✅</td>
-</tr>
-<tr>
-<td align="center">支持发送ETH</td>
-<td align="center">✅</td>
-<td align="center">❌</td>
-<td align="center">❌</td>
-</tr>
-<tr>
-<td align="center">调用不存在的函数</td>
-<td align="center">支持，返回失败</td>
-<td align="center">支持，返回失败</td>
-<td align="center">支持，返回失败</td>
-</tr>
-</tbody></table>
-<h1 id="使用注意事项"><a href="#使用注意事项" class="headerlink" title="使用注意事项"></a>使用注意事项</h1><p><strong>call 的安全性</strong></p>
-<ul>
-<li>使用 call 调用外部合约时，目标合约可能会执行恶意代码。需要额外检查返回值并限制权限。</li>
-<li>不要轻易使用 call 调用不可信的合约。</li>
-</ul>
-<p><strong>delegatecall 的存储风险</strong></p>
-<ul>
-<li>调用目标合约时，目标合约必须与调用合约共享相同的存储布局，否则可能导致存储冲突。</li>
-<li>使用 delegatecall 需要确保调用的是受信任的逻辑。</li>
-</ul>
-<p><strong>Gas 消耗与返回值处理</strong></p>
-<ul>
-<li>注意低级调用的 Gas 使用，避免由于 Gas 不足导致调用失败。</li>
-<li>低级调用（call、staticcall 和 delegatecall）不会自动抛出异常，需要手动处理返回值。</li>
-</ul>
-<p><strong>不要使用简写类型</strong></p>
-<p>无论是使用abi.encodeWithSelect 还是 abi.encodeWithSignature ，参数中方法名后的参数一定不要使用简写类型。</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">// 错误写法</span><br><span class="line">(bool success, ) = target.call(abi.encodeWithSignature(&quot;setValue(uint)&quot;, value));</span><br></pre></td></tr></table></figure>
-
-<p>因为在编译的过程中，编译器会将简写类型（如：uint）转换成uint256，这将导致，你的签名或选择器不匹配，导致执行失败。</p>
-<h1 id="实践案例：实现代理合约"><a href="#实践案例：实现代理合约" class="headerlink" title="实践案例：实现代理合约"></a>实践案例：实现代理合约</h1><p>以下是使用 <code>delegatecall</code> 的代理合约的示例，用于实现合约逻辑的动态升级</p>
-<p><strong>代码示例</strong></p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">pragma solidity ^0.8.0;</span><br><span class="line"></span><br><span class="line">// 逻辑合约</span><br><span class="line">contract LogicContract &#123;</span><br><span class="line">    uint256 public storedValue;</span><br><span class="line"></span><br><span class="line">    function setValue(uint256 value) external &#123;</span><br><span class="line">        storedValue = value;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// 代理合约</span><br><span class="line">contract ProxyContract &#123;</span><br><span class="line">    address public logicContract;</span><br><span class="line"></span><br><span class="line">    constructor(address _logicContract) &#123;</span><br><span class="line">        logicContract = _logicContract;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    fallback() external payable &#123;</span><br><span class="line">        (bool success, ) = logicContract.delegatecall(msg.data);</span><br><span class="line">        require(success, &quot;Delegatecall failed&quot;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p><strong>运行过程</strong></p>
-<ul>
-<li>部署 LogicContract。</li>
-<li>部署 ProxyContract，将 LogicContract 的地址传递给其构造函数。</li>
-<li>通过代理合约调用 setValue 方法，storedValue 实际存储在 ProxyContract 中</li>
-</ul>
-<h1 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h1><p><code>call</code>、<code>staticcall</code> 和 <code>delegatecall</code> 是 Solidity 中的基础工具，可以用来实现灵活的合约交互和逻辑扩展。在使用这些低级调用时，需要仔细处理返回值、安全性以及存储一致性问题。</p>
-<p>通过合理使用这些工具，您可以设计功能强大且可扩展的智能合约体系，同时避免潜在的安全漏洞。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -2231,7 +2171,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">148</span>
+          <span class="site-state-item-count">149</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

@@ -188,6 +188,89 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2016/08/10/mysql/20160810-mysql-deploy-on-rhel7-2/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2016/08/10/mysql/20160810-mysql-deploy-on-rhel7-2/" class="post-title-link" itemprop="url">MySQL环境配置搭建</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2016-08-10 20:05:40" itemprop="dateCreated datePublished" datetime="2016-08-10T20:05:40+08:00">2016-08-10</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/mysql/" itemprop="url" rel="index"><span itemprop="name">mysql</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h1><h2 id="OS"><a href="#OS" class="headerlink" title="OS"></a>OS</h2><p>RHEL7.2</p>
+<h1 id="步骤"><a href="#步骤" class="headerlink" title="步骤"></a>步骤</h1><h2 id="1、安装mysql，详细见mysql官网"><a href="#1、安装mysql，详细见mysql官网" class="headerlink" title="1、安装mysql，详细见mysql官网"></a>1、安装mysql，详细见mysql官网</h2><h2 id="2、启动mysql-service"><a href="#2、启动mysql-service" class="headerlink" title="2、启动mysql service"></a>2、启动mysql service</h2><p>rhel7.2中，使用service mysqld start启动mysql服务。【status：查服务状态；stop：停止服务；restart：重启服务】</p>
+<h2 id="3、修改root密码"><a href="#3、修改root密码" class="headerlink" title="3、修改root密码"></a>3、修改root密码</h2><ul>
+<li><p>首先使客户端登陆掉过密码检测，然后重启mysql服务<br><code>echo &quot;skip-grant-tables&quot; &gt;&gt; /etc/my.cnf</code></p>
+</li>
+<li><p>使用<code>mysql -uroot -p</code>登陆，然后修改<code>mysql</code>库中的<code>user</code>表<br><code>update user set password_expired=&quot;N&quot; where user=&quot;root&quot;;</code><br><code>update user set authentication_string=password(&quot;hnagroup&quot;) where user=&quot;root&quot;;</code></p>
+</li>
+<li><p>最后删除<code>/etc/my.cnf</code>中的<code>skip-grant-tables</code>，去掉客户端跳过密码检测设置</p>
+</li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2016/07/27/storage/ceph/20160727-ceph-deploy-parse/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1230,90 +1313,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2016/04/29/storage/ceph/20160429-jewel-of-ceph-deploy-test/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2016/04/29/storage/ceph/20160429-jewel-of-ceph-deploy-test/" class="post-title-link" itemprop="url">ceph Jewel 10.2.0 部署测试</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2016-04-29 16:11:57" itemprop="dateCreated datePublished" datetime="2016-04-29T16:11:57+08:00">2016-04-29</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h1><ul>
-<li>RHEL 7.2</li>
-<li>ceph Jewel(10.2.0)</li>
-</ul>
-<h1 id="部署方法"><a href="#部署方法" class="headerlink" title="部署方法"></a>部署方法</h1><ul>
-<li>基本部署方式与Infernalis版本相同（<a href="http://zhoubofsy.github.io/2016/04/15/20160415_ceph-install-deploy-config-on-rhel7-md/">《在RHEL7.2平台上搭建ceph集群》</a>）</li>
-<li>其中OSD部署时，文件系统建议选择XFS，不能选择EXT4（EXT4，在OSD初始化时会报“File name too lang”错误）</li>
-</ul>
-<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a target="_blank" rel="noopener" href="http://tracker.ceph.com/issues/15543">CEPH BUG #15543</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1383,7 +1382,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">148</span>
+          <span class="site-state-item-count">149</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
