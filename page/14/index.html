@@ -188,6 +188,114 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2016/05/04/storage/ceph/20160504-jewel-xensvr6-5-integration/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2016/05/04/storage/ceph/20160504-jewel-xensvr6-5-integration/" class="post-title-link" itemprop="url">ceph J版与Xenserver6.5集成</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2016-05-04 10:20:43" itemprop="dateCreated datePublished" datetime="2016-05-04T10:20:43+08:00">2016-05-04</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="集成原理"><a href="#集成原理" class="headerlink" title="集成原理"></a>集成原理</h1><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">+-----------+</span><br><span class="line">|           |</span><br><span class="line">|           |</span><br><span class="line">|           |                          +-- ISCSI SR ----+</span><br><span class="line">| XenServer |         +---------+      |                |     +------------+ </span><br><span class="line">|           | ------&gt; |SR Driver| -----+-- NFS SR   ----+-----| XenCenter  |</span><br><span class="line">|           |         +---------+      |                |     +------------+ </span><br><span class="line">|           |                          +-- RBD SR   ----+</span><br><span class="line">+-----------+                           ( Fork ISCSI SR)</span><br></pre></td></tr></table></figure>
+<ul>
+<li>RBDSR通过KRBD映射ceph快设备（详细请见<a href="http://zhoubofsy.github.io/2016/04/27/20160427-map-rbd-kernel-without-ceph-common-md/">不使用ceph-common 进行内核映射 rbd 块设备</a>）</li>
+<li>XenCenter在添加ISCSI设备界面中通过指定端口为“6789”来区别使用ISCSISR，还是使用RBDSR</li>
+</ul>
+<h1 id="步骤"><a href="#步骤" class="headerlink" title="步骤"></a>步骤</h1><h2 id="1-搭建ceph-J版集群"><a href="#1-搭建ceph-J版集群" class="headerlink" title="1. 搭建ceph J版集群"></a>1. 搭建ceph J版集群</h2><p>详细请见： </p>
+<ul>
+<li><a href="zhoubofsy.github.io/2016/04/29/20160429-jewel-of-ceph-deploy-test/">ceph Jewel 10.2.0 部署测试</a></li>
+<li><a href="http://zhoubofsy.github.io/2016/04/15/20160415_ceph-install-deploy-config-on-rhel7-md/">在RHEL7.2平台上搭建ceph集群</a></li>
+</ul>
+<h2 id="2-调整ceph集群crush-tunables与XenServer内核匹配"><a href="#2-调整ceph集群crush-tunables与XenServer内核匹配" class="headerlink" title="2. 调整ceph集群crush tunables与XenServer内核匹配"></a>2. 调整ceph集群crush tunables与XenServer内核匹配</h2><p>针对XenServer6.5，需要调整crush tunables 为 bobtail</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ceph osd crush tunables bobtail</span><br></pre></td></tr></table></figure>
+
+<p>查看更改</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ceph osd crush show-tunables</span><br></pre></td></tr></table></figure>
+
+<h2 id="3-创建ceph-rbd块设备"><a href="#3-创建ceph-rbd块设备" class="headerlink" title="3. 创建ceph rbd块设备"></a>3. 创建ceph rbd块设备</h2><ul>
+<li>为了保证快设备可映射、可快照、可克隆，必须使用format 2</li>
+<li>ceph J版必须指定feature 为 layering</li>
+<li>快设备名称必须使用uuid（不带“-”分隔）</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">uuidgen | sed &#x27;s/-//g&#x27;     # 生成无“-”分隔符的rbd名称</span><br><span class="line">rbd create --size &#123;size&#125; &#123;rbd名称&#125; --image-feature layering</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="4-XenServer节点安装RBDSR-patch"><a href="#4-XenServer节点安装RBDSR-patch" class="headerlink" title="4. XenServer节点安装RBDSR patch"></a>4. XenServer节点安装RBDSR patch</h2><p>详细请见：<br><a target="_blank" rel="noopener" href="https://github.com/zhoubofsy/rbdsr/tree/1.0.0">RBDSR README</a></p>
+<h2 id="5-使用XenCenter创建SR"><a href="#5-使用XenCenter创建SR" class="headerlink" title="5. 使用XenCenter创建SR"></a>5. 使用XenCenter创建SR</h2><p>同上</p>
+<h1 id="注意"><a href="#注意" class="headerlink" title="注意"></a>注意</h1><ul>
+<li>ceph J版 开始抛弃KRBD</li>
+<li>ceph J版 tunables会引发集群告警“crush map has legacy tunables (require bobtail, min is firefly)”（可忽略） </li>
+<li>创建rbd快设备必须使用format 2 格式，否则不能正常映射（map）</li>
+<li>ceph J版 rbd格式feature中只能包含layering，不能包含其他feature，否则不能正常映射（map）</li>
+</ul>
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="https://github.com/mstarikov/rbdsr">mstarikov&#x2F;rbdsr</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2016/04/29/storage/ceph/20160429-jewel-of-ceph-deploy-test/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1011,112 +1119,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2016/04/13/linux/rhel/yum-rpm-usage-md/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2016/04/13/linux/rhel/yum-rpm-usage-md/" class="post-title-link" itemprop="url">yum 和 rpm 使用方法总结</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2016-04-13 16:42:43" itemprop="dateCreated datePublished" datetime="2016-04-13T16:42:43+08:00">2016-04-13</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/rhel/" itemprop="url" rel="index"><span itemprop="name">rhel</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="yum"><a href="#yum" class="headerlink" title="yum"></a>yum</h2><hr>
-<h3 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">yum install &#123;软件名称&#125;</span><br></pre></td></tr></table></figure>
-
-<h3 id="查询"><a href="#查询" class="headerlink" title="查询"></a>查询</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">yum search &#123;关键字s&#125;</span><br></pre></td></tr></table></figure>
-
-<h3 id="下载-不安装"><a href="#下载-不安装" class="headerlink" title="下载(不安装)"></a>下载(不安装)</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">yum install --downloadonly &#123;需要下载的软件名，可多个&#125; --downloaddir=&#123;下载位置，目录名&#125;</span><br></pre></td></tr></table></figure>
-
-<h3 id="按依赖关系安装本地rpm包"><a href="#按依赖关系安装本地rpm包" class="headerlink" title="按依赖关系安装本地rpm包"></a>按依赖关系安装本地rpm包</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">yum localinstall *.rpm</span><br></pre></td></tr></table></figure>
-
-<h3 id="查看包版本"><a href="#查看包版本" class="headerlink" title="查看包版本"></a>查看包版本</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">yum list &#123;安装包名称&#125; --showduplicates</span><br></pre></td></tr></table></figure>
-
-<h3 id="安装指定版本的rpm包"><a href="#安装指定版本的rpm包" class="headerlink" title="安装指定版本的rpm包"></a>安装指定版本的rpm包</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">yum install &#123;安装包名称&#125;-&lt;VERSION_STRING&gt;</span><br></pre></td></tr></table></figure>
-<p>eg: <code>yum install ceph-13.2.6-0.el7</code></p>
-<h2 id="rpm"><a href="#rpm" class="headerlink" title="rpm"></a>rpm</h2><hr>
-<ul>
-<li>每个rpm包上记录着它所依赖的rpm包</li>
-</ul>
-<h3 id="安装-1"><a href="#安装-1" class="headerlink" title="安装"></a>安装</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">rpm -ivh &#123;xxx.rpm&#125;</span><br></pre></td></tr></table></figure>
-
-<h3 id="卸载"><a href="#卸载" class="headerlink" title="卸载"></a>卸载</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">rpm -e --nodeps &#123;软件名称&#125;</span><br></pre></td></tr></table></figure>
-<ul>
-<li>卸载软件包，但不卸载依赖包</li>
-</ul>
-<h3 id="解压"><a href="#解压" class="headerlink" title="解压"></a>解压</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">rpm2cpio &#123;xxx.rpm&#125; | cpio -div</span><br></pre></td></tr></table></figure>
-
-<h3 id="查看包依赖关系"><a href="#查看包依赖关系" class="headerlink" title="查看包依赖关系"></a>查看包依赖关系</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">rpm -qpR &#123;软件名称&#125;</span><br></pre></td></tr></table></figure>
-
-
-<h2 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h2><hr>
-<ul>
-<li><a target="_blank" rel="noopener" href="https://linux.cn/article-5100-1.html">如何使用yum来下载RPM包而不进行安装</a></li>
-<li><a target="_blank" rel="noopener" href="http://www.linuxeden.com/html/softuse/20090703/66563.html">实用小命令:解压RPM</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1186,7 +1188,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">149</span>
+          <span class="site-state-item-count">150</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -1285,6 +1287,8 @@
 
 
 
+
+  
 
   
 

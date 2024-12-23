@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zhoubofsy.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="在以太坊中，存在一个铸造和销毁机制的平衡，这样可以有效控制以太坊的供应量，防止通货膨胀或通货紧缩，同时促进ETH的价值保持稳定。这个平衡的关键是：    铸造过程：指通过出块奖励为验证者铸造新的ETH。   销毁过程：通过交易中 baseFee 的销毁来减少ETH的总供应量。  铸造过程：新区块奖励在以太坊的PoS（权益证明）模式下，每当一个新区块被生产时，系统会给予验证者一定数量的ETH作为奖励">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Ethereum 微观经济">
+<meta property="og:url" content="http://zhoubofsy.github.io/2024/12/23/blockchain/ethereum/ethereum-micro-economy/index.html">
+<meta property="og:site_name" content="Bolog">
+<meta property="og:description" content="在以太坊中，存在一个铸造和销毁机制的平衡，这样可以有效控制以太坊的供应量，防止通货膨胀或通货紧缩，同时促进ETH的价值保持稳定。这个平衡的关键是：    铸造过程：指通过出块奖励为验证者铸造新的ETH。   销毁过程：通过交易中 baseFee 的销毁来减少ETH的总供应量。  铸造过程：新区块奖励在以太坊的PoS（权益证明）模式下，每当一个新区块被生产时，系统会给予验证者一定数量的ETH作为奖励">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2024-12-23T06:45:27.000Z">
+<meta property="article:modified_time" content="2024-12-23T07:04:32.889Z">
+<meta property="article:author" content="博">
+<meta property="article:tag" content="ethereum">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://zhoubofsy.github.io/2024/12/23/blockchain/ethereum/ethereum-micro-economy/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>Ethereum 微观经济 | Bolog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Bolog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2024/12/23/blockchain/ethereum/ethereum-micro-economy/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Ethereum 微观经济
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2024-12-23 14:45:27 / Modified: 15:04:32" itemprop="dateCreated datePublished" datetime="2024-12-23T14:45:27+08:00">2024-12-23</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/blockchain/" itemprop="url" rel="index"><span itemprop="name">blockchain</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>在以太坊中，存在一个<strong>铸造</strong>和<strong>销毁</strong>机制的平衡，这样可以有效控制以太坊的供应量，防止通货膨胀或通货紧缩，同时促进ETH的价值保持稳定。这个平衡的关键是：  </p>
+<ul>
+<li><strong>铸造过程</strong>：指通过出块奖励为验证者铸造新的ETH。  </li>
+<li><strong>销毁过程</strong>：通过交易中 <code>baseFee</code> 的销毁来减少ETH的总供应量。</li>
+</ul>
+<h1 id="铸造过程：新区块奖励"><a href="#铸造过程：新区块奖励" class="headerlink" title="铸造过程：新区块奖励"></a>铸造过程：新区块奖励</h1><p>在以太坊的<strong>PoS（权益证明）</strong>模式下，每当一个新区块被生产时，系统会给予验证者一定数量的ETH作为奖励。这些奖励是通过<strong>以太坊网络</strong>的共识机制铸造出来的，是<strong>凭空创造</strong>的。</p>
+<h2 id="奖励计算公式"><a href="#奖励计算公式" class="headerlink" title="奖励计算公式"></a>奖励计算公式</h2><p>以太坊2.0的验证者奖励包括了基础奖励（由区块生产产生）和根据**<code>baseFee</code>** 的销毁以及网络活动（例如gas价格）带来的额外奖励。</p>
+<h3 id="基础奖励（Base-Reward）"><a href="#基础奖励（Base-Reward）" class="headerlink" title="基础奖励（Base Reward）"></a>基础奖励（Base Reward）</h3><p>   每个验证者在每个 Epoch 中的基础奖励基于质押总量和总验证者数量计算。  </p>
+<p>   <strong>公式：</strong>  </p>
+<p>$$\text{Base Reward} &#x3D; \frac{\text{Effective Balance} \times R}{\text{Total Balance}}$$</p>
+<ul>
+<li><strong>Effective Balance</strong>: 验证者的有效质押余额（最多 32 ETH，过多部分不计入）。  </li>
+<li><strong>R</strong>: 奖励因子，与网络的总质押量（<code>Total Balance</code>）相关。  </li>
+<li><strong>Total Balance</strong>: 网络中所有验证者的质押总量。</li>
+</ul>
+<p>   <strong>R 的计算</strong>：</p>
+<p>$$R &#x3D; \frac{\text{Base Reward Per Increment}}{\sqrt{\text{Total Active Balance}}}$$</p>
+<ul>
+<li><strong>Base Reward Per Increment</strong>: 固定参数，当前为 64（具体值可能随协议更新变化）。  </li>
+<li><strong>Total Active Balance</strong>: 所有验证者的活跃质押余额总和。</li>
+</ul>
+<p>   <strong>简化理解</strong>：总质押越高，每个验证者的奖励越低；总质押越低，每个验证者的奖励越高。</p>
+<h3 id="出块奖励（Proposer-Reward）"><a href="#出块奖励（Proposer-Reward）" class="headerlink" title="出块奖励（Proposer Reward）"></a>出块奖励（Proposer Reward）</h3><p>   出块的验证者会获得额外的奖励，通常来自网络中的交易小费（<code>Tip</code>）。<br>   <strong>公式：</strong></p>
+<p>   $$\text{Proposer Reward} &#x3D; \frac{1}{8} \times \text{Total Attestation Rewards}$$</p>
+<ul>
+<li><strong>Total Attestation Rewards</strong>: 当前区块中其他验证者的总奖励。</li>
+</ul>
+<h3 id="小费（Tips）"><a href="#小费（Tips）" class="headerlink" title="小费（Tips）"></a>小费（Tips）</h3><p>   验证者还可以通过出块收取交易小费，作为额外的激励。<br>   <strong>公式：</strong></p>
+<p>$$\text{Tips} &#x3D; \text{maxPriorityFeePerGas} \times \text{GasUsed}$$</p>
+<ul>
+<li>小费是交易者直接支付给验证者的费用，主要用于提升交易优先级。</li>
+</ul>
+<h2 id="奖励的分配"><a href="#奖励的分配" class="headerlink" title="奖励的分配"></a>奖励的分配</h2><p><strong>出块奖励</strong>：主要分配给验证者。具体的奖励数量和验证者质押的ETH数量有关。  </p>
+<p><strong>验证者奖励（年化）</strong>：网络中的所有验证者按质押ETH的比例来分享总的奖励池，基于<strong>年化利率</strong>进行分配。</p>
+<ol>
+<li><p><strong>基础奖励分配</strong><br>验证者参与网络共识（如投票或提议新区块）时，按比例分配基础奖励。未按要求参与时将减少奖励。</p>
+</li>
+<li><p><strong>附加奖励分配</strong><br>验证者根据其行为（如投票是否及时、正确）获得额外奖励。<br><strong>行为奖励类型：</strong></p>
+<ul>
+<li><strong>同步贡献奖励</strong>：如果验证者正确参与区块提议和投票。  </li>
+<li><strong>罚没机制</strong>：恶意行为（如双签名）导致奖励减少或直接罚没部分质押。</li>
+</ul>
+</li>
+<li><p><strong>动态调整年化收益率</strong>  </p>
+<ul>
+<li>质押总量（网络参与率）影响验证者奖励：<br> $$\text{Yearly Yield} \propto \frac{1}{\sqrt{\text{Total Stake}}}$$</li>
+<li>如果质押率较低，验证者的年化收益率上升，激励更多人质押。</li>
+</ul>
+</li>
+</ol>
+<p><strong>触发铸造的条件</strong>：</p>
+<ul>
+<li>每生产一个新区块，系统会根据当前的奖励机制铸造出新的ETH，并将其奖励给验证者。  </li>
+<li>该过程的触发条件就是区块的产生与验证，且与链上交易的数量、复杂度等因素无关。</li>
+</ul>
+<h2 id="举例计算"><a href="#举例计算" class="headerlink" title="举例计算"></a><strong>举例计算</strong></h2><p>假设：</p>
+<ul>
+<li>网络总质押量：10,000,000 ETH  </li>
+<li>验证者质押：32 ETH  </li>
+<li>基础奖励因子：64</li>
+</ul>
+<ol>
+<li><p><strong>基础奖励</strong><br>$$<br>\text{Base Reward} &#x3D; \frac{32 \times 64}{\sqrt{10,000,000}} \approx 0.64 , \text{ETH &#x2F; Epoch}<br>$$<br>每 6.4 分钟获得约 0.64 ETH。</p>
+</li>
+<li><p><strong>年化收益率</strong><br>$$<br>\text{Yearly Yield} &#x3D; 0.64 \times 365 \times 24 \times 60 &#x2F; 6.4 \approx 8.76 % , \text{年化收益率}<br>$$</p>
+</li>
+</ol>
+<hr>
+<h1 id="销毁过程：baseFee-的销毁"><a href="#销毁过程：baseFee-的销毁" class="headerlink" title="销毁过程：baseFee 的销毁"></a>销毁过程：<code>baseFee</code> 的销毁</h1><p>为了防止ETH的通货膨胀，<strong>EIP-1559</strong> 引入了销毁机制，旨在通过<strong>销毁<code>baseFee</code></strong> 来减少ETH的总供应量，从而对抗铸造过程带来的通货膨胀。</p>
+<h2 id="baseFee-销毁机制"><a href="#baseFee-销毁机制" class="headerlink" title="baseFee 销毁机制"></a><code>baseFee</code> 销毁机制</h2><p><code>baseFee</code>是由网络中的区块大小决定的基础费用，动态调整，以保持网络的区块容量稳定。这个费用的<strong>一部分会被销毁</strong>，而不是奖励给验证者。  在以太坊中，<code>baseFee</code> 是交易费用的一部分，定义了在一个区块中执行交易所需支付的最低费用。在 <strong>EIP-1559</strong> 提案中，<code>baseFee</code> 引入了一个<strong>动态调整机制</strong>，该机制根据网络的负载和拥堵情况自动调整 <code>baseFee</code> 的值。这个调节机制的设计目标是优化交易费用的透明性和可预测性，并避免交易费用波动过大。</p>
+<h3 id="1-baseFee-机制的基本概念"><a href="#1-baseFee-机制的基本概念" class="headerlink" title="1. baseFee 机制的基本概念"></a>1. <code>baseFee</code> 机制的基本概念</h3><p><code>baseFee</code> 是每笔交易的最低费用，并且是由网络自动调节的，基于以下几个因素：</p>
+<ul>
+<li>网络当前的 <strong>负载</strong>（即当前区块的使用情况）。</li>
+<li>网络 <strong>目标的区块大小</strong>（即区块目标的 gas 限额）。</li>
+</ul>
+<p>EIP-1559 改变了传统的以太坊费用模型，使得交易费用变得更加<strong>可预测</strong>，并且将一部分费用 <strong>销毁</strong>，而不是支付给矿工。<code>baseFee</code> 作为这部分费用的核心部分，其动态调整机制起到了关键作用。</p>
+<h3 id="2-baseFee-的动态调节原理"><a href="#2-baseFee-的动态调节原理" class="headerlink" title="2. baseFee 的动态调节原理"></a>2. <code>baseFee</code> 的动态调节原理</h3><p><code>baseFee</code> 是根据上一块区块的拥堵情况进行调整的。调整的规则如下：</p>
+<ul>
+<li><strong>目标区块大小</strong>：以太坊的目标区块大小是 <strong>15,000,000 gas</strong>（以太坊网络上的一个理想值）。区块的实际大小会决定 <code>baseFee</code> 的调整。</li>
+<li><strong>如果区块的 gas 使用量高于目标（即区块接近 15,000,000 gas）</strong>，<code>baseFee</code> 会<strong>增加</strong>，以此来降低交易的需求，并避免网络拥堵。</li>
+<li><strong>如果区块的 gas 使用量低于目标（即区块未满）</strong>，<code>baseFee</code> 会<strong>减少</strong>，以鼓励更多交易的提交，提升区块的利用率。</li>
+</ul>
+<p>具体的调整规则是基于区块内的 gas 使用量（<code>gasUsed</code>）与目标值（<code>gasTarget</code>）之间的差异来计算：</p>
+<ul>
+<li>每个区块的 <code>baseFee</code> 会根据以下公式调整：</li>
+</ul>
+<p> $$<br>  \text{new baseFee} &#x3D; \text{old baseFee} + \text{adjustment}<br> $$</p>
+<p>  其中，<code>adjustment</code> 是根据以下条件计算的：</p>
+<ul>
+<li><strong>如果区块的 gas 使用量高于目标</strong>，<code>baseFee</code> 会增加。增加的幅度为 <code>baseFee</code> 的 <strong>1&#x2F;8</strong>。</li>
+<li><strong>如果区块的 gas 使用量低于目标</strong>，<code>baseFee</code> 会减少。减少的幅度同样是 <code>baseFee</code> 的 <strong>1&#x2F;8</strong>。</li>
+</ul>
+<p>  即：</p>
+<p>$$<br>  \text{adjustment} &#x3D; \text{baseFee} \times \frac{1}{8} \times \left( \frac{\text{gasUsed}}{\text{gasTarget}} - 1 \right)<br>$$</p>
+<p>  这个公式确保了 <code>baseFee</code> 逐渐适应区块的实际使用情况，避免了过大的波动。</p>
+<ul>
+<li><strong>调整的上限和下限</strong>：<ul>
+<li><code>baseFee</code> 的调整是逐步的，每个区块的 <code>baseFee</code> 相对于上一块最多只能增加或减少 <code>1/8</code>。</li>
+<li>这意味着即使网络负载突然增加或减少，<code>baseFee</code> 也不会立即发生剧烈变化，避免了费用过高或过低的极端情况。</li>
+</ul>
+</li>
+</ul>
+<h3 id="3-baseFee-与-maxFeePerGas-和-maxPriorityFeePerGas-的关系"><a href="#3-baseFee-与-maxFeePerGas-和-maxPriorityFeePerGas-的关系" class="headerlink" title="3. baseFee 与 maxFeePerGas 和 maxPriorityFeePerGas 的关系"></a>3. <code>baseFee</code> 与 <code>maxFeePerGas</code> 和 <code>maxPriorityFeePerGas</code> 的关系</h3><p>除了 <code>baseFee</code>，每个交易还包括两个可变费用参数：</p>
+<ul>
+<li>**<code>maxFeePerGas</code>**：这是交易发起者愿意支付的最大总费用（包括 <code>baseFee</code> 和 <code>priorityFee</code>）。</li>
+<li>**<code>maxPriorityFeePerGas</code>**：这是交易发起者愿意支付给矿工（或验证者）的额外小费。</li>
+</ul>
+<p>在 <strong>EIP-1559</strong> 中，<code>baseFee</code> 是一个由网络动态调整的固定费用，而 <code>maxFeePerGas</code> 和 <code>maxPriorityFeePerGas</code> 则由用户设定。<code>maxFeePerGas</code> 包括 <code>baseFee</code> 和矿工小费部分。</p>
+<ul>
+<li><strong>交易的费用结构</strong>：用户在发起交易时，会设置 <code>maxFeePerGas</code> 和 <code>maxPriorityFeePerGas</code>。实际的交易费用是通过以下公式计算的：</li>
+</ul>
+<p>$$<br>  \text{transaction fee} &#x3D; \max(\text{baseFee}, \text{maxFeePerGas}) + \text{maxPriorityFeePerGas}<br>$$</p>
+<ul>
+<li><code>baseFee</code> 永远不低于区块的实际 <code>baseFee</code>，但用户可以选择支付更高的 <code>maxFeePerGas</code> 和 <code>maxPriorityFeePerGas</code> 以便交易更快地被包含在区块中，尤其在网络拥堵时。</li>
+</ul>
+<h3 id="4-销毁的机制与-baseFee"><a href="#4-销毁的机制与-baseFee" class="headerlink" title="4. 销毁的机制与 baseFee"></a>4. 销毁的机制与 <code>baseFee</code></h3><p>在 EIP-1559 机制中，<code>baseFee</code> 不会直接支付给矿工，而是被<strong>销毁</strong>（burned），从而减少 ETH 的总供应量。</p>
+<ul>
+<li>销毁的 ETH 数量是根据每个区块的 <code>baseFee</code> 和区块的 gas 使用量（<code>gasUsed</code>）来决定的。</li>
+<li>销毁的 ETH 量等于每个交易的 <code>baseFee</code> 与该交易消耗的 gas 量的乘积：</li>
+</ul>
+<p>$$<br>  \text{burned ETH} &#x3D; \text{baseFee} \times \text{gasUsed}<br>$$</p>
+<p>  随着网络交易量的增加，销毁的 ETH 数量也会增多，从而可能导致 ETH 的供应量减少，产生通货紧缩的效果。</p>
+<p><strong>销毁过程</strong>：每当发生交易时，系统会根据交易中的<code>baseFee</code>来销毁一定数量的ETH。这意味着**<code>baseFee</code>** 部分的ETH会永久消失，从而减少市场上的ETH总供应量。</p>
+<p><strong><code>baseFee</code> 的销毁机制会被触发的情况</strong>：</p>
+<ul>
+<li>当用户发起交易时，交易费用中包含的 <strong><code>baseFee</code></strong> 会被销毁，而不是奖励给矿工或验证者。  </li>
+<li><code>baseFee</code> 会随着网络的拥堵情况动态调整，当区块满时，<code>baseFee</code> 增加；反之，当区块空闲时，<code>baseFee</code> 会减少。  </li>
+<li>销毁的<code>baseFee</code> 每个区块的具体数量是通过算法自动计算的，并且每个区块的<code>baseFee</code>会根据网络的拥堵状况自动变化。</li>
+</ul>
+<h2 id="触发销毁的过程"><a href="#触发销毁的过程" class="headerlink" title="触发销毁的过程"></a>触发销毁的过程</h2><ul>
+<li>触发销毁的主要过程是用户发起交易并提交到网络中。这时，系统会根据交易的<code>gasPrice</code>（包括<code>baseFee</code>和<code>maxPriorityFeePerGas</code>）来计算销毁的ETH数量。</li>
+<li>除了交易之外，某些智能合约的操作也会触发<code>baseFee</code>的销毁。例如，执行合约调用时，合约内部的交易（如ERC-20代币转账）也会根据相应的<code>baseFee</code>销毁ETH。</li>
+</ul>
+<hr>
+<h1 id="良性循环：铸造和销毁的平衡"><a href="#良性循环：铸造和销毁的平衡" class="headerlink" title="良性循环：铸造和销毁的平衡"></a>良性循环：铸造和销毁的平衡</h1><p><strong>铸造与销毁形成平衡</strong>：</p>
+<ul>
+<li><strong>铸造过程</strong>：每个新区块奖励一定数量的ETH给验证者，增加市场的ETH供应量。</li>
+<li><strong>销毁过程</strong>：通过销毁<code>baseFee</code>，减少市场的ETH供应量，避免过度膨胀。</li>
+</ul>
+<p><strong>如何保持ETH供应量稳定？</strong></p>
+<ul>
+<li>在一个健康的以太坊网络中，<strong>铸造和销毁机制会共同作用</strong>，实现供需平衡，防止过度的通货膨胀。</li>
+<li><strong>销毁机制对供应量的影响</strong>：通过销毁<code>baseFee</code>，ETH的供应量会得到控制。具体销毁多少ETH，取决于网络的交易量和拥堵状况。</li>
+<li><strong>网络需求与奖励</strong>：交易量越高，<code>baseFee</code> 就越高，销毁的ETH就越多，这可以有效减缓通货膨胀的速度。</li>
+<li><strong>验证者奖励</strong>：验证者通过出块得到的奖励是新增的ETH，在网络正常运行时，这部分奖励与销毁的ETH保持平衡，避免ETH的数量过快增加。</li>
+</ul>
+<p><strong>合适的销毁与铸造机制</strong>：</p>
+<ul>
+<li><strong>区块奖励与销毁的关系</strong>：销毁<code>baseFee</code>的ETH，有时可能会比新增奖励的ETH更多，这就可能导致长期内ETH的总供应量减少，进而形成某种程度的<strong>通货紧缩</strong>。</li>
+<li>在交易需求高、<code>baseFee</code> 较高的情况下，销毁的ETH数量可能大于验证者奖励的ETH，从而实现一个<strong>负增长</strong>或稳定的供应量。</li>
+<li>在交易需求低、<code>baseFee</code> 较低的情况下，新增的ETH数量可能高于销毁量，导致ETH的供应量逐渐增加。</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/ethereum/" rel="tag"># ethereum</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2024/12/14/blockchain/ethereum/solidity-call-deploy-principle/" rel="prev" title="Solidity部署和调用原理">
+      <i class="fa fa-chevron-left"></i> Solidity部署和调用原理
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%93%B8%E9%80%A0%E8%BF%87%E7%A8%8B%EF%BC%9A%E6%96%B0%E5%8C%BA%E5%9D%97%E5%A5%96%E5%8A%B1"><span class="nav-number">1.</span> <span class="nav-text">铸造过程：新区块奖励</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A5%96%E5%8A%B1%E8%AE%A1%E7%AE%97%E5%85%AC%E5%BC%8F"><span class="nav-number">1.1.</span> <span class="nav-text">奖励计算公式</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E7%A1%80%E5%A5%96%E5%8A%B1%EF%BC%88Base-Reward%EF%BC%89"><span class="nav-number">1.1.1.</span> <span class="nav-text">基础奖励（Base Reward）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%87%BA%E5%9D%97%E5%A5%96%E5%8A%B1%EF%BC%88Proposer-Reward%EF%BC%89"><span class="nav-number">1.1.2.</span> <span class="nav-text">出块奖励（Proposer Reward）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B0%8F%E8%B4%B9%EF%BC%88Tips%EF%BC%89"><span class="nav-number">1.1.3.</span> <span class="nav-text">小费（Tips）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A5%96%E5%8A%B1%E7%9A%84%E5%88%86%E9%85%8D"><span class="nav-number">1.2.</span> <span class="nav-text">奖励的分配</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BE%E4%BE%8B%E8%AE%A1%E7%AE%97"><span class="nav-number">1.3.</span> <span class="nav-text">举例计算</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%94%80%E6%AF%81%E8%BF%87%E7%A8%8B%EF%BC%9AbaseFee-%E7%9A%84%E9%94%80%E6%AF%81"><span class="nav-number">2.</span> <span class="nav-text">销毁过程：baseFee 的销毁</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#baseFee-%E9%94%80%E6%AF%81%E6%9C%BA%E5%88%B6"><span class="nav-number">2.1.</span> <span class="nav-text">baseFee 销毁机制</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-baseFee-%E6%9C%BA%E5%88%B6%E7%9A%84%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5"><span class="nav-number">2.1.1.</span> <span class="nav-text">1. baseFee 机制的基本概念</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-baseFee-%E7%9A%84%E5%8A%A8%E6%80%81%E8%B0%83%E8%8A%82%E5%8E%9F%E7%90%86"><span class="nav-number">2.1.2.</span> <span class="nav-text">2. baseFee 的动态调节原理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-baseFee-%E4%B8%8E-maxFeePerGas-%E5%92%8C-maxPriorityFeePerGas-%E7%9A%84%E5%85%B3%E7%B3%BB"><span class="nav-number">2.1.3.</span> <span class="nav-text">3. baseFee 与 maxFeePerGas 和 maxPriorityFeePerGas 的关系</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-%E9%94%80%E6%AF%81%E7%9A%84%E6%9C%BA%E5%88%B6%E4%B8%8E-baseFee"><span class="nav-number">2.1.4.</span> <span class="nav-text">4. 销毁的机制与 baseFee</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A7%A6%E5%8F%91%E9%94%80%E6%AF%81%E7%9A%84%E8%BF%87%E7%A8%8B"><span class="nav-number">2.2.</span> <span class="nav-text">触发销毁的过程</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%89%AF%E6%80%A7%E5%BE%AA%E7%8E%AF%EF%BC%9A%E9%93%B8%E9%80%A0%E5%92%8C%E9%94%80%E6%AF%81%E7%9A%84%E5%B9%B3%E8%A1%A1"><span class="nav-number">3.</span> <span class="nav-text">良性循环：铸造和销毁的平衡</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">博</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">150</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">123</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">博</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
+
+  
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : 'Iv1.9c9e3f90ac2cc9f9',
+      clientSecret: '478f8511687999ac85664313c08c94a1420e13f6',
+      repo        : 'zhoubofsy.github.io',
+      owner       : 'zhoubofsy',
+      admin       : ['zhoubofsy'],
+      id          : '10a72a1d9c4a3b86064f16e65d33fe2f',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

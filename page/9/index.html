@@ -188,6 +188,102 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/06/09/container/docker/docker-compile/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2017/06/09/container/docker/docker-compile/" class="post-title-link" itemprop="url">Moby（Docker）编译趟坑</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2017-06-09 16:06:52" itemprop="dateCreated datePublished" datetime="2017-06-09T16:06:52+08:00">2017-06-09</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/container/" itemprop="url" rel="index"><span itemprop="name">container</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>今天是2017年6月12日，在此之前Docker就已经更名为moby了，就moby的的编译与之前docker的编译无异，为什么呢，因为无论是docker还是moby，都将自己的编译放在了容器中，编译所依赖的包也在容器中完成安装，目前moby（以下都以此替代docker）能直接编译出rpm、deb两种安装包，具体支持哪些平台，哪些操作系统，请见<code>./contrib/builder/</code>。</p>
+<p>本文主要以编译<code>centos7</code>能用的rpm包为例，对moby的编译配置文件进行了修改，从而使moby快速完成编译。</p>
+<h1 id="编译原理"><a href="#编译原理" class="headerlink" title="编译原理"></a>编译原理</h1><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"> Debian:jessie</span><br><span class="line">+-------------+                              golang 1.7.5-alpine</span><br><span class="line">|             |                          +------------------------+ </span><br><span class="line">|  Moby       | ----- docker run -----&gt;  | docker manpage compile |</span><br><span class="line">|  Compile    |                          +------------------------+             centos:7</span><br><span class="line">|  Container  |                                                         +--------------------+</span><br><span class="line">|             | -------------- docker run ----------------------------&gt; |  build centos rpm  |                           </span><br><span class="line">+-------------+                                                         +--------------------+</span><br></pre></td></tr></table></figure>
+
+<p>Moby先创建一个Debian的容器，编译Moby，然后该容器根据用户输入的参数决定使用哪些容器编译哪些安装包，在编译目标安装包之前会使用golang容器编译manpage。总之moby的所有编译工作都是在容器中进行的。</p>
+<h1 id="编译方法"><a href="#编译方法" class="headerlink" title="编译方法"></a>编译方法</h1><h2 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h2><ul>
+<li>宿主机<br>  RHEL7.2</li>
+<li>docker<br>  17.04.0-ce</li>
+</ul>
+<h2 id="RPM-Only-CentOS"><a href="#RPM-Only-CentOS" class="headerlink" title="RPM (Only CentOS)"></a>RPM (Only CentOS)</h2><ul>
+<li>获取 moby 代码  <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash"><span class="built_in">clone</span> moby</span></span><br><span class="line">git clone https://github.com/moby/moby.git</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">切换到17.04.0-ce版本</span></span><br><span class="line">git checkout -b building_v17.04.0-ce v17.04.0-ce</span><br></pre></td></tr></table></figure></li>
+<li>修改Dockerfile  <figure class="highlight vim"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">diff --git <span class="keyword">a</span>/Dockerfile <span class="keyword">b</span>/Dockerfile</span><br><span class="line"><span class="built_in">index</span> <span class="number">8</span>a361ce..<span class="number">3</span>d6b0bb <span class="number">100644</span></span><br><span class="line">--- <span class="keyword">a</span>/Dockerfile</span><br><span class="line">+++ <span class="keyword">b</span>/Dockerfile</span><br><span class="line">@@ -<span class="number">34</span>,<span class="number">8</span> +<span class="number">34</span>,<span class="number">12</span> @@ COPY <span class="built_in">keys</span>/launchpad-ppa-zfs.asc /<span class="keyword">go</span>/src/github.<span class="keyword">com</span>/docker/docker/<span class="built_in">keys</span>/</span><br><span class="line"> RUN apt-key <span class="built_in">add</span> /<span class="keyword">go</span>/src/github.<span class="keyword">com</span>/docker/docker/<span class="built_in">keys</span>/launchpad-ppa-zfs.asc</span><br><span class="line"> RUN <span class="keyword">echo</span> <span class="keyword">deb</span> http://ppa.launchpad.net/zfs-native/stable/ubuntu trusty main &gt; /etc/apt/sources.<span class="keyword">list</span>.d/zfs.<span class="keyword">list</span></span><br><span class="line"></span><br><span class="line">+RUN apt-<span class="built_in">get</span> clean</span><br><span class="line">+RUN apt-<span class="built_in">get</span> <span class="keyword">update</span> -<span class="keyword">o</span> Acquire::http::No-Cache=True</span><br><span class="line">+</span><br><span class="line"> # Packaged dependencies</span><br><span class="line">-RUN apt-<span class="built_in">get</span> <span class="keyword">update</span> &amp;&amp; apt-<span class="built_in">get</span> install -<span class="keyword">y</span> \</span><br><span class="line">+# RUN apt-<span class="built_in">get</span> <span class="keyword">update</span> &amp;&amp; apt-<span class="built_in">get</span> install -<span class="keyword">y</span> \</span><br><span class="line">+RUN apt-<span class="built_in">get</span> install -<span class="keyword">y</span> \</span><br><span class="line">        apparmor \</span><br><span class="line">        apt-utils \</span><br><span class="line">        aufs-tools \</span><br><span class="line">@@ -<span class="number">112</span>,<span class="number">10</span> +<span class="number">116</span>,<span class="number">12</span> @@ ENV PATH /osxcross/target/bin:$PATH</span><br><span class="line"> ENV SECCOMP_VERSION <span class="number">2.3</span>.<span class="number">2</span></span><br><span class="line"> RUN <span class="keyword">set</span> -<span class="keyword">x</span> \</span><br><span class="line">        &amp;&amp; export SECCOMP_PATH=<span class="string">&quot;$(mktemp -d)&quot;</span> \</span><br><span class="line">-       &amp;&amp; curl -fsSL <span class="string">&quot;https://github.com/seccomp/libseccomp/releases/download/v$&#123;SECCOMP_VERSION&#125;/libseccomp-$&#123;SECCOMP_VERSION&#125;.tar.gz&quot;</span> \</span><br><span class="line">+       # &amp;&amp; curl -fsSL <span class="string">&quot;https://github.com/seccomp/libseccomp/releases/download/v$&#123;SECCOMP_VERSION&#125;/libseccomp-$&#123;SECCOMP_VERSION&#125;.tar.gz&quot;</span> \</span><br><span class="line">+       &amp;&amp; curl -fsSL <span class="string">&quot;https://github.com/seccomp/libseccomp/archive/v$&#123;SECCOMP_VERSION&#125;.tar.gz&quot;</span> \</span><br><span class="line">                | tar -xzC <span class="string">&quot;$SECCOMP_PATH&quot;</span> --strip-components=<span class="number">1</span> \</span><br><span class="line">        &amp;&amp; ( \</span><br><span class="line">                <span class="keyword">cd</span> <span class="string">&quot;$SECCOMP_PATH&quot;</span> \</span><br><span class="line">+        &amp;&amp; ./autogen.<span class="keyword">sh</span> \</span><br><span class="line">                &amp;&amp; ./configure --prefix=/usr/local \</span><br><span class="line">                &amp;&amp; <span class="keyword">make</span> \</span><br><span class="line">                &amp;&amp; <span class="keyword">make</span> install \</span><br></pre></td></tr></table></figure></li>
+<li>去掉DM(DeviceMapper)支持  <figure class="highlight vim"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">diff --git <span class="keyword">a</span>/hack/<span class="keyword">make</span>/.integration-daemon-start <span class="keyword">b</span>/hack/<span class="keyword">make</span>/.integration-daemon-start</span><br><span class="line"><span class="built_in">index</span> <span class="number">0</span>bc8b96..bea0d70 <span class="number">100644</span></span><br><span class="line">--- <span class="keyword">a</span>/hack/<span class="keyword">make</span>/.integration-daemon-start</span><br><span class="line">+++ <span class="keyword">b</span>/hack/<span class="keyword">make</span>/.integration-daemon-start</span><br><span class="line">@@ -<span class="number">71</span>,<span class="number">7</span> +<span class="number">71</span>,<span class="number">7</span> @@ <span class="keyword">if</span> [ -<span class="keyword">z</span> <span class="string">&quot;$DOCKER_TEST_HOST&quot;</span> ]; then</span><br><span class="line">        ( <span class="keyword">set</span> -<span class="keyword">x</span>; exec \</span><br><span class="line">                dockerd --<span class="keyword">debug</span> \</span><br><span class="line">                --host <span class="string">&quot;$DOCKER_HOST&quot;</span> \</span><br><span class="line">-               --storage-driver <span class="string">&quot;$DOCKER_GRAPHDRIVER&quot;</span> \</span><br><span class="line">+               # --storage-driver <span class="string">&quot;$DOCKER_GRAPHDRIVER&quot;</span> \</span><br><span class="line">                --pidfile <span class="string">&quot;$DEST/docker.pid&quot;</span> \</span><br><span class="line">                --userland-proxy=<span class="string">&quot;$DOCKER_USERLANDPROXY&quot;</span> \</span><br><span class="line">                $storage_params \</span><br></pre></td></tr></table></figure></li>
+<li>由于GFW的原因，去掉manpage中关于<code>golang.org/x/sys</code>的安装  <figure class="highlight vim"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">diff --git <span class="keyword">a</span>/man/glide.lock <span class="keyword">b</span>/man/glide.lock</span><br><span class="line"><span class="built_in">index</span> <span class="number">5</span>ec765a..<span class="number">2</span>ecad45 <span class="number">100644</span></span><br><span class="line">--- <span class="keyword">a</span>/man/glide.lock</span><br><span class="line">+++ <span class="keyword">b</span>/man/glide.lock</span><br><span class="line">@@ -<span class="number">38</span>,<span class="number">10</span> +<span class="number">38</span>,<span class="number">6</span> @@ imports:</span><br><span class="line">   <span class="keyword">version</span>: dabebe21bf790f782ea4c7bbd2efc430de182afd</span><br><span class="line"> - name: github.<span class="keyword">com</span>/spf13/viper</span><br><span class="line">   <span class="keyword">version</span>: c1ccc378a054ea8d4e38d8c67f6938d4760b53dd</span><br><span class="line">-- name: golang.org/<span class="keyword">x</span>/sys</span><br><span class="line">-  <span class="keyword">version</span>: <span class="number">62</span>bee037599929a6e9146f29d10dd5208c43507d</span><br><span class="line">-  subpackages:</span><br><span class="line">-  - unix</span><br><span class="line"> - name: gopkg.in/yaml.v2</span><br><span class="line">   <span class="keyword">version</span>: a83829b6f1293c91addabc89d0571c246397bbf4</span><br><span class="line"> - name: github.<span class="keyword">com</span>/spf13/cobra</span><br></pre></td></tr></table></figure></li>
+<li>删除<code>amd64</code>平台下的与<code>centos7</code>无关的目录  <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">rm -rvf contrib/builder/rpm/amd64/amazonlinux-latest/</span><br><span class="line">rm -rvf contrib/builder/rpm/amd64/fedora-24/</span><br><span class="line">rm -rvf contrib/builder/rpm/amd64/fedora-25/</span><br><span class="line">rm -rvf contrib/builder/rpm/amd64/opensuse-13.2/</span><br><span class="line">rm -rvf contrib/builder/rpm/amd64/oraclelinux-6/</span><br><span class="line">rm -rvf contrib/builder/rpm/amd64/oraclelinux-7/</span><br><span class="line">rm -rvf contrib/builder/rpm/amd64/photon-1.0/</span><br></pre></td></tr></table></figure></li>
+<li>修改<code>contrib/builder/rpm/amd64/centos-7/Dockerfile</code><br>  由于docker 17.04.0-ce这个版本是由golang1.7.5这个版本所编译的，所以在centos容器中需要安装golang1.7.5，而golangtc.com上没有1.7.5这个版本，所以只能通过vpn去golang.org上获取  <figure class="highlight vim"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">diff --git <span class="keyword">a</span>/contrib/builder/rpm/amd64/centos-<span class="number">7</span>/Dockerfile <span class="keyword">b</span>/contrib/builder/rpm/amd64/centos-<span class="number">7</span>/Dockerfile</span><br><span class="line"><span class="built_in">index</span> <span class="number">5986</span>dfd..b1f024d <span class="number">100644</span></span><br><span class="line">--- <span class="keyword">a</span>/contrib/builder/rpm/amd64/centos-<span class="number">7</span>/Dockerfile</span><br><span class="line">+++ <span class="keyword">b</span>/contrib/builder/rpm/amd64/centos-<span class="number">7</span>/Dockerfile</span><br><span class="line">@@ -<span class="number">9</span>,<span class="number">7</span> +<span class="number">9</span>,<span class="number">9</span> @@ RUN yum -<span class="keyword">y</span> swap -- <span class="built_in">remove</span> systemd-container systemd-container-libs -- install <span class="keyword">sy</span></span><br><span class="line"> RUN yum install -<span class="keyword">y</span> btrfs-progs-devel device-mapper-devel glibc-static libseccomp-devel libselinux-devel libtool-ltdl-devel pkgconfig selinux-policy selinux-policy-devel systemd-devel tar git cmake <span class="keyword">vim</span>-common</span><br><span class="line"></span><br><span class="line"> ENV GO_VERSION <span class="number">1.7</span>.<span class="number">5</span></span><br><span class="line">+ENV https_proxy <span class="number">192.168</span>.<span class="number">1.230</span>:<span class="number">1080</span></span><br><span class="line"> RUN curl -fSL <span class="string">&quot;https://golang.org/dl/go$&#123;GO_VERSION&#125;.linux-amd64.tar.gz&quot;</span> | tar xzC /usr/local</span><br><span class="line">+# RUN curl -fSL <span class="string">&quot;https://www.golangtc.com/static/go/$&#123;GO_VERSION&#125;/go$&#123;GO_VERSION&#125;.linux-amd64.tar.gz&quot;</span> | tar xzC /usr/local</span><br><span class="line"> ENV PATH $PATH:/usr/local/<span class="keyword">go</span>/bin</span><br><span class="line"></span><br><span class="line"> ENV AUTO_GOPATH <span class="number">1</span></span><br></pre></td></tr></table></figure></li>
+<li>使用Makefile编译Moby<br>  完成了上述Dockerfile的修改以后，可以使用make进行编译，由于我们需要编译的是rpm安装包，所以可直接使用<code>make rpm</code>进行。更多编译操作，可通过<code>make help</code>查看。</li>
+</ul>
+<p>*** 目前，Moby的编译主要问题处在GFW对网络封锁上，如遇到其它问题，请第一时间确认该网络是否能访问，尤其是中国大陆地区。 ***</p>
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="http://www.ybojj.com/docker%E6%BA%90%E4%BB%A3%E7%A0%81%E7%BC%96%E8%AF%91/">docker源代码编译</a></li>
+<li>感谢同事为我提供的VPN服务</li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/05/25/storage/ceph/ceph-nfs-service-by-rgw-with-nfs-ganesha/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1246,100 +1342,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/03/01/container/rancher/rancher-dns-and-metadata/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2017/03/01/container/rancher/rancher-dns-and-metadata/" class="post-title-link" itemprop="url">Rancher服务发现分析</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2017-03-01 15:52:16" itemprop="dateCreated datePublished" datetime="2017-03-01T15:52:16+08:00">2017-03-01</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/container/" itemprop="url" rel="index"><span itemprop="name">container</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="什么是服务发现"><a href="#什么是服务发现" class="headerlink" title="什么是服务发现"></a>什么是服务发现</h1><p>容器可以对其它容器提供服务，如mysql（数据库服务）、nginx、mangodb等等。这些服务都可以通过IP＋Port方式访问。由于容器会经常重建迁移，所以IP会发生变化，如果调用服务的程序使用IP访问就会很不方便，为此可以使用DNS、zookeeper、etcd等技术实现服务访问与IP的解耦。这种解耦方式叫做服务发现。</p>
-<h1 id="版本"><a href="#版本" class="headerlink" title="版本"></a>版本</h1><ul>
-<li>rancher-dns v0.13.3</li>
-</ul>
-<h1 id="Rancher服务发现构成及更新流程"><a href="#Rancher服务发现构成及更新流程" class="headerlink" title="Rancher服务发现构成及更新流程"></a>Rancher服务发现构成及更新流程</h1><p><img src="/images/rancher/rancher-dns-and-metadata.png" alt="rancher-dns-and-metadata"></p>
-<ul>
-<li>Cattle<br>  容器管理器（rancher核心）。</li>
-<li>Event Subscriber<br>  轻量级的消息队列，用于通知rancher-metadata更新数据<br>  ** 猜测：采用websocket协议通讯，Cattle为消息生产者，rancher-metadata、scheduler、rancher-agent为消费者或消息订阅者 **</li>
-<li>rancher-dns<br>  向容器提供DNS服务</li>
-<li>rancher-metadata<br>  rancher中的元数据管理器</li>
-</ul>
-<h1 id="rancher-dns结构"><a href="#rancher-dns结构" class="headerlink" title="rancher-dns结构"></a>rancher-dns结构</h1><p><img src="/images/rancher/rancher-dns-struct.png" alt="rancher-dns-struct"></p>
-<ul>
-<li>TCP、UDP Listen<br>  rancher-dns监听53端口，用于接收域名解析请求。</li>
-<li>miekg DNS<br>  DNS协议封装解析库</li>
-<li>ROUTE<br>  处理域名解析业务逻辑</li>
-<li>metadata client<br>  负责与rancher-metadata同步answer数据，每5秒同步一次。</li>
-<li>answers<br>  负责存储解析<code>metadata client</code>同步来的answer数据（<code>/etc/rancher/answers.json</code>）</li>
-</ul>
-<h1 id="rancher-dns-ROUTE工作流程"><a href="#rancher-dns-ROUTE工作流程" class="headerlink" title="rancher-dns ROUTE工作流程"></a>rancher-dns ROUTE工作流程</h1><p><img src="/images/rancher/rancher-dns-route-workflow.png" alt="rancher-dns-route-workflow"></p>
-<p>*** 关于域名协议流程参见：<a href="https://zhoubofsy.github.io/2017/02/17/network/dns-protocol/">《DNS协议》</a>中相关内容 ***</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1409,7 +1411,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">149</span>
+          <span class="site-state-item-count">150</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -1508,6 +1510,8 @@
 
 
 
+
+  
 
   
 

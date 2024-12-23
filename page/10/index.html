@@ -188,6 +188,100 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/03/01/container/rancher/rancher-dns-and-metadata/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2017/03/01/container/rancher/rancher-dns-and-metadata/" class="post-title-link" itemprop="url">Rancher服务发现分析</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2017-03-01 15:52:16" itemprop="dateCreated datePublished" datetime="2017-03-01T15:52:16+08:00">2017-03-01</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/container/" itemprop="url" rel="index"><span itemprop="name">container</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="什么是服务发现"><a href="#什么是服务发现" class="headerlink" title="什么是服务发现"></a>什么是服务发现</h1><p>容器可以对其它容器提供服务，如mysql（数据库服务）、nginx、mangodb等等。这些服务都可以通过IP＋Port方式访问。由于容器会经常重建迁移，所以IP会发生变化，如果调用服务的程序使用IP访问就会很不方便，为此可以使用DNS、zookeeper、etcd等技术实现服务访问与IP的解耦。这种解耦方式叫做服务发现。</p>
+<h1 id="版本"><a href="#版本" class="headerlink" title="版本"></a>版本</h1><ul>
+<li>rancher-dns v0.13.3</li>
+</ul>
+<h1 id="Rancher服务发现构成及更新流程"><a href="#Rancher服务发现构成及更新流程" class="headerlink" title="Rancher服务发现构成及更新流程"></a>Rancher服务发现构成及更新流程</h1><p><img src="/images/rancher/rancher-dns-and-metadata.png" alt="rancher-dns-and-metadata"></p>
+<ul>
+<li>Cattle<br>  容器管理器（rancher核心）。</li>
+<li>Event Subscriber<br>  轻量级的消息队列，用于通知rancher-metadata更新数据<br>  ** 猜测：采用websocket协议通讯，Cattle为消息生产者，rancher-metadata、scheduler、rancher-agent为消费者或消息订阅者 **</li>
+<li>rancher-dns<br>  向容器提供DNS服务</li>
+<li>rancher-metadata<br>  rancher中的元数据管理器</li>
+</ul>
+<h1 id="rancher-dns结构"><a href="#rancher-dns结构" class="headerlink" title="rancher-dns结构"></a>rancher-dns结构</h1><p><img src="/images/rancher/rancher-dns-struct.png" alt="rancher-dns-struct"></p>
+<ul>
+<li>TCP、UDP Listen<br>  rancher-dns监听53端口，用于接收域名解析请求。</li>
+<li>miekg DNS<br>  DNS协议封装解析库</li>
+<li>ROUTE<br>  处理域名解析业务逻辑</li>
+<li>metadata client<br>  负责与rancher-metadata同步answer数据，每5秒同步一次。</li>
+<li>answers<br>  负责存储解析<code>metadata client</code>同步来的answer数据（<code>/etc/rancher/answers.json</code>）</li>
+</ul>
+<h1 id="rancher-dns-ROUTE工作流程"><a href="#rancher-dns-ROUTE工作流程" class="headerlink" title="rancher-dns ROUTE工作流程"></a>rancher-dns ROUTE工作流程</h1><p><img src="/images/rancher/rancher-dns-route-workflow.png" alt="rancher-dns-route-workflow"></p>
+<p>*** 关于域名协议流程参见：<a href="https://zhoubofsy.github.io/2017/02/17/network/dns-protocol/">《DNS协议》</a>中相关内容 ***</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/02/23/apple/mac-remove-sqlite-editor-app-intr/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1294,108 +1388,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/01/20/raspbarrypi/rpi3-make-image/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2017/01/20/raspbarrypi/rpi3-make-image/" class="post-title-link" itemprop="url">img制作</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2017-01-20 13:54:34" itemprop="dateCreated datePublished" datetime="2017-01-20T13:54:34+08:00">2017-01-20</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/rpi/" itemprop="url" rel="index"><span itemprop="name">rpi</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h1><p>新买了一个TF卡，Class10的，应该能挺快。原来的卡是class4的，如果用新卡做系统，然后所有软件都重装重配，太麻烦！所以将现有系统，做成镜像（img），然后直接<code>dd</code>到新卡上，然后再执行<code>raspi-conf</code>进行容量扩展就可以正常使用了。</p>
-<h1 id="版本"><a href="#版本" class="headerlink" title="版本"></a>版本</h1><ul>
-<li>硬件，RaspberryPi3</li>
-<li>OS，raspbian jessie</li>
-</ul>
-<h1 id="步骤"><a href="#步骤" class="headerlink" title="步骤"></a>步骤</h1><h2 id="安装需要的软件"><a href="#安装需要的软件" class="headerlink" title="安装需要的软件"></a>安装需要的软件</h2><p>安装<code>dosfstools</code>、<code>parted</code>、<code>kpartx</code>软件及依赖包。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt-get install dosfstools parted kpartx</span><br></pre></td></tr></table></figure>
-
-<h2 id="计算镜像大小"><a href="#计算镜像大小" class="headerlink" title="计算镜像大小"></a>计算镜像大小</h2><p>获取<code>/dev/root</code>和<code>/dev/mmcblk0p1</code>占用的空间，然后计算镜像大小，计算公式：1.2 * (size(&#x2F;dev&#x2F;root) + size(&#x2F;dev&#x2F;mmcblk0p1))</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">df</span> -P</span></span><br><span class="line">Filesystem     1024-blocks      Used Available Capacity Mounted on</span><br><span class="line">/dev/root         30690780   1390740  28024812       5% /</span><br><span class="line">/dev/mmcblk0p1       64366     20698     43668      33% /boot</span><br></pre></td></tr></table></figure>
-<p><code>df</code>返回的容量单位为KB。</p>
-<h2 id="生成空白镜像文件"><a href="#生成空白镜像文件" class="headerlink" title="生成空白镜像文件"></a>生成空白镜像文件</h2><p>使用<code>dd</code>和<code>/dev/zero</code>生成空白镜像文件<code>sudo dd if=/dev/zero of=&#123;镜像文件&#125; bs=1K count=&#123;镜像大小（单位为K）&#125;</code></p>
-<h2 id="分区镜像文件并格式化"><a href="#分区镜像文件并格式化" class="headerlink" title="分区镜像文件并格式化"></a>分区镜像文件并格式化</h2><h3 id="分区"><a href="#分区" class="headerlink" title="分区"></a>分区</h3><p>使用<code>parted</code>为img文件分区</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">标记label，选择MBR or GPT主引导格式，MBR:msdos, GPT:gpt</span></span><br><span class="line">sudo parted &#123;镜像文件&#125; -s -- mklabel msdos</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">创建分区</span></span><br><span class="line">sudo parted &#123;镜像文件&#125; -s -- mkpart primary fat32 &#123;开始扇区&#125;s &#123;结束扇区&#125;s</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">创建分区</span></span><br><span class="line">sudo parted &#123;镜像文件&#125; -s -- mkpart primary ext4 &#123;开始扇区&#125;s -1</span><br></pre></td></tr></table></figure>
-<p>开始扇区和结束扇区可是通过<code>sudo fdisk -l /dev/mmcblk0</code>来查看。</p>
-<h3 id="格式化"><a href="#格式化" class="headerlink" title="格式化"></a>格式化</h3><p>在格式化前，需要先将img文件映射给系统的loop设备，然后在将loop设备映射给device mapper。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">映射loop设备</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> losetup -f --show &#123;镜像文件&#125;</span></span><br><span class="line">/dev/loop0</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">device mapper</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> kpartx -va /dev/loop0</span></span><br><span class="line">add map loop0p1 (254:0): 0 257 linear /dev/loop0 256</span><br><span class="line">add map loop0p2 (254:1): 0 18015 linear /dev/loop0 513</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">格式化</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> mkfs.vfat /dev/mapper/loop0p1</span></span><br><span class="line">......</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> mkfs.ext4 /dev/mapper/loop0p2</span></span><br><span class="line">......</span><br></pre></td></tr></table></figure>
-
-<h2 id="挂载并备份系统"><a href="#挂载并备份系统" class="headerlink" title="挂载并备份系统"></a>挂载并备份系统</h2><p>备份<code>/boot</code></p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> mount -f vfat /dev/mapper/loop0p1 /media</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> <span class="built_in">cp</span> -rfp /boot/* /media/</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> umount /media</span></span><br></pre></td></tr></table></figure>
-
-<p>备份<code>/</code></p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> mount -t ext4 /dev/mapper/loop0p2 /media</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> rsync -aP --exclude=&#123;镜像文件&#125; --exclude=/media/* --exclude=/sys/* --exclude=/proc/* --exclude=/tmp/* / /media/</span></span><br><span class="line">...</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> umount /media</span></span><br></pre></td></tr></table></figure>
-
-<h2 id="卸载打包镜像文件"><a href="#卸载打包镜像文件" class="headerlink" title="卸载打包镜像文件"></a>卸载打包镜像文件</h2><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">关闭device mapper</span></span><br><span class="line">sudo kpartx -d /dev/loop0</span><br><span class="line"></span><br><span class="line">＃关闭 loop 设备</span><br><span class="line">sudo losetup -d /dev/loop0</span><br></pre></td></tr></table></figure>
-
-<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/talkxin/article/details/50456282">制作树莓派最小镜像-img裁剪瘦身</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1465,7 +1457,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">149</span>
+          <span class="site-state-item-count">150</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -1564,6 +1556,8 @@
 
 
 
+
+  
 
   
 

@@ -188,6 +188,170 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2018/12/25/linux/kernel-module-sbull/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2018/12/25/linux/kernel-module-sbull/" class="post-title-link" itemprop="url">Linux块设备驱动——sbull</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2018-12-25 00:04:12" itemprop="dateCreated datePublished" datetime="2018-12-25T00:04:12+08:00">2018-12-25</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/linux/" itemprop="url" rel="index"><span itemprop="name">linux</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>块设备驱动程序，linux内核中的一类驱动程序。通过传输固定大小的随机数据来访问设备。</p>
+<h1 id="初始化"><a href="#初始化" class="headerlink" title="初始化"></a>初始化</h1><h2 id="注册块设备驱动"><a href="#注册块设备驱动" class="headerlink" title="注册块设备驱动"></a>注册块设备驱动</h2><p>向内核注册设备驱动程序使用函数<code>int register_blkdev(unsigned int major, const char *name);</code>(linux&#x2F;fs.h)，参数是该设备使用的主设备号和名称(名字在<code>/proc/devices</code>中显示)。若传入的主设备号为0，内核将分配一个新的主设备号，并将该设备号返回给调用者；失败则返回负值。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">int</span> __init <span class="title function_">sbull_init</span><span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">int</span> i;</span><br><span class="line">    sbull_major = register_blkdev(sbull_major,<span class="string">&quot;sbull&quot;</span>); <span class="comment">// 注册块设备，第一个是设备号，0为动态</span></span><br><span class="line">    <span class="keyword">if</span>(sbull_major &lt;= <span class="number">0</span>)&#123;                               <span class="comment">//分配，第二个是设备名</span></span><br><span class="line">        printk(KERN_WARNING <span class="string">&quot;sbull:unable to get major number\n&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> -EBUSY;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">/* 为块核心数据结构 sbull_dev 分配空间*/</span></span><br><span class="line">    Devices = kmalloc(ndevices *<span class="keyword">sizeof</span>(<span class="keyword">struct</span> sbull_dev),GFP_KERNEL);</span><br><span class="line">    <span class="keyword">if</span>(Devices == <span class="literal">NULL</span>)</span><br><span class="line">        <span class="keyword">goto</span> out_unregister;</span><br><span class="line">    <span class="keyword">for</span>(i = <span class="number">0</span>;i &lt; ndevices;i++)       <span class="comment">/* 初始化 sbull_dev 核心数据结构 */</span></span><br><span class="line">        setup_device(Devices + i,i);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>; </span><br><span class="line">out_unregister:</span><br><span class="line">    unregister_blkdev(sbull_major,<span class="string">&quot;sbd&quot;</span>);</span><br><span class="line">    <span class="keyword">return</span> -ENOMEM;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>对于<code>register_blkdev</code>的调用是可选的，该接口所做的事情是：如果需要的话分配一个动态的主设备号；在<code>/proc/devices</code>中创建一个入口项。</p>
+<h2 id="注册磁盘"><a href="#注册磁盘" class="headerlink" title="注册磁盘"></a>注册磁盘</h2><p>内核使用<code>gendisk</code>结构(<code>linux/genhd.h</code>)来表示一个独立的磁盘设备。内核还使用该结构体表示分区。该结构中的许多成员必须由驱动程序进行初始化。</p>
+<ul>
+<li>major<br>  <code>int major;</code>主设备号</li>
+<li>first_minor<br>  <code>int first_minor;</code>一个驱动器至少使用一个次设备号，如果驱动器是可被分区的用户将要为每个可能的分区都分配一个次设备号。</li>
+<li>minors<br>  <code>int minors;</code>常取16，一个完整的磁盘可以包含15个分区。</li>
+<li>disk_name<br>  <code>char disk_name[32];</code>磁盘设备名字，该名字显示在<code>/proc/partitions</code>和<code>sysfs</code>中。</li>
+<li>fops<br>  <code>struct block_device_operations *fops;</code>块设备操作</li>
+<li>queue<br>  <code>struct request_queue *queue;</code>设备I&#x2F;O请求队列</li>
+<li>flags<br>  <code>int flags;</code>驱动器状态标志。可移动介质将被设置为<code>GENHD_FL_REMOVABLE</code>；CD-ROM设备被设置为<code>GENHD_FL_CD</code>；若不希望在<code>/proc/partitions</code>中显示分区信息可设置为<code>GENHD_FL_SUPPRESS_PARTITION_INFO</code></li>
+<li>capacity<br>  <code>sector_t capacity;</code>以512字节为一个扇区，该驱动器可以包含的扇区数。驱动程序不能直接设置该成员，而要将扇区数传给<code>set_capacity</code></li>
+<li>private_data<br>  <code>void *private_data;</code>块设备驱动可以使用该成员保存指向其内部数据的指针</li>
+</ul>
+<p><code>gendisk</code>是一个动态分配的结构，驱动程序不能自己动态分配该结构，必须使用<code>alloc_disk</code>分配，使用<code>del_gendisk</code>回收。</p>
+<ul>
+<li>alloc_disk<br>  <code>struct gendisk *alloc_disk(int minors);</code>参数<code>minors</code>是该磁盘使用的次设备号的数目。为了能正常工作，<code>minors</code>传入后就不能更改了。</li>
+<li>add_disk<br>  <code>void add_disk(struct gendisk *gd);</code>使用<code>alloc_disk</code>分配的<code>gendisk</code>不能使磁盘对系统可用，还需要<code>add_disk</code>将磁盘设备激活，并随时准备调用它提供的方法。在驱动程序完全被初始化并且能够响应对磁盘的请求前，请不要调用<code>add_disk</code></li>
+<li>get_disk and put_disk<br>  <code>gendisk</code>是一个引用技术结构，<code>get_disk</code>和<code>put_disk</code>函数负责处理引用计数。</li>
+<li>del_gendisk<br>  <code>void del_gendisk(struct gendisk *gd);</code>调用<code>del_gendisk</code>会删除<code>gendisk</code>中的最终计数。当没有用户继续使用时，将真正删除该结构。此后，在系统中不会找到该设备信息。</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">void</span> <span class="title function_">setup_device</span><span class="params">(<span class="keyword">struct</span> sbull_dev *dev,<span class="type">int</span> which)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">memset</span>(dev,<span class="number">0</span>,<span class="keyword">sizeof</span>(<span class="keyword">struct</span> sbull_dev));    <span class="comment">/* 初始化 dev 所指内容为0*/</span></span><br><span class="line">    dev-&gt;size = nsectors * hardsect_size;</span><br><span class="line">    dev-&gt;data = vmalloc(dev-&gt;size);</span><br><span class="line">    <span class="keyword">if</span>(dev-&gt;data == <span class="literal">NULL</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        printk(KERN_NOTICE <span class="string">&quot;vmalloc failure.\n&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span> ;</span><br><span class="line">    &#125;</span><br><span class="line">    spin_lock_init(&amp;dev-&gt;lock);               <span class="comment">/* 初始化自旋锁*/</span></span><br><span class="line">    <span class="comment">/* 在分配请求队列前要先初始化自旋锁*/</span></span><br><span class="line">    <span class="comment">/* The timer which &quot;invalidates the device给内核定时器初始化 &quot;*/</span></span><br><span class="line">    init_timer(&amp;dev-&gt;timer); <span class="comment">/*初始化定时器，实际将结构中的list成员初始化为空*/</span>            </span><br><span class="line">    dev-&gt;timer.data = (<span class="type">unsigned</span> <span class="type">long</span>)dev;   <span class="comment">/*被用作function函数的调用参数*/</span></span><br><span class="line">    dev-&gt;timer.function = sbull_invalidate; <span class="comment">/* 当定时器到期时，就执行function指定的函数*/</span></span><br><span class="line">                                                                 </span><br><span class="line">    <span class="comment">/*</span></span><br><span class="line"><span class="comment">     * The I/O queue, depending on whether we are using our own</span></span><br><span class="line"><span class="comment">     * make_request function or not.</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">switch</span>(request_mode)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">case</span> RM_NOQUEUE:</span><br><span class="line">            dev-&gt;<span class="built_in">queue</span> = blk_alloc_queue(GFP_KERNEL);  <span class="comment">/* 分配“请求队列” */</span></span><br><span class="line">            <span class="keyword">if</span>(dev-&gt;<span class="built_in">queue</span> == <span class="literal">NULL</span>)</span><br><span class="line">                <span class="keyword">goto</span> out_vfree;</span><br><span class="line">            blk_queue_make_request(dev-&gt;<span class="built_in">queue</span>,sbull_make_request); <span class="comment">/*绑定&quot;制造请求&quot;函数 */</span></span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">case</span> RM_FULL:</span><br><span class="line">            dev-&gt;<span class="built_in">queue</span> = blk_init_queue(sbull_full_request,&amp;dev-&gt;lock); <span class="comment">/*请求队列初始化*/</span></span><br><span class="line">            <span class="keyword">if</span>(dev-&gt;<span class="built_in">queue</span> == <span class="literal">NULL</span>)</span><br><span class="line">                <span class="keyword">goto</span> out_vfree;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">case</span> RM_SIMPLE:</span><br><span class="line">            dev-&gt;<span class="built_in">queue</span> = blk_init_queue(sbull_request,&amp;dev-&gt;lock); <span class="comment">/*请求队列初始化*/</span></span><br><span class="line">            <span class="keyword">if</span>(dev-&gt;<span class="built_in">queue</span> == <span class="literal">NULL</span>)</span><br><span class="line">                <span class="keyword">goto</span> out_vfree;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">default</span>:</span><br><span class="line">            printk(KERN_NOTICE <span class="string">&quot;Bad request mode %d,using simple\n&quot;</span>,request_mode);     </span><br><span class="line">    &#125;</span><br><span class="line">    blk_queue_hardsect_size(dev-&gt;<span class="built_in">queue</span>,hardsect_size);  <span class="comment">/* 硬件扇区尺寸设置 */</span></span><br><span class="line">    dev-&gt;<span class="built_in">queue</span>-&gt;queuedata = dev;</span><br><span class="line">    dev-&gt;gd = alloc_disk(SBULL_MINORS);             <span class="comment">/* 动态分配 gendisk 结构体*/</span></span><br><span class="line">    <span class="keyword">if</span>(!dev-&gt;gd)</span><br><span class="line">    &#123;</span><br><span class="line">        printk(KERN_NOTICE <span class="string">&quot;alloc_disk failure\n&quot;</span>);</span><br><span class="line">        <span class="keyword">goto</span> out_vfree;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">/* 初始化 gendisk */</span></span><br><span class="line">    dev-&gt;gd-&gt;major = sbull_major;                 <span class="comment">/* 主设备号 */</span></span><br><span class="line">    dev-&gt;gd-&gt;first_minor = which * SBULL_MINORS;  <span class="comment">/* 第一个次设备号 */</span></span><br><span class="line">    dev-&gt;gd-&gt;fops = &amp;sbull_ops;                   <span class="comment">/* 块设备操作结构体 */</span></span><br><span class="line">    dev-&gt;gd-&gt;<span class="built_in">queue</span> = dev-&gt;<span class="built_in">queue</span>;                  <span class="comment">/* 请求队列 */</span></span><br><span class="line">    dev-&gt;gd-&gt;private_data = dev;                  <span class="comment">/* 私有数据 */</span></span><br><span class="line">    <span class="built_in">snprintf</span>(dev-&gt;gd-&gt;disk_name,<span class="number">32</span>,<span class="string">&quot;sbull%c&quot;</span>,which + <span class="string">&#x27;a&#x27;</span>);</span><br><span class="line">    <span class="comment">/* 每个请求的大小都是扇区大小的整数倍，内核总是认为扇区大小是512字节，因此必须进行转换*/</span></span><br><span class="line">    set_capacity(dev-&gt;gd,nsectors*(hardsect_size/KERNEL_SECTOR_SIZE));</span><br><span class="line">    add_disk(dev-&gt;gd);  <span class="comment">/* 完成以上初始化后，调用 add_disk 函数来注册这个磁盘设备 */</span></span><br><span class="line">    <span class="keyword">return</span> ;</span><br><span class="line">             </span><br><span class="line">out_vfree:</span><br><span class="line">    <span class="keyword">if</span>(dev-&gt;data)</span><br><span class="line">        vfree(dev-&gt;data);       <span class="comment">/* 释放用 vmalloc 申请的不连续空间*/</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="逆初始化"><a href="#逆初始化" class="headerlink" title="逆初始化"></a>逆初始化</h1><h2 id="注销块设备驱动"><a href="#注销块设备驱动" class="headerlink" title="注销块设备驱动"></a>注销块设备驱动</h2><p>与<code>register_blkdev</code>对应的注销函数为<code>int unregister_blkdev(unsigned int major, const char *name);</code>，传入的参数与传递给<code>register_blkdev</code>的参数必须匹配。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">void</span> <span class="title function_">sbull_exit</span><span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">int</span> i;</span><br><span class="line">    <span class="keyword">for</span>(i = <span class="number">0</span>; i &lt; ndevices;i++)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">sbull_dev</span> *<span class="title">dev</span> =</span> Devices + i;</span><br><span class="line">        del_timer_sync(&amp;dev-&gt;timer);            <span class="comment">/* 去掉 &quot;介质移除&quot; 定时器*/</span></span><br><span class="line">        <span class="keyword">if</span>(dev-&gt;gd)</span><br><span class="line">        &#123;</span><br><span class="line">            del_gendisk(dev-&gt;gd);             <span class="comment">/* 释放 gendisk 结构体*/</span></span><br><span class="line">            put_disk(dev-&gt;gd);                <span class="comment">/* 释放对 gendisk 的引用 */</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span>(dev-&gt;<span class="built_in">queue</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">if</span>(request_mode == RM_NOQUEUE)</span><br><span class="line">                blk_put_queue(dev-&gt;<span class="built_in">queue</span>);</span><br><span class="line">            <span class="keyword">else</span></span><br><span class="line">                blk_cleanup_queue(dev-&gt;<span class="built_in">queue</span>);   <span class="comment">// 清除请求队列</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span>(dev-&gt;data)</span><br><span class="line">            vfree(dev-&gt;data);</span><br><span class="line">    &#125;</span><br><span class="line">    unregister_blkdev(sbull_major,<span class="string">&quot;sbull&quot;</span>);</span><br><span class="line">    kfree(Devices);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="块设备操作"><a href="#块设备操作" class="headerlink" title="块设备操作"></a>块设备操作</h1><p>字符设备使用<code>file_operations</code>结构，块设备使用类似的结构<code>block_device_operations</code>(linux2.6在<code>linux/fs.h</code>中，linux4.4在<code>linux/blkdev.h</code>中)</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">block_device_operations</span> &#123;</span></span><br><span class="line">        <span class="type">int</span> (*open) (<span class="keyword">struct</span> block_device *, <span class="type">fmode_t</span>);</span><br><span class="line">        <span class="type">void</span> (*release) (<span class="keyword">struct</span> gendisk *, <span class="type">fmode_t</span>);</span><br><span class="line">        <span class="type">int</span> (*rw_page)(<span class="keyword">struct</span> block_device *, <span class="type">sector_t</span>, <span class="keyword">struct</span> page *, <span class="type">int</span> rw);</span><br><span class="line">        <span class="type">int</span> (*ioctl) (<span class="keyword">struct</span> block_device *, <span class="type">fmode_t</span>, <span class="type">unsigned</span>, <span class="type">unsigned</span> <span class="type">long</span>);</span><br><span class="line">        <span class="type">int</span> (*compat_ioctl) (<span class="keyword">struct</span> block_device *, <span class="type">fmode_t</span>, <span class="type">unsigned</span>, <span class="type">unsigned</span> <span class="type">long</span>);</span><br><span class="line">        <span class="type">long</span> (*direct_access)(<span class="keyword">struct</span> block_device *, <span class="type">sector_t</span>, <span class="type">void</span> __pmem **, <span class="type">unsigned</span> <span class="type">long</span> *pfn);</span><br><span class="line">        <span class="type">unsigned</span> <span class="title function_">int</span> <span class="params">(*check_events)</span> <span class="params">(<span class="keyword">struct</span> gendisk *disk, <span class="type">unsigned</span> <span class="type">int</span> clearing)</span>;</span><br><span class="line">        <span class="comment">/* -&gt;media_changed() is DEPRECATED, use -&gt;check_events() instead */</span></span><br><span class="line">        <span class="type">int</span> (*media_changed) (<span class="keyword">struct</span> gendisk *);</span><br><span class="line">        <span class="type">void</span> (*unlock_native_capacity) (<span class="keyword">struct</span> gendisk *);</span><br><span class="line">        <span class="type">int</span> (*revalidate_disk) (<span class="keyword">struct</span> gendisk *);</span><br><span class="line">        <span class="type">int</span> (*getgeo)(<span class="keyword">struct</span> block_device *, <span class="keyword">struct</span> hd_geometry *);</span><br><span class="line">        <span class="comment">/* this callback is with swap_lock and sometimes page table lock held */</span></span><br><span class="line">        <span class="type">void</span> (*swap_slot_free_notify) (<span class="keyword">struct</span> block_device *, <span class="type">unsigned</span> <span class="type">long</span>);</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">module</span> *<span class="title">owner</span>;</span></span><br><span class="line">        <span class="type">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">pr_ops</span> *<span class="title">pr_ops</span>;</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>open<br>  <code>int (*open) (struct inode *inode, struct file *filp);</code>当设备被打开时调用它。</li>
+<li>release<br>  <code>int (*release) (struct inode *inode, struct file *filp);</code>当设备被关闭时调用它。</li>
+<li>ioctl<br>  <code>int (*ioctl) (struct inode *inode, struct file *filp, unsigned int cmd, unsigned long arg);</code>实现ioctl系统调用的函数，块设备层会先截取大量的标准请求，因此大多数块设备的ioctl函数都十分短小。</li>
+<li>media_changed<br>  <code>int (*media_changed) (struct gendisk *gd);</code>内核调用该函数检查用户是否更换了驱动器内的介质，如果更换返回一个非零值。该函数只适用于那些支持可移动介质。</li>
+<li>revalidate_disk<br>  <code>int (*revalidate_disk) (struct gendisk *gd);</code>当介质被更换时被调用。</li>
+<li>owner<br>  <code>struct module *owner;</code>指向拥有该结构的模块指针，通常被初始化为<code>THIS_MODULE</code></li>
+</ul>
+<h2 id="open"><a href="#open" class="headerlink" title="open"></a>open</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">int</span> <span class="title function_">sbull_open</span><span class="params">(<span class="keyword">struct</span> inode *inode,<span class="keyword">struct</span> file *filp)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">sbull_dev</span> *<span class="title">dev</span> =</span> inode-&gt;i_bdev-&gt;bd_disk-&gt;private_data;</span><br><span class="line">    del_timer_sync(&amp;dev-&gt;timer); <span class="comment">//去掉&quot;介质移除&quot;定时器</span></span><br><span class="line">    filp-&gt;private_data = dev;</span><br><span class="line">    spin_lock(&amp;dev-&gt;lock);</span><br><span class="line">    <span class="keyword">if</span>(!dev-&gt;users)</span><br><span class="line">        check_disk_change(inode-&gt;i_bdev);</span><br><span class="line">    dev-&gt;users++;                <span class="comment">// 使用计数加 1</span></span><br><span class="line">    spin_unlock(&amp;dev-&gt;lock);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="release"><a href="#release" class="headerlink" title="release"></a>release</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">int</span> <span class="title function_">sbull_release</span><span class="params">(<span class="keyword">struct</span> inode *inode,<span class="keyword">struct</span> file *filp)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">sbull_dev</span> *<span class="title">dev</span> =</span> inode-&gt;i_bdev-&gt;bd_disk-&gt;private_data;</span><br><span class="line">    spin_lock(&amp;dev-&gt;lock);</span><br><span class="line">    dev-&gt;users--;               <span class="comment">// 使用计数减 1</span></span><br><span class="line">    <span class="keyword">if</span>(!dev-&gt;users)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">//30秒的定时器，如果这个时段内设备没有被打开则移除设备</span></span><br><span class="line">        dev-&gt;timer.expires = jiffies + INVALIDATE_DELAY;</span><br><span class="line">        add_timer(&amp;dev-&gt;timer);                      <span class="comment">//将定时器添加到定时器队列中</span></span><br><span class="line">    &#125;</span><br><span class="line">    spin_unlock(&amp;dev-&gt;lock);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="media-changed"><a href="#media-changed" class="headerlink" title="media_changed"></a>media_changed</h2><p><code>open</code>中调用<code>check_disk_change</code>函数触发<code>media_changed</code>检查介质是否被改变。如果介质改变则返回非零值。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">sbull_media_changed</span><span class="params">(<span class="keyword">struct</span> gendisk *gd)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">sbull_dev</span> *<span class="title">dev</span> =</span> gd-&gt;private_data;</span><br><span class="line">    <span class="keyword">return</span> dev-&gt;media_change;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="revalidate-disk"><a href="#revalidate-disk" class="headerlink" title="revalidate_disk"></a>revalidate_disk</h2><p>介质改变后，内核会调用<code>revalidate_disk</code>，调用完成后，内核将重新读取设备的分区表。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">sbull_revalidate</span><span class="params">(<span class="keyword">struct</span> gendisk *gd)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">sbull_dev</span> *<span class="title">dev</span> =</span> gd-&gt;private_data;</span><br><span class="line">    <span class="keyword">if</span>(dev-&gt;media_change)</span><br><span class="line">    &#123;</span><br><span class="line">        dev-&gt;media_change = <span class="number">0</span>;</span><br><span class="line">        <span class="built_in">memset</span>(dev-&gt;data,<span class="number">0</span>,dev-&gt;size);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="ioctl"><a href="#ioctl" class="headerlink" title="ioctl"></a>ioctl</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">sbull_ioctl</span><span class="params">(<span class="keyword">struct</span> inode *inode,<span class="keyword">struct</span> file *filp,<span class="type">unsigned</span> <span class="type">int</span> cmd,<span class="type">unsigned</span> <span class="type">long</span> arg)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">long</span> size;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">hd_geometry</span> <span class="title">geo</span>;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">sbull_dev</span> *<span class="title">dev</span> =</span> filp-&gt;private_data; <span class="comment">// 通过 file-&gt;private 获得设备结构体</span></span><br><span class="line">    <span class="keyword">switch</span>(cmd)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">case</span> HDIO_GETGEO:</span><br><span class="line">            <span class="comment">/*</span></span><br><span class="line"><span class="comment">             * Get geometry: since we are a virtual device, we have to make</span></span><br><span class="line"><span class="comment">             * up something plausible. So we claim 16 sectors, four heads,</span></span><br><span class="line"><span class="comment">             * and calculate the corresponding number of cylinders. We set the</span></span><br><span class="line"><span class="comment">             * start of data at sector four.</span></span><br><span class="line"><span class="comment">             */</span> </span><br><span class="line">            size = dev-&gt;size *(hardsect_size/KERNEL_SECTOR_SIZE);</span><br><span class="line">            <span class="comment">/* 获得几何信息 */</span></span><br><span class="line">            geo.cylinders = (size &amp; ~<span class="number">0x3f</span>) &gt;&gt; <span class="number">6</span>;</span><br><span class="line">            geo.heads = <span class="number">4</span>;</span><br><span class="line">            geo.sectors = <span class="number">16</span>;</span><br><span class="line">            geo.start = <span class="number">4</span>;</span><br><span class="line">            <span class="keyword">if</span>(copy_to_user((<span class="type">void</span> __user *)arg,&amp;geo,<span class="keyword">sizeof</span>(geo)))</span><br><span class="line">                <span class="keyword">return</span> -EFAULT;</span><br><span class="line">            <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> -ENOTTY;   <span class="comment">// 不知道的命令</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>内核对块设备的物理信息并不感兴趣，它只把设备看成是线性的扇区数组。但一些用户空间的应用程序依然需要查询磁盘的物理信息。特别是<code>fdisk</code>工具。</p>
+<h2 id="请求处理"><a href="#请求处理" class="headerlink" title="请求处理"></a>请求处理</h2><p>块设备中没有字符设备中的read、write函数，那么块设备是如何处理I&#x2F;O请求的呢？早在<code>sbull_init</code>中初始化queue时需要传入一个queue处理函数，待内核接收到磁盘I&#x2F;O时，会调用queue处理函数来处理。</p>
+<h3 id="request-queue"><a href="#request-queue" class="headerlink" title="request queue"></a>request queue</h3><p>一个请求队列就是一个动态的数据结构，该结构必须由块设备的I&#x2F;O子系统创建。</p>
+<h4 id="创建删除"><a href="#创建删除" class="headerlink" title="创建删除"></a>创建删除</h4><ul>
+<li>创建初始化<br>  <code>request_queue_t *blk_init_queue(request_fn_proc *request, spinlock_t *lock);</code>参数<code>request</code>是处理这个队列的函数指针，lock是控制访问队列权限的自旋锁。由于创建过程会分配内存，因此会有失败的可能，所以在使用队列前一定要检查返回值。</li>
+<li>删除<br>  <code>void blk_cleanup_queue(request_queue_t *);</code>调用该函数后，驱动程序将不会再得到这个队列中的请求，也不能再引用这个队列了。</li>
+</ul>
+<h4 id="队列元素"><a href="#队列元素" class="headerlink" title="队列元素"></a>队列元素</h4><ul>
+<li>从队列中获取请求<br>  <code>struct request *elv_next_request(request_queue_t *queue);</code>返回一个需要处理的请求指针，该指针由I&#x2F;O调度器决定，如果没有请求需要处理返回NULL。该函数被调用后，请求依然保存在队列中，但是为其做了活动标记，该标记保证了当开始执行该请求时I&#x2F;O调度器不再将该请求与其他请求合并。</li>
+<li>从队列中删除请求<br>  <code>void blkdev_dequeue_request(struct request *req);</code>将请求从队列中删除。</li>
+<li>请求返回队列<br>  <code>void elv_requeue_request(request_queue_t *queue, struct request *req);</code>将拿出队列的请求再返回给队列。当驱动需要同时处理同一队列中的多个请求时，一般多用<code>blkdev_dequeue_request</code>和<code>elv_requeue_request</code></li>
+</ul>
+<h3 id="request"><a href="#request" class="headerlink" title="request"></a>request</h3><p>一个块请求队列可以包含那些实际并不向磁盘读写数据的请求，生产商信息、底层诊断操作、与特殊设备模式相关指令、介质写模式设定等。每个request结构都代表一个块设备的I&#x2F;O请求，这个I&#x2F;O请求可以通过对多个独立请求的合并而来。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">void</span> <span class="title function_">sbull_request</span><span class="params">(<span class="type">request_queue_t</span> *q)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">request</span> *<span class="title">req</span>;</span>          <span class="comment">//定义请求结构体</span></span><br><span class="line">    <span class="keyword">while</span>((req = elv_next_request(q)) != <span class="literal">NULL</span>)<span class="comment">//elv_next_request()获得队列中第一个未完成请求</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">sbull_dev</span> *<span class="title">dev</span> =</span> req-&gt;rq_disk-&gt;private_data;</span><br><span class="line">        <span class="keyword">if</span>(!blk_fs_request(req))     <span class="comment">//判断是否为文件系统请求</span></span><br><span class="line">        &#123;</span><br><span class="line">            printk(KERN_NOTICE <span class="string">&quot;Skip non-fs request\n&quot;</span>);</span><br><span class="line">            end_request(req,<span class="number">0</span>);   <span class="comment">//通知请求处理失败，0为失败，1为成功</span></span><br><span class="line">            <span class="keyword">continue</span>; </span><br><span class="line">        &#125;</span><br><span class="line">        sbull_transfer(dev,req-&gt;sector,req-&gt;current_nr_sectors,req-&gt;buffer,rq_data_dir(req));</span><br><span class="line">        end_request(req,<span class="number">1</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><code>elv_next_request</code><br>  用来获取队列中第一个未完成的请求，当没有请求需要处理时，返回NULL。请求被获取后并不从队列中删除。</li>
+<li><code>blk_fs_request</code><br>  用来判断该请求是否是一个文件系统请求。</li>
+<li><code>end_request</code><br>  <code>void end_request(struct request *req, int succeeded);</code>传递当前请求的指针和完成结果（0表示不成功，非0表示成功）。</li>
+<li><code>req-&gt;sector</code><br>  在设备上开始扇区的索引号</li>
+<li><code>req-&gt;buffer</code><br>  传输或者接收数据的缓冲区指针</li>
+<li><code>rq_data_dir</code><br>  传输方向，返回0表示从设备读数据，非0表示向设备写入数据</li>
+</ul>
+<p>如果多个请求都是对磁盘中相邻扇区进行操作，则内核将合并它们，内核不会合并在单独request结构中的读写操作，如果合并的结果会打破对请求队列的限制，则内核也不会对请求进行合并。</p>
+<h3 id="bio"><a href="#bio" class="headerlink" title="bio"></a>bio</h3><p>一个request结构是作为一个bio结构的链表实现的，保证在执行请求的时候驱动程序能知道执行的位置。当内核以文件系统、虚拟内存子系统或者系统调用的形式决定从块I&#x2F;O设备输入、输出块数据时，它将再结合一个bio结构，用来描述这个操作。该结构被传递给I&#x2F;O代码，代码会把它合并到一个已存在的request结构中，或者根据需要再创建一个新的request结构。bio结构包含了驱动程序执行请求的全部信息，而不必与初始化这个请求的用户空间的进程相关联。</p>
+<p><img src="/images/linux/block.png" alt="block"></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">bio</span> &#123;</span></span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">bio</span>              *<span class="title">bi_next</span>;</span>       <span class="comment">/* request queue link */</span></span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">block_device</span>     *<span class="title">bi_bdev</span>;</span></span><br><span class="line">        <span class="type">unsigned</span> <span class="type">int</span>            bi_flags;       <span class="comment">/* status, command, etc */</span></span><br><span class="line">        <span class="type">int</span>                     bi_error;</span><br><span class="line">        <span class="type">unsigned</span> <span class="type">long</span>           bi_rw;          <span class="comment">/* bottom bits READ/WRITE, top bits priority */</span></span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">bvec_iter</span>        <span class="title">bi_iter</span>;</span></span><br><span class="line">        <span class="comment">/* Number of segments in this BIO after</span></span><br><span class="line"><span class="comment">         * physical address coalescing is performed.</span></span><br><span class="line"><span class="comment">         */</span></span><br><span class="line">        <span class="type">unsigned</span> <span class="type">int</span>            bi_phys_segments;</span><br><span class="line">        <span class="comment">/*</span></span><br><span class="line"><span class="comment">         * To keep track of the max segment size, we account for the</span></span><br><span class="line"><span class="comment">         * sizes of the first and last mergeable segments in this bio.</span></span><br><span class="line"><span class="comment">         */</span></span><br><span class="line">        <span class="type">unsigned</span> <span class="type">int</span>            bi_seg_front_size;</span><br><span class="line">        <span class="type">unsigned</span> <span class="type">int</span>            bi_seg_back_size;</span><br><span class="line">        <span class="type">atomic_t</span>                __bi_remaining;</span><br><span class="line">        <span class="type">bio_end_io_t</span>            *bi_end_io;</span><br><span class="line">        <span class="type">void</span>                    *bi_private;</span><br><span class="line"><span class="meta">#<span class="keyword">ifdef</span> CONFIG_BLK_CGROUP</span></span><br><span class="line">        <span class="comment">/*</span></span><br><span class="line"><span class="comment">         * Optional ioc and css associated with this bio.  Put on bio</span></span><br><span class="line"><span class="comment">         * release.  Read comment on top of bio_associate_current().</span></span><br><span class="line"><span class="comment">         */</span></span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">io_context</span>       *<span class="title">bi_ioc</span>;</span></span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">cgroup_subsys_state</span> *<span class="title">bi_css</span>;</span></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line">        <span class="class"><span class="keyword">union</span> &#123;</span></span><br><span class="line"><span class="meta">#<span class="keyword">if</span> defined(CONFIG_BLK_DEV_INTEGRITY)</span></span><br><span class="line">                <span class="class"><span class="keyword">struct</span> <span class="title">bio_integrity_payload</span> *<span class="title">bi_integrity</span>;</span> <span class="comment">/* data integrity */</span></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line">        &#125;;</span><br><span class="line">        <span class="type">unsigned</span> <span class="type">short</span>          bi_vcnt;        <span class="comment">/* how many bio_vec&#x27;s */</span></span><br><span class="line">        <span class="comment">/*</span></span><br><span class="line"><span class="comment">         * Everything starting with bi_max_vecs will be preserved by bio_reset()</span></span><br><span class="line"><span class="comment">         */</span></span><br><span class="line">        <span class="type">unsigned</span> <span class="type">short</span>          bi_max_vecs;    <span class="comment">/* max bvl_vecs we can hold */</span></span><br><span class="line">        <span class="type">atomic_t</span>                __bi_cnt;       <span class="comment">/* pin count */</span></span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">bio_vec</span>          *<span class="title">bi_io_vec</span>;</span>     <span class="comment">/* the actual vec list */</span></span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">bio_set</span>          *<span class="title">bi_pool</span>;</span></span><br><span class="line">        <span class="comment">/*</span></span><br><span class="line"><span class="comment">         * We can inline a number of vecs at the end of the bio, to avoid</span></span><br><span class="line"><span class="comment">         * double allocations for a small number of bio_vecs. This member</span></span><br><span class="line"><span class="comment">         * MUST obviously be kept at the very end of the bio.</span></span><br><span class="line"><span class="comment">         */</span></span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">bio_vec</span>          <span class="title">bi_inline_vecs</span>[0];</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>bio的核心是一个名为<code>bi_io_vec</code>的数组</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">bio_vec</span> &#123;</span></span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">page</span>     *<span class="title">bv_page</span>;</span></span><br><span class="line">        <span class="type">unsigned</span> <span class="type">int</span>    bv_len;</span><br><span class="line">        <span class="type">unsigned</span> <span class="type">int</span>    bv_offset;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<h4 id="遍历request中的bio"><a href="#遍历request中的bio" class="headerlink" title="遍历request中的bio"></a>遍历request中的bio</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">int</span> <span class="title function_">sbull_xfer_request</span><span class="params">(<span class="keyword">struct</span> sbull_dev *dev,<span class="keyword">struct</span> request *req)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">bio</span> *<span class="title">bio</span>;</span></span><br><span class="line">    <span class="type">int</span> nsect = <span class="number">0</span>;</span><br><span class="line">    rq_for_each_bio(bio,req)<span class="comment">//此宏遍历请求中的每个bio,传递用于sbull_xfer_bio()传输的指针</span></span><br><span class="line">    &#123;</span><br><span class="line">        sbull_xfer_bio(dev,bio);  <span class="comment">//调用 bio 处理函数</span></span><br><span class="line">        nsect += bio-&gt;bi_size/KERNEL_SECTOR_SIZE; <span class="comment">//传递的字节数/扇区大小等于扇区数</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> nsect;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="遍历bio中的segment"><a href="#遍历bio中的segment" class="headerlink" title="遍历bio中的segment"></a>遍历bio中的segment</h4><p>遍历bio中的segment，也就是遍历bio结构中的<code>bi_io_vec</code>。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">int</span> <span class="title function_">sbull_xfer_bio</span><span class="params">(<span class="keyword">struct</span> sbull_dev *dev,<span class="keyword">struct</span> bio *bio)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">int</span> i;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">bio_vec</span> *<span class="title">bvec</span>;</span>              <span class="comment">//定义实际的 vec 列表</span></span><br><span class="line">    <span class="type">sector_t</span> sector = bio-&gt;bi_sector;  <span class="comment">//定义要传输的第一个扇区</span></span><br><span class="line">    <span class="comment">//下面的宏遍历bio的每一段，获得一个内核虚拟地址来存取缓冲</span></span><br><span class="line">    bio_for_each_segment(bvec,bio,i)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="type">char</span> *buffer = __bio_kmap_atomic(bio,i,KM_USER0);<span class="comment">//通过kmap_atomic()函数获得返</span></span><br><span class="line">        <span class="comment">//回bio的第i个缓冲区的虚拟地址</span></span><br><span class="line">        sbull_transfer(dev,</span><br><span class="line">                       sector,                        <span class="comment">// 开始扇区的索引号</span></span><br><span class="line">                       bio_cur_sectors(bio),          <span class="comment">// 需要传输的扇区数  </span></span><br><span class="line">                       buffer,                        <span class="comment">// 传输数据的缓冲区指针</span></span><br><span class="line">                       bio_data_dir(bio)== WRITE);    <span class="comment">// 传输方向，0表述从设备读，非0从设备写</span></span><br><span class="line">        sector += bio_cur_sectors(bio);     <span class="comment">//返回扇区数</span></span><br><span class="line">        __bio_kunmap_atomic(bio,KM_USER0); <span class="comment">//返回由 __bio_kmap_atomic()获得的内核虚拟地址</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li>《设备驱动程序》</li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2018/12/14/linux/perf-tools/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1260,173 +1424,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/11/03/language/python/python-matplotlib/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2017/11/03/language/python/python-matplotlib/" class="post-title-link" itemprop="url">matplotlib</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2017-11-03 16:15:29" itemprop="dateCreated datePublished" datetime="2017-11-03T16:15:29+08:00">2017-11-03</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/language/" itemprop="url" rel="index"><span itemprop="name">language</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>Matplotlib数据可视化第三方库(<a target="_blank" rel="noopener" href="http://matplotlib.org/">官网</a>)。由各种可视化类构成。</p>
-<h1 id="matplotlib-pyplot"><a href="#matplotlib-pyplot" class="headerlink" title="matplotlib.pyplot"></a>matplotlib.pyplot</h1><p><code>matplotlib.pyplot</code>是绘制各类可视化图形的命令子库。</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#!/usr/bin/python</span></span><br><span class="line"><span class="comment">#encoding:utf-8</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt</span><br><span class="line"></span><br><span class="line">plt.plot([<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>,<span class="number">4</span>,<span class="number">5</span>,<span class="number">6</span>])</span><br><span class="line">plt.ylabel(<span class="string">&quot;value&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 将图像保存成PNG格式</span></span><br><span class="line">plt.savefig(<span class="string">&quot;./test&quot;</span>, dpi=<span class="number">600</span>)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># x值[0,2,4,6,8]; y值[3,1,4,5,2]</span></span><br><span class="line">plt.plot([<span class="number">0</span>,<span class="number">2</span>,<span class="number">4</span>,<span class="number">6</span>,<span class="number">8</span>], [<span class="number">3</span>,<span class="number">1</span>,<span class="number">4</span>,<span class="number">5</span>,<span class="number">2</span>])</span><br><span class="line">plt.ylabel(<span class="string">&quot;value&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># X轴[-1,10]; Y轴[0,10]</span></span><br><span class="line">plt.axis([-<span class="number">1</span>,<span class="number">10</span>,<span class="number">0</span>,<span class="number">10</span>])</span><br><span class="line"></span><br><span class="line">plt.show()</span><br></pre></td></tr></table></figure>
-
-<h2 id="plot"><a href="#plot" class="headerlink" title="plot"></a>plot</h2><p><code>plt.plot(x,y,format_string, **kwargs)</code></p>
-<ul>
-<li>x X轴数据，列表或数组，只有一条曲线的时候可选。</li>
-<li>y Y轴数据，列表或数组。</li>
-<li>format_string 控制曲线的各式字符串，可选。</li>
-<li>kwargs 第二组或更多(x,y,format_string)</li>
-</ul>
-<p><code>format_string</code>分别由“颜色字符”、“风格字符”、“标记字符”构成</p>
-<p>** 颜色字符 **</p>
-<table>
-<thead>
-<tr>
-<th align="center">颜色字符</th>
-<th align="center">说明</th>
-<th align="center">颜色字符</th>
-<th align="center">说明</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">‘b’</td>
-<td align="center">蓝色</td>
-<td align="center">‘m’</td>
-<td align="center">洋红色</td>
-</tr>
-<tr>
-<td align="center">‘g’</td>
-<td align="center">绿色</td>
-<td align="center">‘y’</td>
-<td align="center">黄色</td>
-</tr>
-<tr>
-<td align="center">‘r’</td>
-<td align="center">红色</td>
-<td align="center">‘k’</td>
-<td align="center">黑色</td>
-</tr>
-<tr>
-<td align="center">‘c’</td>
-<td align="center">青色</td>
-<td align="center">‘w’</td>
-<td align="center">白色</td>
-</tr>
-<tr>
-<td align="center">‘#008000’</td>
-<td align="center">RGB某颜色</td>
-<td align="center">‘0.8’</td>
-<td align="center">灰度值字符串</td>
-</tr>
-</tbody></table>
-<p>如果用户不指定颜色，系统会自动指定不重复的颜色。</p>
-<p>** 风格字符 **</p>
-<table>
-<thead>
-<tr>
-<th align="center">风格字符</th>
-<th align="left">说明</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">‘-‘</td>
-<td align="left">实现</td>
-</tr>
-<tr>
-<td align="center">‘–’</td>
-<td align="left">破折线</td>
-</tr>
-<tr>
-<td align="center">‘-.’</td>
-<td align="left">点划线</td>
-</tr>
-<tr>
-<td align="center">‘:’</td>
-<td align="left">虚线</td>
-</tr>
-<tr>
-<td align="center">‘’</td>
-<td align="left">无线条</td>
-</tr>
-</tbody></table>
-<p>*** 更多关于标记内容请见<a target="_blank" rel="noopener" href="http://matplotlib.org/api/_as_gen/matplotlib.pyplot.plot.html#matplotlib.pyplot.plot">HERE</a> ***</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt</span><br><span class="line"></span><br><span class="line">a = np.arange(<span class="number">10</span>)</span><br><span class="line">plt.plot(a,a*<span class="number">1.5</span>,<span class="string">&#x27;go-&#x27;</span>, a,a*<span class="number">2.5</span>,<span class="string">&#x27;rx&#x27;</span>, a,a*<span class="number">3.5</span>,<span class="string">&#x27;*&#x27;</span>, a,a*<span class="number">4.5</span>,<span class="string">&#x27;b-.&#x27;</span>)</span><br><span class="line">plt.show()</span><br></pre></td></tr></table></figure>
-
-
-<h2 id="分区绘制"><a href="#分区绘制" class="headerlink" title="分区绘制"></a>分区绘制</h2><h3 id="subplot"><a href="#subplot" class="headerlink" title="subplot"></a>subplot</h3><p><code>plt.subplot(nrows, ncols, plot_number)</code> 将绘制区域分割成 nrows x ncols个区域，plot_number指定绘制的是哪个区域</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"><span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">f</span>(<span class="params">t</span>):</span><br><span class="line">    <span class="keyword">return</span> np.exp(-t) * np.cos(<span class="number">2</span>*np.pi*t)</span><br><span class="line"></span><br><span class="line">a = np.arange(<span class="number">0.0</span>,<span class="number">5.0</span>,<span class="number">2.0</span>)</span><br><span class="line"></span><br><span class="line">plt.subplot(<span class="number">2</span>,<span class="number">1</span>,<span class="number">1</span>)</span><br><span class="line">plt.plot(a, f(a))</span><br><span class="line"></span><br><span class="line">plt.subplot(<span class="number">2</span>,<span class="number">1</span>,<span class="number">2</span>)</span><br><span class="line">plt.plot(a, np.cos(<span class="number">2</span>*np.pi*a), <span class="string">&#x27;r--&#x27;</span>)</span><br><span class="line"></span><br><span class="line">plt.show()</span><br></pre></td></tr></table></figure>
-
-
-<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a target="_blank" rel="noopener" href="http://www.icourse163.org/learn/BIT-1001870002?tid=1002239009">Python数据分析与展示</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1496,7 +1493,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">149</span>
+          <span class="site-state-item-count">150</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -1595,6 +1592,8 @@
 
 
 
+
+  
 
   
 

@@ -188,6 +188,113 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2016/11/28/curl-usage/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2016/11/28/curl-usage/" class="post-title-link" itemprop="url">cURL用法</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2016-11-28 15:54:16" itemprop="dateCreated datePublished" datetime="2016-11-28T15:54:16+08:00">2016-11-28</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/other/" itemprop="url" rel="index"><span itemprop="name">other</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>在 *nix 环境下，若要对http server提供的RESTful接口进行测试，往往需要安装一些HTTP Client工具，然后在输入URL、参数、Method等，组成HTTP协议后发送测试。这种HTTP Client工具大都以浏览器插件形式提供。今天介绍一些curl使用方法，来替代HTTP Client。此处只是一个应用举例，关于curl更多操作请参考man手册</p>
+<h1 id="curl简介"><a href="#curl简介" class="headerlink" title="curl简介"></a>curl简介</h1><p>curl命令是一个功能强大的网络工具，它能够通过http、ftp等方式下载文件，也能够上传文件。curl命令使用了libcurl库来实现，libcurl库常用在C程序中用来处理HTTP请求，curlpp是libcurl的一个C++封装，这几个东西可以用在抓取网页、网络监控等方面的开发，而curl命令可以帮助来解决开发过程中遇到的问题。</p>
+<h1 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h1><h2 id="Mac环境"><a href="#Mac环境" class="headerlink" title="Mac环境"></a>Mac环境</h2><ul>
+<li>OS : os x 10.11.6</li>
+<li>curl : url 7.43.0 (x86_64-apple-darwin15.0) libcurl&#x2F;7.43.0 SecureTransport zlib&#x2F;1.2.5</li>
+<li>openssl : OpenSSL 0.9.8zh 14 Jan 2016</li>
+</ul>
+<h2 id="Linux环境"><a href="#Linux环境" class="headerlink" title="Linux环境"></a>Linux环境</h2><ul>
+<li>OS : Red Hat Enterprise Linux Server release 7.2 (Maipo)</li>
+<li>curl : curl 7.29.0 (x86_64-redhat-linux-gnu) libcurl&#x2F;7.29.0 NSS&#x2F;3.16.2.3 Basic ECC zlib&#x2F;1.2.7 libidn&#x2F;1.28 libssh2&#x2F;1.4.3</li>
+<li>openssl : OpenSSL 1.0.1e-fips 11 Feb 2013</li>
+</ul>
+<h1 id="Usage"><a href="#Usage" class="headerlink" title="Usage"></a>Usage</h1><h2 id="HTTP请求命令格式"><a href="#HTTP请求命令格式" class="headerlink" title="HTTP请求命令格式"></a>HTTP请求命令格式</h2><h3 id="HTTP命令"><a href="#HTTP命令" class="headerlink" title="HTTP命令"></a>HTTP命令</h3><p>** curl {URL}?{参数} -X {Http Method} -H “{Header信息}” -d “{body信息}” -v **</p>
+<p>eg:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl http://127.0.0.1:80/test?param=help -X PUT -H &quot;Connection:keep-alive&quot; -d &quot;Hello world&quot; -v</span><br></pre></td></tr></table></figure>
+
+<h2 id="HTTPS请求命令格式"><a href="#HTTPS请求命令格式" class="headerlink" title="HTTPS请求命令格式"></a>HTTPS请求命令格式</h2><h3 id="导入HTTPS需要的证书"><a href="#导入HTTPS需要的证书" class="headerlink" title="导入HTTPS需要的证书"></a>导入HTTPS需要的证书</h3><p>*** 此处以pkcs12证书为例 ***</p>
+<h4 id="Mac"><a href="#Mac" class="headerlink" title="Mac"></a>Mac</h4><p>双击证书文件，按提示步骤导入证书文件</p>
+<h4 id="Linux"><a href="#Linux" class="headerlink" title="Linux"></a>Linux</h4><p>Linux下证书存在于<code>/etc/pki/nssdb</code>中，可使用<code>certutil -d sql:/etc/pki/nssdb -L</code>命令查询数据库中的证书，使用<code>certutil -d sql:/etc/pki/nssdb -D -n &lt;证书名&gt;</code>删除证书，使用<code>certuil -d sql:/etc/pki/nssdb -A -t &quot;C,,&quot; -n &lt;证书名&gt; -i &lt;cer证书文件路径&gt;</code>添加cer证书，如果是p12证书其添加方法为<code>p12util -d sql:/etc/pki/nssdb -i &lt;p12证书文件&gt;</code>。<br>本文中用到的证书正是p12证书，所以可用p12util去添加证书。</p>
+<h3 id="HTTPS命令"><a href="#HTTPS命令" class="headerlink" title="HTTPS命令"></a>HTTPS命令</h3><h4 id="Mac-1"><a href="#Mac-1" class="headerlink" title="Mac"></a>Mac</h4><p>** curl {URL}?{参数} -k –cert {证书.p12}:{证书密码} -X {Http Method} -H “{Header信息}” -d “{body信息}” -v **<br>eg:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl https://127.0.0.1:8787/test?param=help -k --cert cert.p12:pasword -X PUT -H &quot;Connection:keep-alive&quot; -d &quot;Hello world&quot; -v</span><br></pre></td></tr></table></figure>
+
+<h4 id="Linux-1"><a href="#Linux-1" class="headerlink" title="Linux"></a>Linux</h4><p>** curl {URL}?{参数} -k -X {Http Method} -H “{Header信息}” -d “{body信息}” -v **<br>eg:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl https://127.0.0.1:8787/test?param=help -k -X PUT -H &quot;Connection:keep-alive&quot; -d &quot;Hello world&quot; -v</span><br></pre></td></tr></table></figure>
+
+
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="http://superuser.com/questions/851604/mac-os-x-yosemite-and-client-ssl-certificates">Mac OS X Yosemite and Client SSL Certificates</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.cnblogs.com/gbyukg/p/3326825.html">CURL常用命令</a></li>
+<li><a target="_blank" rel="noopener" href="https://segmentfault.com/q/1010000006665586">HTTP PUT请求该如何传输请求参数呢</a></li>
+<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/gubenpeiyuan/article/details/8528747">curl命令总结，Http Post_Get 常用</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.cnblogs.com/sunada2005/p/3829772.html">curl命令可以用来构造http请求</a></li>
+<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/jwzh_cs/article/details/7897272">导入&#x2F;导出&#x2F;删除 Chrome for Linux 的个人证书</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2016/11/24/storage/ceph/jewel-xenserver7-integration/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1921,88 +2028,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2016/08/10/mysql/20160810-mysql-python-install-on-rhel7-2/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2016/08/10/mysql/20160810-mysql-python-install-on-rhel7-2/" class="post-title-link" itemprop="url">RHEL7.2下MySQL-python安装</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2016-08-10 20:12:24" itemprop="dateCreated datePublished" datetime="2016-08-10T20:12:24+08:00">2016-08-10</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/python/" itemprop="url" rel="index"><span itemprop="name">python</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>使用python2.7</p>
-<h1 id="依赖库"><a href="#依赖库" class="headerlink" title="依赖库"></a>依赖库</h1><ul>
-<li><p>gcc<br>需要安装<code>gcc</code>编译器，用于编译<code>_mysql.c</code></p>
-</li>
-<li><p>python<br>安装<code>python-devel</code>解决找不到“Python.h”问题</p>
-</li>
-<li><p>mysql<br>安装 mysql-community-devel</p>
-</li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -2072,7 +2097,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">149</span>
+          <span class="site-state-item-count">150</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -2171,6 +2196,8 @@
 
 
 
+
+  
 
   
 

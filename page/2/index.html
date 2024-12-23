@@ -188,6 +188,88 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2024/11/25/blockchain/ethereum/erc-20/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2024/11/25/blockchain/ethereum/erc-20/" class="post-title-link" itemprop="url">ERC-20</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2024-11-25 10:32:32 / Modified: 10:55:47" itemprop="dateCreated datePublished" datetime="2024-11-25T10:32:32+08:00">2024-11-25</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/blockchain/" itemprop="url" rel="index"><span itemprop="name">blockchain</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="什么是-ERC-20？"><a href="#什么是-ERC-20？" class="headerlink" title="什么是 ERC-20？"></a>什么是 ERC-20？</h1><p>ERC-20 提出了一个同质化代币的标准，换句话说，它们具有一种属性，使得每个代币都与另一个代币（在类型和价值上）完全相同。 例如，一个 ERC-20 代币就像以太币一样，意味着一个代币会并永远会与其他代币一样。(From: 《<a target="_blank" rel="noopener" href="https://ethereum.org/zh/developers/docs/standards/tokens/erc-20/">ERC-20 代币标准</a>》)</p>
+<h2 id="方法（Method）"><a href="#方法（Method）" class="headerlink" title="方法（Method）"></a>方法（Method）</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">function name() public view returns (string)</span><br><span class="line">// 返回令牌的名称 - 例如 &quot;MyToken&quot;</span><br><span class="line">// 可选 - 此方法可用于提高可用性，但接口和其他协定不得期望存在这些值。</span><br><span class="line"></span><br><span class="line">function symbol() public view returns (string)</span><br><span class="line">// 返回令牌的 symbol。例如“HIX”。</span><br><span class="line">// 可选 - 此方法可用于提高可用性，但接口和其他协定不得期望存在这些值。</span><br><span class="line"></span><br><span class="line">function decimals() public view returns (uint8)</span><br><span class="line">// 返回代币使用的小数位数 - 例如 8，表示将代币数量除以 100000000 以获得其用户表示。</span><br><span class="line">// 可选 - 此方法可用于提高可用性，但接口和其他协定不得期望存在这些值。</span><br><span class="line"></span><br><span class="line">function totalSupply() public view returns (uint256)</span><br><span class="line">// 返回总代币供应量。</span><br><span class="line"></span><br><span class="line">function balanceOf(address _owner) public view returns (uint256 balance)</span><br><span class="line">// 返回地址为 _owner 的另一个账户的账户余额。</span><br><span class="line"></span><br><span class="line">function transfer(address _to, uint256 _value) public returns (bool success)</span><br><span class="line">// 将 _value 数量的代币转移到 _to，并且必须触发 Transfer 事件。如果消息调用者的账户余额没有足够的代币可供花费，则函数应该throw。</span><br><span class="line">// 注意值为 0 的传输必须被视为正常传输，并触发 Transfer 事件。</span><br><span class="line"></span><br><span class="line">function transferFrom(address _from, address _to, uint256 _value) public returns (bool success)</span><br><span class="line">// 将 _value数量的代币从地址 _from 转移到地址 _to，并且必须触发 Transfer 事件。</span><br><span class="line">// transferFrom 方法用于提现工作流程，允许合约代表您转移代币。例如，这可用于允许合约代表您转移代币和/或以子货币收取费用。除非 _from 账户通过某种机制故意授权了消息的发送者，否则该函数应该throw。</span><br><span class="line"></span><br><span class="line">function approve(address _spender, uint256 _value) public returns (bool success)</span><br><span class="line">// 允许_spender多次从您的账户提款，最高可达_value金额。如果再次调用此函数，它将用 _value 覆盖当前限额。</span><br><span class="line">// 注意：客户端应该确保在创建用户界面时，先将限额设置为 0，然后再为同一花费者将其设置为另一个值。尽管 Contract 本身不应该强制执行它，以允许向后兼容之前部署的 Contract</span><br><span class="line"></span><br><span class="line">function allowance(address _owner, address _spender) public view returns (uint256 remaining)</span><br><span class="line">// 返回 _spender 仍允许从 _owner 中提取的金额。</span><br></pre></td></tr></table></figure>
+
+<h2 id="事件（Event）"><a href="#事件（Event）" class="headerlink" title="事件（Event）"></a>事件（Event）</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">event Transfer(address indexed _from, address indexed _to, uint256 _value)</span><br><span class="line">// 必须在代币转移时触发，包括零价值转移。</span><br><span class="line">// 创建新代币的代币合约应该在创建代币时触发 Transfer 事件，并将 _from 地址设置为 0x0。</span><br><span class="line"></span><br><span class="line">event Approval(address indexed _owner, address indexed _spender, uint256 _value)</span><br><span class="line">// 必须在成功调用 approve(address _spender, uint256 _value) 时触发。</span><br></pre></td></tr></table></figure>
+
+<h1 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h1><h2 id="简单示例"><a href="#简单示例" class="headerlink" title="简单示例"></a>简单示例</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br></pre></td><td class="code"><pre><span class="line">// SPDX-License-Identifier: MIT</span><br><span class="line"></span><br><span class="line">pragma solidity ^0.8.0;</span><br><span class="line"></span><br><span class="line">contract MyToken &#123;</span><br><span class="line">    string public constant name = &quot;Bob&#x27;s Token&quot;;</span><br><span class="line">    string public constant symbol = &quot;BBK&quot;;</span><br><span class="line">    uint8 public constant decimals = 18;</span><br><span class="line">    uint16 private constant increase = 1000;</span><br><span class="line">    uint256 public constant totalLimit = 27000000 * (10 ** decimals);</span><br><span class="line">    uint256 public totalSupply = 0;</span><br><span class="line">    address private owner;</span><br><span class="line">    mapping(address =&gt; uint256) public balanceOf;</span><br><span class="line">    mapping(address =&gt; mapping(address =&gt; uint256)) public allowance;</span><br><span class="line"></span><br><span class="line">    event Transfer(address indexed _from, address indexed _to, uint256 _value);</span><br><span class="line">    event Approval(address indexed _owner, address indexed _spender, uint256 _value);</span><br><span class="line"></span><br><span class="line">    modifier checkAddress(address _addr) &#123;</span><br><span class="line">        require(address(_addr) != address(0), &quot;Invalid address.&quot;);</span><br><span class="line">        _;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    modifier checkBalanceOf(address _addr, uint256 _value) &#123;</span><br><span class="line">        require(balanceOf[_addr] &gt;= _value, &quot;Insufficient balance&quot;);</span><br><span class="line">        _;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    modifier checkOwner() &#123;</span><br><span class="line">        require(msg.sender == owner, &quot;Not owner.&quot;);</span><br><span class="line">        _;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    constructor() &#123;</span><br><span class="line">        owner = msg.sender;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function mint(address _to) public checkOwner returns (uint256) &#123;</span><br><span class="line">        uint256 mintValue = increase * (10  ** decimals);</span><br><span class="line">        require(totalLimit &gt;= (totalSupply + mintValue), &quot;Out of limit.&quot;);</span><br><span class="line">        totalSupply += mintValue;</span><br><span class="line">        balanceOf[_to] += mintValue;</span><br><span class="line">        return balanceOf[_to];</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function transfer(address _to, uint256 _value) public checkAddress(_to) checkBalanceOf(msg.sender, _value) returns (bool success)&#123;</span><br><span class="line">        balanceOf[msg.sender] -= _value;</span><br><span class="line">        balanceOf[_to] += _value;</span><br><span class="line">        emit Transfer(msg.sender, _to, _value);</span><br><span class="line">        return true;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function transferFrom(address _from, address _to, uint256 _value) public checkAddress(_to) checkBalanceOf(_from, _value) returns (bool success) &#123;</span><br><span class="line">        require(allowance[_from][msg.sender] &gt;= _value, &quot;No enough approve value.&quot;);</span><br><span class="line">        allowance[_from][msg.sender] -= _value;</span><br><span class="line">        balanceOf[_from] -= _value;</span><br><span class="line">        balanceOf[_to] += _value;</span><br><span class="line">        emit Transfer(_from, _to, _value);</span><br><span class="line">        return true;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function approve(address _spender, uint256 _value) public returns (bool success)&#123;</span><br><span class="line">        allowance[msg.sender][_spender] = _value;</span><br><span class="line">        emit Approval(msg.sender, _spender, _value);</span><br><span class="line">        return true;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>注意事项</strong></p>
+<ul>
+<li>由于本合约的编译版本为0.8.0，此版本具备整数溢出检查，所以可以不使用safeMath。</li>
+</ul>
+<h2 id="快速示例"><a href="#快速示例" class="headerlink" title="快速示例"></a>快速示例</h2><p>使用<a target="_blank" rel="noopener" href="https://docs.openzeppelin.com/contracts/5.x/wizard">OpenZeppelin</a>快速创建ERC-20合约</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line">// SPDX-License-Identifier: MIT</span><br><span class="line">// Compatible with OpenZeppelin Contracts ^5.0.0</span><br><span class="line">pragma solidity ^0.8.22;</span><br><span class="line"></span><br><span class="line">import &#123;AccessManaged&#125; from &quot;@openzeppelin/contracts/access/manager/AccessManaged.sol&quot;;</span><br><span class="line">import &#123;ERC20&#125; from &quot;@openzeppelin/contracts/token/ERC20/ERC20.sol&quot;;</span><br><span class="line">import &#123;ERC20Pausable&#125; from &quot;@openzeppelin/contracts/token/ERC20/extensions/ERC20Pausable.sol&quot;;</span><br><span class="line">import &#123;ERC20Permit&#125; from &quot;@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol&quot;;</span><br><span class="line"></span><br><span class="line">contract BobToken is ERC20, ERC20Pausable, AccessManaged, ERC20Permit &#123;</span><br><span class="line">    constructor(address initialAuthority)</span><br><span class="line">         ERC20(&quot;BobToken&quot;, &quot;BBK&quot;)</span><br><span class="line">         AccessManaged(initialAuthority)</span><br><span class="line">         ERC20Permit(&quot;BobToken&quot;)</span><br><span class="line">    &#123;&#125;</span><br><span class="line"></span><br><span class="line">    function pause() public restricted &#123;</span><br><span class="line">         _pause();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function unpause() public restricted &#123;</span><br><span class="line">         _unpause();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function mint(address to, uint256 amount) public restricted &#123;</span><br><span class="line">        _mint(to, amount);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // The following functions are overrides required by Solidity.</span><br><span class="line"></span><br><span class="line">    function _update(address from, address to, uint256 value)</span><br><span class="line">        internal</span><br><span class="line">        override(ERC20, ERC20Pausable)</span><br><span class="line">    &#123;</span><br><span class="line">        super._update(from, to, value);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>我们的合约通常通过<a target="_blank" rel="noopener" href="https://solidity.readthedocs.io/en/latest/contracts.html#inheritance">继承</a>来使用，在这里我们将 <code>ERC20</code> 重新用于基本标准实现以及 <code>name</code>、<code>symbol</code> 和 <code>decimals</code> 可选扩展。此外，我们正在创建一个代币的 <code>initialSupply</code>，该代币将被分配给部署合约的地址。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2024/11/21/blockchain/ethereum/usage-of-call-staticcall-delegatecall/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1512,153 +1594,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2021/09/10/design/pattern/design-pattern-creating/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2021/09/10/design/pattern/design-pattern-creating/" class="post-title-link" itemprop="url">设计模式——创建型模式</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2021-09-10 11:01:23" itemprop="dateCreated datePublished" datetime="2021-09-10T11:01:23+08:00">2021-09-10</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/design/" itemprop="url" rel="index"><span itemprop="name">design</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>设计模式是前人在工作总结出来的一些设计经验。后人使用这些经验进行设计开发，可以减少设计缺陷。常用的设计模式有23个，这23个设计模式分为三类，分别是“创建型模式”、“<a href="">行为型模式</a>”、“<a href="">结构型模式</a>”。</p>
-<h1 id="创建型模式"><a href="#创建型模式" class="headerlink" title="创建型模式"></a>创建型模式</h1><p>顾名思义，用来创建生成对象的设计模式。创建型模式包括：“单例模式”、“工厂模式”和“构建者模式”，其中工厂模式又分为“简单工厂模式”、“工厂方法模式”和“抽象工厂模式”。</p>
-<p>故事是这样开始的……</p>
-<p>在很久很久以前，有个<code>Product</code>他是这样定义的</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">ProductA</span> &#123;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="function"><span class="type">void</span> <span class="title">Show</span><span class="params">()</span></span>;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-
-<p>那时候还没有设计模式，人们创建对象一般都是用<code>new</code>在堆上分配或者直接在栈上定义。</p>
-<p>Example:</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    ProductA *p = <span class="keyword">new</span> <span class="built_in">ProductA</span>();</span><br><span class="line">    p-&gt;<span class="built_in">Show</span>();</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>后来，使用这个<code>Product</code>对象的人越来越多，每个人都想new一下，而且<code>Product</code>又不想被频繁的new，于是前人想了个办法将<code>Product</code>的对象定义为一个<code>static</code>的变量，然后每次在<code>new</code>之前判断一下，看是否需要<code>new</code>。</p>
-<p>Example:</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">SingleInstance</span> &#123;</span><br><span class="line">    <span class="keyword">private</span>:</span><br><span class="line">        <span class="type">static</span> ProductA *m_p;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="function"><span class="type">static</span> ProductA* <span class="title">CreateProduct</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="keyword">if</span>(m_p == <span class="literal">NULL</span>) &#123;</span><br><span class="line">                m_p = <span class="keyword">new</span> <span class="built_in">ProductA</span>();</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">return</span> m_p;</span><br><span class="line">        &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>这就是“单例模式”。</p>
-<hr>
-<h2 id="单例模式"><a href="#单例模式" class="headerlink" title="单例模式"></a>单例模式</h2><ul>
-<li>某个类只能有一个实例</li>
-<li>它必须自行创建这个实例</li>
-<li>它必须自行向整个系统提供这个实例</li>
-</ul>
-<p><img src="/images/patterns/single_1.jpg" alt="single_1"></p>
-<ul>
-<li>单例类的构造函数为私有</li>
-<li>提供一个自身的静态私有成员变量</li>
-<li>提供一个公有的静态工厂方法</li>
-</ul>
-<p><img src="/images/patterns/single_2.jpg" alt="single_2"></p>
-<hr>
-<p>后来，前人又开发了<code>ProductB</code>，<code>ProductA</code>和<code>ProductB</code>同属于<code>Product</code>，于是我们的product变成了这样</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Product</span> &#123;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">Show</span><span class="params">()</span> </span>= <span class="number">0</span>;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">ProductA</span> : <span class="keyword">public</span> Product &#123;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="function"><span class="type">void</span> <span class="title">Show</span><span class="params">()</span></span>;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">ProductB</span> : <span class="keyword">public</span> Product &#123;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="function"><span class="type">void</span> <span class="title">Show</span><span class="params">()</span></span>;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>为了方便创建对象，前人决定用<code>&quot;PA&quot;</code>代表<code>ProductA</code>、<code>&quot;PB&quot;</code>代表<code>ProductB</code>，再创建一个工厂，用来创建对象，在创建对象时候指定<code>PA</code> 或者<code>PB</code>，工厂根据指定的内容来决定是创建<code>ProductA</code>还是<code>ProductB</code>。</p>
-<p>Example：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">enum</span> <span class="title class_">PD_TYPE</span> &#123;</span><br><span class="line">    PA,</span><br><span class="line">    PB</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">SimpleFactory</span> &#123;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="function">Product* <span class="title">CreateProduct</span><span class="params">(PD_TYPE pt)</span></span>;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function">Product* <span class="title">SimpleFactory::CreateProduct</span><span class="params">(PD_TYPE pt)</span></span>&#123;</span><br><span class="line">    Product *p = <span class="literal">NULL</span>;</span><br><span class="line">    <span class="keyword">switch</span>(pt) &#123;</span><br><span class="line">        <span class="keyword">case</span> PA:</span><br><span class="line">        &#123;</span><br><span class="line">            p = <span class="keyword">new</span> <span class="built_in">ProductA</span>();</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">case</span> PB:</span><br><span class="line">        &#123;</span><br><span class="line">            p = <span class="keyword">new</span> <span class="built_in">ProductB</span>();</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">         &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">return</span> p;</span><br></pre></td></tr></table></figure>
-<p>这就是“简单工厂模式”。</p>
-<hr>
-<h2 id="简单工厂模式"><a href="#简单工厂模式" class="headerlink" title="简单工厂模式"></a>简单工厂模式</h2><ul>
-<li>根据参数的不同返回不同类的实例</li>
-<li>简单工厂模式专门定义一个类来负责创建其他类的实例</li>
-<li>被创建的实例通常都具有共同的父类</li>
-</ul>
-<p><img src="/images/patterns/simple_factory_1.jpg" alt="simple_factory_1"></p>
-<p><img src="/images/patterns/simple_factory_2.jpg" alt="simple_factory_2"></p>
-<hr>
-<p>随着<code>Product</code>种类的不断增加，我们需要不断的修改<code>SimpleFactory::CreateProduct</code>方法，这样会增加<code>SimpleFactory::CreateProduct</code>出错的风险，所以前人按照不同的产品创建了不同的工厂，这样以后在增加新的产品只需要增加对应的工厂就可以了。</p>
-<p>Example:</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">MethodFactory</span> &#123;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="function"><span class="keyword">virtual</span> Product* <span class="title">CreateProduct</span><span class="params">()</span> </span>= <span class="number">0</span>;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">MethodFactoryPA</span> : <span class="keyword">public</span> MethodFactory &#123;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="function">Product* <span class="title">CreateProduct</span><span class="params">()</span></span>;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">MethodFactoryPB</span> : <span class="keyword">public</span> MethodFactory &#123;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="function">Product* <span class="title">CreateProduct</span><span class="params">()</span></span>;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function">Product* <span class="title">MethodFactoryPA::CreateProduct</span><span class="params">()</span></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> <span class="built_in">ProductA</span>();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">Product* <span class="title">MethodFactoryPB::CreateProduct</span><span class="params">()</span></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> <span class="built_in">ProductB</span>();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>这就是“工厂方法模式”</p>
-<hr>
-<h2 id="工厂方法模式"><a href="#工厂方法模式" class="headerlink" title="工厂方法模式"></a>工厂方法模式</h2><p><img src="/images/patterns/method_factory_1.jpg" alt="method_factory_1"></p>
-<p>工厂父类负责定义创建产品对象的公共接口，而工厂子类则负责生成具体的产品对象，这样做的目的是将产品类的实例化操作延迟到工厂子类中完成。</p>
-<p><img src="/images/patterns/method_factory_2.jpg" alt="method_factory_2"></p>
-<hr>
-<p>从现在开始我们要将产品变多<code>ProductA1</code>、<code>ProductA2</code>、<code>ProductB1</code>、<code>ProductB2</code></p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">ProductA1</span> : <span class="keyword">public</span> Product &#123;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="function"><span class="type">void</span> <span class="title">Show</span><span class="params">()</span></span>;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">ProductA2</span> : <span class="keyword">public</span> Product &#123;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="function"><span class="type">void</span> <span class="title">Show</span><span class="params">()</span></span>;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">ProductB1</span> : <span class="keyword">public</span> Product &#123;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="function"><span class="type">void</span> <span class="title">Show</span><span class="params">()</span></span>;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">ProductB2</span> : <span class="keyword">public</span> Product &#123;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="function"><span class="type">void</span> <span class="title">Show</span><span class="params">()</span></span>;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-
-<p>要求工厂生产<code>ProductA1</code>时，也要生产<code>ProductB1</code>；生产<code>ProductA1</code>时，也要生产<code>ProductB2</code>。</p>
-<p>Example:</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">AbstractFactory</span> &#123;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="function"><span class="keyword">virtual</span> Product* <span class="title">CreateProductA</span><span class="params">()</span> </span>= <span class="number">0</span>;</span><br><span class="line">        <span class="function"><span class="keyword">virtual</span> Product* <span class="title">CreateProductB</span><span class="params">()</span> </span>= <span class="number">0</span>;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">AbstractFactoryOne</span> : <span class="keyword">public</span> AbstractFactory &#123;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="function">Product* <span class="title">CreateProductA</span><span class="params">()</span></span>;</span><br><span class="line">        <span class="function">Product* <span class="title">CreateProductB</span><span class="params">()</span></span>;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">AbstractFactoryTwo</span> : <span class="keyword">public</span> AbstractFactory &#123;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="function">Product* <span class="title">CreateProductA</span><span class="params">()</span></span>;</span><br><span class="line">        <span class="function">Product* <span class="title">CreateProductB</span><span class="params">()</span></span>;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function">Product* <span class="title">AbstractFactoryOne::CreateProductA</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> <span class="built_in">ProductA1</span>();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">Product* <span class="title">AbstractFactoryOne::CreateProductB</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> <span class="built_in">ProductB1</span>();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">Product* <span class="title">AbstractFactoryTwo::CreateProductA</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> <span class="built_in">ProductA2</span>();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">Product* <span class="title">AbstractFactoryTwo::CreateProductB</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> <span class="built_in">ProductB2</span>();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>这就是“抽象工厂模式”。</p>
-<hr>
-<h2 id="抽象工厂模式"><a href="#抽象工厂模式" class="headerlink" title="抽象工厂模式"></a>抽象工厂模式</h2><p><img src="/images/patterns/abstract_factory_1.jpg" alt="abstract_factory_1"></p>
-<p>与工厂方法很类似，区别在于工厂方法用于一个产品的构建，抽象工厂适用于多个产品构建</p>
-<p><img src="/images/patterns/abstract_factory_2.jpg" alt="abstract_factory_2"></p>
-<hr>
-<p>抽象工厂模式可以让我们批量生产产品了，但是抽象工厂只能生产固定种类的产品，如果我们要让<code>ProductA1</code>、<code>ProductA2</code>、<code>ProductB1</code>、<code>ProductB2</code>随意组合，生成不同的套餐，然后再进行生产。前人想了这样一个办法。。。</p>
-<p>Example:</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Builder</span> &#123;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="function"><span class="keyword">virtual</span> Product* <span class="title">BuildProduct</span><span class="params">()</span> </span>= <span class="number">0</span>;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">ProductABuilder</span> : <span class="keyword">public</span> Builder&#123;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="function">Product* <span class="title">BuildProduct</span><span class="params">()</span></span>;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Director</span> &#123;</span><br><span class="line">    <span class="keyword">private</span>:</span><br><span class="line">        Builder* builder;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="function"><span class="type">void</span> <span class="title">setBuilder</span><span class="params">(Builder* b)</span></span>;</span><br><span class="line">        <span class="function">Product* <span class="title">build</span><span class="params">()</span></span>;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function">Product* <span class="title">ProductABuilder::BuildProduct</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> <span class="built_in">ProductA</span>();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">Director::setBuilder</span><span class="params">(Builder* b)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">this</span>-&gt;builder = b;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">Product* <span class="title">Director::build</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">this</span>-&gt;builder-&gt;<span class="built_in">BuildProduct</span>();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>这就是“建造者模式”</p>
-<hr>
-<h2 id="建造者模式"><a href="#建造者模式" class="headerlink" title="建造者模式"></a>建造者模式</h2><p><img src="/images/patterns/builder_1.jpg" alt="builder_1"></p>
-<p><img src="/images/patterns/builder_2.jpg" alt="builder_2"></p>
-<p>** To be continue …**</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1728,7 +1663,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">149</span>
+          <span class="site-state-item-count">150</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -1827,6 +1762,8 @@
 
 
 
+
+  
 
   
 

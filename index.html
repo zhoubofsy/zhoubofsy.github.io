@@ -188,6 +188,225 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2024/12/23/blockchain/ethereum/ethereum-micro-economy/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2024/12/23/blockchain/ethereum/ethereum-micro-economy/" class="post-title-link" itemprop="url">Ethereum 微观经济</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2024-12-23 14:45:27 / Modified: 15:04:32" itemprop="dateCreated datePublished" datetime="2024-12-23T14:45:27+08:00">2024-12-23</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/blockchain/" itemprop="url" rel="index"><span itemprop="name">blockchain</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>在以太坊中，存在一个<strong>铸造</strong>和<strong>销毁</strong>机制的平衡，这样可以有效控制以太坊的供应量，防止通货膨胀或通货紧缩，同时促进ETH的价值保持稳定。这个平衡的关键是：  </p>
+<ul>
+<li><strong>铸造过程</strong>：指通过出块奖励为验证者铸造新的ETH。  </li>
+<li><strong>销毁过程</strong>：通过交易中 <code>baseFee</code> 的销毁来减少ETH的总供应量。</li>
+</ul>
+<h1 id="铸造过程：新区块奖励"><a href="#铸造过程：新区块奖励" class="headerlink" title="铸造过程：新区块奖励"></a>铸造过程：新区块奖励</h1><p>在以太坊的<strong>PoS（权益证明）</strong>模式下，每当一个新区块被生产时，系统会给予验证者一定数量的ETH作为奖励。这些奖励是通过<strong>以太坊网络</strong>的共识机制铸造出来的，是<strong>凭空创造</strong>的。</p>
+<h2 id="奖励计算公式"><a href="#奖励计算公式" class="headerlink" title="奖励计算公式"></a>奖励计算公式</h2><p>以太坊2.0的验证者奖励包括了基础奖励（由区块生产产生）和根据**<code>baseFee</code>** 的销毁以及网络活动（例如gas价格）带来的额外奖励。</p>
+<h3 id="基础奖励（Base-Reward）"><a href="#基础奖励（Base-Reward）" class="headerlink" title="基础奖励（Base Reward）"></a>基础奖励（Base Reward）</h3><p>   每个验证者在每个 Epoch 中的基础奖励基于质押总量和总验证者数量计算。  </p>
+<p>   <strong>公式：</strong>  </p>
+<p>$$\text{Base Reward} &#x3D; \frac{\text{Effective Balance} \times R}{\text{Total Balance}}$$</p>
+<ul>
+<li><strong>Effective Balance</strong>: 验证者的有效质押余额（最多 32 ETH，过多部分不计入）。  </li>
+<li><strong>R</strong>: 奖励因子，与网络的总质押量（<code>Total Balance</code>）相关。  </li>
+<li><strong>Total Balance</strong>: 网络中所有验证者的质押总量。</li>
+</ul>
+<p>   <strong>R 的计算</strong>：</p>
+<p>$$R &#x3D; \frac{\text{Base Reward Per Increment}}{\sqrt{\text{Total Active Balance}}}$$</p>
+<ul>
+<li><strong>Base Reward Per Increment</strong>: 固定参数，当前为 64（具体值可能随协议更新变化）。  </li>
+<li><strong>Total Active Balance</strong>: 所有验证者的活跃质押余额总和。</li>
+</ul>
+<p>   <strong>简化理解</strong>：总质押越高，每个验证者的奖励越低；总质押越低，每个验证者的奖励越高。</p>
+<h3 id="出块奖励（Proposer-Reward）"><a href="#出块奖励（Proposer-Reward）" class="headerlink" title="出块奖励（Proposer Reward）"></a>出块奖励（Proposer Reward）</h3><p>   出块的验证者会获得额外的奖励，通常来自网络中的交易小费（<code>Tip</code>）。<br>   <strong>公式：</strong></p>
+<p>   $$\text{Proposer Reward} &#x3D; \frac{1}{8} \times \text{Total Attestation Rewards}$$</p>
+<ul>
+<li><strong>Total Attestation Rewards</strong>: 当前区块中其他验证者的总奖励。</li>
+</ul>
+<h3 id="小费（Tips）"><a href="#小费（Tips）" class="headerlink" title="小费（Tips）"></a>小费（Tips）</h3><p>   验证者还可以通过出块收取交易小费，作为额外的激励。<br>   <strong>公式：</strong></p>
+<p>$$\text{Tips} &#x3D; \text{maxPriorityFeePerGas} \times \text{GasUsed}$$</p>
+<ul>
+<li>小费是交易者直接支付给验证者的费用，主要用于提升交易优先级。</li>
+</ul>
+<h2 id="奖励的分配"><a href="#奖励的分配" class="headerlink" title="奖励的分配"></a>奖励的分配</h2><p><strong>出块奖励</strong>：主要分配给验证者。具体的奖励数量和验证者质押的ETH数量有关。  </p>
+<p><strong>验证者奖励（年化）</strong>：网络中的所有验证者按质押ETH的比例来分享总的奖励池，基于<strong>年化利率</strong>进行分配。</p>
+<ol>
+<li><p><strong>基础奖励分配</strong><br>验证者参与网络共识（如投票或提议新区块）时，按比例分配基础奖励。未按要求参与时将减少奖励。</p>
+</li>
+<li><p><strong>附加奖励分配</strong><br>验证者根据其行为（如投票是否及时、正确）获得额外奖励。<br><strong>行为奖励类型：</strong></p>
+<ul>
+<li><strong>同步贡献奖励</strong>：如果验证者正确参与区块提议和投票。  </li>
+<li><strong>罚没机制</strong>：恶意行为（如双签名）导致奖励减少或直接罚没部分质押。</li>
+</ul>
+</li>
+<li><p><strong>动态调整年化收益率</strong>  </p>
+<ul>
+<li>质押总量（网络参与率）影响验证者奖励：<br> $$\text{Yearly Yield} \propto \frac{1}{\sqrt{\text{Total Stake}}}$$</li>
+<li>如果质押率较低，验证者的年化收益率上升，激励更多人质押。</li>
+</ul>
+</li>
+</ol>
+<p><strong>触发铸造的条件</strong>：</p>
+<ul>
+<li>每生产一个新区块，系统会根据当前的奖励机制铸造出新的ETH，并将其奖励给验证者。  </li>
+<li>该过程的触发条件就是区块的产生与验证，且与链上交易的数量、复杂度等因素无关。</li>
+</ul>
+<h2 id="举例计算"><a href="#举例计算" class="headerlink" title="举例计算"></a><strong>举例计算</strong></h2><p>假设：</p>
+<ul>
+<li>网络总质押量：10,000,000 ETH  </li>
+<li>验证者质押：32 ETH  </li>
+<li>基础奖励因子：64</li>
+</ul>
+<ol>
+<li><p><strong>基础奖励</strong><br>$$<br>\text{Base Reward} &#x3D; \frac{32 \times 64}{\sqrt{10,000,000}} \approx 0.64 , \text{ETH &#x2F; Epoch}<br>$$<br>每 6.4 分钟获得约 0.64 ETH。</p>
+</li>
+<li><p><strong>年化收益率</strong><br>$$<br>\text{Yearly Yield} &#x3D; 0.64 \times 365 \times 24 \times 60 &#x2F; 6.4 \approx 8.76 % , \text{年化收益率}<br>$$</p>
+</li>
+</ol>
+<hr>
+<h1 id="销毁过程：baseFee-的销毁"><a href="#销毁过程：baseFee-的销毁" class="headerlink" title="销毁过程：baseFee 的销毁"></a>销毁过程：<code>baseFee</code> 的销毁</h1><p>为了防止ETH的通货膨胀，<strong>EIP-1559</strong> 引入了销毁机制，旨在通过<strong>销毁<code>baseFee</code></strong> 来减少ETH的总供应量，从而对抗铸造过程带来的通货膨胀。</p>
+<h2 id="baseFee-销毁机制"><a href="#baseFee-销毁机制" class="headerlink" title="baseFee 销毁机制"></a><code>baseFee</code> 销毁机制</h2><p><code>baseFee</code>是由网络中的区块大小决定的基础费用，动态调整，以保持网络的区块容量稳定。这个费用的<strong>一部分会被销毁</strong>，而不是奖励给验证者。  在以太坊中，<code>baseFee</code> 是交易费用的一部分，定义了在一个区块中执行交易所需支付的最低费用。在 <strong>EIP-1559</strong> 提案中，<code>baseFee</code> 引入了一个<strong>动态调整机制</strong>，该机制根据网络的负载和拥堵情况自动调整 <code>baseFee</code> 的值。这个调节机制的设计目标是优化交易费用的透明性和可预测性，并避免交易费用波动过大。</p>
+<h3 id="1-baseFee-机制的基本概念"><a href="#1-baseFee-机制的基本概念" class="headerlink" title="1. baseFee 机制的基本概念"></a>1. <code>baseFee</code> 机制的基本概念</h3><p><code>baseFee</code> 是每笔交易的最低费用，并且是由网络自动调节的，基于以下几个因素：</p>
+<ul>
+<li>网络当前的 <strong>负载</strong>（即当前区块的使用情况）。</li>
+<li>网络 <strong>目标的区块大小</strong>（即区块目标的 gas 限额）。</li>
+</ul>
+<p>EIP-1559 改变了传统的以太坊费用模型，使得交易费用变得更加<strong>可预测</strong>，并且将一部分费用 <strong>销毁</strong>，而不是支付给矿工。<code>baseFee</code> 作为这部分费用的核心部分，其动态调整机制起到了关键作用。</p>
+<h3 id="2-baseFee-的动态调节原理"><a href="#2-baseFee-的动态调节原理" class="headerlink" title="2. baseFee 的动态调节原理"></a>2. <code>baseFee</code> 的动态调节原理</h3><p><code>baseFee</code> 是根据上一块区块的拥堵情况进行调整的。调整的规则如下：</p>
+<ul>
+<li><strong>目标区块大小</strong>：以太坊的目标区块大小是 <strong>15,000,000 gas</strong>（以太坊网络上的一个理想值）。区块的实际大小会决定 <code>baseFee</code> 的调整。</li>
+<li><strong>如果区块的 gas 使用量高于目标（即区块接近 15,000,000 gas）</strong>，<code>baseFee</code> 会<strong>增加</strong>，以此来降低交易的需求，并避免网络拥堵。</li>
+<li><strong>如果区块的 gas 使用量低于目标（即区块未满）</strong>，<code>baseFee</code> 会<strong>减少</strong>，以鼓励更多交易的提交，提升区块的利用率。</li>
+</ul>
+<p>具体的调整规则是基于区块内的 gas 使用量（<code>gasUsed</code>）与目标值（<code>gasTarget</code>）之间的差异来计算：</p>
+<ul>
+<li>每个区块的 <code>baseFee</code> 会根据以下公式调整：</li>
+</ul>
+<p> $$<br>  \text{new baseFee} &#x3D; \text{old baseFee} + \text{adjustment}<br> $$</p>
+<p>  其中，<code>adjustment</code> 是根据以下条件计算的：</p>
+<ul>
+<li><strong>如果区块的 gas 使用量高于目标</strong>，<code>baseFee</code> 会增加。增加的幅度为 <code>baseFee</code> 的 <strong>1&#x2F;8</strong>。</li>
+<li><strong>如果区块的 gas 使用量低于目标</strong>，<code>baseFee</code> 会减少。减少的幅度同样是 <code>baseFee</code> 的 <strong>1&#x2F;8</strong>。</li>
+</ul>
+<p>  即：</p>
+<p>$$<br>  \text{adjustment} &#x3D; \text{baseFee} \times \frac{1}{8} \times \left( \frac{\text{gasUsed}}{\text{gasTarget}} - 1 \right)<br>$$</p>
+<p>  这个公式确保了 <code>baseFee</code> 逐渐适应区块的实际使用情况，避免了过大的波动。</p>
+<ul>
+<li><strong>调整的上限和下限</strong>：<ul>
+<li><code>baseFee</code> 的调整是逐步的，每个区块的 <code>baseFee</code> 相对于上一块最多只能增加或减少 <code>1/8</code>。</li>
+<li>这意味着即使网络负载突然增加或减少，<code>baseFee</code> 也不会立即发生剧烈变化，避免了费用过高或过低的极端情况。</li>
+</ul>
+</li>
+</ul>
+<h3 id="3-baseFee-与-maxFeePerGas-和-maxPriorityFeePerGas-的关系"><a href="#3-baseFee-与-maxFeePerGas-和-maxPriorityFeePerGas-的关系" class="headerlink" title="3. baseFee 与 maxFeePerGas 和 maxPriorityFeePerGas 的关系"></a>3. <code>baseFee</code> 与 <code>maxFeePerGas</code> 和 <code>maxPriorityFeePerGas</code> 的关系</h3><p>除了 <code>baseFee</code>，每个交易还包括两个可变费用参数：</p>
+<ul>
+<li>**<code>maxFeePerGas</code>**：这是交易发起者愿意支付的最大总费用（包括 <code>baseFee</code> 和 <code>priorityFee</code>）。</li>
+<li>**<code>maxPriorityFeePerGas</code>**：这是交易发起者愿意支付给矿工（或验证者）的额外小费。</li>
+</ul>
+<p>在 <strong>EIP-1559</strong> 中，<code>baseFee</code> 是一个由网络动态调整的固定费用，而 <code>maxFeePerGas</code> 和 <code>maxPriorityFeePerGas</code> 则由用户设定。<code>maxFeePerGas</code> 包括 <code>baseFee</code> 和矿工小费部分。</p>
+<ul>
+<li><strong>交易的费用结构</strong>：用户在发起交易时，会设置 <code>maxFeePerGas</code> 和 <code>maxPriorityFeePerGas</code>。实际的交易费用是通过以下公式计算的：</li>
+</ul>
+<p>$$<br>  \text{transaction fee} &#x3D; \max(\text{baseFee}, \text{maxFeePerGas}) + \text{maxPriorityFeePerGas}<br>$$</p>
+<ul>
+<li><code>baseFee</code> 永远不低于区块的实际 <code>baseFee</code>，但用户可以选择支付更高的 <code>maxFeePerGas</code> 和 <code>maxPriorityFeePerGas</code> 以便交易更快地被包含在区块中，尤其在网络拥堵时。</li>
+</ul>
+<h3 id="4-销毁的机制与-baseFee"><a href="#4-销毁的机制与-baseFee" class="headerlink" title="4. 销毁的机制与 baseFee"></a>4. 销毁的机制与 <code>baseFee</code></h3><p>在 EIP-1559 机制中，<code>baseFee</code> 不会直接支付给矿工，而是被<strong>销毁</strong>（burned），从而减少 ETH 的总供应量。</p>
+<ul>
+<li>销毁的 ETH 数量是根据每个区块的 <code>baseFee</code> 和区块的 gas 使用量（<code>gasUsed</code>）来决定的。</li>
+<li>销毁的 ETH 量等于每个交易的 <code>baseFee</code> 与该交易消耗的 gas 量的乘积：</li>
+</ul>
+<p>$$<br>  \text{burned ETH} &#x3D; \text{baseFee} \times \text{gasUsed}<br>$$</p>
+<p>  随着网络交易量的增加，销毁的 ETH 数量也会增多，从而可能导致 ETH 的供应量减少，产生通货紧缩的效果。</p>
+<p><strong>销毁过程</strong>：每当发生交易时，系统会根据交易中的<code>baseFee</code>来销毁一定数量的ETH。这意味着**<code>baseFee</code>** 部分的ETH会永久消失，从而减少市场上的ETH总供应量。</p>
+<p><strong><code>baseFee</code> 的销毁机制会被触发的情况</strong>：</p>
+<ul>
+<li>当用户发起交易时，交易费用中包含的 <strong><code>baseFee</code></strong> 会被销毁，而不是奖励给矿工或验证者。  </li>
+<li><code>baseFee</code> 会随着网络的拥堵情况动态调整，当区块满时，<code>baseFee</code> 增加；反之，当区块空闲时，<code>baseFee</code> 会减少。  </li>
+<li>销毁的<code>baseFee</code> 每个区块的具体数量是通过算法自动计算的，并且每个区块的<code>baseFee</code>会根据网络的拥堵状况自动变化。</li>
+</ul>
+<h2 id="触发销毁的过程"><a href="#触发销毁的过程" class="headerlink" title="触发销毁的过程"></a>触发销毁的过程</h2><ul>
+<li>触发销毁的主要过程是用户发起交易并提交到网络中。这时，系统会根据交易的<code>gasPrice</code>（包括<code>baseFee</code>和<code>maxPriorityFeePerGas</code>）来计算销毁的ETH数量。</li>
+<li>除了交易之外，某些智能合约的操作也会触发<code>baseFee</code>的销毁。例如，执行合约调用时，合约内部的交易（如ERC-20代币转账）也会根据相应的<code>baseFee</code>销毁ETH。</li>
+</ul>
+<hr>
+<h1 id="良性循环：铸造和销毁的平衡"><a href="#良性循环：铸造和销毁的平衡" class="headerlink" title="良性循环：铸造和销毁的平衡"></a>良性循环：铸造和销毁的平衡</h1><p><strong>铸造与销毁形成平衡</strong>：</p>
+<ul>
+<li><strong>铸造过程</strong>：每个新区块奖励一定数量的ETH给验证者，增加市场的ETH供应量。</li>
+<li><strong>销毁过程</strong>：通过销毁<code>baseFee</code>，减少市场的ETH供应量，避免过度膨胀。</li>
+</ul>
+<p><strong>如何保持ETH供应量稳定？</strong></p>
+<ul>
+<li>在一个健康的以太坊网络中，<strong>铸造和销毁机制会共同作用</strong>，实现供需平衡，防止过度的通货膨胀。</li>
+<li><strong>销毁机制对供应量的影响</strong>：通过销毁<code>baseFee</code>，ETH的供应量会得到控制。具体销毁多少ETH，取决于网络的交易量和拥堵状况。</li>
+<li><strong>网络需求与奖励</strong>：交易量越高，<code>baseFee</code> 就越高，销毁的ETH就越多，这可以有效减缓通货膨胀的速度。</li>
+<li><strong>验证者奖励</strong>：验证者通过出块得到的奖励是新增的ETH，在网络正常运行时，这部分奖励与销毁的ETH保持平衡，避免ETH的数量过快增加。</li>
+</ul>
+<p><strong>合适的销毁与铸造机制</strong>：</p>
+<ul>
+<li><strong>区块奖励与销毁的关系</strong>：销毁<code>baseFee</code>的ETH，有时可能会比新增奖励的ETH更多，这就可能导致长期内ETH的总供应量减少，进而形成某种程度的<strong>通货紧缩</strong>。</li>
+<li>在交易需求高、<code>baseFee</code> 较高的情况下，销毁的ETH数量可能大于验证者奖励的ETH，从而实现一个<strong>负增长</strong>或稳定的供应量。</li>
+<li>在交易需求低、<code>baseFee</code> 较低的情况下，新增的ETH数量可能高于销毁量，导致ETH的供应量逐渐增加。</li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2024/12/14/blockchain/ethereum/solidity-call-deploy-principle/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -2020,88 +2239,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2024/11/25/blockchain/ethereum/erc-20/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2024/11/25/blockchain/ethereum/erc-20/" class="post-title-link" itemprop="url">ERC-20</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-              
-
-              <time title="Created: 2024-11-25 10:32:32 / Modified: 10:55:47" itemprop="dateCreated datePublished" datetime="2024-11-25T10:32:32+08:00">2024-11-25</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/blockchain/" itemprop="url" rel="index"><span itemprop="name">blockchain</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="什么是-ERC-20？"><a href="#什么是-ERC-20？" class="headerlink" title="什么是 ERC-20？"></a>什么是 ERC-20？</h1><p>ERC-20 提出了一个同质化代币的标准，换句话说，它们具有一种属性，使得每个代币都与另一个代币（在类型和价值上）完全相同。 例如，一个 ERC-20 代币就像以太币一样，意味着一个代币会并永远会与其他代币一样。(From: 《<a target="_blank" rel="noopener" href="https://ethereum.org/zh/developers/docs/standards/tokens/erc-20/">ERC-20 代币标准</a>》)</p>
-<h2 id="方法（Method）"><a href="#方法（Method）" class="headerlink" title="方法（Method）"></a>方法（Method）</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">function name() public view returns (string)</span><br><span class="line">// 返回令牌的名称 - 例如 &quot;MyToken&quot;</span><br><span class="line">// 可选 - 此方法可用于提高可用性，但接口和其他协定不得期望存在这些值。</span><br><span class="line"></span><br><span class="line">function symbol() public view returns (string)</span><br><span class="line">// 返回令牌的 symbol。例如“HIX”。</span><br><span class="line">// 可选 - 此方法可用于提高可用性，但接口和其他协定不得期望存在这些值。</span><br><span class="line"></span><br><span class="line">function decimals() public view returns (uint8)</span><br><span class="line">// 返回代币使用的小数位数 - 例如 8，表示将代币数量除以 100000000 以获得其用户表示。</span><br><span class="line">// 可选 - 此方法可用于提高可用性，但接口和其他协定不得期望存在这些值。</span><br><span class="line"></span><br><span class="line">function totalSupply() public view returns (uint256)</span><br><span class="line">// 返回总代币供应量。</span><br><span class="line"></span><br><span class="line">function balanceOf(address _owner) public view returns (uint256 balance)</span><br><span class="line">// 返回地址为 _owner 的另一个账户的账户余额。</span><br><span class="line"></span><br><span class="line">function transfer(address _to, uint256 _value) public returns (bool success)</span><br><span class="line">// 将 _value 数量的代币转移到 _to，并且必须触发 Transfer 事件。如果消息调用者的账户余额没有足够的代币可供花费，则函数应该throw。</span><br><span class="line">// 注意值为 0 的传输必须被视为正常传输，并触发 Transfer 事件。</span><br><span class="line"></span><br><span class="line">function transferFrom(address _from, address _to, uint256 _value) public returns (bool success)</span><br><span class="line">// 将 _value数量的代币从地址 _from 转移到地址 _to，并且必须触发 Transfer 事件。</span><br><span class="line">// transferFrom 方法用于提现工作流程，允许合约代表您转移代币。例如，这可用于允许合约代表您转移代币和/或以子货币收取费用。除非 _from 账户通过某种机制故意授权了消息的发送者，否则该函数应该throw。</span><br><span class="line"></span><br><span class="line">function approve(address _spender, uint256 _value) public returns (bool success)</span><br><span class="line">// 允许_spender多次从您的账户提款，最高可达_value金额。如果再次调用此函数，它将用 _value 覆盖当前限额。</span><br><span class="line">// 注意：客户端应该确保在创建用户界面时，先将限额设置为 0，然后再为同一花费者将其设置为另一个值。尽管 Contract 本身不应该强制执行它，以允许向后兼容之前部署的 Contract</span><br><span class="line"></span><br><span class="line">function allowance(address _owner, address _spender) public view returns (uint256 remaining)</span><br><span class="line">// 返回 _spender 仍允许从 _owner 中提取的金额。</span><br></pre></td></tr></table></figure>
-
-<h2 id="事件（Event）"><a href="#事件（Event）" class="headerlink" title="事件（Event）"></a>事件（Event）</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">event Transfer(address indexed _from, address indexed _to, uint256 _value)</span><br><span class="line">// 必须在代币转移时触发，包括零价值转移。</span><br><span class="line">// 创建新代币的代币合约应该在创建代币时触发 Transfer 事件，并将 _from 地址设置为 0x0。</span><br><span class="line"></span><br><span class="line">event Approval(address indexed _owner, address indexed _spender, uint256 _value)</span><br><span class="line">// 必须在成功调用 approve(address _spender, uint256 _value) 时触发。</span><br></pre></td></tr></table></figure>
-
-<h1 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h1><h2 id="简单示例"><a href="#简单示例" class="headerlink" title="简单示例"></a>简单示例</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br></pre></td><td class="code"><pre><span class="line">// SPDX-License-Identifier: MIT</span><br><span class="line"></span><br><span class="line">pragma solidity ^0.8.0;</span><br><span class="line"></span><br><span class="line">contract MyToken &#123;</span><br><span class="line">    string public constant name = &quot;Bob&#x27;s Token&quot;;</span><br><span class="line">    string public constant symbol = &quot;BBK&quot;;</span><br><span class="line">    uint8 public constant decimals = 18;</span><br><span class="line">    uint16 private constant increase = 1000;</span><br><span class="line">    uint256 public constant totalLimit = 27000000 * (10 ** decimals);</span><br><span class="line">    uint256 public totalSupply = 0;</span><br><span class="line">    address private owner;</span><br><span class="line">    mapping(address =&gt; uint256) public balanceOf;</span><br><span class="line">    mapping(address =&gt; mapping(address =&gt; uint256)) public allowance;</span><br><span class="line"></span><br><span class="line">    event Transfer(address indexed _from, address indexed _to, uint256 _value);</span><br><span class="line">    event Approval(address indexed _owner, address indexed _spender, uint256 _value);</span><br><span class="line"></span><br><span class="line">    modifier checkAddress(address _addr) &#123;</span><br><span class="line">        require(address(_addr) != address(0), &quot;Invalid address.&quot;);</span><br><span class="line">        _;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    modifier checkBalanceOf(address _addr, uint256 _value) &#123;</span><br><span class="line">        require(balanceOf[_addr] &gt;= _value, &quot;Insufficient balance&quot;);</span><br><span class="line">        _;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    modifier checkOwner() &#123;</span><br><span class="line">        require(msg.sender == owner, &quot;Not owner.&quot;);</span><br><span class="line">        _;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    constructor() &#123;</span><br><span class="line">        owner = msg.sender;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function mint(address _to) public checkOwner returns (uint256) &#123;</span><br><span class="line">        uint256 mintValue = increase * (10  ** decimals);</span><br><span class="line">        require(totalLimit &gt;= (totalSupply + mintValue), &quot;Out of limit.&quot;);</span><br><span class="line">        totalSupply += mintValue;</span><br><span class="line">        balanceOf[_to] += mintValue;</span><br><span class="line">        return balanceOf[_to];</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function transfer(address _to, uint256 _value) public checkAddress(_to) checkBalanceOf(msg.sender, _value) returns (bool success)&#123;</span><br><span class="line">        balanceOf[msg.sender] -= _value;</span><br><span class="line">        balanceOf[_to] += _value;</span><br><span class="line">        emit Transfer(msg.sender, _to, _value);</span><br><span class="line">        return true;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function transferFrom(address _from, address _to, uint256 _value) public checkAddress(_to) checkBalanceOf(_from, _value) returns (bool success) &#123;</span><br><span class="line">        require(allowance[_from][msg.sender] &gt;= _value, &quot;No enough approve value.&quot;);</span><br><span class="line">        allowance[_from][msg.sender] -= _value;</span><br><span class="line">        balanceOf[_from] -= _value;</span><br><span class="line">        balanceOf[_to] += _value;</span><br><span class="line">        emit Transfer(_from, _to, _value);</span><br><span class="line">        return true;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function approve(address _spender, uint256 _value) public returns (bool success)&#123;</span><br><span class="line">        allowance[msg.sender][_spender] = _value;</span><br><span class="line">        emit Approval(msg.sender, _spender, _value);</span><br><span class="line">        return true;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p><strong>注意事项</strong></p>
-<ul>
-<li>由于本合约的编译版本为0.8.0，此版本具备整数溢出检查，所以可以不使用safeMath。</li>
-</ul>
-<h2 id="快速示例"><a href="#快速示例" class="headerlink" title="快速示例"></a>快速示例</h2><p>使用<a target="_blank" rel="noopener" href="https://docs.openzeppelin.com/contracts/5.x/wizard">OpenZeppelin</a>快速创建ERC-20合约</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line">// SPDX-License-Identifier: MIT</span><br><span class="line">// Compatible with OpenZeppelin Contracts ^5.0.0</span><br><span class="line">pragma solidity ^0.8.22;</span><br><span class="line"></span><br><span class="line">import &#123;AccessManaged&#125; from &quot;@openzeppelin/contracts/access/manager/AccessManaged.sol&quot;;</span><br><span class="line">import &#123;ERC20&#125; from &quot;@openzeppelin/contracts/token/ERC20/ERC20.sol&quot;;</span><br><span class="line">import &#123;ERC20Pausable&#125; from &quot;@openzeppelin/contracts/token/ERC20/extensions/ERC20Pausable.sol&quot;;</span><br><span class="line">import &#123;ERC20Permit&#125; from &quot;@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol&quot;;</span><br><span class="line"></span><br><span class="line">contract BobToken is ERC20, ERC20Pausable, AccessManaged, ERC20Permit &#123;</span><br><span class="line">    constructor(address initialAuthority)</span><br><span class="line">         ERC20(&quot;BobToken&quot;, &quot;BBK&quot;)</span><br><span class="line">         AccessManaged(initialAuthority)</span><br><span class="line">         ERC20Permit(&quot;BobToken&quot;)</span><br><span class="line">    &#123;&#125;</span><br><span class="line"></span><br><span class="line">    function pause() public restricted &#123;</span><br><span class="line">         _pause();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function unpause() public restricted &#123;</span><br><span class="line">         _unpause();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function mint(address to, uint256 amount) public restricted &#123;</span><br><span class="line">        _mint(to, amount);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // The following functions are overrides required by Solidity.</span><br><span class="line"></span><br><span class="line">    function _update(address from, address to, uint256 value)</span><br><span class="line">        internal</span><br><span class="line">        override(ERC20, ERC20Pausable)</span><br><span class="line">    &#123;</span><br><span class="line">        super._update(from, to, value);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>我们的合约通常通过<a target="_blank" rel="noopener" href="https://solidity.readthedocs.io/en/latest/contracts.html#inheritance">继承</a>来使用，在这里我们将 <code>ERC20</code> 重新用于基本标准实现以及 <code>name</code>、<code>symbol</code> 和 <code>decimals</code> 可选扩展。此外，我们正在创建一个代币的 <code>initialSupply</code>，该代币将被分配给部署合约的地址。</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -2171,7 +2308,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">149</span>
+          <span class="site-state-item-count">150</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -2272,6 +2409,61 @@
 
 
   
+
+  
+      
+
+<script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      loader: {
+        source: {
+          '[tex]/amsCd': '[tex]/amscd',
+          '[tex]/AMScd': '[tex]/amscd'
+        }
+      },
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'ams'
+      },
+      options: {
+        renderActions: {
+          findScript: [10, doc => {
+            document.querySelectorAll('script[type^="math/tex"]').forEach(node => {
+              const display = !!node.type.match(/; *mode=display/);
+              const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display);
+              const text = document.createTextNode('');
+              node.parentNode.replaceChild(text, node);
+              math.start = {node: text, delim: '', n: 0};
+              math.end = {node: text, delim: '', n: 0};
+              doc.math.push(math);
+            });
+          }, '', false],
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              let target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    (function () {
+      var script = document.createElement('script');
+      script.src = '//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+      script.defer = true;
+      document.head.appendChild(script);
+    })();
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+    
 
   
 

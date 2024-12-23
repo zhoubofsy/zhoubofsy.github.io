@@ -188,6 +188,97 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2019/11/28/storage/ceph/cephfs-export/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2019/11/28/storage/ceph/cephfs-export/" class="post-title-link" itemprop="url">cephfs export</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2019-11-28 18:43:01" itemprop="dateCreated datePublished" datetime="2019-11-28T18:43:01+08:00">2019-11-28</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="export-cephfs"><a href="#export-cephfs" class="headerlink" title="export cephfs"></a>export cephfs</h1><h3 id="创建用户目录"><a href="#创建用户目录" class="headerlink" title="创建用户目录"></a>创建用户目录</h3><p>使用<code>admin</code>用户将根目录挂载，并创建用户使用需要的目录</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mount -t ceph &lt;monitor ip&gt;:6789:/ /mnt/ -o name=admin,secret=xxxxxxxxxxxxxxxxxxxxxxxx==</span><br></pre></td></tr></table></figure>
+<p>在<code>/mnt</code>目录下创建<code>kubefs</code>目录</p>
+<h3 id="给目录设置配额-Quota"><a href="#给目录设置配额-Quota" class="headerlink" title="给目录设置配额(Quota)"></a>给目录设置配额(Quota)</h3><p>设置目录配额是linux内核本身提供的功能，cephfs只是支持了该功能。设置前需要先安装attr的rpm包<code>yum install -y attr</code>。</p>
+<p>设置目录配额</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">setfattr -n ceph.quota.size_bytes -v &lt;size byte&gt; /mnt/kubefs</span><br></pre></td></tr></table></figure>
+<p>通过<code>getfattr</code>可以获取该quota值。</p>
+<p>cephfs quota 不能精确的限制配额，容量统计有延时，大概10s左右。</p>
+<h3 id="创建用户"><a href="#创建用户" class="headerlink" title="创建用户"></a>创建用户</h3><p>创建一个名称为<code>client.kubefs</code>的用户，使其在<code>/</code>目录下有只读的权限，在<code>/kubefs</code>目录下有读写权限</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ceph fs authorize cephfs client.kubefs / r /kubefs rw</span><br></pre></td></tr></table></figure>
+<p><code>cephfs</code>为<code>filesystem name</code>，可以通过<code>ceph fs ls</code>查询。用户创建成功后，可以通过<code>ceph auth list</code>查询用户权限。需要删除用户也可以通过<code>ceph auth rm</code>仅限删除操作。</p>
+<h3 id="挂载"><a href="#挂载" class="headerlink" title="挂载"></a>挂载</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mount -t ceph &lt;monitor ip&gt;:6789:/kubefs /mnt/ -o name=kubefs,secret=xxxxxxxxxxxxxxxxxxxxxx==</span><br></pre></td></tr></table></figure>
+
+<h1 id="export-nfs"><a href="#export-nfs" class="headerlink" title="export nfs"></a>export nfs</h1><p>cephfs本身不支持nfs协议，可以通过nfs-ganesha将cephfs转成nfs提供出去。</p>
+<h3 id="镜像"><a href="#镜像" class="headerlink" title="镜像"></a>镜像</h3><p><a target="_blank" rel="noopener" href="https://hub.docker.com/r/ananace/nfs-ganesha-ceph">ananace&#x2F;nfs-ganesha-ceph</a></p>
+<h3 id="ganesha配置"><a href="#ganesha配置" class="headerlink" title="ganesha配置"></a>ganesha配置</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"># NFS protocol options</span><br><span class="line">EXPORT</span><br><span class="line">&#123;</span><br><span class="line">  # Export Id (mandatory, each EXPORT must have a unique Export_Id)</span><br><span class="line">  Export_Id = 77;</span><br><span class="line"></span><br><span class="line">  # Exported path (mandatory)</span><br><span class="line">  Path = /;</span><br><span class="line"></span><br><span class="line">  # Pseudo Path (for NFS v4)</span><br><span class="line">  Pseudo = /;</span><br><span class="line"></span><br><span class="line">  # Access control options</span><br><span class="line">  Access_Type = RW;</span><br><span class="line">  Squash = No_Root_Squash;</span><br><span class="line"></span><br><span class="line">  # NFS protocol options</span><br><span class="line">  SecType = &quot;sys&quot;;</span><br><span class="line">  Transports = TCP;</span><br><span class="line">  Protocols = 4;</span><br><span class="line"></span><br><span class="line">  # Exporting FSAL</span><br><span class="line">  FSAL &#123;</span><br><span class="line">    Name = CEPH;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="运行ganesha容器"><a href="#运行ganesha容器" class="headerlink" title="运行ganesha容器"></a>运行ganesha容器</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run -d --net=host  -v /home/xxx/ceph/etc_ceph/:/etc/ceph -v /home/xxx/ceph/ganesha/:/etc/ganesha --name nfs -e GANESHA_BOOTSTRAP_CONFIG=no ananace/nfs-ganesha-ceph</span><br></pre></td></tr></table></figure>
+
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2019/10/17/storage/ceph/rgw-bucket-policy/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1206,293 +1297,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2019/08/20/storage/ceph/changcun-ceph-deployment/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2019/08/20/storage/ceph/changcun-ceph-deployment/" class="post-title-link" itemprop="url">Ceph环境部署</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2019-08-20 09:21:47" itemprop="dateCreated datePublished" datetime="2019-08-20T09:21:47+08:00">2019-08-20</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h1><h2 id="硬件环境"><a href="#硬件环境" class="headerlink" title="硬件环境"></a>硬件环境</h2><ul>
-<li>CPU</li>
-<li>内存</li>
-<li>硬盘<br>  SAS 300G x 2<br>  SATA 6T x 4<br>  SSD 480G x 6</li>
-</ul>
-<h2 id="软件环境"><a href="#软件环境" class="headerlink" title="软件环境"></a>软件环境</h2><ul>
-<li>操作系统<br>  Centos 7.6.1810</li>
-<li>Ceph软件版本<br>  14.2.2</li>
-</ul>
-<h1 id="部署方案"><a href="#部署方案" class="headerlink" title="部署方案"></a>部署方案</h1><p><img src="/images/ceph/changcun_ceph_solution.png" alt="changcun_ceph_solution.png"></p>
-<h3 id="OS"><a href="#OS" class="headerlink" title="OS"></a>OS</h3><p>两个SAS盘（300G）做成RAID1，用于存储操作系统。</p>
-<h3 id="SATA-Pool"><a href="#SATA-Pool" class="headerlink" title="SATA Pool"></a>SATA Pool</h3><ul>
-<li>OSD Data<br>  每个SATA（6T）做成RAID0，用于存储每个OSD数据</li>
-<li>OSD Journal<br>  两个SSD（480G）做成RAID1，再分成4个分区给每台主机中的4个OSD提供Journal数据存储服务</li>
-<li>ObjectStore<br>  OSD后端存储引擎使用Filestore</li>
-<li>Replication<br>  副本数：3<br>  最小允许副本数：1</li>
-</ul>
-<h3 id="SSD-Pool"><a href="#SSD-Pool" class="headerlink" title="SSD Pool"></a>SSD Pool</h3><ul>
-<li>OSD<br>  每个SSD（480G）做成RAID0，用于存储每个OSD的数据</li>
-<li>ObjectStore<br>  OSD后端存储引擎使用Bluestore</li>
-<li>Replication<br>  副本数：3<br>  最小允许副本数：1</li>
-</ul>
-<h1 id="部署步骤"><a href="#部署步骤" class="headerlink" title="部署步骤"></a>部署步骤</h1><h2 id="Ceph集群部署"><a href="#Ceph集群部署" class="headerlink" title="Ceph集群部署"></a>Ceph集群部署</h2><p>Ceph集群的节点分为管理节点、MON节点、OSD节点</p>
-<table>
-<thead>
-<tr>
-<th align="center">节点</th>
-<th align="left">用途</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">MON节点</td>
-<td align="left">用于监控集群、为客户端提供ClusterMap等服务</td>
-</tr>
-<tr>
-<td align="center">OSD节点</td>
-<td align="left">数据存储节点，用于完成数据的持久化工作</td>
-</tr>
-<tr>
-<td align="center">ADMIN节点</td>
-<td align="left">集群维护管理节点，提供管理员权限</td>
-</tr>
-<tr>
-<td align="center">MDS节点</td>
-<td align="left">提供Cephfs服务</td>
-</tr>
-<tr>
-<td align="center">RGW节点</td>
-<td align="left">提供对象存储服务</td>
-</tr>
-<tr>
-<td align="center">MGR节点</td>
-<td align="left">提供监控（zabbix、prometheus等）、dashboard等服务</td>
-</tr>
-<tr>
-<td align="center">iSCSI-GW节点</td>
-<td align="left">提供iSCSI Target 服务</td>
-</tr>
-</tbody></table>
-<p>更多Ceph内容，请见<a target="_blank" rel="noopener" href="https://docs.ceph.com/docs/nautilus/">此链接</a></p>
-<ul>
-<li>需要在部署集群前，做通管理节点与集群节点（包括：MON节点、OSD节点）之间的ssh无密码访问。</li>
-<li>将各个节点的hostname和ip地址对应后，写入<code>/etc/hosts</code>文件，并将此文件同步到各个节点上<br>  以ceph13为例：  <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">[root@ceph13 cluster]# cat /etc/hosts</span><br><span class="line">127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4</span><br><span class="line">::1         localhost localhost.localdomain localhost6 localhost6.localdomain6</span><br><span class="line"></span><br><span class="line">10.53.2.13      ceph13  ceph13</span><br><span class="line">10.53.2.16      ceph16  ceph16</span><br><span class="line">10.53.2.19      ceph19  ceph19</span><br></pre></td></tr></table></figure></li>
-</ul>
-<h3 id="Ceph-deploy-安装"><a href="#Ceph-deploy-安装" class="headerlink" title="Ceph-deploy 安装"></a>Ceph-deploy 安装</h3><p>在管理节点上安装Ceph-deploy工具。</p>
-<p>安装EPEL</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">yum install -y epel-release</span><br></pre></td></tr></table></figure>
-
-<p>修改&#x2F;增加ceph.repo，并安装ceph-deploy</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">[ceph-noarch]</span><br><span class="line">name=Ceph noarch packages</span><br><span class="line">baseurl=https://download.ceph.com/rpm-nautilus/el7/noarch</span><br><span class="line">enabled=1</span><br><span class="line">gpgcheck=1</span><br><span class="line">type=rpm-md</span><br><span class="line">gpgkey=https://download.ceph.com/keys/release.asc</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">yum update -y</span><br><span class="line">yum install -y ceph-deploy</span><br></pre></td></tr></table></figure>
-
-<h3 id="Create-the-cluster"><a href="#Create-the-cluster" class="headerlink" title="Create the cluster"></a>Create the cluster</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">mkdir &#123;my-cluster&#125;</span><br><span class="line">cd &#123;my-cluster&#125;</span><br><span class="line">ceph-deploy new &#123;initial-monitor-node(s)&#125;</span><br></pre></td></tr></table></figure>
-
-<p>eg:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">[root@ceph13 ~]# mkdir cluster</span><br><span class="line">[root@ceph13 ~]# cd cluster</span><br><span class="line">[root@ceph13 cluster]# ceph-deploy new ceph13 ceph16 ceph19</span><br></pre></td></tr></table></figure>
-
-<h3 id="修改集群初始化配置"><a href="#修改集群初始化配置" class="headerlink" title="修改集群初始化配置"></a>修改集群初始化配置</h3><p>修改<code>&#123;my-cluster&#125;</code>目录中的<code>ceph.conf</code></p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">[root@ceph13 cluster]# ls -al</span><br><span class="line">总用量 600</span><br><span class="line">drwxr-xr-x. 2 root root    244 8月  21 15:51 .</span><br><span class="line">dr-xr-x---. 8 root root   4096 8月  11 16:27 ..</span><br><span class="line">-rw-------. 1 root root    113 8月  10 16:17 ceph.bootstrap-mds.keyring</span><br><span class="line">-rw-------. 1 root root    113 8月  10 16:17 ceph.bootstrap-mgr.keyring</span><br><span class="line">-rw-------. 1 root root    113 8月  10 16:17 ceph.bootstrap-osd.keyring</span><br><span class="line">-rw-------. 1 root root    113 8月  10 16:17 ceph.bootstrap-rgw.keyring</span><br><span class="line">-rw-------. 1 root root    151 8月  10 16:17 ceph.client.admin.keyring</span><br><span class="line">-rw-r--r--. 1 root root    293 8月  10 15:15 ceph.conf</span><br><span class="line">-rw-r--r--. 1 root root 580431 8月  10 17:13 ceph-deploy-ceph.log</span><br><span class="line">-rw-------. 1 root root     73 8月  10 15:12 ceph.mon.keyring</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>配置public、cluster网络</li>
-<li>配置osd rebalance</li>
-<li>配置scrub和deep-scrub</li>
-<li>关闭crushmap 启动更新配置<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">[global]</span><br><span class="line"></span><br><span class="line">public network = &#123;ip-address&#125;/&#123;bits&#125;</span><br><span class="line">cluster network = &#123;ip-address&#125;/&#123;bits&#125;</span><br><span class="line"></span><br><span class="line">osd crush update on start = false</span><br><span class="line"></span><br><span class="line">[osd]</span><br><span class="line">osd max backfills = 1</span><br><span class="line">osd recovery op priority = 1</span><br><span class="line">osd recovery max active = 1</span><br><span class="line">osd client op priority = 63</span><br><span class="line">osd recovery delay start = 0.5</span><br><span class="line"></span><br><span class="line">osd scrub chunk min = 1</span><br><span class="line">osd scrub chunk max = 5</span><br><span class="line">osd scrub sleep = 5</span><br><span class="line">osd deep scrub interval = 2592000 # 60(秒)*60(分)*24(时)*30(天)</span><br></pre></td></tr></table></figure></li>
-</ul>
-<p>eg:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">[root@ceph13 cluster]# cat /etc/ceph/ceph.conf </span><br><span class="line">[global]</span><br><span class="line">fsid = 20192dd5-3228-4135-9831-c9d7de74a890</span><br><span class="line">mon_initial_members = ceph13, ceph16, ceph19</span><br><span class="line">mon_host = 10.53.2.13,10.53.2.16,10.53.2.19</span><br><span class="line">auth_cluster_required = cephx</span><br><span class="line">auth_service_required = cephx</span><br><span class="line">auth_client_required = cephx</span><br><span class="line">osd crush update on start = false</span><br><span class="line"></span><br><span class="line">public network = 10.53.2.0/24</span><br><span class="line">cluster network = 10.53.1.0/24</span><br><span class="line"></span><br><span class="line">[osd]</span><br><span class="line">osd max backfills = 1</span><br><span class="line">osd recovery op priority = 1</span><br><span class="line">osd recovery max active = 1</span><br><span class="line">osd client op priority = 63</span><br><span class="line">osd recovery delay start = 0.5</span><br><span class="line"></span><br><span class="line">osd scrub chunk min = 1</span><br><span class="line">osd scrub chunk max = 5</span><br><span class="line">osd scrub sleep = 5</span><br><span class="line">osd deep scrub interval = 2592000</span><br></pre></td></tr></table></figure>
-
-<h3 id="ceph软件安装"><a href="#ceph软件安装" class="headerlink" title="ceph软件安装"></a>ceph软件安装</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ceph-deploy install --stable nautilus &#123;ceph-node(s)&#125;</span><br></pre></td></tr></table></figure>
-
-<p>eg: </p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ceph-deploy install --stable nautilus ceph13 ceph16 ceph19</span><br></pre></td></tr></table></figure>
-
-<p>*** 此处安装过程比较慢，失败的话建议重试几次。***</p>
-<h3 id="MON节点创建初始化"><a href="#MON节点创建初始化" class="headerlink" title="MON节点创建初始化"></a>MON节点创建初始化</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ceph-deploy mon create-initial</span><br></pre></td></tr></table></figure>
-<p>此命令会根据<code>ceph.conf</code>进行MON节点的创建及初始化工作</p>
-<h3 id="部署管理节点"><a href="#部署管理节点" class="headerlink" title="部署管理节点"></a>部署管理节点</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ceph-deploy admin &#123;ceph-node(s)&#125;</span><br></pre></td></tr></table></figure>
-<p>eg:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ceph-deploy admin ceph13 ceph16 ceph19</span><br></pre></td></tr></table></figure>
-
-<h3 id="部署mgr节点（可选）"><a href="#部署mgr节点（可选）" class="headerlink" title="部署mgr节点（可选）"></a>部署mgr节点（可选）</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ceph-deploy mgr create &#123;ceph-node(s)&#125;</span><br></pre></td></tr></table></figure>
-
-<p>eg:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ceph-deploy mgr create ceph13 ceph16 ceph19</span><br></pre></td></tr></table></figure>
-
-<p>*** 若不部署mgr服务，集群会有告警，但不影响使用。***</p>
-<h3 id="部署OSD节点（Filestore）"><a href="#部署OSD节点（Filestore）" class="headerlink" title="部署OSD节点（Filestore）"></a>部署OSD节点（Filestore）</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ceph-deploy osd create --filestore --data &#123;device path&#125; --journal &#123;device path&#125; &#123;ceph-node&#125; </span><br></pre></td></tr></table></figure>
-
-<ul>
-<li><code>--filestore</code><br>  指定数据存储引擎</li>
-<li><code>--data</code><br>  指定osd数据存储设备(SATA盘)</li>
-<li><code>--journal</code><br>  指定osd journal存储设备(SSD Journal盘)</li>
-<li><code>ceph-node</code><br>  指定osd所在主机的hostname</li>
-</ul>
-<p>eg:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">ceph-deploy osd create ceph13 --filestore --data /dev/sdb --journal /dev/sdf1</span><br><span class="line">ceph-deploy osd create ceph13 --filestore --data /dev/sdb --journal /dev/sdf1</span><br><span class="line">ceph-deploy osd create ceph13 --filestore --data /dev/sdc --journal /dev/sdf2</span><br><span class="line">ceph-deploy osd create ceph13 --filestore --data /dev/sdd --journal /dev/sdf3</span><br><span class="line">ceph-deploy osd create ceph13 --filestore --data /dev/sde --journal /dev/sdf4</span><br><span class="line">ceph-deploy osd create ceph16 --filestore --data /dev/sdb --journal /dev/sdf1</span><br><span class="line">ceph-deploy osd create ceph16 --filestore --data /dev/sdc --journal /dev/sdf2</span><br><span class="line">ceph-deploy osd create ceph16 --filestore --data /dev/sdd --journal /dev/sdf3</span><br><span class="line">ceph-deploy osd create ceph16 --filestore --data /dev/sde --journal /dev/sdf4</span><br><span class="line">ceph-deploy osd create ceph19 --filestore --data /dev/sdb --journal /dev/sdf1</span><br><span class="line">ceph-deploy osd create ceph19 --filestore --data /dev/sdc --journal /dev/sdf2</span><br><span class="line">ceph-deploy osd create ceph19 --filestore --data /dev/sdd --journal /dev/sdf3</span><br><span class="line">ceph-deploy osd create ceph19 --filestore --data /dev/sde --journal /dev/sdf4</span><br></pre></td></tr></table></figure>
-
-<h3 id="部署OSD节点（Bluestore）"><a href="#部署OSD节点（Bluestore）" class="headerlink" title="部署OSD节点（Bluestore）"></a>部署OSD节点（Bluestore）</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ceph-deploy osd create --data &#123;device path&#125; &#123;ceph-node&#125;</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li><code>--data</code><br>  指定osd数据存储设备(SSD盘)</li>
-<li><code>ceph-node</code><br>  指定osd所在主机的hostname</li>
-</ul>
-<p>eg:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">ceph-deploy osd create ceph13 --data /dev/sdg</span><br><span class="line">ceph-deploy osd create ceph13 --data /dev/sdh</span><br><span class="line">ceph-deploy osd create ceph13 --data /dev/sdi</span><br><span class="line">ceph-deploy osd create ceph13 --data /dev/sdj</span><br><span class="line">ceph-deploy osd create ceph16 --data /dev/sdg</span><br><span class="line">ceph-deploy osd create ceph16 --data /dev/sdh</span><br><span class="line">ceph-deploy osd create ceph16 --data /dev/sdi</span><br><span class="line">ceph-deploy osd create ceph16 --data /dev/sdj</span><br><span class="line">ceph-deploy osd create ceph19 --data /dev/sdg</span><br><span class="line">ceph-deploy osd create ceph19 --data /dev/sdh</span><br><span class="line">ceph-deploy osd create ceph19 --data /dev/sdi</span><br><span class="line">ceph-deploy osd create ceph19 --data /dev/sdj</span><br></pre></td></tr></table></figure>
-
-<p>部署完所有OSD节点后，此集群部署完成可以通过<code>ceph -s</code>查看集群状态。</p>
-<p>eg:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line">[root@ceph13 cluster]# ceph -s</span><br><span class="line">  cluster:</span><br><span class="line">    id:     20192dd5-3228-4135-9831-c9d7de74a890</span><br><span class="line">    health: HEALTH_OK</span><br><span class="line"></span><br><span class="line">  services:</span><br><span class="line">    mon: 3 daemons, quorum ceph13,ceph16,ceph19 (age 10d)</span><br><span class="line">    mgr: ceph13(active, since 10d), standbys: ceph16, ceph19</span><br><span class="line">    osd: 24 osds: 24 up (since 9d), 24 in (since 10d)</span><br><span class="line"></span><br><span class="line">  data:</span><br><span class="line">    pools:   3 pools, 1536 pgs</span><br><span class="line">    objects: 20.80k objects, 81 GiB</span><br><span class="line">    usage:   244 GiB used, 70 TiB / 71 TiB avail</span><br><span class="line">    pgs:     1536 active+clean</span><br><span class="line"></span><br><span class="line">  io:</span><br><span class="line">    client:   309 KiB/s rd, 145 KiB/s wr, 41 op/s rd, 12 op/s wr</span><br><span class="line"></span><br><span class="line">[root@ceph13 cluster]# ceph osd tree</span><br><span class="line">ID  CLASS WEIGHT   TYPE NAME            STATUS REWEIGHT PRI-AFF </span><br><span class="line">-15        5.21997 root ssd                                     </span><br><span class="line"> -9        1.73999     host ceph13_ssd                          </span><br><span class="line"> 12   ssd  0.43500         osd.12           up  1.00000 1.00000 </span><br><span class="line"> 13   ssd  0.43500         osd.13           up  1.00000 1.00000 </span><br><span class="line"> 14   ssd  0.43500         osd.14           up  1.00000 1.00000 </span><br><span class="line"> 15   ssd  0.43500         osd.15           up  1.00000 1.00000 </span><br><span class="line">-11        1.73999     host ceph16_ssd                          </span><br><span class="line"> 16   ssd  0.43500         osd.16           up  1.00000 1.00000 </span><br><span class="line"> 17   ssd  0.43500         osd.17           up  1.00000 1.00000 </span><br><span class="line"> 18   ssd  0.43500         osd.18           up  1.00000 1.00000 </span><br><span class="line"> 19   ssd  0.43500         osd.19           up  1.00000 1.00000 </span><br><span class="line">-13        1.73999     host ceph19_ssd                          </span><br><span class="line"> 20   ssd  0.43500         osd.20           up  1.00000 1.00000 </span><br><span class="line"> 21   ssd  0.43500         osd.21           up  1.00000 1.00000 </span><br><span class="line"> 22   ssd  0.43500         osd.22           up  1.00000 1.00000 </span><br><span class="line"> 23   ssd  0.43500         osd.23           up  1.00000 1.00000 </span><br><span class="line"> -1       65.41200 root default                                 </span><br><span class="line"> -3       21.80400     host ceph13_sata                         </span><br><span class="line">  0   hdd  5.45099         osd.0            up  1.00000 1.00000 </span><br><span class="line">  1   hdd  5.45099         osd.1            up  1.00000 1.00000 </span><br><span class="line">  2   hdd  5.45099         osd.2            up  1.00000 1.00000 </span><br><span class="line">  3   hdd  5.45099         osd.3            up  1.00000 1.00000 </span><br><span class="line"> -5       21.80400     host ceph16_sata                         </span><br><span class="line">  4   hdd  5.45099         osd.4            up  1.00000 1.00000 </span><br><span class="line">  5   hdd  5.45099         osd.5            up  1.00000 1.00000 </span><br><span class="line">  6   hdd  5.45099         osd.6            up  1.00000 1.00000 </span><br><span class="line">  7   hdd  5.45099         osd.7            up  1.00000 1.00000 </span><br><span class="line"> -7       21.80400     host ceph19_sata                         </span><br><span class="line">  8   hdd  5.45099         osd.8            up  1.00000 1.00000 </span><br><span class="line">  9   hdd  5.45099         osd.9            up  1.00000 1.00000 </span><br><span class="line"> 10   hdd  5.45099         osd.10           up  1.00000 1.00000 </span><br><span class="line"> 11   hdd  5.45099         osd.11           up  1.00000 1.00000 </span><br></pre></td></tr></table></figure>
-
-<h2 id="iscsi-gw部署"><a href="#iscsi-gw部署" class="headerlink" title="iscsi-gw部署"></a>iscsi-gw部署</h2><h3 id="依赖软件安装"><a href="#依赖软件安装" class="headerlink" title="依赖软件安装"></a>依赖软件安装</h3><p>iscsi-gw软件在<code>192.168.1.70</code>的<code>/home/zhoub/rpms</code>目录下。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">[zhoub@CentOS ceph-iscsi-rpms]$ ls -al</span><br><span class="line">总用量 588</span><br><span class="line">drwxr-xr-x.  9 zhoub zhoub   4096 6月  19 16:31 .</span><br><span class="line">drwxrwxr-x.  3 zhoub zhoub     53 8月   8 13:42 ..</span><br><span class="line">drwxrwxr-x. 10 zhoub zhoub   4096 6月  19 16:10 ceph-iscsi</span><br><span class="line">drwxrwxr-x.  9 zhoub zhoub    213 6月  19 16:10 configshell-fb</span><br><span class="line">-rw-r--r--.  1 root  root  284340 8月  11 2017 libnl3-3.2.28-4.el7.x86_64.rpm</span><br><span class="line">drwxrwxr-x.  2 zhoub zhoub    240 6月  19 15:51 pip</span><br><span class="line">drwxr-xr-x.  2 zhoub zhoub   4096 6月  19 16:10 pip_packages</span><br><span class="line">-rw-r--r--.  1 root  root  137912 11月 12 2018 pyOpenSSL-0.13.1-4.el7.x86_64.rpm</span><br><span class="line">-rw-r--r--.  1 root  root   96088 7月   4 2014 pyparsing-1.5.6-9.el7.noarch.rpm</span><br><span class="line">-rw-r--r--.  1 root  root   58008 7月   4 2014 python-kmod-0.9-4.el7.x86_64.rpm</span><br><span class="line">-rw-r--r--.  1 zhoub zhoub     76 6月  19 16:10 requirement.txt</span><br><span class="line">drwxrwxr-x. 11 zhoub zhoub    223 6月  19 16:10 rtslib-fb</span><br><span class="line">drwxrwxr-x. 10 zhoub zhoub    248 6月  19 16:10 targetcli-fb</span><br><span class="line">drwxr-xr-x.  2 root  root     112 6月  19 16:28 tcmu-runner</span><br></pre></td></tr></table></figure>
-
-<h4 id="pip安装"><a href="#pip安装" class="headerlink" title="pip安装"></a>pip安装</h4><p>在<code>rpms/ceph-iscsi-rpms/pip</code>目录下。</p>
-<p>pip 安装依赖的软件</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">[zhoub@CentOS pip]$ ls -al</span><br><span class="line">总用量 4080</span><br><span class="line">drwxrwxr-x. 2 zhoub zhoub     240 6月  19 15:51 .</span><br><span class="line">drwxr-xr-x. 9 zhoub zhoub    4096 6月  19 16:31 ..</span><br><span class="line">-rw-rw-r--. 1 zhoub zhoub 3700178 6月  19 15:31 pip_19.1.1.tar.gz</span><br><span class="line">-rw-r--r--. 1 root  root     5932 3月  14 2015 python-backports-1.0-8.el7.x86_64.rpm</span><br><span class="line">-rw-r--r--. 1 root  root    12896 4月  25 2018 python-backports-ssl_match_hostname-3.5.0.1-1.el7.noarch.rpm</span><br><span class="line">-rw-r--r--. 1 root  root    35176 11月 21 2016 python-ipaddress-1.0.16-2.el7.noarch.rpm</span><br><span class="line">-rw-r--r--. 1 root  root   406404 8月  11 2017 python-setuptools-0.9.8-7.el7.noarch.rpm</span><br></pre></td></tr></table></figure>
-<p>安装pip及其依赖的软件</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">cd pip</span><br><span class="line">yum localinstall *.rpm</span><br><span class="line">tar -xzvf ./pip_19.1.1.tar.gz</span><br><span class="line">cd pip_19.1.1</span><br><span class="line">python setup.py install</span><br></pre></td></tr></table></figure>
-
-<h4 id="安装pip-package"><a href="#安装pip-package" class="headerlink" title="安装pip package"></a>安装pip package</h4><p>在线安装使用<code>rpms/ceph-iscsi-rpms/requirement.txt</code>文件进行安装</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">[zhoub@CentOS ceph-iscsi-rpms]$  cat requirement.txt</span><br><span class="line"><span class="meta prompt_">pyudev&gt;</span><span class="language-bash">=0.16.1</span></span><br><span class="line">Flask</span><br><span class="line">requests</span><br><span class="line">crypto</span><br><span class="line">netifaces</span><br><span class="line">urwid</span><br><span class="line">pyparsing</span><br><span class="line">cryptography</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pip install -r ./requirement.txt</span><br></pre></td></tr></table></figure>
-
-<p>离线安装包在<code>rpms/ceph-iscsi-rpms/pip_packages</code>中</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">[zhoub@CentOS pip_packages]$ ls -al</span><br><span class="line">总用量 5828</span><br><span class="line">drwxr-xr-x. 2 zhoub zhoub    4096 6月  19 16:10 .</span><br><span class="line">drwxr-xr-x. 9 zhoub zhoub    4096 6月  19 16:31 ..</span><br><span class="line">-rw-r--r--. 1 zhoub zhoub  101571 6月  19 16:10 asn1crypto-0.24.0-py2.py3-none-any.whl</span><br><span class="line">-rw-r--r--. 1 zhoub zhoub  157119 6月  19 16:10 certifi-2019.6.16-py2.py3-none-any.whl</span><br><span class="line">-rw-r--r--. 1 zhoub zhoub  415091 6月  19 16:10 cffi-1.12.3-cp27-cp27mu-manylinux1_x86_64.whl</span><br><span class="line">-rw-r--r--. 1 zhoub zhoub  133356 6月  19 16:10 chardet-3.0.4-py2.py3-none-any.whl</span><br><span class="line">-rw-r--r--. 1 zhoub zhoub   81299 6月  19 16:10 Click-7.0-py2.py3-none-any.whl</span><br><span class="line">-rw-r--r--. 1 zhoub zhoub   18019 6月  19 16:10 crypto-1.4.1-py2.py3-none-any.whl</span><br><span class="line">-rw-r--r--. 1 zhoub zhoub 2288455 6月  19 16:10 cryptography-2.7-cp27-cp27mu-manylinux1_x86_64.whl</span><br><span class="line">-rw-r--r--. 1 zhoub zhoub   12427 6月  19 16:10 enum34-1.1.6-py2-none-any.whl</span><br><span class="line">-rw-r--r--. 1 zhoub zhoub   92053 6月  19 16:10 Flask-1.0.3-py2.py3-none-any.whl</span><br><span class="line">-rw-r--r--. 1 zhoub zhoub   58594 6月  19 16:10 idna-2.8-py2.py3-none-any.whl</span><br><span class="line">-rw-r--r--. 1 zhoub zhoub   18155 6月  19 16:10 ipaddress-1.0.22-py2.py3-none-any.whl</span><br><span class="line">-rw-r--r--. 1 zhoub zhoub   16743 6月  19 16:10 itsdangerous-1.1.0-py2.py3-none-any.whl</span><br><span class="line">-rw-r--r--. 1 zhoub zhoub  124883 6月  19 16:10 Jinja2-2.10.1-py2.py3-none-any.whl</span><br><span class="line">-rw-r--r--. 1 zhoub zhoub   24348 6月  19 16:10 MarkupSafe-1.1.1-cp27-cp27mu-manylinux1_x86_64.whl</span><br><span class="line">-rw-r--r--. 1 zhoub zhoub  590559 6月  19 16:10 Naked-0.1.31-py2.py3-none-any.whl</span><br><span class="line">-rw-r--r--. 1 zhoub zhoub   31249 6月  19 16:10 netifaces-0.10.9-cp27-cp27mu-manylinux1_x86_64.whl</span><br><span class="line">-rw-r--r--. 1 zhoub zhoub  158295 6月  19 16:10 pycparser-2.19.tar.gz</span><br><span class="line">-rw-r--r--. 1 zhoub zhoub   62288 6月  19 16:10 pyparsing-2.4.0-py2.py3-none-any.whl</span><br><span class="line">-rw-r--r--. 1 zhoub zhoub   89469 6月  19 16:10 pyudev-0.21.0.tar.gz</span><br><span class="line">-rw-r--r--. 1 zhoub zhoub  274442 6月  19 16:10 PyYAML-5.1.1.tar.gz</span><br><span class="line">-rw-r--r--. 1 zhoub zhoub   57952 6月  19 16:10 requests-2.22.0-py2.py3-none-any.whl</span><br><span class="line">-rw-r--r--. 1 zhoub zhoub    4933 6月  19 16:10 shellescape-3.4.1-py2.py3-none-any.whl</span><br><span class="line">-rw-r--r--. 1 zhoub zhoub   10586 6月  19 16:10 six-1.12.0-py2.py3-none-any.whl</span><br><span class="line">-rw-r--r--. 1 zhoub zhoub  150942 6月  19 16:10 urllib3-1.25.3-py2.py3-none-any.whl</span><br><span class="line">-rw-r--r--. 1 zhoub zhoub  604167 6月  19 16:10 urwid-2.0.1.tar.gz</span><br><span class="line">-rw-r--r--. 1 zhoub zhoub  327611 6月  19 16:10 Werkzeug-0.15.4-py2.py3-none-any.whl</span><br></pre></td></tr></table></figure>
-
-<h4 id="安装依赖rpms"><a href="#安装依赖rpms" class="headerlink" title="安装依赖rpms"></a>安装依赖rpms</h4><p>rpm包在<code>rpms/ceph-iscsi-rpms/</code>目录下。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">yum localinstall libnl3-3.2.28-4.el7.x86_64.rpm</span><br><span class="line">yum localinstall pyOpenSSL-0.13.1-4.el7.x86_64.rpm</span><br><span class="line">yum localinstall pyparsing-1.5.6-9.el7.noarch.rpm</span><br><span class="line">yum localinstall python-kmod-0.9-4.el7.x86_64.rpm</span><br></pre></td></tr></table></figure>
-
-<h4 id="安装TCMU-RUNNER"><a href="#安装TCMU-RUNNER" class="headerlink" title="安装TCMU-RUNNER"></a>安装TCMU-RUNNER</h4><p>rpm包在<code>rpms/ceph-iscsi-rpms/tcmu-runner</code>目录下。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cd tcmu-runner</span><br><span class="line">yum localinstall *.rpm</span><br></pre></td></tr></table></figure>
-
-<p>启动<code>tcmu-runner</code>服务</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">systemctl daemon-reload</span><br><span class="line">systemctl enable tcmu-runner</span><br><span class="line">systemctl start tcmu-runner</span><br></pre></td></tr></table></figure>
-
-<p>源码地址：<a target="_blank" rel="noopener" href="https://github.com/open-iscsi/tcmu-runner">https://github.com/open-iscsi/tcmu-runner</a><br>commit：8d8e612e50b7787c57f32f59bba7def9bb06954b</p>
-<h4 id="安装RTSLIB-FB"><a href="#安装RTSLIB-FB" class="headerlink" title="安装RTSLIB-FB"></a>安装RTSLIB-FB</h4><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cd rtslib-fb</span><br><span class="line">python setup.py install</span><br></pre></td></tr></table></figure>
-
-<p>源码地址：<a target="_blank" rel="noopener" href="https://github.com/open-iscsi/rtslib-fb">https://github.com/open-iscsi/rtslib-fb</a><br>commit: 03d6c7813187cd141a3a08f4b7978190187d56c1</p>
-<h4 id="安装CONFIGSHELL-FB"><a href="#安装CONFIGSHELL-FB" class="headerlink" title="安装CONFIGSHELL-FB"></a>安装CONFIGSHELL-FB</h4><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cd configshell-fb</span><br><span class="line">python setup.py install</span><br></pre></td></tr></table></figure>
-
-<p>源码地址：<a target="_blank" rel="noopener" href="https://github.com/open-iscsi/configshell-fb">https://github.com/open-iscsi/configshell-fb</a><br>commit: 166ba97e36d7b53e7fa53d7853a8b9f5a509503c</p>
-<h4 id="安装TARGETCLI-FB"><a href="#安装TARGETCLI-FB" class="headerlink" title="安装TARGETCLI-FB"></a>安装TARGETCLI-FB</h4><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">cd targetcli-fb</span><br><span class="line">python setup.py install</span><br><span class="line">mkdir /etc/target</span><br><span class="line">mkdir /var/target</span><br></pre></td></tr></table></figure>
-
-<p>源码地址：<a target="_blank" rel="noopener" href="https://github.com/open-iscsi/targetcli-fb">https://github.com/open-iscsi/targetcli-fb</a><br>commit: 85031ad48b011f5626cd0a287749abcaa145277b</p>
-<h4 id="安装CEPH-ISCSI"><a href="#安装CEPH-ISCSI" class="headerlink" title="安装CEPH-ISCSI"></a>安装CEPH-ISCSI</h4><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">cd ceph-iscsi</span><br><span class="line">python setup.py install --install-scripts=/usr/bin</span><br><span class="line">cp ./usr/lib/systemd/system/rbd-target-gw.service /lib/systemd/system/</span><br><span class="line">cp ./usr/lib/systemd/system/rbd-target-api.service /lib/systemd/system/</span><br></pre></td></tr></table></figure>
-
-<p>启动<code>rbd-target-gw</code>和<code>rbd-target-api</code>服务</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">systemctl daemon-reload</span><br><span class="line">systemctl enable rbd-target-gw</span><br><span class="line">systemctl enable rbd-target-api</span><br><span class="line">systemctl start rbd-target-gw</span><br><span class="line">systemctl start rbd-target-api</span><br></pre></td></tr></table></figure>
-
-<p>源码地址：<a target="_blank" rel="noopener" href="https://github.com/ceph/ceph-iscsi">https://github.com/ceph/ceph-iscsi</a><br>commit: c5ebf29e1a0caa2e4bef44370b40fe940b66aaad</p>
-<h3 id="配置iscsi-gateway-cfg"><a href="#配置iscsi-gateway-cfg" class="headerlink" title="配置iscsi-gateway.cfg"></a>配置iscsi-gateway.cfg</h3><p>创建一个<code>/etc/ceph/iscsi-gateway.cfg</code>文件，在文件中增加如下内容</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">[config]</span><br><span class="line"># Name of the Ceph storage cluster. A suitable Ceph configuration file allowing</span><br><span class="line"># access to the Ceph storage cluster from the gateway node is required, if not</span><br><span class="line"># colocated on an OSD node.</span><br><span class="line">cluster_name = ceph</span><br><span class="line"></span><br><span class="line"># Place a copy of the ceph cluster&#x27;s admin keyring in the gateway&#x27;s /etc/ceph</span><br><span class="line"># drectory and reference the filename here</span><br><span class="line">gateway_keyring = ceph.client.admin.keyring</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"># API settings.</span><br><span class="line"># The API supports a number of options that allow you to tailor it to your</span><br><span class="line"># local environment. If you want to run the API under https, you will need to</span><br><span class="line"># create cert/key files that are compatible for each iSCSI gateway node, that is</span><br><span class="line"># not locked to a specific node. SSL cert and key files *must* be called</span><br><span class="line"># &#x27;iscsi-gateway.crt&#x27; and &#x27;iscsi-gateway.key&#x27; and placed in the &#x27;/etc/ceph/&#x27; directory</span><br><span class="line"># on *each* gateway node. With the SSL files in place, you can use &#x27;api_secure = true&#x27;</span><br><span class="line"># to switch to https mode.</span><br><span class="line"></span><br><span class="line"># To support the API, the bear minimum settings are:</span><br><span class="line">api_secure = false</span><br><span class="line"></span><br><span class="line"># Additional API configuration options are as follows, defaults shown.</span><br><span class="line"># api_user = admin</span><br><span class="line"># api_password = admin</span><br><span class="line"># api_port = 5001</span><br><span class="line"># iscsi-gw 最少需要部署两个服务</span><br><span class="line">trusted_ip_list = 10.53.2.13,10.53.2.16,10.53.2.19</span><br></pre></td></tr></table></figure>
-
-<p>重启<code>rbd-target-api</code>服务</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">systemctl daemon-reload</span><br><span class="line">systemctl stop rbd-target-api</span><br><span class="line">systemctl start rbd-target-api</span><br></pre></td></tr></table></figure>
-
-<p>*** rbd-target-api 需要依赖 rbd pool，若集群中没有rbd pool ，需要手动创建。 ***</p>
-<h3 id="配置iscsi-target"><a href="#配置iscsi-target" class="headerlink" title="配置iscsi-target"></a>配置iscsi-target</h3><p>在iscsi-gw服务所在节点上输入<code>gwcli</code>进入gw交互模式</p>
-<h4 id="创建target-iqn"><a href="#创建target-iqn" class="headerlink" title="创建target iqn"></a>创建target iqn</h4><p>eg:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">/&gt; </span><span class="language-bash"><span class="built_in">cd</span> /iscsi-target</span></span><br><span class="line"><span class="meta prompt_">/iscsi-target&gt; </span><span class="language-bash">create iqn.2019-08.com.hna.iscsi-gw:iscsi-igw</span></span><br></pre></td></tr></table></figure>
-
-<h4 id="创建iscsi-gateway"><a href="#创建iscsi-gateway" class="headerlink" title="创建iscsi-gateway"></a>创建iscsi-gateway</h4><p>eg:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">/iscsi-target&gt; </span><span class="language-bash"><span class="built_in">cd</span> iqn.2019-08.com.hna.iscsi-gw:iscsi-igw/gateways</span></span><br><span class="line">/iscsi-target...-igw/gateways&gt;  create ceph13 10.53.2.13</span><br><span class="line">/iscsi-target...-igw/gateways&gt;  create ceph16 10.53.2.16</span><br><span class="line">/iscsi-target...-igw/gateways&gt;  create ceph19 10.53.2.19</span><br></pre></td></tr></table></figure>
-<p>创建gateway时，输入的gateway名称为hostname, ip要与其对应上，并且在<code>/etc/hosts</code>文件中也要将<code>hostname</code>和<code>ip</code>对应上。</p>
-<h4 id="创建rbd-image"><a href="#创建rbd-image" class="headerlink" title="创建rbd image"></a>创建rbd image</h4><p>eg:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">/iscsi-target...-igw/gateways&gt; cd /disks</span><br><span class="line"><span class="meta prompt_">/disks&gt; </span><span class="language-bash">create pool=sata image=vol_sata_23t size=23T</span></span><br><span class="line"><span class="meta prompt_">/disks&gt; </span><span class="language-bash">create pool=ssd image=vol_ssd_1800g size=1800G</span></span><br></pre></td></tr></table></figure>
-
-<h4 id="创建client-iqn"><a href="#创建client-iqn" class="headerlink" title="创建client iqn"></a>创建client iqn</h4><p>eg:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">/disks&gt; </span><span class="language-bash"><span class="built_in">cd</span> /iscsi-targets/iqn.2019-08.com.hna.iscsi-gw:iscsi-igw/hosts/</span></span><br><span class="line">/iscsi-target...csi-igw/hosts&gt;  create iqn.2019-08.com.example:2b14c50a</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">/disks&gt; </span><span class="language-bash"><span class="built_in">cd</span> /iscsi-targets/iqn.2019-08.com.hna.iscsi-gw:iscsi-igw/hosts/</span></span><br><span class="line">/iscsi-target...csi-igw/hosts&gt;  create iqn.2019-08.com.example:479172ae</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">/disks&gt; </span><span class="language-bash"><span class="built_in">cd</span> /iscsi-targets/iqn.2019-08.com.hna.iscsi-gw:iscsi-igw/hosts/</span></span><br><span class="line">/iscsi-target...csi-igw/hosts&gt;  create iqn.2019-08.com.example:066f5c54</span><br></pre></td></tr></table></figure>
-
-<p>设置chap用户名密码<br>eg:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">/&gt; </span><span class="language-bash"><span class="built_in">cd</span> iscsi-targets/iqn.2019-08.com.hna.iscsi-gw:iscsi-igw/hosts/iqn.2019-08.com.example:2b14c50a/</span></span><br><span class="line">/iscsi-target...mple:2b14c50a&gt; auth username=iqn.2019-08.com.example password=1qaz2wsx3edc</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">/&gt; </span><span class="language-bash"><span class="built_in">cd</span> iscsi-targets/iqn.2019-08.com.hna.iscsi-gw:iscsi-igw/hosts/iqn.2019-08.com.example:479172ae/</span></span><br><span class="line">/iscsi-target...mple:479172ae&gt; auth username=iqn.2019-08.com.example password=1qaz2wsx3edc</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">/&gt; </span><span class="language-bash"><span class="built_in">cd</span> iscsi-targets/iqn.2019-08.com.hna.iscsi-gw:iscsi-igw/hosts/iqn.2019-08.com.example:066f5c54/</span></span><br><span class="line">/iscsi-target...mple:066f5c54&gt; auth username=iqn.2019-08.com.example password=1qaz2wsx3edc</span><br></pre></td></tr></table></figure>
-
-<h4 id="创建host-groups"><a href="#创建host-groups" class="headerlink" title="创建host-groups"></a>创建host-groups</h4><p>eg:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">/&gt; </span><span class="language-bash"><span class="built_in">cd</span> iscsi-targets/iqn.2019-08.com.hna.iscsi-gw:iscsi-igw/host-groups/</span></span><br><span class="line">/iscsi-target...w/host-groups&gt; create xen</span><br></pre></td></tr></table></figure>
-
-<h4 id="添加client-iqn"><a href="#添加client-iqn" class="headerlink" title="添加client iqn"></a>添加client iqn</h4><p>eg:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">/&gt; </span><span class="language-bash"><span class="built_in">cd</span> iscsi-targets/iqn.2019-08.com.hna.iscsi-gw:iscsi-igw/host-groups/xen/</span></span><br><span class="line">/iscsi-target...st-groups/xen&gt; host add iqn.2019-08.com.example:066f5c54</span><br><span class="line">/iscsi-target...st-groups/xen&gt; host add iqn.2019-08.com.example:2b14c50a</span><br><span class="line">/iscsi-target...st-groups/xen&gt; host add iqn.2019-08.com.example:479172ae</span><br></pre></td></tr></table></figure>
-
-<h4 id="添加rbd-image"><a href="#添加rbd-image" class="headerlink" title="添加rbd image"></a>添加rbd image</h4><p>eg:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">/&gt; </span><span class="language-bash"><span class="built_in">cd</span> iscsi-targets/iqn.2019-08.com.hna.iscsi-gw:iscsi-igw/host-groups/xen/</span></span><br><span class="line">/iscsi-target...st-groups/xen&gt; disk add sata/vol_sata_23t</span><br><span class="line">/iscsi-target...st-groups/xen&gt; disk add ssd/vol_ssd_1800g</span><br></pre></td></tr></table></figure>
-
-<p>至此iscsi-gw的搭建及配置完成，客户端可以通过iscsi协议访问ceph存储了。</p>
-<p>eg:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">/&gt; </span><span class="language-bash"><span class="built_in">ls</span></span></span><br><span class="line">o- / ......................................................................................................................... [...]</span><br><span class="line">  o- cluster ......................................................................................................... [Clusters: 1]</span><br><span class="line">  | o- ceph ............................................................................................................ [HEALTH_OK]</span><br><span class="line">  |   o- pools .......................................................................................................... [Pools: 3]</span><br><span class="line">  |   | o- rbd ................................................................... [(x3), Commit: 0.00Y/21703946M (0%), Used: 6823b]</span><br><span class="line">  |   | o- sata ......................................................... [(x3), Commit: 23.0T/21703946M (111%), Used: 14325219841b]</span><br><span class="line">  |   | o- ssd ........................................................ [(x3), Commit: 1800G/1744741760K (108%), Used: 27569961653b]</span><br><span class="line">  |   o- topology ............................................................................................... [OSDs: 24,MONs: 3]</span><br><span class="line">  o- disks ...................................................................................................... [25352G, Disks: 2]</span><br><span class="line">  | o- sata ......................................................................................................... [sata (23.0T)]</span><br><span class="line">  | | o- vol_sata_23t .................................................................................. [sata/vol_sata_23t (23.0T)]</span><br><span class="line">  | o- ssd ........................................................................................................... [ssd (1800G)]</span><br><span class="line">  |   o- vol_ssd_1800g ................................................................................. [ssd/vol_ssd_1800g (1800G)]</span><br><span class="line">  o- iscsi-targets ............................................................................... [DiscoveryAuth: None, Targets: 1]</span><br><span class="line">    o- iqn.2019-08.com.hna.iscsi-gw:iscsi-igw ........................................................................ [Gateways: 3]</span><br><span class="line">      o- disks .......................................................................................................... [Disks: 2]</span><br><span class="line">      | o- sata/vol_sata_23t ....................................................................................... [Owner: ceph13]</span><br><span class="line">      | o- ssd/vol_ssd_1800g ....................................................................................... [Owner: ceph19]</span><br><span class="line">      o- gateways ............................................................................................ [Up: 3/3, Portals: 3]</span><br><span class="line">      | o- ceph13 ................................................................................................ [10.53.2.13 (UP)]</span><br><span class="line">      | o- ceph16 ................................................................................................ [10.53.2.16 (UP)]</span><br><span class="line">      | o- ceph19 ................................................................................................ [10.53.2.19 (UP)]</span><br><span class="line">      o- host-groups .................................................................................................. [Groups : 1]</span><br><span class="line">      | o- xen ................................................................................................ [Hosts: 3, Disks: 2]</span><br><span class="line">      |   o- iqn.2019-08.com.example:066f5c54 ............................................................................... [host]</span><br><span class="line">      |   o- iqn.2019-08.com.example:2b14c50a ............................................................................... [host]</span><br><span class="line">      |   o- iqn.2019-08.com.example:479172ae ............................................................................... [host]</span><br><span class="line">      |   o- sata/vol_sata_23t .............................................................................................. [disk]</span><br><span class="line">      |   o- ssd/vol_ssd_1800g .............................................................................................. [disk]</span><br><span class="line">      o- hosts .............................................................................................. [Hosts: 3: Auth: CHAP]</span><br><span class="line">        o- iqn.2019-08.com.example:2b14c50a .............................................. [LOGGED-IN, Auth: CHAP, Disks: 2(25352G)]</span><br><span class="line">        | o- lun 0 ....................................................................... [sata/vol_sata_23t(23.0T), Owner: ceph13]</span><br><span class="line">        | o- lun 1 ....................................................................... [ssd/vol_ssd_1800g(1800G), Owner: ceph19]</span><br><span class="line">        o- iqn.2019-08.com.example:479172ae .............................................. [LOGGED-IN, Auth: CHAP, Disks: 2(25352G)]</span><br><span class="line">        | o- lun 0 ....................................................................... [sata/vol_sata_23t(23.0T), Owner: ceph13]</span><br><span class="line">        | o- lun 1 ....................................................................... [ssd/vol_ssd_1800g(1800G), Owner: ceph19]</span><br><span class="line">        o- iqn.2019-08.com.example:066f5c54 .............................................. [LOGGED-IN, Auth: CHAP, Disks: 2(25352G)]</span><br><span class="line">          o- lun 0 ....................................................................... [sata/vol_sata_23t(23.0T), Owner: ceph13]</span><br><span class="line">          o- lun 1 ....................................................................... [ssd/vol_ssd_1800g(1800G), Owner: ceph19]</span><br></pre></td></tr></table></figure>
-
-<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a target="_blank" rel="noopener" href="https://docs.ceph.com/docs/nautilus/start/quick-ceph-deploy/">ceph installation</a></li>
-<li><a target="_blank" rel="noopener" href="https://docs.ceph.com/docs/nautilus/rbd/iscsi-overview/">LIO iSCSI Gateway</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1562,7 +1366,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">149</span>
+          <span class="site-state-item-count">150</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -1661,6 +1465,8 @@
 
 
 
+
+  
 
   
 

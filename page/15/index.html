@@ -188,6 +188,112 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2016/04/13/linux/rhel/yum-rpm-usage-md/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2016/04/13/linux/rhel/yum-rpm-usage-md/" class="post-title-link" itemprop="url">yum 和 rpm 使用方法总结</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2016-04-13 16:42:43" itemprop="dateCreated datePublished" datetime="2016-04-13T16:42:43+08:00">2016-04-13</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/rhel/" itemprop="url" rel="index"><span itemprop="name">rhel</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="yum"><a href="#yum" class="headerlink" title="yum"></a>yum</h2><hr>
+<h3 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">yum install &#123;软件名称&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="查询"><a href="#查询" class="headerlink" title="查询"></a>查询</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">yum search &#123;关键字s&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="下载-不安装"><a href="#下载-不安装" class="headerlink" title="下载(不安装)"></a>下载(不安装)</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">yum install --downloadonly &#123;需要下载的软件名，可多个&#125; --downloaddir=&#123;下载位置，目录名&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="按依赖关系安装本地rpm包"><a href="#按依赖关系安装本地rpm包" class="headerlink" title="按依赖关系安装本地rpm包"></a>按依赖关系安装本地rpm包</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">yum localinstall *.rpm</span><br></pre></td></tr></table></figure>
+
+<h3 id="查看包版本"><a href="#查看包版本" class="headerlink" title="查看包版本"></a>查看包版本</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">yum list &#123;安装包名称&#125; --showduplicates</span><br></pre></td></tr></table></figure>
+
+<h3 id="安装指定版本的rpm包"><a href="#安装指定版本的rpm包" class="headerlink" title="安装指定版本的rpm包"></a>安装指定版本的rpm包</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">yum install &#123;安装包名称&#125;-&lt;VERSION_STRING&gt;</span><br></pre></td></tr></table></figure>
+<p>eg: <code>yum install ceph-13.2.6-0.el7</code></p>
+<h2 id="rpm"><a href="#rpm" class="headerlink" title="rpm"></a>rpm</h2><hr>
+<ul>
+<li>每个rpm包上记录着它所依赖的rpm包</li>
+</ul>
+<h3 id="安装-1"><a href="#安装-1" class="headerlink" title="安装"></a>安装</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">rpm -ivh &#123;xxx.rpm&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="卸载"><a href="#卸载" class="headerlink" title="卸载"></a>卸载</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">rpm -e --nodeps &#123;软件名称&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>卸载软件包，但不卸载依赖包</li>
+</ul>
+<h3 id="解压"><a href="#解压" class="headerlink" title="解压"></a>解压</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">rpm2cpio &#123;xxx.rpm&#125; | cpio -div</span><br></pre></td></tr></table></figure>
+
+<h3 id="查看包依赖关系"><a href="#查看包依赖关系" class="headerlink" title="查看包依赖关系"></a>查看包依赖关系</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">rpm -qpR &#123;软件名称&#125;</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h2><hr>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://linux.cn/article-5100-1.html">如何使用yum来下载RPM包而不进行安装</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.linuxeden.com/html/softuse/20090703/66563.html">实用小命令:解压RPM</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2016/04/12/works/ceph_stable_select/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1486,7 +1592,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">149</span>
+          <span class="site-state-item-count">150</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -1585,6 +1691,8 @@
 
 
 
+
+  
 
   
 
