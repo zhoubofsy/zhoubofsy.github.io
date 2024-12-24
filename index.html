@@ -211,10 +211,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2024-12-23 14:45:27 / Modified: 15:04:32" itemprop="dateCreated datePublished" datetime="2024-12-23T14:45:27+08:00">2024-12-23</time>
+              <time title="Created: 2024-12-23 14:45:27" itemprop="dateCreated datePublished" datetime="2024-12-23T14:45:27+08:00">2024-12-23</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-12-24 10:13:27" itemprop="dateModified" datetime="2024-12-24T10:13:27+08:00">2024-12-24</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
@@ -322,7 +328,7 @@
 <ul>
 <li>每个区块的 <code>baseFee</code> 会根据以下公式调整：</li>
 </ul>
-<p> $$<br>  \text{new baseFee} &#x3D; \text{old baseFee} + \text{adjustment}<br> $$</p>
+<p>$$<br>  \text{new baseFee} &#x3D; \text{old baseFee} + \text{adjustment}<br>$$</p>
 <p>  其中，<code>adjustment</code> 是根据以下条件计算的：</p>
 <ul>
 <li><strong>如果区块的 gas 使用量高于目标</strong>，<code>baseFee</code> 会增加。增加的幅度为 <code>baseFee</code> 的 <strong>1&#x2F;8</strong>。</li>
@@ -338,19 +344,101 @@
 </ul>
 </li>
 </ul>
-<h3 id="3-baseFee-与-maxFeePerGas-和-maxPriorityFeePerGas-的关系"><a href="#3-baseFee-与-maxFeePerGas-和-maxPriorityFeePerGas-的关系" class="headerlink" title="3. baseFee 与 maxFeePerGas 和 maxPriorityFeePerGas 的关系"></a>3. <code>baseFee</code> 与 <code>maxFeePerGas</code> 和 <code>maxPriorityFeePerGas</code> 的关系</h3><p>除了 <code>baseFee</code>，每个交易还包括两个可变费用参数：</p>
+<h3 id="3-baseFee-、-maxFeePerGas-、gasLimit和-maxPriorityFeePerGas-的关系"><a href="#3-baseFee-、-maxFeePerGas-、gasLimit和-maxPriorityFeePerGas-的关系" class="headerlink" title="3. baseFee 、 maxFeePerGas 、gasLimit和 maxPriorityFeePerGas 的关系"></a>3. <code>baseFee</code> 、 <code>maxFeePerGas</code> 、<code>gasLimit</code>和 <code>maxPriorityFeePerGas</code> 的关系</h3><p>在以太坊的<strong>EIP-1559</strong> 交易费用模型中，**<code>maxFeePerGas</code>**, <strong><code>maxPriorityFeePerGas</code></strong>, <strong><code>baseFee</code></strong>, 和 <strong><code>gas limit</code></strong> 是关键参数，它们共同决定了用户支付的总交易费用以及矿工&#x2F;验证者的收入。</p>
+<h4 id="定义与含义"><a href="#定义与含义" class="headerlink" title="定义与含义"></a>定义与含义</h4><ul>
+<li><p>**<code>maxFeePerGas</code>**：</p>
 <ul>
-<li>**<code>maxFeePerGas</code>**：这是交易发起者愿意支付的最大总费用（包括 <code>baseFee</code> 和 <code>priorityFee</code>）。</li>
-<li>**<code>maxPriorityFeePerGas</code>**：这是交易发起者愿意支付给矿工（或验证者）的额外小费。</li>
+<li>用户愿意为交易支付的每单位<code>gas</code>的最大费用（总上限）。</li>
+<li>这是用户设定的费用上限，用于限制支付的最高费用。</li>
+<li>单位：Gwei。</li>
 </ul>
-<p>在 <strong>EIP-1559</strong> 中，<code>baseFee</code> 是一个由网络动态调整的固定费用，而 <code>maxFeePerGas</code> 和 <code>maxPriorityFeePerGas</code> 则由用户设定。<code>maxFeePerGas</code> 包括 <code>baseFee</code> 和矿工小费部分。</p>
+</li>
+<li><p>**<code>maxPriorityFeePerGas</code>**：</p>
 <ul>
-<li><strong>交易的费用结构</strong>：用户在发起交易时，会设置 <code>maxFeePerGas</code> 和 <code>maxPriorityFeePerGas</code>。实际的交易费用是通过以下公式计算的：</li>
+<li>用户希望额外支付给矿工&#x2F;验证者的每单位<code>gas</code>的小费（奖励）。</li>
+<li>这个值是用户主动提供的，通常用于鼓励矿工&#x2F;验证者优先处理自己的交易。</li>
+<li>单位：Gwei。</li>
+<li>如果设置为0，则交易没有小费。</li>
 </ul>
-<p>$$<br>  \text{transaction fee} &#x3D; \max(\text{baseFee}, \text{maxFeePerGas}) + \text{maxPriorityFeePerGas}<br>$$</p>
+</li>
+<li><p>**<code>baseFee</code>**：</p>
 <ul>
-<li><code>baseFee</code> 永远不低于区块的实际 <code>baseFee</code>，但用户可以选择支付更高的 <code>maxFeePerGas</code> 和 <code>maxPriorityFeePerGas</code> 以便交易更快地被包含在区块中，尤其在网络拥堵时。</li>
+<li>每单位<code>gas</code>的基础费用，由网络动态调整，决定交易执行所需的最小费用。</li>
+<li>由协议规定，所有交易的<code>baseFee</code>部分都会被销毁，而不是分配给矿工&#x2F;验证者。</li>
+<li>单位：Gwei。</li>
+<li><strong>动态调整规则</strong>：<ul>
+<li>如果区块的实际<code>gas</code>使用量超过目标（区块<code>gas limit</code>的一半），则<code>baseFee</code>会增加。</li>
+<li>如果使用量低于目标，则<code>baseFee</code>会减少。</li>
 </ul>
+</li>
+</ul>
+</li>
+<li><p>**<code>gas limit</code>**：</p>
+<ul>
+<li>交易中可以消耗的最大<code>gas</code>数量，用户设定的上限。</li>
+<li>确保用户不会为超出需求的计算支付费用。</li>
+<li>区块级的<code>gas limit</code>决定了整个区块内最多可消耗的<code>gas</code>数量。</li>
+</ul>
+</li>
+</ul>
+<h4 id="计算逻辑与关系"><a href="#计算逻辑与关系" class="headerlink" title="计算逻辑与关系"></a>计算逻辑与关系</h4><p><strong>用户实际支付的费用（effective gas fee）</strong><br>用户为每单位<code>gas</code>实际支付的费用可以表示为：<br>$$<br>\text{Effective Gas Fee} &#x3D; \text{baseFee} + \min(\text{maxPriorityFeePerGas}, (\text{maxFeePerGas} - \text{baseFee}))<br>$$</p>
+<ul>
+<li><strong>解释</strong>：<ul>
+<li>**<code>baseFee</code>**：这是网络最低要求的费用，每笔交易都必须支付。</li>
+<li><strong>小费部分</strong>：用户支付的实际小费是<code>maxPriorityFeePerGas</code>与<code>maxFeePerGas - baseFee</code>的较小值。</li>
+<li>如果<code>maxFeePerGas</code>不足以覆盖<code>baseFee</code>，交易将被拒绝。</li>
+</ul>
+</li>
+</ul>
+<p><strong>总交易费用（total transaction fee）</strong><br>用户支付的总费用计算为：<br>$$<br>\text{Total Transaction Fee} &#x3D; \text{Effective Gas Fee} \times \text{Gas Used}<br>$$</p>
+<ul>
+<li><p>**<code>Gas Used</code>**：是交易实际消耗的<code>gas</code>量，通常小于或等于用户设置的<code>gas limit</code>。</p>
+</li>
+<li><p><strong><code>baseFee</code> 与 <code>maxFeePerGas</code> 的关系</strong>：</p>
+<ul>
+<li>如果用户设定的<code>maxFeePerGas</code>小于当前的<code>baseFee</code>，交易无法提交。</li>
+<li>用户支付的实际费用不会超过<code>maxFeePerGas</code>。</li>
+</ul>
+</li>
+<li><p><strong><code>maxPriorityFeePerGas</code> 与 <code>maxFeePerGas</code> 的关系</strong>：</p>
+<ul>
+<li><code>maxPriorityFeePerGas</code> 决定用户愿意支付的小费，实际的小费不能超过<code>maxFeePerGas - baseFee</code>。</li>
+<li>如果<code>baseFee</code>接近<code>maxFeePerGas</code>，小费部分会自动减少。</li>
+</ul>
+</li>
+<li><p><strong><code>gas limit</code> 的作用</strong>：</p>
+<ul>
+<li>用户设定的<code>gas limit</code>决定了交易的最大<code>gas</code>消耗。</li>
+<li>用户支付的总费用与实际消耗的<code>gas</code>数量相关，未使用的<code>gas</code>会退还。</li>
+</ul>
+</li>
+</ul>
+<h4 id="举例说明"><a href="#举例说明" class="headerlink" title="举例说明"></a>举例说明</h4><p><strong>假设参数如下：</strong></p>
+<ul>
+<li><code>maxFeePerGas = 50 Gwei</code></li>
+<li><code>maxPriorityFeePerGas = 10 Gwei</code></li>
+<li><code>baseFee = 30 Gwei</code></li>
+<li><code>gas limit = 21,000</code></li>
+</ul>
+<p><strong>计算步骤：</strong></p>
+<ol>
+<li><p><strong>有效单价（Effective Gas Fee）</strong>：<br>$$<br>\text{Effective Gas Fee} &#x3D; \text{baseFee} + \min(\text{maxPriorityFeePerGas}, (\text{maxFeePerGas} - \text{baseFee}))<br>$$<br>$$<br>\text{Effective Gas Fee} &#x3D; 30 + \min(10, (50 - 30)) &#x3D; 30 + 10 &#x3D; 40 , \text{Gwei}<br>$$</p>
+</li>
+<li><p><strong>总费用（Total Transaction Fee）</strong>：<br>$$<br>\text{Total Transaction Fee} &#x3D; \text{Effective Gas Fee} \times \text{Gas Used}<br>$$<br>如果实际使用的<code>gas</code>为21,000：<br>$$<br>\text{Total Transaction Fee} &#x3D; 40 \times 21,000 &#x3D; 840,000 , \text{Gwei} &#x3D; 0.00084 , \text{ETH}<br>$$</p>
+</li>
+<li><p><strong>销毁的ETH</strong>：</p>
+<ul>
+<li><p>销毁部分仅包含<code>baseFee</code>：</p>
+<p>$$\text{Burned Fee} &#x3D; \text{baseFee} \times \text{Gas Used}$$<br>$$\text{Burned Fee} &#x3D; 30 \times 21,000 &#x3D; 630,000 , \text{Gwei} &#x3D; 0.00063 , \text{ETH}$$</p>
+</li>
+</ul>
+</li>
+<li><p><strong>验证者收益（小费部分）</strong>：</p>
+<ul>
+<li>小费是<code>maxPriorityFeePerGas</code>：<br>$$\text{Tip} &#x3D; 10 \times 21,000 &#x3D; 210,000 , \text{Gwei} &#x3D; 0.00021 , \text{ETH}$$</li>
+</ul>
+</li>
+</ol>
 <h3 id="4-销毁的机制与-baseFee"><a href="#4-销毁的机制与-baseFee" class="headerlink" title="4. 销毁的机制与 baseFee"></a>4. 销毁的机制与 <code>baseFee</code></h3><p>在 EIP-1559 机制中，<code>baseFee</code> 不会直接支付给矿工，而是被<strong>销毁</strong>（burned），从而减少 ETH 的总供应量。</p>
 <ul>
 <li>销毁的 ETH 数量是根据每个区块的 <code>baseFee</code> 和区块的 gas 使用量（<code>gasUsed</code>）来决定的。</li>
