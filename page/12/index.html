@@ -188,6 +188,103 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2016/12/08/language/python/python-class-underline/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2016/12/08/language/python/python-class-underline/" class="post-title-link" itemprop="url">python class 中各种"__"的隐藏使用</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2016-12-08 18:55:04" itemprop="dateCreated datePublished" datetime="2016-12-08T18:55:04+08:00">2016-12-08</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="Class"><a href="#Class" class="headerlink" title="Class"></a>Class</h1><p>Python中也有类的概念，类中的成员函数不支持重载（overloading method），但支持重写（overiding method）。Python Class中还有很多隐含的成员函数，这些函数的首尾都是“__”开头结尾的。</p>
+<h1 id="隐藏的用法"><a href="#隐藏的用法" class="headerlink" title="隐藏的用法"></a>隐藏的用法</h1><h2 id="构造与析构"><a href="#构造与析构" class="headerlink" title="构造与析构"></a>构造与析构</h2><h3 id="new"><a href="#new" class="headerlink" title="new"></a>new</h3><p>创建对象时调用，返回当前对象的一个实例。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">__new__(cls, *args, **kwargs)</span><br></pre></td></tr></table></figure>
+
+<h3 id="init"><a href="#init" class="headerlink" title="init"></a>init</h3><p>对象建立后，第一个被调用的函数，相当于c++中的构造函数</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">__init__(<span class="variable language_">self</span>, *args, **kwargs)</span><br></pre></td></tr></table></figure>
+
+<h3 id="del"><a href="#del" class="headerlink" title="del"></a>del</h3><p>对象销毁前，最后调用的函数，相当于c++中的析构函数</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">__del__(<span class="variable language_">self</span>, *args, **kwargs)</span><br></pre></td></tr></table></figure>
+
+<h2 id="call"><a href="#call" class="headerlink" title="call"></a>call</h2><p>重写__call__方法后，对象当函数来使用，相当于重载了括号运算符</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">__call__(<span class="variable language_">self</span>, *args, **kwargs)</span><br></pre></td></tr></table></figure>
+
+<h2 id="属性操作"><a href="#属性操作" class="headerlink" title="属性操作"></a>属性操作</h2><h3 id="getattr"><a href="#getattr" class="headerlink" title="getattr"></a>getattr</h3><p>获取属性</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">__getattr__(<span class="variable language_">self</span>, key)</span><br></pre></td></tr></table></figure>
+
+<h3 id="setattr"><a href="#setattr" class="headerlink" title="setattr"></a>setattr</h3><p>创建或设置属性</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">__setattr__(<span class="variable language_">self</span>, key, value)</span><br></pre></td></tr></table></figure>
+
+<h3 id="delattr"><a href="#delattr" class="headerlink" title="delattr"></a>delattr</h3><p>删除属性</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">__delattr__(<span class="variable language_">self</span>, key)</span><br></pre></td></tr></table></figure>
+
+<h2 id="str"><a href="#str" class="headerlink" title="str"></a>str</h2><p>对象转换字符串函数</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">__str__(<span class="variable language_">self</span>)</span><br></pre></td></tr></table></figure>
+
+<h2 id="repr"><a href="#repr" class="headerlink" title="repr"></a><strong>repr</strong></h2><p>str()出来的是给人看的，repr()出来的是给Python看的，可以通过eval()重新变回一个Python对象。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">__repr__(<span class="variable language_">self</span>)</span><br></pre></td></tr></table></figure>
+
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="http://www.jianshu.com/p/b937f346dd4a">python中__setattr__, <strong>getattr</strong>, <strong>delattr</strong>, <strong>call</strong></a></li>
+<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/yuzhiyuxia/article/details/41941205">python中的__init__ 、__new__、__call__小结及使用</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.guokr.com/post/91890/">菜鸟求大大们解释Python里str函数和repr函数的区别</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2016/11/28/curl-usage/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1866,172 +1963,10 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2016/09/23/uwsgi/uwsgi-limit-process-resource/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2016/09/23/uwsgi/uwsgi-limit-process-resource/" class="post-title-link" itemprop="url">limit-as限制子进程资源，导致Mysqld服务无法启动</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2016-09-23 00:00:00" itemprop="dateCreated datePublished" datetime="2016-09-23T00:00:00+08:00">2016-09-23</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/uwsgi/" itemprop="url" rel="index"><span itemprop="name">uwsgi</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="问题发现"><a href="#问题发现" class="headerlink" title="问题发现"></a>问题发现</h1><h3 id="现象"><a href="#现象" class="headerlink" title="现象"></a>现象</h3><p>在nginx+uwsgi+python环境中，启动mysqld服务，发生服务无法正常启动现象（闪退）。而在shell终端中可以正常启动mysqld服务。说明“nginx+uwsgi+python”这个环境限制了某些资源，导致mysqld服务启动失败。</p>
-<h3 id="uwsgi错误日志-var-log-uwsgi-log"><a href="#uwsgi错误日志-var-log-uwsgi-log" class="headerlink" title="uwsgi错误日志(&#x2F;var&#x2F;log&#x2F;uwsgi.log)"></a>uwsgi错误日志(&#x2F;var&#x2F;log&#x2F;uwsgi.log)</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Starting MySQL. ERROR! The server quit without updating PID file (/store/xxx.pid)</span><br></pre></td></tr></table></figure>
-
-<h3 id="mysql错误日志-mysqldatadir-hostname-err"><a href="#mysql错误日志-mysqldatadir-hostname-err" class="headerlink" title="mysql错误日志(&#x2F;{mysqldatadir}&#x2F;{hostname}.err)"></a>mysql错误日志(&#x2F;{mysqldatadir}&#x2F;{hostname}.err)</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">2016-09-22 16:21:41 28084 [Note] InnoDB: Using atomics to ref count buffer pool pages</span><br><span class="line">2016-09-22 16:21:41 28084 [Note] InnoDB: The InnoDB memory heap is disabled</span><br><span class="line">2016-09-22 16:21:41 28084 [Note] InnoDB: Mutexes and rw_locks use GCC atomic builtins</span><br><span class="line">2016-09-22 16:21:41 28084 [Note] InnoDB: Memory barrier is not used</span><br><span class="line">2016-09-22 16:21:41 28084 [Note] InnoDB: Compressed tables use zlib 1.2.3</span><br><span class="line">2016-09-22 16:21:41 28084 [Note] InnoDB: Using CPU crc32 instructions</span><br><span class="line">2016-09-22 16:21:41 28084 [Note] InnoDB: Initializing buffer pool, size = 1.0G</span><br><span class="line">InnoDB: mmap(137363456 bytes) failed; errno 12</span><br><span class="line">2016-09-22 16:21:41 28084 [ERROR] InnoDB: Cannot allocate memory for the buffer pool</span><br><span class="line">2016-09-22 16:21:41 28084 [ERROR] Plugin &#x27;InnoDB&#x27; init function returned error.</span><br><span class="line">2016-09-22 16:21:41 28084 [ERROR] Plugin &#x27;InnoDB&#x27; registration as a STORAGE ENGINE failed.</span><br><span class="line">2016-09-22 16:21:41 28084 [ERROR] Unknown/unsupported storage engine: InnoDB</span><br><span class="line">2016-09-22 16:21:41 28084 [ERROR] Aborting</span><br><span class="line">2016-09-22 16:21:41 28084 [Note] Binlog end</span><br></pre></td></tr></table></figure>
-
-<h3 id="分析"><a href="#分析" class="headerlink" title="分析"></a>分析</h3><p>根据mysql错误日志提示，mysql在初始化InnoDB引擎时，申请“Buffer Pool”内存失败，此处的mmap是用来申请内存的（allocate申请内存时，小于128KB的在栈上进行分配内存，大于128K的，从堆上分配内存）。<br>使用shell终端正常启动mysqld服务，查看mysqld占用内存大小发现需要2GB左右的虚拟内存，如下所示：</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">[root@host]# </span><span class="language-bash">ps aux | grep mysqld | grep -v grep</span></span><br><span class="line">root 31635 0.0 0.1 11300 1520 ? S Sep22 0:00 /bin/sh /cs/mysql/bin/mysqld_safe --datadir=/store --pid-file=/store/zhoubo.pid</span><br><span class="line">root 32165 0.0 25.5 2041620 259716 ? Sl Sep22 0:15 /cs/mysql/bin/mysqld --basedir=/cs/mysql --datadir=/store --plugin-dir=/cs/mysql/lib/plugin --user=root --log-error=/store/zhoubo.err --open-files-limit=65535 --pid-file=/store/zhoubo.pid --socket=/cs/mysql/data/mysql.sock --port=3306</span><br></pre></td></tr></table></figure>
-
-<p>由此可以看出，“nginx+uwsgi+python”这个组合在其中某个环节对内存做了内存限制导致内存不能正常分配；nginx父进程为init，uwsgi父进程也为init，二者之间使用管道进行通信，所以不可能由nginx限制uwsgi进程资源。而uwsgi以fork形式调用python，fork过程中可以限制资源，python进程的资源被限制后再启动mysqld服务，就会导致mysqld分配内存失败，从而出现上述的错误现象。</p>
-<h3 id="解决"><a href="#解决" class="headerlink" title="解决"></a>解决</h3><p>根据上诉分析，找到了问题的原因出在uwsgi对进程资源进行了限制，所以将uwsgi.ini中关于资源限制的配置去掉，即可解决。<br>在uwsgi.ini中去掉<code>limit-as 256</code>选项。</p>
-<h1 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h1><p>uwsgi.ini中资源限制项包括<code>limit-as</code>，<code>limit-nproc</code>，<code>limit-port</code>等，他们对进程资源的限制的访问获取都是通过系统接口getrlimt和setrlimit来实现的(POSIX API)。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/time.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/resource.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">getrlimit</span><span class="params">(<span class="type">int</span> resource, <span class="keyword">struct</span> rlimit *rlim)</span></span>;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">setrlimit</span><span class="params">(<span class="type">int</span> resource, <span class="type">const</span> <span class="keyword">struct</span> rlimit *rlim)</span></span>;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">prlimit</span><span class="params">(<span class="type">pid_t</span> pid, <span class="type">int</span> resource, <span class="type">const</span> <span class="keyword">struct</span> rlimit *new_limit,<span class="keyword">struct</span> rlimit *old_limit)</span></span>;</span><br></pre></td></tr></table></figure>
-
-<h3 id="核心结构体"><a href="#核心结构体" class="headerlink" title="核心结构体"></a>核心结构体</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">rlimit</span>&#123;</span><br><span class="line">    <span class="type">rlim_t</span> rlim_cur;  <span class="comment">// soft limit</span></span><br><span class="line">    <span class="type">rlim_t</span> rlim_max;  <span class="comment">// hard limit</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p><strong>rlim_cur</strong></p>
-<p>为soft limit是指内核所能支持的资源上限。比如对于RLIMIT_NOFILE(一个进程能打开的最大文件数，内核默认是1024)，soft limit最大也只能达到1024。对于RLIMIT_CORE(core文件的大小，内核不做限制)，soft limit最大能是unlimited。</p>
-<p><strong>rlim_max</strong></p>
-<p>为hard limit在资源中只是作为soft limit的上限。当你设置hard limit后，你以后设置的soft limit只能小于hard limit。要说明的是，hard limit只针对非特权进程，也就是进程的有效用户ID(effective user ID)不是0的进程。具有特权级别的进程(具有属性CAP_SYS_RESOURCE)，soft limit则只有内核上限。</p>
-<h3 id="可限制资源列表"><a href="#可限制资源列表" class="headerlink" title="可限制资源列表"></a>可限制资源列表</h3><table>
-<thead>
-<tr>
-<th align="center">资源</th>
-<th align="left">描述</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">RLIMIT_AS</td>
-<td align="left">进程的最大虚拟内存空间，字节为单位</td>
-</tr>
-<tr>
-<td align="center">RLIMIT_CORE</td>
-<td align="left">内核转存文件的最大长度</td>
-</tr>
-<tr>
-<td align="center">RLIMIT_CPU</td>
-<td align="left">最大允许的CPU使用时间，秒为单位</td>
-</tr>
-<tr>
-<td align="center">RLIMIT_DATA</td>
-<td align="left">进程数据段的最大</td>
-</tr>
-<tr>
-<td align="center">RLIMIT_FSIZE</td>
-<td align="left">进程可建立的文件的最大长度</td>
-</tr>
-<tr>
-<td align="center">RLIMIT_LOCKS</td>
-<td align="left">进程可建立的锁和租赁的最大值</td>
-</tr>
-<tr>
-<td align="center">RLIMIT_MEMLOCK</td>
-<td align="left">进程可锁定在内存中的最大数据量，字节为单位</td>
-</tr>
-<tr>
-<td align="center">RLIMIT_MSGQUEUE</td>
-<td align="left">进程可为POSIX消息队列分配的最大字节数</td>
-</tr>
-<tr>
-<td align="center">RLIMIT_NICE</td>
-<td align="left">进程可通过setpriority() 或 nice()调用设置的最大完美值</td>
-</tr>
-<tr>
-<td align="center">RLIMIT_NOFILE</td>
-<td align="left">指定比进程可打开的最大文件描述词大一的值，超出此值，将会产生EMFILE错误</td>
-</tr>
-<tr>
-<td align="center">RLIMIT_NPROC</td>
-<td align="left">用户可拥有的最大进程数</td>
-</tr>
-<tr>
-<td align="center">RLIMIT_RTPRIO</td>
-<td align="left">进程可通过sched_setscheduler 和 sched_setparam设置的最大实时优先级</td>
-</tr>
-<tr>
-<td align="center">RLIMIT_SIGPENDING</td>
-<td align="left">用户可拥有的最大挂起信号数</td>
-</tr>
-<tr>
-<td align="center">RLIMIT_STACK</td>
-<td align="left">最大的进程堆栈，以字节为单位</td>
-</tr>
-</tbody></table>
-<h1 id="参考及鸣谢"><a href="#参考及鸣谢" class="headerlink" title="参考及鸣谢"></a>参考及鸣谢</h1><ul>
-<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/todd911/article/details/14055745">《UNIX环境高级编程》笔记–getrlimit和setrlimit函数</a></li>
-<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/kevin6216/article/details/15378617">uWSGI参考资料</a></li>
-<li><a target="_blank" rel="noopener" href="http://uwsgi-docs.readthedocs.io/en/latest/Options.html?highlight=limit-as">uWSGI Options(官方)</a></li>
-<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/pennyliang/article/details/41678953">mmap ENOMEM（errno 12） 错误 </a></li>
-<li><a target="_blank" rel="noopener" href="http://www.cnblogs.com/vinozly/p/5489138.html">Linux进程分配内存的两种方式–brk() 和mmap()</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/page/11/"><i class="fa fa-angle-left" aria-label="Previous page"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/11/">11</a><span class="page-number current">12</span><a class="page-number" href="/page/13/">13</a><span class="space">&hellip;</span><a class="page-number" href="/page/15/">15</a><a class="extend next" rel="next" href="/page/13/"><i class="fa fa-angle-right" aria-label="Next page"></i></a>
+    <a class="extend prev" rel="prev" href="/page/11/"><i class="fa fa-angle-left" aria-label="Previous page"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/11/">11</a><span class="page-number current">12</span><a class="page-number" href="/page/13/">13</a><span class="space">&hellip;</span><a class="page-number" href="/page/16/">16</a><a class="extend next" rel="next" href="/page/13/"><i class="fa fa-angle-right" aria-label="Next page"></i></a>
   </nav>
 
 
@@ -2097,7 +2032,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">150</span>
+          <span class="site-state-item-count">151</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -2137,7 +2072,7 @@
 <div class="copyright">
   
   &copy; 
-  <span itemprop="copyrightYear">2024</span>
+  <span itemprop="copyrightYear">2025</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>

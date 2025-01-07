@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zhoubofsy.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="使用Go的官方以太坊实现go-ethereum来和以太坊区块链进行交互。Go-ethereum，也被简称为Geth，是最流行的以太坊客户端。因为它是用Go开发的，当使用Golang开发应用程序时，Geth提供了读写区块链的一切功能。 环境 go version go1.23.0 darwin&#x2F;arm64 github.com&#x2F;ethereum&#x2F;go-ethereum">
+<meta property="og:type" content="article">
+<meta property="og:title" content="当需要用Go调用Ethereum的时候">
+<meta property="og:url" content="http://zhoubofsy.github.io/2025/01/07/blockchain/ethereum/call-eth-with-golang/index.html">
+<meta property="og:site_name" content="Bolog">
+<meta property="og:description" content="使用Go的官方以太坊实现go-ethereum来和以太坊区块链进行交互。Go-ethereum，也被简称为Geth，是最流行的以太坊客户端。因为它是用Go开发的，当使用Golang开发应用程序时，Geth提供了读写区块链的一切功能。 环境 go version go1.23.0 darwin&#x2F;arm64 github.com&#x2F;ethereum&#x2F;go-ethereum">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2025-01-07T04:17:25.000Z">
+<meta property="article:modified_time" content="2025-01-07T04:20:42.043Z">
+<meta property="article:author" content="博">
+<meta property="article:tag" content="ethereum">
+<meta property="article:tag" content="golang">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://zhoubofsy.github.io/2025/01/07/blockchain/ethereum/call-eth-with-golang/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>当需要用Go调用Ethereum的时候 | Bolog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Bolog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2025/01/07/blockchain/ethereum/call-eth-with-golang/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          当需要用Go调用Ethereum的时候
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2025-01-07 12:17:25 / Modified: 12:20:42" itemprop="dateCreated datePublished" datetime="2025-01-07T12:17:25+08:00">2025-01-07</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/blockchain/" itemprop="url" rel="index"><span itemprop="name">blockchain</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>使用Go的官方以太坊实现<a target="_blank" rel="noopener" href="https://github.com/ethereum/go-ethereum">go-ethereum</a>来和以太坊区块链进行交互。Go-ethereum，也被简称为Geth，是最流行的以太坊客户端。因为它是用Go开发的，当使用Golang开发应用程序时，Geth提供了读写区块链的一切功能。</p>
+<h1 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h1><ul>
+<li>go version go1.23.0 darwin&#x2F;arm64</li>
+<li>github.com&#x2F;ethereum&#x2F;go-ethereum v1.14.12</li>
+<li>github.com&#x2F;gin-gonic&#x2F;gin v1.10.0</li>
+</ul>
+<h1 id="代码示例"><a href="#代码示例" class="headerlink" title="代码示例"></a>代码示例</h1><p>完整代码请见：<a target="_blank" rel="noopener" href="https://github.com/zhoubofsy/web3_golang/tree/main/gin">https://github.com/zhoubofsy/web3_golang/tree/main/gin</a></p>
+<h2 id="Balance查看"><a href="#Balance查看" class="headerlink" title="Balance查看"></a>Balance查看</h2><p><em>account.go</em></p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> OpAccount <span class="keyword">struct</span> &#123;</span><br><span class="line">  client *blockchain.Client</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(op *OpAccount)</span></span> GetBalance(accountID <span class="type">string</span>, blkNum *big.Int) (*big.Int, <span class="type">error</span>) &#123;</span><br><span class="line">  <span class="keyword">if</span> accountID == <span class="string">&quot;&quot;</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nil</span>, ErrAccountIDRequired</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// 实现获取余额</span></span><br><span class="line">  <span class="keyword">return</span> op.client.Eth.BalanceAt(context.Background(), common.HexToAddress(accountID), blkNum)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(op *OpAccount)</span></span> GetPendingBalance(accountID <span class="type">string</span>) (*big.Int, <span class="type">error</span>) &#123;</span><br><span class="line">  <span class="keyword">if</span> accountID == <span class="string">&quot;&quot;</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nil</span>, ErrAccountIDRequired</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> op.client.Eth.PendingBalanceAt(context.Background(), common.HexToAddress(accountID))</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="Block查询"><a href="#Block查询" class="headerlink" title="Block查询"></a>Block查询</h2><p><em>block.go</em></p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> OpBlock <span class="keyword">struct</span> &#123;</span><br><span class="line">  client *blockchain.Client</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewOpBlock</span><span class="params">(client *blockchain.Client)</span></span> *OpBlock &#123;</span><br><span class="line">  <span class="keyword">return</span> &amp;OpBlock&#123;</span><br><span class="line">    client: client,</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(op *OpBlock)</span></span> GetBlockNumber() (<span class="type">uint64</span>, <span class="type">error</span>) &#123;</span><br><span class="line">  <span class="keyword">return</span> op.client.Eth.BlockNumber(context.Background())</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(op *OpBlock)</span></span> GetBlockInfo(number <span class="type">uint64</span>) (BlockInfo, <span class="type">error</span>) &#123;</span><br><span class="line">  blkInfo, err := op.client.Eth.BlockByNumber(context.Background(), big.NewInt(<span class="type">int64</span>(number)))</span><br><span class="line">  <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> BlockInfo&#123;&#125;, err</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> BlockInfo&#123;</span><br><span class="line">    Hash:       blkInfo.Hash().Hex(),</span><br><span class="line">    Height:     blkInfo.Number().Uint64(),</span><br><span class="line">    Timestamp:  blkInfo.Time(),</span><br><span class="line">    Difficulty: blkInfo.Difficulty().Uint64(),</span><br><span class="line">    Nonce:      blkInfo.Nonce(),</span><br><span class="line">    Miner:      blkInfo.Coinbase().Hex(),</span><br><span class="line">    TransCount: <span class="type">uint64</span>(<span class="built_in">len</span>(blkInfo.Transactions())),</span><br><span class="line">  &#125;, err</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(op *OpBlock)</span></span> ListBlocks(from, to <span class="type">uint64</span>) ([]BlockInfo, <span class="type">error</span>) &#123;</span><br><span class="line">  blkMaxNum, err := op.GetBlockNumber()</span><br><span class="line">  <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nil</span>, err</span><br><span class="line">  &#125;</span><br><span class="line">  start := max(from, <span class="number">0</span>)</span><br><span class="line">  end := min(to, blkMaxNum)</span><br><span class="line"></span><br><span class="line">  blocks := <span class="built_in">make</span>([]BlockInfo, <span class="number">0</span>)</span><br><span class="line">  <span class="keyword">for</span> i := start; i &lt;= end; i++ &#123;</span><br><span class="line">    bi, err := op.GetBlockInfo(i)</span><br><span class="line">    <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">      <span class="keyword">continue</span></span><br><span class="line">    &#125;</span><br><span class="line">    blocks = <span class="built_in">append</span>(blocks, bi)</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> blocks, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="交易查询"><a href="#交易查询" class="headerlink" title="交易查询"></a>交易查询</h2><p><em>trans.go</em></p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> OpTrans <span class="keyword">struct</span> &#123;</span><br><span class="line">  client *blockchain.Client</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewOpTrans</span><span class="params">(bcClient *blockchain.Client)</span></span> *OpTrans &#123;</span><br><span class="line">  <span class="keyword">return</span> &amp;OpTrans&#123;client: bcClient&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(op *OpTrans)</span></span> Transfer(to <span class="type">string</span>, value <span class="type">uint64</span>) (<span class="type">string</span>, <span class="type">error</span>) &#123;</span><br><span class="line">  <span class="comment">// 1. 使用私钥生成 ECDSA 密钥对</span></span><br><span class="line">  privateKey, err := crypto.HexToECDSA(<span class="string">&quot;ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80&quot;</span>)</span><br><span class="line">  <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="string">&quot;&quot;</span>, err</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// 2. 从私钥中获取公钥</span></span><br><span class="line">  pubKey, ok := privateKey.Public().(*ecdsa.PublicKey)</span><br><span class="line">  <span class="keyword">if</span> !ok &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="string">&quot;&quot;</span>, errors.New(<span class="string">&quot;failed to get public key&quot;</span>)</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// 3. 从公钥中获取From地址</span></span><br><span class="line">  fromAddress := crypto.PubkeyToAddress(*pubKey)</span><br><span class="line">  toAddress := common.HexToAddress(to)</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 4. 获取当前账户(From地址)的nonce值</span></span><br><span class="line">  nonce, err := op.client.Eth.PendingNonceAt(context.Background(), fromAddress)</span><br><span class="line">  <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="string">&quot;&quot;</span>, err</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// 5. 设置转账金额</span></span><br><span class="line">  val := big.NewInt(<span class="type">int64</span>(value * <span class="number">1000000000000000000</span>)) <span class="comment">// in wei (1 eth)</span></span><br><span class="line">  <span class="comment">// 6. 设置gasLimit</span></span><br><span class="line">  <span class="comment">//gasLimit := uint64(21000) // in units</span></span><br><span class="line">  gasLimit, err := op.client.Eth.EstimateGas(context.Background(), ethereum.CallMsg&#123;</span><br><span class="line">    From:  fromAddress,</span><br><span class="line">    To:    &amp;toAddress,</span><br><span class="line">    Value: val,</span><br><span class="line">    Data:  <span class="literal">nil</span>,</span><br><span class="line">  &#125;)</span><br><span class="line">  <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="string">&quot;&quot;</span>, err</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// 7. 获取当前推荐的gasPrice</span></span><br><span class="line">  gasPrice, err := op.client.Eth.SuggestGasPrice(context.Background())</span><br><span class="line">  <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="string">&quot;&quot;</span>, err</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// 8. 获取当前网络的chainID</span></span><br><span class="line">  chainId, err := op.client.Eth.NetworkID(context.Background())</span><br><span class="line">  <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="string">&quot;&quot;</span>, err</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// 9. 创建交易</span></span><br><span class="line">  tx := types.NewTransaction(nonce, toAddress, val, gasLimit, gasPrice, <span class="literal">nil</span>)</span><br><span class="line">  <span class="comment">// 10. 签名交易</span></span><br><span class="line">  signTx, err := types.SignTx(tx, types.NewEIP155Signer(big.NewInt(chainId.Int64())), privateKey)</span><br><span class="line">  <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="string">&quot;&quot;</span>, err</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// 11. 发送交易</span></span><br><span class="line">  err = op.client.Eth.SendTransaction(context.Background(), signTx)</span><br><span class="line">  <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="string">&quot;&quot;</span>, err</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> signTx.Hash().Hex(), err</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(op *OpTrans)</span></span> GetHeaderTransactionCount() (<span class="type">uint</span>, <span class="type">error</span>) &#123;</span><br><span class="line">  headerBlockNum, err := op.client.Eth.HeaderByNumber(context.Background(), <span class="literal">nil</span>)</span><br><span class="line">  <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">    log.Fatal(err)</span><br><span class="line">  &#125;</span><br><span class="line">  blockInfo, err := op.client.Eth.BlockByNumber(context.Background(), big.NewInt(<span class="type">int64</span>(headerBlockNum.Number.Int64())))</span><br><span class="line">  <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">    log.Fatal(err)</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> op.client.Eth.TransactionCount(context.Background(), blockInfo.Hash())</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(op *OpTrans)</span></span> ListTX(blkHash <span class="type">string</span>) ([]TXInfo, <span class="type">error</span>) &#123;</span><br><span class="line">  block, err := op.client.Eth.BlockByHash(context.Background(), common.HexToHash(blkHash))</span><br><span class="line">  <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">    log.Fatal(err)</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nil</span>, err</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">var</span> txInfos []TXInfo</span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span> _, tx := <span class="keyword">range</span> block.Transactions() &#123;</span><br><span class="line">    txHash := tx.Hash()</span><br><span class="line">    receipt, err := op.client.Eth.TransactionReceipt(context.Background(), txHash)</span><br><span class="line">    <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">      <span class="keyword">continue</span></span><br><span class="line">    &#125;</span><br><span class="line">    chainId := tx.ChainId()</span><br><span class="line">    from, err := types.Sender(types.NewEIP155Signer(chainId), tx)</span><br><span class="line">    <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">      <span class="keyword">continue</span></span><br><span class="line">    &#125;</span><br><span class="line">    txInfo := TXInfo&#123;</span><br><span class="line">      TxHash:     txHash.Hex(),</span><br><span class="line">      TxValue:    tx.Value().Uint64(),</span><br><span class="line">      TxGas:      tx.Gas(),</span><br><span class="line">      TxGasPrice: tx.GasPrice().Uint64(),</span><br><span class="line">      TxNonce:    tx.Nonce(),</span><br><span class="line">      TxData:     tx.Data(),</span><br><span class="line">      TxTo:       tx.To().Hex(),</span><br><span class="line">      TxReceipt:  <span class="type">uint8</span>(receipt.Status),</span><br><span class="line">      TxFrom:     from.Hex(),</span><br><span class="line">    &#125;</span><br><span class="line">    txInfos = <span class="built_in">append</span>(txInfos, txInfo)</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> txInfos, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="合约的部署"><a href="#合约的部署" class="headerlink" title="合约的部署"></a>合约的部署</h2><p>首先编写一个Solidity合约。</p>
+<p><em>mytoken.sol</em></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br></pre></td><td class="code"><pre><span class="line">// SPDX-License-Identifier: MIT</span><br><span class="line"></span><br><span class="line">pragma solidity ^0.8.0;</span><br><span class="line"></span><br><span class="line">contract MyToken &#123;</span><br><span class="line">    string public constant name = &quot;Bob&#x27;s Token&quot;;</span><br><span class="line">    string public constant symbol = &quot;BBK&quot;;</span><br><span class="line">    uint8 public constant decimals = 18;</span><br><span class="line">    uint16 private constant increase = 1000;</span><br><span class="line">    uint256 public constant totalLimit = 27000000 * (10 ** decimals);</span><br><span class="line">    uint256 public totalSupply = 0;</span><br><span class="line">    address private owner;</span><br><span class="line">    mapping(address =&gt; uint256) public balanceOf;</span><br><span class="line">    mapping(address =&gt; mapping(address =&gt; uint256)) public allowance;</span><br><span class="line"></span><br><span class="line">    event Transfer(address indexed _from, address indexed _to, uint256 _value);</span><br><span class="line">    event Approval(address indexed _owner, address indexed _spender, uint256 _value);</span><br><span class="line"></span><br><span class="line">    modifier checkAddress(address _addr) &#123;</span><br><span class="line">        require(address(_addr) != address(0), &quot;Invalid address.&quot;);</span><br><span class="line">        _;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    modifier checkBalanceOf(address _addr, uint256 _value) &#123;</span><br><span class="line">        require(balanceOf[_addr] &gt;= _value, &quot;Insufficient balance&quot;);</span><br><span class="line">        _;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    modifier checkOwner() &#123;</span><br><span class="line">        require(msg.sender == owner, &quot;Not owner.&quot;);</span><br><span class="line">        _;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    constructor() &#123;</span><br><span class="line">        owner = msg.sender;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function mint(address _to) public checkOwner returns (uint256) &#123;</span><br><span class="line">        uint256 mintValue = increase * (10  ** decimals);</span><br><span class="line">        require(totalLimit &gt;= (totalSupply + mintValue), &quot;Out of limit.&quot;);</span><br><span class="line">        totalSupply += mintValue;</span><br><span class="line">        balanceOf[_to] += mintValue;</span><br><span class="line">        return balanceOf[_to];</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function transfer(address _to, uint256 _value) public checkAddress(_to) checkBalanceOf(msg.sender, _value) returns (bool success)&#123;</span><br><span class="line">        balanceOf[msg.sender] -= _value;</span><br><span class="line">        balanceOf[_to] += _value;</span><br><span class="line">        emit Transfer(msg.sender, _to, _value);</span><br><span class="line">        return true;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function transferFrom(address _from, address _to, uint256 _value) public checkAddress(_to) checkBalanceOf(_from, _value) returns (bool success) &#123;</span><br><span class="line">        require(allowance[_from][msg.sender] &gt;= _value, &quot;No enough approve value.&quot;);</span><br><span class="line">        allowance[_from][msg.sender] -= _value;</span><br><span class="line">        balanceOf[_from] -= _value;</span><br><span class="line">        balanceOf[_to] += _value;</span><br><span class="line">        emit Transfer(_from, _to, _value);</span><br><span class="line">        return true;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    function approve(address _spender, uint256 _value) public returns (bool success)&#123;</span><br><span class="line">        allowance[msg.sender][_spender] = _value;</span><br><span class="line">        emit Approval(msg.sender, _spender, _value);</span><br><span class="line">        return true;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后使用工具<code>abigen</code>将这个合约编译并导出成<code>mytoken.go</code>的源代码文件。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">abigen --bin ./MyToken.bin --abi MyToken.abi --out ./mytoken.go --pkg mytoken</span></span><br></pre></td></tr></table></figure>
+
+<p>最后在部署的时候调用引入这个包并调用其中的部署方法完成部署。</p>
+<p><em>contract.go</em></p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> contract <span class="keyword">struct</span> &#123;</span><br><span class="line">  client *blockchain.Client</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewContract</span><span class="params">(client *blockchain.Client)</span></span> *contract &#123;</span><br><span class="line">  <span class="keyword">return</span> &amp;contract&#123;client: client&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *contract)</span></span> DeployContract() (<span class="type">string</span>, <span class="type">string</span>, <span class="type">error</span>) &#123;</span><br><span class="line">  privateKey, err := crypto.HexToECDSA(<span class="string">&quot;ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80&quot;</span>)</span><br><span class="line">  <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="string">&quot;&quot;</span>, <span class="string">&quot;&quot;</span>, err</span><br><span class="line">  &#125;</span><br><span class="line">  chainId, err := c.client.Eth.ChainID(context.Background())</span><br><span class="line">  <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="string">&quot;&quot;</span>, <span class="string">&quot;&quot;</span>, err</span><br><span class="line">  &#125;</span><br><span class="line">  txOpts, err := bind.NewKeyedTransactorWithChainID(privateKey, chainId)</span><br><span class="line">  <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="string">&quot;&quot;</span>, <span class="string">&quot;&quot;</span>, err</span><br><span class="line">  &#125;</span><br><span class="line">  bk := backend.NewMyTokenCB(c.client.Eth)</span><br><span class="line">  <span class="comment">// <span class="doctag">TODO:</span> 部署合约</span></span><br><span class="line">  contractAddress, txHash, _, err := mytoken.DeployMytoken(txOpts, *bk)</span><br><span class="line">  <span class="keyword">return</span> contractAddress.Hex(), txHash.Hash().Hex(), err</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="关于abigen工具的编译安装"><a href="#关于abigen工具的编译安装" class="headerlink" title="关于abigen工具的编译安装"></a>关于abigen工具的编译安装</h3><p>克隆<code>go-ethereum</code>代码</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">git <span class="built_in">clone</span> git@github.com:ethereum/go-ethereum.git ethereum/go-ethereum</span></span><br></pre></td></tr></table></figure>
+
+<p>编译<code>go-ethereum</code></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">make</span></span><br><span class="line">go run build/ci.go install ./cmd/geth</span><br><span class="line"><span class="meta prompt_">&gt;</span><span class="language-bash">&gt;&gt; /usr/local/go/bin/go build -ldflags <span class="string">&quot;--buildid=none -X github.com/ethereum/go-ethereum/internal/version.gitCommit=f861535f1ecc59ad279c35f77f3962efc14dcf98 -X github.com/ethereum/go-ethereum/internal/version.gitDate=20241219 -s&quot;</span> -tags urfave_cli_no_docs,ckzg -trimpath -v -o /Users/zhoub/Labs/ethereum/go-ethereum/build/bin/geth ./cmd/geth</span></span><br><span class="line">internal/goarch</span><br><span class="line">internal/profilerecord</span><br><span class="line">internal/unsafeheader</span><br><span class="line">internal/race</span><br><span class="line">internal/goexperiment</span><br><span class="line">internal/coverage/rtcov</span><br><span class="line">internal/byteorder</span><br><span class="line">...</span><br><span class="line">github.com/cockroachdb/pebble</span><br><span class="line">github.com/ethereum/go-ethereum/ethdb/pebble</span><br><span class="line">github.com/ethereum/go-ethereum/node</span><br><span class="line">github.com/ethereum/go-ethereum/ethstats</span><br><span class="line">github.com/ethereum/go-ethereum/graphql</span><br><span class="line">github.com/ethereum/go-ethereum/eth</span><br><span class="line">github.com/ethereum/go-ethereum/eth/catalyst</span><br><span class="line">github.com/ethereum/go-ethereum/cmd/utils</span><br><span class="line">github.com/ethereum/go-ethereum/cmd/geth</span><br><span class="line">Done building.</span><br><span class="line">Run &quot;./build/bin/geth&quot; to launch geth.</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">make devtool</span></span><br><span class="line">env GOBIN= go install golang.org/x/tools/cmd/stringer@latest</span><br><span class="line">go: downloading golang.org/x/tools v0.28.0</span><br><span class="line">env GOBIN= go install github.com/fjl/gencodec@latest</span><br><span class="line">go: downloading github.com/fjl/gencodec v0.0.0-20230517082657-f9840df7b83e</span><br><span class="line">go: downloading github.com/garslo/gogen v0.0.0-20170306192744-1d203ffc1f61</span><br><span class="line">go: downloading golang.org/x/tools v0.0.0-20191126055441-b0650ceb63d9</span><br><span class="line">env GOBIN= go install google.golang.org/protobuf/cmd/protoc-gen-go@latest</span><br><span class="line">go: downloading google.golang.org/protobuf v1.36.1</span><br><span class="line">env GOBIN= go install ./cmd/abigen</span><br><span class="line">solc is /opt/homebrew/bin/solc</span><br><span class="line">protoc is /opt/homebrew/bin/protoc</span><br></pre></td></tr></table></figure>
+
+<h2 id="合约的调用"><a href="#合约的调用" class="headerlink" title="合约的调用"></a>合约的调用</h2><p><em>contract.go</em></p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *contract)</span></span> Call(addr <span class="type">string</span>, category <span class="type">string</span>, params <span class="keyword">interface</span>&#123;&#125;) (<span class="keyword">interface</span>&#123;&#125;, <span class="type">error</span>) &#123;</span><br><span class="line">  <span class="keyword">var</span> resp <span class="keyword">interface</span>&#123;&#125;</span><br><span class="line">  <span class="keyword">var</span> err <span class="type">error</span></span><br><span class="line"></span><br><span class="line">  instance, err := mytoken.NewMytoken(common.HexToAddress(addr), c.client.Eth)</span><br><span class="line">  <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nil</span>, err</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">switch</span> category &#123;</span><br><span class="line">  <span class="keyword">case</span> <span class="string">&quot;BalanceOf&quot;</span>:</span><br><span class="line">    callOpts := &amp;bind.CallOpts&#123;</span><br><span class="line">      Pending: <span class="literal">false</span>,</span><br><span class="line">      Context: context.Background(),</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> account, ok := params.(<span class="type">string</span>); ok &#123;</span><br><span class="line">      bBlance, err := instance.BalanceOf(callOpts, common.HexToAddress(account))</span><br><span class="line">      <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nil</span>, err</span><br><span class="line">      &#125;</span><br><span class="line">      resp = bBlance.String()</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      err = errors.New(<span class="string">&quot;invalid params&quot;</span>)</span><br><span class="line">    &#125;</span><br><span class="line">  <span class="keyword">case</span> <span class="string">&quot;Transfer&quot;</span>:</span><br><span class="line">    <span class="comment">// 使用私钥生成 ECDSA 密钥对</span></span><br><span class="line">    privateKey, err := crypto.HexToECDSA(<span class="string">&quot;ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80&quot;</span>)</span><br><span class="line">    <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">      <span class="keyword">return</span> <span class="literal">nil</span>, errors.New(<span class="string">&quot;failed to get private key&quot;</span>)</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 获取当前账户的地址</span></span><br><span class="line">    pubAddr := crypto.PubkeyToAddress(privateKey.PublicKey)</span><br><span class="line">    <span class="comment">// 获取当前账户的nonce值</span></span><br><span class="line">    nonce, err := c.client.Eth.PendingNonceAt(context.Background(), pubAddr)</span><br><span class="line">    <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">      <span class="keyword">return</span> <span class="literal">nil</span>, errors.New(<span class="string">&quot;failed to get nonce&quot;</span>)</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 获取当前推荐的gasPrice</span></span><br><span class="line">    gasPrice, err := c.client.Eth.SuggestGasPrice(context.Background())</span><br><span class="line">    <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">      <span class="keyword">return</span> <span class="literal">nil</span>, errors.New(<span class="string">&quot;failed to get gas price&quot;</span>)</span><br><span class="line">    &#125;</span><br><span class="line">    gasLimit := <span class="type">uint64</span>(<span class="number">30000000</span>)</span><br><span class="line">    txOpts := &amp;bind.TransactOpts&#123;</span><br><span class="line">      From:  pubAddr,</span><br><span class="line">      Nonce: big.NewInt(<span class="type">int64</span>(nonce)),</span><br><span class="line">      Signer: <span class="function"><span class="keyword">func</span><span class="params">(addr common.Address, tx *types.Transaction)</span></span> (*types.Transaction, <span class="type">error</span>) &#123;</span><br><span class="line">        chainId, err := c.client.Eth.ChainID(context.Background())</span><br><span class="line">        <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">          <span class="keyword">return</span> <span class="literal">nil</span>, errors.New(<span class="string">&quot;failed to get chain id&quot;</span>)</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> types.SignTx(tx, types.NewEIP155Signer(chainId), privateKey)</span><br><span class="line"></span><br><span class="line">      &#125;,</span><br><span class="line">      Value:    <span class="literal">nil</span>,</span><br><span class="line">      GasPrice: gasPrice,</span><br><span class="line">      GasLimit: gasLimit,</span><br><span class="line">      Context:  context.Background(),</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> txParams, ok := params.(TransactParams); ok &#123;</span><br><span class="line">      resp, err = instance.TransferFrom(txOpts, common.HexToAddress(txParams.TxFrom),</span><br><span class="line">        common.HexToAddress(txParams.TxTo), big.NewInt(<span class="type">int64</span>(txParams.TxValue)))</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      <span class="keyword">return</span> <span class="literal">nil</span>, errors.New(<span class="string">&quot;invalid params&quot;</span>)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">default</span>:</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nil</span>, errors.New(<span class="string">&quot;unsupported category&quot;</span>)</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> resp, err</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="合约的事件"><a href="#合约的事件" class="headerlink" title="合约的事件"></a>合约的事件</h2><p>智能合约具有在执行期间“发出”事件的能力。 事件在以太坊中也称为“日志”。 事件的输出存储在日志部分下的事务处理中。 事件已经在以太坊智能合约中被广泛使用，以便在发生相对重要的动作时记录，特别是在代币合约（即ERC-20）中，以指示代币转账已经发生。</p>
+<p><em>event.go</em></p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(e *ContractEvent)</span></span> Run(contractAddr <span class="type">string</span>) &#123;</span><br><span class="line">  query := ethereum.FilterQuery&#123;</span><br><span class="line">    Addresses: []common.Address&#123;common.HexToAddress(contractAddr)&#125;,</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  ch := <span class="built_in">make</span>(<span class="keyword">chan</span> types.Log)</span><br><span class="line">  sp, err := e.Client.SubscribeFilterLogs(context.Background(), query, ch)</span><br><span class="line">  <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">    fmt.Printf(<span class="string">&quot;SubscribeFilterLogs err: %v\n&quot;</span>, err)</span><br><span class="line">    <span class="keyword">return</span></span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">for</span> &#123;</span><br><span class="line">    <span class="keyword">select</span> &#123;</span><br><span class="line">    <span class="keyword">case</span> err := &lt;-sp.Err():</span><br><span class="line">      fmt.Printf(<span class="string">&quot;sp err: %v\n&quot;</span>, err)</span><br><span class="line">      <span class="keyword">return</span></span><br><span class="line">    <span class="keyword">case</span> vLog := &lt;-ch:</span><br><span class="line">      logJSON, err := json.Marshal(vLog)</span><br><span class="line">      <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">        fmt.Printf(<span class="string">&quot;json.Marshal err: %v\n&quot;</span>, err)</span><br><span class="line">        <span class="keyword">return</span></span><br><span class="line">      &#125;</span><br><span class="line">      fmt.Printf(<span class="string">&quot;vLog: %s\n&quot;</span>, logJSON)</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>event.go</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(e *ContractEvent)</span></span> ListWithBlkId(contractAddr <span class="type">string</span>, fromBlock, toBlock <span class="type">uint64</span>) ([]LogInfo, <span class="type">error</span>) &#123;</span><br><span class="line">  <span class="keyword">if</span> fromBlock &gt; toBlock &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nil</span>, fmt.Errorf(<span class="string">&quot;fromBlock &gt; toBlock&quot;</span>)</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">var</span> fBlock *big.Int</span><br><span class="line">  <span class="keyword">var</span> tBlock *big.Int</span><br><span class="line">  <span class="keyword">if</span> fromBlock &gt; <span class="number">0</span> &#123;</span><br><span class="line">    fBlock = big.NewInt(<span class="type">int64</span>(fromBlock))</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span> toBlock &gt; <span class="number">0</span> &#123;</span><br><span class="line">    tBlock = big.NewInt(<span class="type">int64</span>(toBlock))</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  query := ethereum.FilterQuery&#123;</span><br><span class="line">    Addresses: []common.Address&#123;common.HexToAddress(contractAddr)&#125;,</span><br><span class="line">    FromBlock: fBlock,</span><br><span class="line">    ToBlock:   tBlock,</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  logs, err := e.Client.FilterLogs(context.Background(), query)</span><br><span class="line">  <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nil</span>, err</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  contractABI, err := abi.JSON(strings.NewReader(mytoken.MytokenABI))</span><br><span class="line">  <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nil</span>, err</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">var</span> logsInfo []LogInfo</span><br><span class="line">  <span class="keyword">var</span> logType <span class="type">string</span></span><br><span class="line">  <span class="keyword">for</span> _, vLog := <span class="keyword">range</span> logs &#123;</span><br><span class="line">    <span class="keyword">if</span> topic, ok := e.TopicMap[vLog.Topics[<span class="number">0</span>].Hex()]; !ok &#123;</span><br><span class="line">      fmt.Printf(<span class="string">&quot;topic not found: %s\n&quot;</span>, vLog.Topics[<span class="number">0</span>].Hex())</span><br><span class="line">      <span class="keyword">continue</span></span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      logType = topic</span><br><span class="line">    &#125;</span><br><span class="line">    parseData, err := contractABI.Unpack(logType, vLog.Data)</span><br><span class="line">    <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">      <span class="keyword">if</span> logJSON, err := json.Marshal(vLog); err == <span class="literal">nil</span> &#123;</span><br><span class="line">        fmt.Printf(<span class="string">&quot;Unpack err: %v\n %s&quot;</span>, err, logJSON)</span><br><span class="line">      &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        fmt.Printf(<span class="string">&quot;Unpack err: %v\n %v&quot;</span>, err, vLog)</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">continue</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">var</span> strData <span class="type">string</span></span><br><span class="line">    <span class="keyword">switch</span> logType &#123;</span><br><span class="line">    <span class="keyword">case</span> TransferTopic:</span><br><span class="line">      strData = parseData[<span class="number">0</span>].(*big.Int).String()</span><br><span class="line">    <span class="keyword">case</span> ApproveTopic:</span><br><span class="line">      strData = parseData[<span class="number">0</span>].(*big.Int).String()</span><br><span class="line">    <span class="keyword">default</span>:</span><br><span class="line">      fmt.Printf(<span class="string">&quot;Unknow parse data: %v\n&quot;</span>, parseData)</span><br><span class="line">      strData = <span class="string">&quot;unknow&quot;</span></span><br><span class="line">    &#125;</span><br><span class="line">    logsInfo = <span class="built_in">append</span>(logsInfo, LogInfo&#123;</span><br><span class="line">      <span class="comment">//Log: vLog,</span></span><br><span class="line">      LogType:     logType,</span><br><span class="line">      FromAddress: common.HexToAddress(vLog.Topics[<span class="number">1</span>].Hex()).Hex(),</span><br><span class="line">      ToAddress:   common.HexToAddress(vLog.Topics[<span class="number">2</span>].Hex()).Hex(),</span><br><span class="line">      ParseData:   strData,</span><br><span class="line">    &#125;)</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> logsInfo, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/ethereum/" rel="tag"># ethereum</a>
+              <a href="/tags/golang/" rel="tag"># golang</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2024/12/23/blockchain/ethereum/ethereum-micro-economy/" rel="prev" title="Ethereum 微观经济">
+      <i class="fa fa-chevron-left"></i> Ethereum 微观经济
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%8E%AF%E5%A2%83"><span class="nav-number">1.</span> <span class="nav-text">环境</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BB%A3%E7%A0%81%E7%A4%BA%E4%BE%8B"><span class="nav-number">2.</span> <span class="nav-text">代码示例</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Balance%E6%9F%A5%E7%9C%8B"><span class="nav-number">2.1.</span> <span class="nav-text">Balance查看</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Block%E6%9F%A5%E8%AF%A2"><span class="nav-number">2.2.</span> <span class="nav-text">Block查询</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%A4%E6%98%93%E6%9F%A5%E8%AF%A2"><span class="nav-number">2.3.</span> <span class="nav-text">交易查询</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%90%88%E7%BA%A6%E7%9A%84%E9%83%A8%E7%BD%B2"><span class="nav-number">2.4.</span> <span class="nav-text">合约的部署</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B3%E4%BA%8Eabigen%E5%B7%A5%E5%85%B7%E7%9A%84%E7%BC%96%E8%AF%91%E5%AE%89%E8%A3%85"><span class="nav-number">2.4.1.</span> <span class="nav-text">关于abigen工具的编译安装</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%90%88%E7%BA%A6%E7%9A%84%E8%B0%83%E7%94%A8"><span class="nav-number">2.5.</span> <span class="nav-text">合约的调用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%90%88%E7%BA%A6%E7%9A%84%E4%BA%8B%E4%BB%B6"><span class="nav-number">2.6.</span> <span class="nav-text">合约的事件</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">博</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">151</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">123</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2025</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">博</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : 'Iv1.9c9e3f90ac2cc9f9',
+      clientSecret: '478f8511687999ac85664313c08c94a1420e13f6',
+      repo        : 'zhoubofsy.github.io',
+      owner       : 'zhoubofsy',
+      admin       : ['zhoubofsy'],
+      id          : '9ef2749c183cabaee72e2261de447693',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

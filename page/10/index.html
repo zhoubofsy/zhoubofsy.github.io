@@ -188,6 +188,142 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/03/03/container/docker/docker-network/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2017/03/03/container/docker/docker-network/" class="post-title-link" itemprop="url">Docker网络技术(Bridge)</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2017-03-03 11:09:46" itemprop="dateCreated datePublished" datetime="2017-03-03T11:09:46+08:00">2017-03-03</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/container/" itemprop="url" rel="index"><span itemprop="name">container</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>Docker网络技术，用来保证Container之间正常通讯的技术，作为Docker自身提供的网络分为4种，Bridge、Host、None、Container。本文重点介绍** Bridge **</p>
+<h1 id="环境"><a href="#环境" class="headerlink" title="环境"></a>环境</h1><ul>
+<li>Docker 版本<br>  Docker version 1.12.5, build 7392c3b</li>
+<li>OS 版本<br>  Red Hat Enterprise Linux Server release 7.2 (Maipo)</li>
+<li>kernel 版本<br>  Linux 3.10.0-327.el7.x86_64</li>
+</ul>
+<h1 id="Bridge介绍"><a href="#Bridge介绍" class="headerlink" title="Bridge介绍"></a>Bridge介绍</h1><h2 id="longlong-ago"><a href="#longlong-ago" class="headerlink" title="longlong ago :-)"></a>longlong ago :-)</h2><p><img src="/images/docker/docker-network-bridge-br0.png" alt="docker-network-bridge-br0"></p>
+<p>早期的二层网络中，bridge可以连接不同的LAN网，当host1 发出一个数据包时，LAN1的其他主机和网桥br0都会收到该数据包。网桥再将数据包从入口端广播到其他端口上（我的理解是，多端口网桥叫交换机）。因此，LAN2上的主机也会接收到host1发出的数据包，从而实现不同LAN网上所有主机的通信。</p>
+<p><img src="/images/docker/docker-network-bridge-linux.png" alt="docker-network-bridge-linux"></p>
+<p>后来linux kernel借鉴桥设备的原理实现了虚拟bridge，用到了veth pair技术，实现了不同子网通讯的二层基础。</p>
+<h2 id="Docker-Bridge"><a href="#Docker-Bridge" class="headerlink" title="Docker Bridge"></a>Docker Bridge</h2><p>(正题)<code>Docker Bridge</code>不同于<code>linux bridge</code>也不同于<code>桥设备</code>，但<code>Docker Bridge</code>的构建基于<code>linux bridge</code>、<code>Network Namespace</code>、<code>iptables</code>。</p>
+<ul>
+<li>Network Namespace<br>  实现了子网之间的隔离</li>
+<li>iptables<br>  解决了NAT映射问题，使容器有(被)访问外网的能力。</li>
+<li>linux bridge<br>  实现了Host内跨子网通讯</li>
+</ul>
+<p><img src="/images/docker/docker-network-bridge-main.png" alt="docker-network-bridge-main"></p>
+<p>在桥接模式下，Docker Daemon将veth0附加到docker0网桥上，保证宿主机的报文有能力发往veth0。再将veth1添加到Docker容器所属的网络命名空间，保证宿主机的网络报文若发往veth0可以立即被veth1收到。容器如果需要联网，则需要采用NAT方式。准确的说，是NATP(网络地址端口转换)方式。NATP包含两种转换方式：SNAT和DNAT。</p>
+<h3 id="下行访问流程"><a href="#下行访问流程" class="headerlink" title="下行访问流程"></a>下行访问流程</h3><p><img src="/images/docker/docker-network-bridge-downflow.png" alt="docker-network-bridge-downflow"><br>由于容器的IP与端口对外都是不可见的，所以数据包的目的地址为宿主机的ip和端口，为192.168.1.10:24。<br>数据包经过路由器发给宿主机eth0，再经eth0转发给docker0网桥。<br>由于存在DNAT(Destination NAT，修改数据包的目的地址)规则，会将数据包的目的地址转换为容器的ip和端口，为172.17.0.n:24。宿主机上的docker0网桥识别到容器ip和端口，于是将数据包发送附加到docker0网桥上的veth0接口，veth0接口再将数据包发送给容器内部的veth1接口，容器接收数据包并作出响应。<br><img src="/images/docker/docker-network-bridge-downflow-detail.png" alt="docker-network-bridge-downflow-detail"></p>
+<h3 id="上行访问流程"><a href="#上行访问流程" class="headerlink" title="上行访问流程"></a>上行访问流程</h3><p>看了上面的<code>下行访问流程</code>用到了DNAT，那么上行访问一定会使用SNAT了吧。可实时却并非如此。<br>容器内的请求可以正常发送到host外，是因为host开启的<code>ip_forward</code>。如果host关闭转发功能<code>echo 0 &gt; /proc/sys/net/ipv4/ip_forward</code>，容器能的请求只能发送到于自己相同网段的节点容器内，不同网段及跨主机的网段是不通的。<br><img src="/images/docker/docker-network-bridge-upflow-detail.png" alt="docker-network-bridge-upflow-detail"></p>
+<h1 id="Docker-bridge中关键技术"><a href="#Docker-bridge中关键技术" class="headerlink" title="Docker bridge中关键技术"></a>Docker bridge中关键技术</h1><p>Docker bridge充分利用了linux bridge和iptabels、namespace等技术。将其中需要很多命令做成自动化脚本以方便执行维护。如：pipework是一个shell脚本，用于完成bridge网络管理。</p>
+<h2 id="veth-pair"><a href="#veth-pair" class="headerlink" title="veth pair"></a>veth pair</h2><p>veth pair是一对虚拟网卡，从一张veth网卡发出的数据包可以直接到达它的peer veth,两者之间存在着虚拟链路。veth网卡和常规的以太网区别仅在于xmit接口：将数据发送到其peer,触发peer的Rx 过程。<br><img src="/images/docker/docker-network-bridge-vethpair.png" alt="docker-network-bridge-vethpair"><br>veth pair是用于不同network namespace间进行通信的方式，veth pair将一个network namespace数据发往另一个network namespace的veth。如果多个network namespace需要进行通信，则需要借助bridge。</p>
+<p>*** 属于iproute2工具包中的ip-link提供的功能 ***</p>
+<p>创建veth pair，vp16与vp19是一对儿，vp26与vp29是一对儿。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> ip <span class="built_in">link</span> add vp16 <span class="built_in">type</span> veth peer name vp19</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> ip <span class="built_in">link</span> add vp26 <span class="built_in">type</span> veth peer name vp29</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> ip <span class="built_in">link</span> show</span></span><br><span class="line">1: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT group default qlen 1</span><br><span class="line">    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00</span><br><span class="line">2: enp0s5: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc pfifo_fast state UP mode DEFAULT group default qlen 1000</span><br><span class="line">    link/ether 00:1c:42:c6:de:63 brd ff:ff:ff:ff:ff:ff</span><br><span class="line">3: vp19@vp16: &lt;BROADCAST,MULTICAST,M-DOWN&gt; mtu 1500 qdisc noop state DOWN mode DEFAULT group default qlen 1000</span><br><span class="line">    link/ether b6:62:99:1e:0c:2a brd ff:ff:ff:ff:ff:ff</span><br><span class="line">4: vp16@vp19: &lt;BROADCAST,MULTICAST,M-DOWN&gt; mtu 1500 qdisc noop state DOWN mode DEFAULT group default qlen 1000</span><br><span class="line">    link/ether 1e:ea:cf:86:51:ab brd ff:ff:ff:ff:ff:ff</span><br><span class="line">5: vp29@vp26: &lt;BROADCAST,MULTICAST,M-DOWN&gt; mtu 1500 qdisc noop state DOWN mode DEFAULT group default qlen 1000</span><br><span class="line">    link/ether 4e:16:07:e6:77:2c brd ff:ff:ff:ff:ff:ff</span><br><span class="line">6: vp26@vp29: &lt;BROADCAST,MULTICAST,M-DOWN&gt; mtu 1500 qdisc noop state DOWN mode DEFAULT group default qlen 1000</span><br><span class="line">    link/ether be:98:08:90:da:7a brd ff:ff:ff:ff:ff:ff</span><br></pre></td></tr></table></figure>
+
+<p>创建namespace ns19和ns29，并设置vp19和vp29的netns</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> ip netns add ns19</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> ip netns add ns29</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> ip netns list</span></span><br><span class="line">ns19</span><br><span class="line">ns29</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> ip <span class="built_in">link</span> <span class="built_in">set</span> netns ns19 vp19</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> ip <span class="built_in">link</span> <span class="built_in">set</span> netns ns29 vp29</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> ip <span class="built_in">link</span> show</span></span><br><span class="line">1: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT group default qlen 1</span><br><span class="line">    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00</span><br><span class="line">2: enp0s5: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc pfifo_fast state UP mode DEFAULT group default qlen 1000</span><br><span class="line">    link/ether 00:1c:42:c6:de:63 brd ff:ff:ff:ff:ff:ff</span><br><span class="line">4: vp16@if3: &lt;BROADCAST,MULTICAST&gt; mtu 1500 qdisc noop state DOWN mode DEFAULT group default qlen 1000</span><br><span class="line">    link/ether 1e:ea:cf:86:51:ab brd ff:ff:ff:ff:ff:ff link-netnsid 0</span><br><span class="line">6: vp26@if5: &lt;BROADCAST,MULTICAST&gt; mtu 1500 qdisc noop state DOWN mode DEFAULT group default qlen 1000</span><br><span class="line">    link/ether be:98:08:90:da:7a brd ff:ff:ff:ff:ff:ff link-netnsid 1</span><br></pre></td></tr></table></figure>
+<p>设置完netns后，在当前namespace中查看网卡信息就看不到vp19和vp29这两个网卡了，但在ns19和ns29 namespace中却能查看到对应的网卡。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> ip netns <span class="built_in">exec</span> ns19 ip <span class="built_in">link</span> show</span></span><br><span class="line">1: lo: &lt;LOOPBACK&gt; mtu 65536 qdisc noop state DOWN mode DEFAULT group default qlen 1</span><br><span class="line">    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00</span><br><span class="line">3: vp19@if4: &lt;BROADCAST,MULTICAST&gt; mtu 1500 qdisc noop state DOWN mode DEFAULT group default qlen 1000</span><br><span class="line">    link/ether b6:62:99:1e:0c:2a brd ff:ff:ff:ff:ff:ff link-netnsid 0</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> ip netns <span class="built_in">exec</span> ns29 ip <span class="built_in">link</span> show</span></span><br><span class="line">1: lo: &lt;LOOPBACK&gt; mtu 65536 qdisc noop state DOWN mode DEFAULT group default qlen 1</span><br><span class="line">    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00</span><br><span class="line">5: vp29@if6: &lt;BROADCAST,MULTICAST&gt; mtu 1500 qdisc noop state DOWN mode DEFAULT group default qlen 1000</span><br><span class="line">    link/ether 4e:16:07:e6:77:2c brd ff:ff:ff:ff:ff:ff link-netnsid 0</span><br></pre></td></tr></table></figure>
+<p>此时将这四个网卡激活，并配置ip，他们便可以相互通讯了。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> ip <span class="built_in">link</span> <span class="built_in">set</span> dev vp16 up</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> ip <span class="built_in">link</span> <span class="built_in">set</span> dev vp26 up</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> ip netns <span class="built_in">exec</span> ns19 ip <span class="built_in">link</span> <span class="built_in">set</span> dev vp19 up</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> ip netns <span class="built_in">exec</span> ns29 ip <span class="built_in">link</span> <span class="built_in">set</span> dev vp29 up</span></span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> ip addr add 192.168.200.16/24 dev vp16</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> ip addr add 192.168.200.26/24 dev vp26</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> ip addr show</span></span><br><span class="line">1: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1</span><br><span class="line">    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00</span><br><span class="line">    inet 127.0.0.1/8 scope host lo</span><br><span class="line">        valid_lft forever preferred_lft forever</span><br><span class="line">    inet6 ::1/128 scope host</span><br><span class="line">        valid_lft forever preferred_lft forever</span><br><span class="line">2: enp0s5: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc pfifo_fast state UP group default qlen 1000</span><br><span class="line">    link/ether 00:1c:42:c6:de:63 brd ff:ff:ff:ff:ff:ff</span><br><span class="line">    inet 192.168.3.5/24 brd 192.168.3.255 scope global enp0s5</span><br><span class="line">        valid_lft forever preferred_lft forever</span><br><span class="line">    inet6 fe80::21c:42ff:fec6:de63/64 scope link</span><br><span class="line">        valid_lft forever preferred_lft forever</span><br><span class="line">4: vp16@if3: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc noqueue state UP group default qlen 1000</span><br><span class="line">    link/ether 1e:ea:cf:86:51:ab brd ff:ff:ff:ff:ff:ff link-netnsid 0</span><br><span class="line">    inet 192.168.200.16/24 scope global vp16</span><br><span class="line">        valid_lft forever preferred_lft forever</span><br><span class="line">    inet6 fe80::1cea:cfff:fe86:51ab/64 scope link</span><br><span class="line">        valid_lft forever preferred_lft forever</span><br><span class="line">6: vp26@if5: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc noqueue state UP group default qlen 1000</span><br><span class="line">    link/ether be:98:08:90:da:7a brd ff:ff:ff:ff:ff:ff link-netnsid 1</span><br><span class="line">    inet 192.168.200.26/24 scope global vp26</span><br><span class="line">        valid_lft forever preferred_lft forever</span><br><span class="line">    inet6 fe80::bc98:8ff:fe90:da7a/64 scope link</span><br><span class="line">        valid_lft forever preferred_lft forever</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> ip netns <span class="built_in">exec</span> ns19 ip addr add 192.168.200.19/24 dev vp19</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> ip netns <span class="built_in">exec</span> ns19 ip addr show</span></span><br><span class="line">1: lo: &lt;LOOPBACK&gt; mtu 65536 qdisc noop state DOWN group default qlen 1</span><br><span class="line">    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00</span><br><span class="line">3: vp19@if4: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc noqueue state UP group default qlen 1000</span><br><span class="line">    link/ether b6:62:99:1e:0c:2a brd ff:ff:ff:ff:ff:ff link-netnsid 0</span><br><span class="line">    inet 192.168.200.19/24 scope global vp19</span><br><span class="line">        valid_lft forever preferred_lft forever</span><br><span class="line">    inet6 fe80::b462:99ff:fe1e:c2a/64 scope link</span><br><span class="line">        valid_lft forever preferred_lft forever</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> ip netns <span class="built_in">exec</span> ns29 ip addr add 192.168.200.29/24 dev vp29</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> ip netns <span class="built_in">exec</span> ns29 ip addr show</span></span><br><span class="line">1: lo: &lt;LOOPBACK&gt; mtu 65536 qdisc noop state DOWN group default qlen 1</span><br><span class="line">    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00</span><br><span class="line">5: vp29@if6: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc noqueue state UP group default qlen 1000</span><br><span class="line">    link/ether 4e:16:07:e6:77:2c brd ff:ff:ff:ff:ff:ff link-netnsid 0</span><br><span class="line">    inet 192.168.200.29/24 scope global vp29</span><br><span class="line">        valid_lft forever preferred_lft forever</span><br><span class="line">    inet6 fe80::4c16:7ff:fee6:772c/64 scope link</span><br><span class="line">        valid_lft forever preferred_lft forever</span><br></pre></td></tr></table></figure>
+<ul>
+<li>ns19、ns29这两个namespace的网络不能ping通各自的<code>192.168.200.0</code>网段的ip地址<br>  将ns19、ns29中的<code>lo</code>设备激活(up)，便能ping通各自的ip地址了。</li>
+<li>ns19 namespace的网络能ping同<code>192.168.200.16</code>和<code>192.168.200.26</code>，但不能ping通<code>192.168.200.29</code><br>  ns29 namespace的网络却不能ping通任何一个ip地址。</li>
+<li>将ns29所对应的veth pair划分独立网段(<code>192.168.29.0</code>)，veth pair对应的两个网卡便能正常ping通</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> ip netns <span class="built_in">exec</span> ns19 ping 192.168.200.16</span></span><br><span class="line">ING 192.168.200.16 (192.168.200.16) 56(84) bytes of data.</span><br><span class="line">64 bytes from 192.168.200.16: icmp_seq=1 ttl=64 time=0.060 ms</span><br><span class="line">64 bytes from 192.168.200.16: icmp_seq=2 ttl=64 time=0.065 ms</span><br><span class="line">...</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> ip netns <span class="built_in">exec</span> ns19 ping 192.168.200.26</span></span><br><span class="line">PING 192.168.200.26 (192.168.200.26) 56(84) bytes of data.</span><br><span class="line">64 bytes from 192.168.200.26: icmp_seq=1 ttl=64 time=0.041 ms</span><br><span class="line">64 bytes from 192.168.200.26: icmp_seq=2 ttl=64 time=0.063 ms</span><br><span class="line">64 bytes from 192.168.200.26: icmp_seq=3 ttl=64 time=0.057 ms</span><br><span class="line">...</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> ip netns <span class="built_in">exec</span> ns29 ping 192.168.200.26 -w 5</span></span><br><span class="line">PING 192.168.200.26 (192.168.200.26) 56(84) bytes of data.</span><br><span class="line"></span><br><span class="line">--- 192.168.200.26 ping statistics --- </span><br><span class="line">6 packets transmitted, 0 received, 100% packet loss, time 4999ms</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> ip netns <span class="built_in">exec</span> ns29 ping 192.168.200.16 -w 5</span></span><br><span class="line">PING 192.168.200.16 (192.168.200.16) 56(84) bytes of data.</span><br><span class="line"></span><br><span class="line">--- 192.168.200.16 ping statistics ---</span><br><span class="line">6 packets transmitted, 0 received, 100% packet loss, time 4999ms</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> ip netns <span class="built_in">exec</span> ns29 ip addr delete 192.168.200.29/24 dev vp29</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> ip netns <span class="built_in">exec</span> ns29 ip addr add 192.168.29.29/24 dev vp29</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> ip addr delete 192.168.200.26/24 dev vp26</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> ip addr add 192.168.29.26/24 dev vp26</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> ip netns <span class="built_in">exec</span> ns29 ping 192.168.29.26</span></span><br><span class="line">PING 192.168.29.26 (192.168.29.26) 56(84) bytes of data.</span><br><span class="line">64 bytes from 192.168.29.26: icmp_seq=1 ttl=64 time=0.059 ms</span><br><span class="line">64 bytes from 192.168.29.26: icmp_seq=2 ttl=64 time=0.051 ms</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+
+<h2 id="brctl"><a href="#brctl" class="headerlink" title="brctl"></a>brctl</h2><p>brctl是<code>bridge-utils</code>包中的程序，用于管理linux bridge的CLI工具。</p>
+<p>创建bridge设备</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> brctl addbr vb</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> brctl show</span></span><br><span class="line">bridge name     bridge id               STP enabled     interfaces</span><br><span class="line">vb              8000.000000000000       no</span><br></pre></td></tr></table></figure>
+<p>将网卡vp16和vp26添加到bridge设备中，可实现vp19与vp29的通讯</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> brctl addif vb vp16</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> brctl addif vb vp26</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> brctl show</span></span><br><span class="line">bridge name     bridge id               STP enabled     interfaces</span><br><span class="line">vb              8000.1eeacf8651ab       no              vp16</span><br><span class="line">                                                        vp26</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> ip netns <span class="built_in">exec</span> ns29 ping 192.168.200.19</span></span><br><span class="line">PING 192.168.200.19 (192.168.200.19) 56(84) bytes of data.</span><br><span class="line">64 bytes from 192.168.200.19: icmp_seq=1 ttl=64 time=0.063 ms</span><br><span class="line">64 bytes from 192.168.200.19: icmp_seq=2 ttl=64 time=0.072 ms</span><br><span class="line">...</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> ip netns <span class="built_in">exec</span> ns19 ping 192.168.200.29</span></span><br><span class="line">PING 192.168.200.29 (192.168.200.29) 56(84) bytes of data.</span><br><span class="line">64 bytes from 192.168.200.29: icmp_seq=1 ttl=64 time=0.066 ms</span><br><span class="line">64 bytes from 192.168.200.29: icmp_seq=2 ttl=64 time=0.058 ms</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<p>若希望namespace网络能ping通宿主机内所有网络，需要添加默认网关</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> ip netns <span class="built_in">exec</span> ns19 ping 192.168.3.5</span></span><br><span class="line">connect: Network is unreachable</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> ip netns <span class="built_in">exec</span> ns29 ping 192.168.3.5</span></span><br><span class="line">connect: Network is unreachable</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> ip netns <span class="built_in">exec</span> ns19 route add default gw 192.168.200.1</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> ip netns <span class="built_in">exec</span> ns19 route -n</span></span><br><span class="line">Kernel IP routing table</span><br><span class="line">Destination     Gateway         Genmask         Flags Metric Ref    Use Iface</span><br><span class="line">0.0.0.0         192.168.200.1   0.0.0.0         UG    0      0        0 vp19</span><br><span class="line">192.168.200.0   0.0.0.0         255.255.255.0   U     0      0        0 vp19</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> ip netns <span class="built_in">exec</span> ns19 ping 192.168.3.5</span></span><br><span class="line">PING 192.168.3.5 (192.168.3.5) 56(84) bytes of data.</span><br><span class="line"></span><br><span class="line">--- 192.168.3.5 ping statistics ---</span><br><span class="line">4 packets transmitted, 0 received, 100% packet loss, time 2999ms</span><br></pre></td></tr></table></figure>
+<p>配置完默认网关后，<code>网络不可达</code>变成了<code>访问超时</code>，此时需要将网卡<code>vp16</code>和<code>vp26</code>的IP地址删除</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> ip addr delete 192.168.200.16/24 dev vp16</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> ip addr delete 192.168.200.26/24 dev vp26</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> ip addr show</span></span><br><span class="line">...</span><br><span class="line">4: vp16@if3: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc noqueue master vb state UP group default qlen 1000</span><br><span class="line">    link/ether 1e:ea:cf:86:51:ab brd ff:ff:ff:ff:ff:ff link-netnsid 0</span><br><span class="line">    inet6 fe80::1cea:cfff:fe86:51ab/64 scope link</span><br><span class="line">        valid_lft forever preferred_lft forever</span><br><span class="line">6: vp26@if5: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc noqueue master vb state UP group default qlen 1000</span><br><span class="line">    link/ether be:98:08:90:da:7a brd ff:ff:ff:ff:ff:ff link-netnsid 1</span><br><span class="line">    inet6 fe80::bc98:8ff:fe90:da7a/64 scope link</span><br><span class="line">        valid_lft forever preferred_lft forever</span><br><span class="line">7: vb: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc noqueue state UP group default qlen 1000</span><br><span class="line">    link/ether 1e:ea:cf:86:51:ab brd ff:ff:ff:ff:ff:ff</span><br><span class="line">    inet 192.168.200.1/24 scope global vb</span><br><span class="line">        valid_lft forever preferred_lft forever</span><br><span class="line">    inet6 fe80::1cea:cfff:fe86:51ab/64 scope link</span><br><span class="line">        valid_lft forever preferred_lft forever</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> ip netns <span class="built_in">exec</span> ns19 ping 192.168.3.5</span></span><br><span class="line">PING 192.168.3.5 (192.168.3.5) 56(84) bytes of data.</span><br><span class="line">64 bytes from 192.168.3.5: icmp_seq=1 ttl=64 time=0.064 ms</span><br><span class="line">64 bytes from 192.168.3.5: icmp_seq=2 ttl=64 time=0.062 ms</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+
+<h2 id="iptables-netfilter"><a href="#iptables-netfilter" class="headerlink" title="iptables&#x2F;netfilter"></a>iptables&#x2F;netfilter</h2><p>netfilter是Linux操作系统核心层内部的一个数据包处理模块，它具有网络地址转换(Network Address Translate)、数据包过滤、数据包处理、地址伪装、透明代理，以及基于用户及媒体访问控制(Media Access Control，MAC)地址的过滤和基于状态的过滤、包速率限制等。** netfilter工作在三层 **</p>
+<p>iptables是与netfilter交互的CLI工具。</p>
+<p>按照上述的配置方式，只能做到访问宿主机内的所有网络，若希望ping通宿主机所在网络的其它主机，需要开启ip_forward(<code>echo 1 &gt;&gt; /proc/sys/net/ipv4/ip_forward</code>，需要以root身份操作，仅仅使用root权限不够)，并关闭防火墙(iptables)或配置防火墙<code>POSTROUTING</code></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">sudo</span> iptables -t nat -A POSTROUTING -s 192.168.200.0/24 -p all -j MASQUERADE</span></span><br><span class="line">hain PREROUTING (policy ACCEPT)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line"></span><br><span class="line">Chain INPUT (policy ACCEPT)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line"></span><br><span class="line">Chain OUTPUT (policy ACCEPT)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line"></span><br><span class="line">Chain POSTROUTING (policy ACCEPT)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">MASQUERADE  all  --  192.168.200.0/24     0.0.0.0/0</span><br></pre></td></tr></table></figure>
+
+<h2 id="TUN-TAP驱动"><a href="#TUN-TAP驱动" class="headerlink" title="TUN&#x2F;TAP驱动"></a>TUN&#x2F;TAP驱动</h2><p>Todo.</p>
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="http://www.tuicool.com/wx/nyQFfaZ">探索 Docker bridge 的正确姿势，亲测有效！</a></li>
+<li><a target="_blank" rel="noopener" href="http://blog.chinaunix.net/uid-27017686-id-5057025.html">虚拟网络设备–VETH pair</a></li>
+<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/tycoon1988/article/details/39055149">network namespace与veth pair</a></li>
+<li><a target="_blank" rel="noopener" href="https://segmentfault.com/a/1190000002540601">iptables防火墙原理详解</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.cnblogs.com/jackhub/p/3575879.html">Linux IP_FORWARD说明</a></li>
+<li><a href="https://zhoubofsy.github.io/2017/05/12/network/iptables-introduce/">iptables</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/03/01/container/rancher/rancher-dns-and-metadata/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1309,89 +1445,10 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/01/22/storage/ceph/librbd-frame-analyse/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2017/01/22/storage/ceph/librbd-frame-analyse/" class="post-title-link" itemprop="url">librbd 架构分析</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2017-01-22 10:53:20" itemprop="dateCreated datePublished" datetime="2017-01-22T10:53:20+08:00">2017-01-22</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h1><p>ceph为统一存储，包括块存储（rbd）、文件存储（cephfs）、对象存储（radosgw）。正常我们所使用rbd cli使用的是库librbd来操作ceph的。</p>
-<h1 id="版本"><a href="#版本" class="headerlink" title="版本"></a>版本</h1><p>ceph-jewel</p>
-<h1 id="架构"><a href="#架构" class="headerlink" title="架构"></a>架构</h1><p>librbd组织结构:<br><img src="/images/ceph/librbd.png" alt="librbd"></p>
-<p>librbd架构:<br><img src="/images/ceph/librbd_frame.png" alt="librbd_frame"></p>
-<h1 id="接口"><a href="#接口" class="headerlink" title="接口"></a>接口</h1><p>*** todo ***</p>
-<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><p>*** None ***</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/page/9/"><i class="fa fa-angle-left" aria-label="Previous page"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/9/">9</a><span class="page-number current">10</span><a class="page-number" href="/page/11/">11</a><span class="space">&hellip;</span><a class="page-number" href="/page/15/">15</a><a class="extend next" rel="next" href="/page/11/"><i class="fa fa-angle-right" aria-label="Next page"></i></a>
+    <a class="extend prev" rel="prev" href="/page/9/"><i class="fa fa-angle-left" aria-label="Previous page"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/9/">9</a><span class="page-number current">10</span><a class="page-number" href="/page/11/">11</a><span class="space">&hellip;</span><a class="page-number" href="/page/16/">16</a><a class="extend next" rel="next" href="/page/11/"><i class="fa fa-angle-right" aria-label="Next page"></i></a>
   </nav>
 
 
@@ -1457,7 +1514,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">150</span>
+          <span class="site-state-item-count">151</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -1497,7 +1554,7 @@
 <div class="copyright">
   
   &copy; 
-  <span itemprop="copyrightYear">2024</span>
+  <span itemprop="copyrightYear">2025</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>
