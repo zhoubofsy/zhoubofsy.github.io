@@ -188,6 +188,111 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/03/29/container/k8s/k8s-service-expose/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2017/03/29/container/k8s/k8s-service-expose/" class="post-title-link" itemprop="url">k8s service expose</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2017-03-29 11:08:40" itemprop="dateCreated datePublished" datetime="2017-03-29T11:08:40+08:00">2017-03-29</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/container/" itemprop="url" rel="index"><span itemprop="name">container</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>从<code>k8s 1.2</code>版本开始提供Ingress来实现对外暴露服务；目前k8s有三种暴露方式</p>
+<ul>
+<li>LoadBlancer Service</li>
+<li>NodePort Service</li>
+<li>Ingress</li>
+</ul>
+<h1 id="K8s-LBS"><a href="#K8s-LBS" class="headerlink" title="K8s-LBS"></a>K8s-LBS</h1><p>LBS是k8s与云平台深度结合的一个组件，当使用LBS暴露服务时，实际上是通过底层云平台申请创建一个负载均衡器来向外暴露服务。目前LBS支持的云平台有GCE、DigitalOcean、Aliyun、私有云Openstack等等，由于LBS与云平台深度结合，所以只能在这些平台上使用。</p>
+<h1 id="NodePort"><a href="#NodePort" class="headerlink" title="NodePort"></a>NodePort</h1><p><img src="/images/k8s/k8s_nodeport.png" alt="k8s_nodeport"></p>
+<p>k8s的端口分为：</p>
+<ul>
+<li>Port<br>  service上暴露出来的端口，提供给集群(集群指整个容器集群)内部客户访问的端口。</li>
+<li>NodePort<br>  node上暴露的端口，提供给集群外部客户访问的端口。</li>
+<li>TargetPort<br>  endpoint上暴露的端口，也可以当作Pod上暴露的端口，无论从Port或NodePort上来的数据最终都会经过kube-proxy转发到Pod的TargetPort端口上。</li>
+</ul>
+<p>k8s的IP分为：</p>
+<ul>
+<li>ClusterIP<br>  service上虚拟ip地址，它由kube-proxy使用iptables规则重新定向到本地端口，再均衡到后端的Pod上。</li>
+<li>NodeIP<br>  node节点的物理ip地址，它被kube-proxy使用iptables规则重定向到本地端口。</li>
+<li>ContainerIP&#x2F;PodIP<br>  K8s中以Pod为最小部署单位，一个Pod中共享一个网络资源（无论Pod中有几个容器）。每个Pod启动时，会自动创建一个镜像为gcr.io&#x2F;google_containers&#x2F;pause:0.8.0的容器，容器内部与外部的通信经由此容器代理，所以ContainerIP就是PodIP。</li>
+</ul>
+<h2 id="暴露方法及API"><a href="#暴露方法及API" class="headerlink" title="暴露方法及API"></a>暴露方法及API</h2><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Service</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">svc-1</span></span><br><span class="line">  <span class="attr">labels:</span></span><br><span class="line">    <span class="attr">name:</span> <span class="string">svc-1</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">type:</span> <span class="string">NodePort</span></span><br><span class="line">  <span class="attr">ports:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">port:</span> <span class="number">2222</span></span><br><span class="line">      <span class="attr">targetPort:</span> <span class="number">22</span></span><br><span class="line">      <span class="attr">nodePort:</span> <span class="number">30022</span></span><br><span class="line">  <span class="attr">selector:</span></span><br><span class="line">    <span class="attr">name:</span> <span class="string">rc-test</span></span><br></pre></td></tr></table></figure>
+
+<p><a target="_blank" rel="noopener" href="https://kubernetes.io/docs/api-reference/v1.5/#service-v1">API操作</a></p>
+<h2 id="实现原理"><a href="#实现原理" class="headerlink" title="实现原理"></a>实现原理</h2><p>ip地址及端口的暴露都是通过修改iptables规则来实现的。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">iptables -t nat -L -n</span></span><br><span class="line">...</span><br><span class="line">Chain KUBE-NODEPORTS (1 references)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">KUBE-MARK-MASQ  tcp  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-lonely: */ tcp dpt:30023</span><br><span class="line">KUBE-SVC-E6FDK4HG4F4JSB77  tcp  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-lonely: */ tcp dpt:30023</span><br><span class="line">KUBE-MARK-MASQ  tcp  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-tmp: */ tcp dpt:30099</span><br><span class="line">KUBE-SVC-OOWDNB3NCXKPBPZE  tcp  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-tmp: */ tcp dpt:30099</span><br><span class="line">KUBE-MARK-MASQ  tcp  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-1: */ tcp dpt:30022</span><br><span class="line">KUBE-SVC-D25WXD2YSOVKEUTU  tcp  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-1: */ tcp dpt:30022</span><br><span class="line">...</span><br><span class="line">Chain KUBE-SEP-2LNK4QUGPB2C5PDO (2 references)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">KUBE-MARK-MASQ  all  --  192.168.6.110        0.0.0.0/0            /* default/kubernetes:https */</span><br><span class="line">DNAT       tcp  --  0.0.0.0/0            0.0.0.0/0            /* default/kubernetes:https */ recent: SET name: KUBE-SEP-2LNK4QUGPB2C5PDO side: source mask: 255.255.255.255 tcp to:192.168.6.110:6443</span><br><span class="line"></span><br><span class="line">Chain KUBE-SEP-5GTCHBFJM5RAI7LS (1 references)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">KUBE-MARK-MASQ  all  --  10.254.86.9          0.0.0.0/0            /* default/svc-lonely: */</span><br><span class="line">DNAT       tcp  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-lonely: */ tcp to:10.254.86.9:22</span><br><span class="line"></span><br><span class="line">Chain KUBE-SEP-BCYRFQ26LZTOSSU7 (1 references)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">KUBE-MARK-MASQ  all  --  10.254.86.4          0.0.0.0/0            /* default/svc-1: */</span><br><span class="line">DNAT       tcp  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-1: */ tcp to:10.254.86.4:22</span><br><span class="line"></span><br><span class="line">Chain KUBE-SEP-CLKUH4WMQ3CNBJ7K (1 references)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">KUBE-MARK-MASQ  all  --  10.254.86.2          0.0.0.0/0            /* default/svc-1: */</span><br><span class="line">DNAT       tcp  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-1: */ tcp to:10.254.86.2:22</span><br><span class="line"></span><br><span class="line">Chain KUBE-SEP-D3FORTYMXA7BVSDA (1 references)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">KUBE-MARK-MASQ  all  --  10.254.86.8          0.0.0.0/0            /* default/svc-1: */</span><br><span class="line">DNAT       tcp  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-1: */ tcp to:10.254.86.8:22</span><br><span class="line"></span><br><span class="line">Chain KUBE-SEP-F4EJGNTAH3JOOQC6 (1 references)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">KUBE-MARK-MASQ  all  --  10.254.86.3          0.0.0.0/0            /* default/svc-1: */</span><br><span class="line">DNAT       tcp  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-1: */ tcp to:10.254.86.3:22</span><br><span class="line"></span><br><span class="line">Chain KUBE-SEP-HO23WAVQKIB2R4KD (1 references)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">KUBE-MARK-MASQ  all  --  10.254.86.10         0.0.0.0/0            /* default/svc-tmp: */</span><br><span class="line">DNAT       tcp  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-tmp: */ tcp to:10.254.86.10:99</span><br><span class="line"></span><br><span class="line">Chain KUBE-SERVICES (2 references)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">KUBE-SVC-E6FDK4HG4F4JSB77  tcp  --  0.0.0.0/0            10.254.162.24        /* default/svc-lonely: cluster IP */ tcp dpt:2223</span><br><span class="line">KUBE-SVC-OOWDNB3NCXKPBPZE  tcp  --  0.0.0.0/0            10.254.119.86        /* default/svc-tmp: cluster IP */ tcp dpt:9999</span><br><span class="line">KUBE-SVC-NPX46M4PTMTKRN6Y  tcp  --  0.0.0.0/0            10.254.0.1           /* default/kubernetes:https cluster IP */ tcp dpt:443</span><br><span class="line">KUBE-SVC-D25WXD2YSOVKEUTU  tcp  --  0.0.0.0/0            10.254.159.12        /* default/svc-1: cluster IP */ tcp dpt:2222</span><br><span class="line">KUBE-NODEPORTS  all  --  0.0.0.0/0            0.0.0.0/0            /* kubernetes service nodeports; NOTE: this must be the last rule in this chain */ ADDRTYPE match dst-type LOCAL</span><br><span class="line"></span><br><span class="line">Chain KUBE-SVC-D25WXD2YSOVKEUTU (2 references)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">KUBE-SEP-CLKUH4WMQ3CNBJ7K  all  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-1: */ statistic mode random probability 0.25000000000</span><br><span class="line">KUBE-SEP-F4EJGNTAH3JOOQC6  all  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-1: */ statistic mode random probability 0.33332999982</span><br><span class="line">KUBE-SEP-BCYRFQ26LZTOSSU7  all  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-1: */ statistic mode random probability 0.50000000000</span><br><span class="line">KUBE-SEP-D3FORTYMXA7BVSDA  all  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-1: */</span><br><span class="line"></span><br><span class="line">Chain KUBE-SVC-E6FDK4HG4F4JSB77 (2 references)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">KUBE-SEP-5GTCHBFJM5RAI7LS  all  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-lonely: */</span><br><span class="line"></span><br><span class="line">Chain KUBE-SVC-NPX46M4PTMTKRN6Y (1 references)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">KUBE-SEP-2LNK4QUGPB2C5PDO  all  --  0.0.0.0/0            0.0.0.0/0            /* default/kubernetes:https */ recent: CHECK seconds: 180 reap name: KUBE-SEP-2LNK4QUGPB2C5PDO side: source mask: 255.255.255.255</span><br><span class="line">KUBE-SEP-2LNK4QUGPB2C5PDO  all  --  0.0.0.0/0            0.0.0.0/0            /* default/kubernetes:https */</span><br><span class="line"></span><br><span class="line">Chain KUBE-SVC-OOWDNB3NCXKPBPZE (2 references)</span><br><span class="line">target     prot opt source               destination</span><br><span class="line">KUBE-SEP-HO23WAVQKIB2R4KD  all  --  0.0.0.0/0            0.0.0.0/0            /* default/svc-tmp: */</span><br></pre></td></tr></table></figure>
+
+<h1 id="Ingress"><a href="#Ingress" class="headerlink" title="Ingress"></a>Ingress</h1><p>Todo…</p>
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="http://www.colabug.com/thread-1703745-1-1.html?pp=2">Traefik-kubernetes 初试</a></li>
+<li><a target="_blank" rel="noopener" href="http://blog.163.com/hk_bs/blog/static/245038011201611149254899/">Kubernetes 中的PodIP、ClusterIP 和外部IP</a></li>
+<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/xinghun_4/article/details/50492041">kubernetes中port、target port、node port的对比分析，以及kube-proxy代理</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/03/03/container/docker/docker-network/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1348,103 +1453,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/01/24/linux/mount-usage/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2017/01/24/linux/mount-usage/" class="post-title-link" itemprop="url">mount更多用法</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2017-01-24 10:42:35" itemprop="dateCreated datePublished" datetime="2017-01-24T10:42:35+08:00">2017-01-24</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/linux/" itemprop="url" rel="index"><span itemprop="name">linux</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h1><p>每一个使用linux或类unix系统的人都会用到的命令mount，它用来挂载／卸载文件系统。这是该命令基本功能，除了基本功能该命令还有其它功能。</p>
-<h1 id="更多多多多多多多多多多多多多多多用法"><a href="#更多多多多多多多多多多多多多多多用法" class="headerlink" title="更多多多多多多多多多多多多多多多用法"></a>更多多多多多多多多多多多多多多多用法</h1><h2 id="绑定挂载-bind-mount"><a href="#绑定挂载-bind-mount" class="headerlink" title="绑定挂载(bind mount)"></a>绑定挂载(bind mount)</h2><p>windows的快捷方式、linux的软硬链接，相信你已很熟悉了，下面我来说说mount的绑定挂载<code>--bind</code>。</p>
-<p>linux的软硬链接原理:<br><img src="/images/linux/soft_hard_link.jpg" alt="原理图"></p>
-<ul>
-<li>软连接受应用程序影响，不是所有应用程序都能通过软连接访问资源的</li>
-<li>硬链接只能作用在文件上，不能为文件夹创建硬链接</li>
-</ul>
-<p>bind mount:<br>能成功克服软硬链接的缺点，将文件或文件夹挂载到指定的挂载点上。使对挂载点的操作转移到文件或文件夹上。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"> # </span><span class="language-bash"><span class="built_in">ls</span> -li uts*</span></span><br><span class="line">583819234 -rw-r--r--. 1 root root 4 1月  23 16:55 uts</span><br><span class="line">606248334 -rw-r--r--. 1 root root 2 1月  23 10:44 uts2</span><br><span class="line"><span class="meta prompt_"> # </span><span class="language-bash">mount --<span class="built_in">bind</span> ./uts2 ./uts</span></span><br><span class="line"><span class="meta prompt_"> # </span><span class="language-bash"><span class="built_in">ls</span> -li uts*</span></span><br><span class="line">606248334 -rw-r--r--. 1 root root 2 1月  23 10:44 uts</span><br><span class="line">606248334 -rw-r--r--. 1 root root 2 1月  23 10:44 uts2</span><br></pre></td></tr></table></figure>
-<p>uts的inode变成了，uts2的inode id，所有访问uts的io都会转移到uts2上；并且在mount中能查看到<code>bind mount</code>信息。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"> # </span><span class="language-bash">mount</span></span><br><span class="line">...</span><br><span class="line">/dev/mapper/rhel_rhel82-root on /home/zhoub/uts type xfs (rw,relatime,seclabel,attr2,inode64,noquota)</span><br></pre></td></tr></table></figure>
-<p><code>bind mount</code>是用挂载文件或目录信息遮盖了挂载的文件或目录，当不需要时，可以通过<code>umount</code>卸载，恢复原文件或目录的信息。</p>
-<h2 id="挂载传播-mount-propagation"><a href="#挂载传播-mount-propagation" class="headerlink" title="挂载传播(mount propagation)"></a>挂载传播(mount propagation)</h2><p>执行<code>clone()</code>时，进程拷贝当前文件系统树，此后，新进程就拥有与原进程相同的文件系统树拷贝，两个文件系统树中的任何挂载操作都不会影响另一个拷贝。尽管每个进程使用单独的文件系统名称空间在理论上非常有意义，但完全隔离也会造成较大限制性。进程克隆了系统的文件系统名称空间之后，已经运行的系统守护进程无法为这个用户自动挂载 CD-ROM，因为在原文件系统名称空间中执行的挂载无法影响用户的拷贝。2006 年引入的挂载传播（mount propagation）解决了这个问题，挂载传播定义了挂载对象之间的关系。</p>
-<ul>
-<li>共享挂载(share mount)<br>  如果两个挂载对象具有共享关系，那么一个挂载对象中的挂载事件会传播到另一个挂载对象，反之亦然<br>  <code>mount --make-shared &lt;mount-object&gt;</code><br>  <code>mount --make-rshared &lt;mount-object&gt;</code></li>
-<li>从属挂载(slave mount)<br>  如果两个挂载对象形成从属（slave）关系，那么一个挂载对象中的挂载事件会传播到另一个挂载对象，但是反过来不行；在这种关系中，从属对象是事件的接收者<br>  <code>mount --make-slave &lt;mount-object&gt;</code></li>
-<li>私有挂载(private mount)<br>  既不传播也不接收挂载事件<br>  <code>mount --make-private &lt;mount-object&gt;</code></li>
-<li>不可绑定挂载(unbindable mount)<br>  与私有挂载相似，但是不允许执行绑定挂载<br>  <code>mount --make-unbindable &lt;mount-object&gt;</code></li>
-</ul>
-<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/shengxia1999/article/details/52060354">mount –bind和硬连接的区别</a></li>
-<li><a target="_blank" rel="noopener" href="http://www.ibm.com/developerworks/cn/linux/l-cn-hardandsymb-links/">理解 Linux 的硬链接与软链接</a></li>
-<li><a target="_blank" rel="noopener" href="http://www.ibm.com/developerworks/cn/linux/l-mount-namespaces.html">应用挂载名称空间</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1514,7 +1522,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">151</span>
+          <span class="site-state-item-count">152</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

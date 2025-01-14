@@ -188,6 +188,88 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2019/09/20/linux/linux-env-variable/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2019/09/20/linux/linux-env-variable/" class="post-title-link" itemprop="url">Linux环境变量</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2019-09-20 14:08:09" itemprop="dateCreated datePublished" datetime="2019-09-20T14:08:09+08:00">2019-09-20</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/linux/" itemprop="url" rel="index"><span itemprop="name">linux</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>说起环境变量，可能首先想到的是shell中敲入<code>env</code>所看到的这些。没错，这些的确是环境变量。</p>
+<p>还有吗。。。<br>有！你再试试<code>set</code>命令，看看是不是比<code>env</code>的多啊。是不是有点儿小懵逼。怎么还不一样呢！<code>set</code>看到的是shell变量，那shell变量是环境变量吗？是。</p>
+<p>还有吗。。。<br>有！在你输入<code>set</code>的时候你看到<code>$@</code>、<code>$?</code>这些了吗？貌似没有吧。据说这些属于系统变量。(听说而已。。。)</p>
+<p>还有吗。。。<br>目前为止，我只知道这么多，如果我了解到更多的再补充吧。</p>
+<p>说了这么多，上一张图，就一目了然了。</p>
+<p><img src="/images/linux/linux_env_variable.jpg" alt="linux_env_variable"></p>
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/fec33aed017b">Linux:环境变量 - set、env、export</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2019/09/11/storage/ceph/rgw-cluster/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1491,105 +1573,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2019/04/28/storage/ceph/rbd-export-import/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2019/04/28/storage/ceph/rbd-export-import/" class="post-title-link" itemprop="url">RBD备份</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2019-04-28 14:15:47" itemprop="dateCreated datePublished" datetime="2019-04-28T14:15:47+08:00">2019-04-28</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <ul>
-<li>Ceph中的RBD备份分为全量备份和增量备份，恢复也有增全量之分。</li>
-<li>备份和恢复的操作都是基于快照来操作的。</li>
-<li>RBD的format必须为2 （–image-format 2）</li>
-</ul>
-<h1 id="备份"><a href="#备份" class="headerlink" title="备份"></a>备份</h1><p>备份操作流程，先做一个全量备份，然后每隔一段时间做一个快照，并将快照导出。</p>
-<h2 id="准备"><a href="#准备" class="headerlink" title="准备"></a>准备</h2><p>创建一个RBD image</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd create --image-format 2 --size 1G crbd_cls17_1</span></span><br></pre></td></tr></table></figure>
-
-<h2 id="全量"><a href="#全量" class="headerlink" title="全量"></a>全量</h2><p>创建一个快照，然后备份从image创建一直到创建快照之前的全量数据</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd snap create crbd_cls17_1@s1</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd export-diff crbd_cls17_1@s1 ./crbd_base</span></span><br></pre></td></tr></table></figure>
-
-<h2 id="增量"><a href="#增量" class="headerlink" title="增量"></a>增量</h2><p>继续写入一段数据后，再次做快照，并导出增量数据</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd snap create crbd_cls17_1@s2</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd export-diff crbd_cls17_1@s2 --from-snap s1 ./crbd_s1_s2</span></span><br></pre></td></tr></table></figure>
-
-<p>至此，全量和增量备份数据都以导出到文件<code>crbd_base</code>和<code>crbd_s1_s2</code>两个文件中。</p>
-<h1 id="恢复"><a href="#恢复" class="headerlink" title="恢复"></a>恢复</h1><h2 id="准备-1"><a href="#准备-1" class="headerlink" title="准备"></a>准备</h2><p>将之前导出的增全量备份数据<code>crbd_base</code>、<code>crbd_s1_s2</code>拷贝到需要导入的ceph集群上。创建一个rbd image用于导入备份数据。</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd create --image-format 2 --size 1G crbd_cls26_1</span></span><br></pre></td></tr></table></figure>
-
-<h2 id="全量-1"><a href="#全量-1" class="headerlink" title="全量"></a>全量</h2><p>恢复全量数据</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd import-diff ./crbd_base crbd_cls26_1</span></span><br></pre></td></tr></table></figure>
-
-<h2 id="增量-1"><a href="#增量-1" class="headerlink" title="增量"></a>增量</h2><p>恢复增量数据</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">rbd import-diff ./crbd_s1_s2 crbd_cls26_1</span></span><br></pre></td></tr></table></figure>
-
-<p>Over!</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1659,7 +1642,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">151</span>
+          <span class="site-state-item-count">152</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

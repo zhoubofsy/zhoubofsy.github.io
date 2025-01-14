@@ -188,6 +188,86 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/11/27/storage/ceph/radosgw-arch/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2017/11/27/storage/ceph/radosgw-arch/" class="post-title-link" itemprop="url">俯瞰 RadosGW</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2017-11-27 22:18:29" itemprop="dateCreated datePublished" datetime="2017-11-27T22:18:29+08:00">2017-11-27</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>Ceph号称统一存储，何为统一，就是将块、文件、对象统一到一起。RadosGW（简称RGW）就是Ceph中提供对象存储服务的模块。它能提供S3和Swift两种对象存储接口，当然也是最主流的两种接口。</p>
+<p>本文不打算介绍概念性的东西，只为扒一扒RGW的架构。废话不多讲，直接上图</p>
+<p><img src="/images/ceph/rgw_arch.png" alt="rgw_arch.png"></p>
+<p>我觉得画的挺清楚了，就不细讲了。</p>
+<hr>
+<p>一张图不过瘾，再来一发。</p>
+<p><img src="/images/ceph/rgw_structural.png" alt="rgw_structural"></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/11/20/network/dnsmasq-usage/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1858,259 +1938,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2017/09/19/language/python/python-basic-grammar/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2017/09/19/language/python/python-basic-grammar/" class="post-title-link" itemprop="url">Python基础语法</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2017-09-19 09:44:32" itemprop="dateCreated datePublished" datetime="2017-09-19T09:44:32+08:00">2017-09-19</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/language/" itemprop="url" rel="index"><span itemprop="name">language</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="Python语法概况"><a href="#Python语法概况" class="headerlink" title="Python语法概况"></a>Python语法概况</h1><p><img src="/images/python/grammar.png" alt="grammar"></p>
-<h2 id="关键字"><a href="#关键字" class="headerlink" title="关键字"></a>关键字</h2><p>and , exec , not , assert , finally , or , break , for , pass , class , from , print , countinue , global , raise , def , if , return , del , import , try , elif , in , while , else , is , with , except , lambda , yield</p>
-<ul>
-<li>exec<br>  用来执行储存在字符串或文件中的Python语句。eg：  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="built_in">exec</span> <span class="string">&#x27;print &quot;Hello World&quot;&#x27;</span></span><br><span class="line">Hello World</span><br></pre></td></tr></table></figure>
-  注意例子中exec语句的用法和eval_r(), execfile()是不一样的. exec是一个语句(就象print或while), 而eval_r()和execfile()则是内建函数。</li>
-<li>lambda<br>  在python中使用lambda来创建匿名函数，lambda会创建一个函数对象，但不会把这个函数对象赋给一个标识符，而def则会把函数对象赋值给一个变量。lambda它只是一个表达式，而def则是一个语句。eg:  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">m = <span class="keyword">lambda</span> x,y,z: (x-y)*z</span><br><span class="line"><span class="built_in">print</span> m(<span class="number">3</span>,<span class="number">1</span>,<span class="number">2</span>)</span><br></pre></td></tr></table></figure>
-  lambda一般只用来定义简单的函数。</li>
-<li>yield<br>  它和return差不多的用法，只是最后是返回了一个生成器，当你调用yield所在的那个函数的时候，那个函数并没有运行，只会返回一个生成器的对象，第一次在for中调用生成器的的对象，它将会运行你函数中的代码从最开始一直到到碰到了yield的关键字，然后它会返回循环中的第一个值。然后每一次其他的调用将会运行你在这个函数中所写的循环多一次，并且返回下一个值，知道没有值可以返回了。eg:  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="keyword">def</span> <span class="title function_">createGenerator</span>():</span><br><span class="line"><span class="meta">... </span>   mylist = <span class="built_in">range</span>(<span class="number">3</span>)</span><br><span class="line"><span class="meta">... </span>   <span class="keyword">for</span> i <span class="keyword">in</span> mylist:</span><br><span class="line"><span class="meta">... </span>       <span class="keyword">yield</span> i*i</span><br><span class="line">...</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span>mygenerator = createGenerator() <span class="comment"># create a generator</span></span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="built_in">print</span>(mygenerator) <span class="comment"># mygenerator is an object!</span></span><br><span class="line">&lt;generator <span class="built_in">object</span> createGenerator at <span class="number">0xb7555c34</span>&gt;</span><br><span class="line"><span class="meta">&gt;&gt;&gt; </span><span class="keyword">for</span> i <span class="keyword">in</span> mygenerator:</span><br><span class="line"><span class="meta">... </span>    <span class="built_in">print</span>(i)</span><br><span class="line"><span class="number">0</span></span><br><span class="line"><span class="number">1</span></span><br><span class="line"><span class="number">4</span></span><br></pre></td></tr></table></figure></li>
-</ul>
-<h1 id="Python-VS-C"><a href="#Python-VS-C" class="headerlink" title="Python VS C"></a>Python VS C</h1><table>
-<thead>
-<tr>
-<th align="center">Pytho</th>
-<th align="center">C</th>
-<th align="left">说明</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">字母、数字、下划线组成，不能以数字开头，区分大小写</td>
-<td align="center">字母、数字、下划线组成，不能以数字开头，区分大小写</td>
-<td align="left">标识符</td>
-</tr>
-<tr>
-<td align="center">单下划线开头的代表不能直接访问的类属性，通过类提供的接口访问</td>
-<td align="center"></td>
-<td align="left"></td>
-</tr>
-<tr>
-<td align="center">双下划线开头的代表类的私有成员</td>
-<td align="center"></td>
-<td align="left"></td>
-</tr>
-<tr>
-<td align="center">双下划线开头和结尾的代表特殊方法专用的标识(eg:<strong>init</strong>())</td>
-<td align="center"></td>
-<td align="left"></td>
-</tr>
-<tr>
-<td align="center">“&quot;</td>
-<td align="center">不需要，以”;”结尾</td>
-<td align="left">行继符</td>
-</tr>
-<tr>
-<td align="center">单引号(‘),双引号(“),三引号(‘’’)</td>
-<td align="center">双引号(“)</td>
-<td align="left">字符串</td>
-</tr>
-<tr>
-<td align="center">#</td>
-<td align="center">&#x2F;&#x2F;</td>
-<td align="left">注释</td>
-</tr>
-<tr>
-<td align="center">:</td>
-<td align="center">{}</td>
-<td align="left">代码块</td>
-</tr>
-<tr>
-<td align="center">if</td>
-<td align="center">if</td>
-<td align="left">条件</td>
-</tr>
-<tr>
-<td align="center">elif</td>
-<td align="center">else if</td>
-<td align="left"></td>
-</tr>
-<tr>
-<td align="center">else</td>
-<td align="center">else</td>
-<td align="left"></td>
-</tr>
-<tr>
-<td align="center">a &#x3D; b &#x3D; 1 or a,b&#x3D;1,”Hi”</td>
-<td align="center">int a&#x3D;1 , b&#x3D;2</td>
-<td align="left">多变量赋值</td>
-</tr>
-<tr>
-<td align="center">Numbers, String, List, Tuple, Dictionary</td>
-<td align="center">char, int , float, double, void, point*</td>
-<td align="left">基础数据类型</td>
-</tr>
-<tr>
-<td align="center">list[item1, item2, …  itemN]</td>
-<td align="center"></td>
-<td align="left">列表，允许更新</td>
-</tr>
-<tr>
-<td align="center">tuple(item1, item2, …, itemN)</td>
-<td align="center"></td>
-<td align="left">元组，不允许更新操作</td>
-</tr>
-<tr>
-<td align="center">dict{key1:value1, key2:value2, …, keyN:valueN}</td>
-<td align="center"></td>
-<td align="left">字典，允许更新</td>
-</tr>
-<tr>
-<td align="center">**</td>
-<td align="center"></td>
-<td align="left">幂，a**b a的b次幂</td>
-</tr>
-<tr>
-<td align="center">&#x2F;&#x2F;</td>
-<td align="center">mod</td>
-<td align="left">整除</td>
-</tr>
-<tr>
-<td align="center">“!&#x3D;” , “&lt;&gt;”</td>
-<td align="center">“!&#x3D;”</td>
-<td align="left">不等</td>
-</tr>
-<tr>
-<td align="center">“and”</td>
-<td align="center">“&amp;&amp;”</td>
-<td align="left">逻辑运算</td>
-</tr>
-<tr>
-<td align="center">“or”</td>
-<td align="center">双竖线</td>
-<td align="left"></td>
-</tr>
-<tr>
-<td align="center">“not”</td>
-<td align="center">“!”</td>
-<td align="left"></td>
-</tr>
-<tr>
-<td align="center">“in” , “not in”</td>
-<td align="center"></td>
-<td align="left">判断元素在不在元组或列表中</td>
-</tr>
-<tr>
-<td align="center">“is” , “not is”</td>
-<td align="center"></td>
-<td align="left">判断两个标识符是不是引用自一个对象</td>
-</tr>
-<tr>
-<td align="center">“while”, “for”</td>
-<td align="center">“while”, “for”, “do..while”</td>
-<td align="left">循环, python中可与”else”一起执行条件为false的情况</td>
-</tr>
-<tr>
-<td align="center">“break”, “continue”, “pass”</td>
-<td align="center">“break”, “continue”, “goto”</td>
-<td align="left">循环控制</td>
-</tr>
-</tbody></table>
-<h1 id="Python编译"><a href="#Python编译" class="headerlink" title="Python编译"></a>Python编译</h1><table>
-<thead>
-<tr>
-<th align="left">选项</th>
-<th align="left">描述</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="left">-d</td>
-<td align="left">在解析时显示调试信息</td>
-</tr>
-<tr>
-<td align="left">-O</td>
-<td align="left">生成优化代码 ( .pyo 文件 )</td>
-</tr>
-<tr>
-<td align="left">-S</td>
-<td align="left">启动时不引入查找Python路径的位置</td>
-</tr>
-<tr>
-<td align="left">-c cmd</td>
-<td align="left">执行 Python 脚本，并将运行结果作为 cmd 字符串</td>
-</tr>
-<tr>
-<td align="left">file</td>
-<td align="left">在给定的python文件执行python脚本</td>
-</tr>
-</tbody></table>
-<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a target="_blank" rel="noopener" href="https://www.w3cschool.cn/python/python-basic-syntax.html">Python 基础语法</a></li>
-<li><a target="_blank" rel="noopener" href="http://www.cnblogs.com/edenpans/p/6524966.html">PYTHON YIELD 关键字</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -2180,7 +2007,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">151</span>
+          <span class="site-state-item-count">152</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

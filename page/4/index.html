@@ -188,6 +188,116 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2019/12/11/storage/ceph/ceph-release-rpm-build/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="博">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Bolog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2019/12/11/storage/ceph/ceph-release-rpm-build/" class="post-title-link" itemprop="url">ceph-release RPM包build</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2019-12-11 17:23:57" itemprop="dateCreated datePublished" datetime="2019-12-11T17:23:57+08:00">2019-12-11</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/storage/" itemprop="url" rel="index"><span itemprop="name">storage</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p><code>ceph-release</code> rpm包用于在<code>/etc/yum.repos.d/</code>目录下安装<code>ceph.repo</code>文件。<br>本人使用容器进行RPM包构建，镜像为<code>centos:7</code>（<code>hub.docker.com</code>下载）</p>
+<h1 id="rpmbuild安装"><a href="#rpmbuild安装" class="headerlink" title="rpmbuild安装"></a>rpmbuild安装</h1><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">yum install -y rpm-build</span><br></pre></td></tr></table></figure>
+
+<h1 id="rpmbuild目录树建立"><a href="#rpmbuild目录树建立" class="headerlink" title="rpmbuild目录树建立"></a>rpmbuild目录树建立</h1><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mkdir -pv ~/rpmbuild/&#123;BUILD,RPMS,SOURCES,SPECS,SRPMS,BUILDROOT&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>SPEC 保存RPM包配置（.spec）文件</li>
+<li>SOURCES 源代码目录,保存源码包（如.tar 包）和所有patch补丁</li>
+<li>BUILD 构建目录,源码包被解压至此，并在该目录的子目录完成编译</li>
+<li>BUILDROOT 最终安装目录,保存 %install 阶段安装的文件,打包好后此目录相关内容会自动删除</li>
+<li>RPMS 标准RPM包目录,生成&#x2F;保存二进制RPM包</li>
+<li>SRPMS 源代码RPM包目录,生成&#x2F;保存源码RPM包(SRPM)</li>
+</ul>
+<h1 id="构建BUILDROOT目录"><a href="#构建BUILDROOT目录" class="headerlink" title="构建BUILDROOT目录"></a>构建BUILDROOT目录</h1><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">mkdir -p ~/rpmbuild/BUILDROOT/ceph-release-1-1.el7.noarch/etc/yum.repos.d/</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">必须建一个你程序名的一个目录</span></span><br></pre></td></tr></table></figure>
+<p>在<code>~/rpmbuild/BUILDROOT/ceph-release-1-1.el7.noarch/etc/yum.repos.d/</code>目录下创建<code>ceph.repo</code>文件，并写入如下内容:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">[Ceph]</span><br><span class="line">name=Ceph packages for $basearch</span><br><span class="line">baseurl=http://10.100.13.112/rpm-mimic/el7/$basearch</span><br><span class="line">enabled=1</span><br><span class="line">gpgcheck=0</span><br><span class="line"></span><br><span class="line">[Ceph-noarch]</span><br><span class="line">name=Ceph noarch packages</span><br><span class="line">baseurl=http://10.100.13.112/rpm-mimic/el7/noarch</span><br><span class="line">enabled=1</span><br><span class="line">gpgcheck=0</span><br></pre></td></tr></table></figure>
+
+<h1 id="编写SPEC文件"><a href="#编写SPEC文件" class="headerlink" title="编写SPEC文件"></a>编写SPEC文件</h1><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">touch ~/rpmbuild/SPEC/ceph-release.spec</span><br></pre></td></tr></table></figure>
+
+<p>内容如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">Name: ceph-release</span><br><span class="line">Version: 1</span><br><span class="line">Release: 1.el7</span><br><span class="line">Summary: Ceph Release</span><br><span class="line">License: GPL</span><br><span class="line">Group: Applications/System</span><br><span class="line">Vendor: zhoub</span><br><span class="line">Buildarch: noarch</span><br><span class="line"></span><br><span class="line">%description</span><br><span class="line">%prep</span><br><span class="line">%build</span><br><span class="line">%pre</span><br><span class="line">%post</span><br><span class="line">%preun</span><br><span class="line">%postun</span><br><span class="line">%files</span><br><span class="line">/etc/yum.repos.d/ceph.repo</span><br><span class="line">%changelog</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>Name 标签就是软件名，Version标签为版本号，而Release是发布编号。</li>
+<li>Summary 标签是简要说明，英文的话第一个字母应大写，以避免rpmlint工具（打包检查工具）警告</li>
+<li>License 标签说明软件包的协议版本，审查软件的License状态是打包者的职责，这可以通过检查源码或LICENSE文件，或与作者沟通来完成。</li>
+<li>Group 标签过去用于按照<code>/usr/share/doc/rpm-/GROUPS</code>分类软件包。目前该标记已丢弃，vim的模板还有这一条，删掉即可，不过添加该标记也不会有任何影响。</li>
+<li>%changelog 标签应包含每个Release所做的更改日志，尤其应包含上游的安全&#x2F;漏洞补丁的说明。Changelog日志可使用<code>rpm --changelog -q &lt;packagename&gt;</code>查询，通过查询可得知已安装的软件是否包含指定漏洞和安全补丁。<code>%changelog</code>条目应包含版本字符串，以避免rpmlint工具警告。</li>
+<li>多行的部分，如<code>%changelog</code>或<code>%description</code>由指令下一行开始，空行结束。</li>
+<li>一些不需要的行(如BuildRequires和Requires)可使用‘#’注释。</li>
+<li><code>%prep</code>、<code>%build</code>、<code>%install</code>、<code>%file</code>暂时用默认的，未做任何修改。</li>
+</ul>
+<h1 id="构建RPM包"><a href="#构建RPM包" class="headerlink" title="构建RPM包"></a>构建RPM包</h1><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">rpmbuild -bb ~/rpmbuild/SPEC/ceph-release.spec</span><br></pre></td></tr></table></figure>
+
+<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
+<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/weixin_44208042/article/details/89216844">centos7使用rpmbuild制作rpm包</a></li>
+</ul>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2019/12/11/storage/ceph/ceph-repo/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1178,88 +1288,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="http://zhoubofsy.github.io/2019/09/20/linux/linux-env-variable/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="博">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Bolog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2019/09/20/linux/linux-env-variable/" class="post-title-link" itemprop="url">Linux环境变量</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2019-09-20 14:08:09" itemprop="dateCreated datePublished" datetime="2019-09-20T14:08:09+08:00">2019-09-20</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-09-09 15:57:18" itemprop="dateModified" datetime="2024-09-09T15:57:18+08:00">2024-09-09</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/linux/" itemprop="url" rel="index"><span itemprop="name">linux</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>说起环境变量，可能首先想到的是shell中敲入<code>env</code>所看到的这些。没错，这些的确是环境变量。</p>
-<p>还有吗。。。<br>有！你再试试<code>set</code>命令，看看是不是比<code>env</code>的多啊。是不是有点儿小懵逼。怎么还不一样呢！<code>set</code>看到的是shell变量，那shell变量是环境变量吗？是。</p>
-<p>还有吗。。。<br>有！在你输入<code>set</code>的时候你看到<code>$@</code>、<code>$?</code>这些了吗？貌似没有吧。据说这些属于系统变量。(听说而已。。。)</p>
-<p>还有吗。。。<br>目前为止，我只知道这么多，如果我了解到更多的再补充吧。</p>
-<p>说了这么多，上一张图，就一目了然了。</p>
-<p><img src="/images/linux/linux_env_variable.jpg" alt="linux_env_variable"></p>
-<h1 id="参考-鸣谢"><a href="#参考-鸣谢" class="headerlink" title="参考&amp;鸣谢"></a>参考&amp;鸣谢</h1><ul>
-<li><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/fec33aed017b">Linux:环境变量 - set、env、export</a></li>
-</ul>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1329,7 +1357,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">151</span>
+          <span class="site-state-item-count">152</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
